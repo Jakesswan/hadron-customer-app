@@ -805,29 +805,35 @@
         <div class="window-header">
             <button class="back-button" onclick="closeWindow('store')">←</button>
             <span class="window-title">Hadron Store</span>
-            <a href="https://hadrongrp.com" target="_blank" rel="noopener"
-               style="margin-left:auto; background: rgba(255,255,255,0.22); color: white; text-decoration: none; font-size: 13px; font-weight: 600; padding: 8px 12px; border-radius: 8px; white-space: nowrap;">
-                ↗ Open in browser
-            </a>
         </div>
-        <div class="window-content" style="padding: 0; position: relative;">
-            <!-- Fallback shown if the site refuses to embed -->
-            <div id="storeFallback" style="display:none; padding: 40px 20px; text-align: center; color: #333;">
-                <div style="font-size: 48px; margin-bottom: 12px;">🛒</div>
-                <h3 style="margin-bottom: 8px;">Couldn't embed the store</h3>
-                <p style="color: #666; margin-bottom: 20px; max-width: 360px; margin-left: auto; margin-right: auto;">
-                    Your webstore's security settings prevent it from loading inside the app. Tap below to open it in your browser instead.
+        <div class="window-content">
+            <div style="max-width: 520px; margin: 0 auto; padding: 30px 10px 20px; text-align: center;">
+                <div style="width: 110px; height: 110px; margin: 0 auto 24px; border-radius: 24px; background: linear-gradient(135deg, #00b1ca 0%, #f9bb32 100%); display: flex; align-items: center; justify-content: center; box-shadow: 0 10px 30px rgba(0,177,202,0.35);">
+                    <span style="font-size: 58px;">🛒</span>
+                </div>
+                <h2 style="margin-bottom: 10px; color: #333;">Hadron Store</h2>
+                <p style="color: #666; font-size: 15px; line-height: 1.55; margin-bottom: 28px;">
+                    Browse our full range of water treatment products, request quotes, and place orders directly from the Hadron Group website.
                 </p>
                 <a href="https://hadrongrp.com" target="_blank" rel="noopener"
-                   style="display: inline-block; background: linear-gradient(135deg, #00b1ca 0%, #f9bb32 100%); color: white; text-decoration: none; font-weight: 600; padding: 14px 26px; border-radius: 10px;">
-                    Open hadrongrp.com ↗
+                   style="display: inline-block; background: linear-gradient(135deg, #00b1ca 0%, #f9bb32 100%); color: white; text-decoration: none; font-weight: 600; padding: 16px 34px; border-radius: 12px; font-size: 16px; box-shadow: 0 6px 18px rgba(0,0,0,0.12);">
+                    Visit Hadron Store ↗
                 </a>
+                <div style="margin-top: 14px; color: #999; font-size: 12px;">
+                    Opens hadrongrp.com in your browser
+                </div>
             </div>
-            <iframe id="storeFrame" src="about:blank"
-                    style="display:none; width: 100%; height: 100%; border: 0; background: white;"
-                    referrerpolicy="no-referrer-when-downgrade"
-                    loading="lazy"
-                    onload="handleStoreFrameLoad()"></iframe>
+
+            <div style="max-width: 520px; margin: 30px auto 0; padding: 20px; background: #f8f9fa; border-radius: 12px; border: 1px solid #eee;">
+                <h3 style="color: #00b1ca; font-size: 16px; margin-bottom: 12px;">Need help with an order?</h3>
+                <p style="color: #666; font-size: 14px; line-height: 1.55; margin-bottom: 10px;">
+                    Reach our team directly:
+                </p>
+                <p style="color: #444; font-size: 14px; line-height: 1.8;">
+                    📧 <a href="mailto:Sales@hadrongrp.com" style="color: #00b1ca; text-decoration: none;">Sales@hadrongrp.com</a><br>
+                    💬 Tap the AI Assistant icon on the home screen
+                </p>
+            </div>
         </div>
     </div>
 
@@ -1127,47 +1133,6 @@
             openWindows.add(appName);
             updateTaskbar();
             bringToFront(window);
-            if (appName === 'store') loadStoreFrame();
-        }
-
-        // Store iframe: lazy-load with a block-detection fallback.
-        const STORE_URL = 'https://hadrongrp.com';
-        let storeFrameLoaded = false;
-        let storeFrameTimer = null;
-
-        function loadStoreFrame() {
-            const frame = document.getElementById('storeFrame');
-            const fallback = document.getElementById('storeFallback');
-            if (storeFrameLoaded) return;
-
-            frame.style.display = 'block';
-            fallback.style.display = 'none';
-
-            // If the site sends X-Frame-Options: DENY / SAMEORIGIN or a strict CSP
-            // frame-ancestors, the iframe simply never fires "load". Wait ~6s;
-            // if nothing loaded by then, show the fallback.
-            clearTimeout(storeFrameTimer);
-            storeFrameTimer = setTimeout(function () {
-                if (!storeFrameLoaded) showStoreFallback();
-            }, 6000);
-
-            // Trigger the actual navigation.
-            frame.src = STORE_URL;
-        }
-
-        function handleStoreFrameLoad() {
-            // about:blank also fires load, so ignore the first (blank) load.
-            const frame = document.getElementById('storeFrame');
-            if (!frame.src || frame.src === 'about:blank') return;
-            storeFrameLoaded = true;
-            clearTimeout(storeFrameTimer);
-            document.getElementById('storeFallback').style.display = 'none';
-            frame.style.display = 'block';
-        }
-
-        function showStoreFallback() {
-            document.getElementById('storeFrame').style.display = 'none';
-            document.getElementById('storeFallback').style.display = 'block';
         }
 
         function closeWindow(appName) {
