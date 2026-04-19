@@ -1,4 +1,4 @@
-# Google Play Store Listing — Hadron Group Customer Interface
+# Google Play Store Listing — Hadron Group
 
 Everything you need to paste into the Play Console when you submit. Character
 limits shown in brackets come from Google's current Play Console rules.
@@ -7,11 +7,11 @@ limits shown in brackets come from Google's current Play Console rules.
 
 ## App title  `[max 30 chars]`
 
-**Hadron Customer Interface**  *(27 chars)*
+**Hadron Group**  *(12 chars)* — the chosen title.
 
-Alternate options if you want something punchier:
+Alternates kept here for reference:
+- **Hadron Customer Interface**  *(27 chars)*
 - **Hadron Water Dosage**  *(20 chars)*
-- **Hadron Group**  *(12 chars)*
 
 ---
 
@@ -28,7 +28,7 @@ Backup versions:
 ## Full description  `[max 4000 chars]`
 
 ```
-Hadron Customer Interface is the quickest way for water-treatment professionals to get the job done on site.
+The Hadron Group app is the quickest way for water-treatment professionals to get the job done on site.
 
 Built for operators, plant managers and service techs working with Hadron Group, the app bundles the calculations you actually use every day into one clean, offline-capable interface.
 
