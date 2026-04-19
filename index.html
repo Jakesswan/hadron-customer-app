@@ -859,10 +859,16 @@
                     <h3 style="margin-bottom: 15px; color: #00b1ca; font-size: 18px;">Plant Configuration</h3>
                     <div style="display: flex; flex-direction: column; gap: 12px;">
                         <label style="font-weight: 600; font-size: 15px;">Plant Size (MLD):</label>
-                        <input type="number" id="mldInput" value="0.5" step="0.1" min="0.1" 
+                        <input type="number" id="mldInput" value="0.5" step="0.1" min="0.1"
                                style="padding: 12px; border: 2px solid #e0e0e0; border-radius: 8px; width: 100%; font-size: 16px; max-width: 300px;"
                                oninput="calculateDosage()">
                         <span style="color: #666; font-size: 13px;">Megaliters per day</span>
+
+                        <label style="font-weight: 600; font-size: 15px; margin-top: 15px;">Target Free Chlorine (ppm):</label>
+                        <input type="number" id="chlorinePpm" value="5" step="0.1" min="0.1"
+                               style="padding: 12px; border: 2px solid #e0e0e0; border-radius: 8px; width: 100%; font-size: 16px; max-width: 300px;"
+                               oninput="calculateDosage()">
+                        <span style="color: #666; font-size: 13px;">mg/L required in treated water</span>
                     </div>
                 </div>
 
@@ -894,10 +900,16 @@
                     <h3 style="margin-bottom: 15px; color: #00b1ca; font-size: 18px;">Plant Configuration</h3>
                     <div style="display: flex; flex-direction: column; gap: 12px;">
                         <label style="font-weight: 600; font-size: 15px;">Plant Size (MLD):</label>
-                        <input type="number" id="mldInputClO2" value="0.5" step="0.1" min="0.1" 
+                        <input type="number" id="mldInputClO2" value="0.5" step="0.1" min="0.1"
                                style="padding: 12px; border: 2px solid #e0e0e0; border-radius: 8px; width: 100%; font-size: 16px; max-width: 300px;"
                                oninput="calculateClO2()">
                         <span style="color: #666; font-size: 13px;">Megaliters per day</span>
+
+                        <label style="font-weight: 600; font-size: 15px; margin-top: 15px;">Target ClO2 (ppm):</label>
+                        <input type="number" id="clo2Ppm" value="0.6" step="0.05" min="0.05"
+                               style="padding: 12px; border: 2px solid #e0e0e0; border-radius: 8px; width: 100%; font-size: 16px; max-width: 300px;"
+                               oninput="calculateClO2()">
+                        <span style="color: #666; font-size: 13px;">mg/L required in treated water</span>
                     </div>
                 </div>
 
@@ -1121,12 +1133,16 @@
         ];
 
         function calculateDosage() {
-            const treatmentSize = 1000000; // 1 Megaliter
+            const treatmentSize = 1000000; // 1 Megaliter (litres)
             const mld = parseFloat(document.getElementById('mldInput').value) || 0;
+            const targetPpm = parseFloat(document.getElementById('chlorinePpm').value) || 0;
 
             // Find TCCA product
             const tccaProduct = products.find(p => p.name === 'TCCA');
-            const tccaKgPerML = treatmentSize / (tccaProduct.ppm / tccaProduct.ppmRequired);
+            // kg of TCCA per megaliter needed to hit the target ppm
+            const tccaKgPerML = targetPpm > 0
+                ? treatmentSize / (tccaProduct.ppm / targetPpm)
+                : 0;
 
             // Calculate TCCA usage
             const tccaDaily = mld * tccaKgPerML;
@@ -1168,10 +1184,13 @@
 
         // ClO2 Calculator
         function calculateClO2() {
-            const treatmentSize = 1000000;
+            const treatmentSize = 1000000; // litres in 1 Megaliter
             const mld = parseFloat(document.getElementById('mldInputClO2').value) || 0;
+            const targetPpm = parseFloat(document.getElementById('clo2Ppm').value) || 0;
             const clo2Product = products.find(p => p.name === 'ClO2 (Chlorine Dioxide)');
-            const clo2KgPerML = treatmentSize / (clo2Product.ppm / clo2Product.ppmRequired);
+            const clo2KgPerML = targetPpm > 0
+                ? treatmentSize / (clo2Product.ppm / targetPpm)
+                : 0;
             const clo2Daily = mld * clo2KgPerML;
             const clo2Monthly = clo2Daily * 30;
             document.getElementById('clo2Daily').textContent = clo2Daily.toLocaleString(undefined, {maximumFractionDigits: 2});
