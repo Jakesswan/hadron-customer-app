@@ -660,6 +660,10 @@
                     <div class="icon">💊</div>
                     <div class="app-name">Dosage Calculator</div>
                 </div>
+                <div class="app-icon" onclick="openWindow('waterindex')">
+                    <div class="icon">🧮</div>
+                    <div class="app-name">LSI &amp; RSI Index</div>
+                </div>
                 <div class="app-icon" onclick="openChatbot()">
                     <div class="icon">🤖</div>
                     <div class="app-name">AI Assistant</div>
@@ -973,6 +977,91 @@
         </div>
     </div>
 
+    <!-- LSI / RSI Water Index Calculator -->
+    <div class="window" id="window-waterindex">
+        <div class="window-header">
+            <button class="back-button" onclick="closeWindow('waterindex')">←</button>
+            <span class="window-title">LSI &amp; RSI Index</span>
+        </div>
+        <div class="window-content" style="overflow-y: auto;">
+            <h2 style="margin-bottom: 10px;">Water Stability Indices</h2>
+            <p style="color: #666; font-size: 14px; margin-bottom: 20px; line-height: 1.5;">
+                Enter a full water analysis below. The calculator computes the <strong>Langelier Saturation Index (LSI)</strong> — the driving force for calcium-carbonate scaling or corrosion — and the <strong>Ryznar Stability Index (RSI)</strong>, which gives a practical stability score for boilers, cooling circuits and potable lines.
+            </p>
+
+            <div style="background: #f8f9fa; padding: 20px; border-radius: 10px; margin-bottom: 25px;">
+                <h3 style="margin-bottom: 15px; color: #00b1ca; font-size: 18px;">Water Analysis</h3>
+                <div style="display: grid; grid-template-columns: 1fr; gap: 16px;">
+                    <div style="display: flex; flex-direction: column; gap: 6px;">
+                        <label style="font-weight: 600; font-size: 15px;">Measured pH:</label>
+                        <input type="number" id="wiPh" value="7.5" step="0.01" min="0" max="14"
+                               style="padding: 12px; border: 2px solid #e0e0e0; border-radius: 8px; width: 100%; font-size: 16px; max-width: 300px;"
+                               oninput="calculateWaterIndex()">
+                        <span style="color: #666; font-size: 13px;">Field/lab pH reading</span>
+                    </div>
+                    <div style="display: flex; flex-direction: column; gap: 6px;">
+                        <label style="font-weight: 600; font-size: 15px;">Temperature:</label>
+                        <input type="number" id="wiTemp" value="25" step="0.1"
+                               style="padding: 12px; border: 2px solid #e0e0e0; border-radius: 8px; width: 100%; font-size: 16px; max-width: 300px;"
+                               oninput="calculateWaterIndex()">
+                        <span style="color: #666; font-size: 13px;">Degrees Celsius (°C)</span>
+                    </div>
+                    <div style="display: flex; flex-direction: column; gap: 6px;">
+                        <label style="font-weight: 600; font-size: 15px;">Total Dissolved Solids (TDS):</label>
+                        <input type="number" id="wiTds" value="400" step="1" min="1"
+                               style="padding: 12px; border: 2px solid #e0e0e0; border-radius: 8px; width: 100%; font-size: 16px; max-width: 300px;"
+                               oninput="calculateWaterIndex()">
+                        <span style="color: #666; font-size: 13px;">mg/L</span>
+                    </div>
+                    <div style="display: flex; flex-direction: column; gap: 6px;">
+                        <label style="font-weight: 600; font-size: 15px;">Calcium Hardness:</label>
+                        <input type="number" id="wiCa" value="250" step="1" min="1"
+                               style="padding: 12px; border: 2px solid #e0e0e0; border-radius: 8px; width: 100%; font-size: 16px; max-width: 300px;"
+                               oninput="calculateWaterIndex()">
+                        <span style="color: #666; font-size: 13px;">mg/L as CaCO₃</span>
+                    </div>
+                    <div style="display: flex; flex-direction: column; gap: 6px;">
+                        <label style="font-weight: 600; font-size: 15px;">Total Alkalinity:</label>
+                        <input type="number" id="wiAlk" value="150" step="1" min="1"
+                               style="padding: 12px; border: 2px solid #e0e0e0; border-radius: 8px; width: 100%; font-size: 16px; max-width: 300px;"
+                               oninput="calculateWaterIndex()">
+                        <span style="color: #666; font-size: 13px;">mg/L as CaCO₃</span>
+                    </div>
+                </div>
+            </div>
+
+            <div style="margin-top: 20px; padding: 20px; background: linear-gradient(135deg, #00b1ca 0%, #4f4f4f 100%); border-radius: 10px; color: white;">
+                <h3 style="margin-bottom: 15px; font-size: 18px;">Results</h3>
+                <div style="display: grid; grid-template-columns: 1fr; gap: 15px;">
+                    <div style="background: rgba(255,255,255,0.18); padding: 20px; border-radius: 8px;">
+                        <div style="font-size: 14px; margin-bottom: 8px; opacity: 0.9;">Saturation pH (pHs)</div>
+                        <div style="font-size: 28px; font-weight: 700;" id="wiPhs">—</div>
+                    </div>
+                    <div style="background: rgba(255,255,255,0.18); padding: 20px; border-radius: 8px;">
+                        <div style="font-size: 14px; margin-bottom: 8px; opacity: 0.9;">Langelier Saturation Index (LSI)</div>
+                        <div style="font-size: 32px; font-weight: 700;" id="wiLsi">—</div>
+                        <div style="font-size: 14px; opacity: 0.95; margin-top: 8px;" id="wiLsiInterp">—</div>
+                    </div>
+                    <div style="background: rgba(255,255,255,0.18); padding: 20px; border-radius: 8px;">
+                        <div style="font-size: 14px; margin-bottom: 8px; opacity: 0.9;">Ryznar Stability Index (RSI)</div>
+                        <div style="font-size: 32px; font-weight: 700;" id="wiRsi">—</div>
+                        <div style="font-size: 14px; opacity: 0.95; margin-top: 8px;" id="wiRsiInterp">—</div>
+                    </div>
+                </div>
+            </div>
+
+            <div style="margin-top: 20px; padding: 16px 18px; background: #f8f9fa; border-left: 4px solid #00b1ca; border-radius: 6px; font-size: 13px; color: #555; line-height: 1.55;">
+                <strong style="color: #333;">Formulas used</strong><br>
+                pHs = (9.3 + A + B) − (C + D), where<br>
+                &nbsp;&nbsp;A = (log₁₀(TDS) − 1) / 10<br>
+                &nbsp;&nbsp;B = −13.12 · log₁₀(T + 273.15) + 34.55<br>
+                &nbsp;&nbsp;C = log₁₀(Ca hardness as CaCO₃) − 0.4<br>
+                &nbsp;&nbsp;D = log₁₀(Alkalinity as CaCO₃)<br>
+                LSI = pH − pHs &nbsp;·&nbsp; RSI = 2·pHs − pH
+            </div>
+        </div>
+    </div>
+
     <script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script>
         // Login functionality
         document.getElementById('loginForm').addEventListener('submit', function(e) {
@@ -1058,7 +1147,8 @@
                 analytics: '📊',
                 support: '🎧',
                 store: '🛒',
-                dosage: '💊'
+                dosage: '💊',
+                waterindex: '🧮'
             };
             return icons[appName] || '📱';
         }
@@ -1207,11 +1297,76 @@
             document.getElementById('coagMonthly').textContent = coagMonthly.toLocaleString(undefined, {maximumFractionDigits: 2});
         }
 
+        // LSI / RSI Water Index Calculator
+        // Standard Langelier / Ryznar formulation:
+        //   pHs = (9.3 + A + B) - (C + D)
+        //     A = (log10(TDS) - 1) / 10           [TDS in mg/L]
+        //     B = -13.12 * log10(T + 273.15) + 34.55   [T in °C]
+        //     C = log10(Ca hardness as CaCO3) - 0.4    [mg/L as CaCO3]
+        //     D = log10(Alkalinity as CaCO3)           [mg/L as CaCO3]
+        //   LSI = pH - pHs
+        //   RSI = 2*pHs - pH
+        function calculateWaterIndex() {
+            const pH   = parseFloat(document.getElementById('wiPh').value);
+            const tC   = parseFloat(document.getElementById('wiTemp').value);
+            const tds  = parseFloat(document.getElementById('wiTds').value);
+            const ca   = parseFloat(document.getElementById('wiCa').value);
+            const alk  = parseFloat(document.getElementById('wiAlk').value);
+
+            const phsEl = document.getElementById('wiPhs');
+            const lsiEl = document.getElementById('wiLsi');
+            const rsiEl = document.getElementById('wiRsi');
+            const lsiI  = document.getElementById('wiLsiInterp');
+            const rsiI  = document.getElementById('wiRsiInterp');
+
+            if (![pH, tC, tds, ca, alk].every(v => isFinite(v)) ||
+                tds <= 0 || ca <= 0 || alk <= 0 || (tC + 273.15) <= 0) {
+                phsEl.textContent = '—';
+                lsiEl.textContent = '—';
+                rsiEl.textContent = '—';
+                lsiI.textContent  = 'Enter all values above';
+                rsiI.textContent  = '';
+                return;
+            }
+
+            const A = (Math.log10(tds) - 1) / 10;
+            const B = -13.12 * Math.log10(tC + 273.15) + 34.55;
+            const C = Math.log10(ca) - 0.4;
+            const D = Math.log10(alk);
+
+            const pHs = (9.3 + A + B) - (C + D);
+            const lsi = pH - pHs;
+            const rsi = 2 * pHs - pH;
+
+            phsEl.textContent = pHs.toFixed(2);
+            lsiEl.textContent = (lsi > 0 ? '+' : '') + lsi.toFixed(2);
+            rsiEl.textContent = rsi.toFixed(2);
+
+            // LSI interpretation (common water-treatment bands)
+            let lsiText;
+            if (lsi <= -2.0)      lsiText = 'Severe corrosion tendency';
+            else if (lsi <= -0.5) lsiText = 'Corrosive — protective CaCO₃ film unlikely';
+            else if (lsi <  0.5)  lsiText = 'Balanced — neither scaling nor corrosive';
+            else if (lsi <  2.0)  lsiText = 'Mild scale-forming tendency';
+            else                  lsiText = 'Heavy scale-forming tendency';
+            lsiI.textContent = lsiText;
+
+            // RSI interpretation
+            let rsiText;
+            if (rsi < 5.5)        rsiText = 'Heavy scale formation';
+            else if (rsi < 6.2)   rsiText = 'Scale forming';
+            else if (rsi < 6.8)   rsiText = 'Balanced — little scale or corrosion';
+            else if (rsi < 8.5)   rsiText = 'Water is aggressive / corrosive';
+            else                  rsiText = 'Severe corrosion';
+            rsiI.textContent = rsiText;
+        }
+
         // Initialize calculator on page load
         window.addEventListener('load', function() {
             calculateDosage();
             calculateClO2();
             calculateCoagulants();
+            calculateWaterIndex();
         });
 
         // Chatbot integration
