@@ -20,12 +20,13 @@
     <link rel="icon" type="image/png" sizes="16x16" href="icons/favicon-16.png">
     <link rel="apple-touch-icon" sizes="180x180" href="icons/apple-touch-icon.png">
     <link rel="mask-icon" href="icons/apple-touch-icon.png" color="#00b1ca">
-    
-    <!-- Chatbase AI Integration -->
-    <script>
-    (function(){if(!window.chatbase||window.chatbase("getState")!=="initialized"){window.chatbase=(...arguments)=>{if(!window.chatbase.q){window.chatbase.q=[]}window.chatbase.q.push(arguments)};window.chatbase=new Proxy(window.chatbase,{get(target,prop){if(prop==="q"){return target.q}return(...args)=>target(prop,...args)}})}const onLoad=function(){const script=document.createElement("script");script.src="https://www.chatbase.co/embed.min.js";script.id="P8IjR80V_ZImLgIIECop4";script.domain="www.chatbase.co";document.body.appendChild(script)};if(document.readyState==="complete"){onLoad()}else{window.addEventListener("load",onLoad)}})();
-    </script>
-    
+
+    <!-- jsPDF for branded PDF export of calculator results -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js" defer></script>
+
+    <!-- Translation bundle -->
+    <script src="i18n.js"></script>
+
     <style>
         * {
             margin: 0;
@@ -219,6 +220,28 @@
             }
         }
 
+        .datetime-display {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 14px;
+            font-weight: 500;
+            opacity: 0.95;
+            white-space: nowrap;
+        }
+        .date-display {
+            font-weight: 600;
+        }
+        .date-dot {
+            opacity: 0.6;
+        }
+        @media (max-width: 480px) {
+            .datetime-display {
+                font-size: 12px;
+                gap: 5px;
+            }
+        }
+
         .time-display {
             font-size: 14px;
             font-weight: 500;
@@ -359,6 +382,15 @@
             font-size: 32px;
             box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
             transition: box-shadow 0.2s;
+            overflow: hidden;
+        }
+        .icon.icon-image {
+            padding: 8px;
+        }
+        .icon.icon-image img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
         }
 
         @media (max-width: 480px) {
@@ -574,6 +606,468 @@
         .taskbar-icon.active {
             background: rgba(255, 255, 255, 0.4);
         }
+
+        /* Save / history / PDF buttons on calculator result screens */
+        .save-calc-btn, .pdf-calc-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            margin-top: 18px;
+            margin-right: 10px;
+            padding: 12px 20px;
+            border: none;
+            border-radius: 10px;
+            font-size: 15px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.15s ease, box-shadow 0.15s ease, opacity 0.15s ease;
+            touch-action: manipulation;
+        }
+
+        .save-calc-btn {
+            background: linear-gradient(135deg, #00b1ca 0%, #4f4f4f 100%);
+            color: #fff;
+            box-shadow: 0 4px 12px rgba(0, 177, 202, 0.25);
+        }
+
+        .pdf-calc-btn {
+            background: linear-gradient(135deg, #f9bb32 0%, #d99500 100%);
+            color: #fff;
+            box-shadow: 0 4px 12px rgba(249, 187, 50, 0.25);
+        }
+
+        .save-calc-btn:active, .pdf-calc-btn:active {
+            transform: scale(0.97);
+        }
+
+        .save-calc-btn.saved {
+            background: #2e7d32;
+            box-shadow: 0 4px 12px rgba(46, 125, 50, 0.25);
+        }
+
+        /* History window styles */
+        .history-empty {
+            text-align: center;
+            padding: 50px 20px;
+            color: #888;
+        }
+
+        .history-empty .empty-icon {
+            font-size: 56px;
+            margin-bottom: 12px;
+            opacity: 0.6;
+        }
+
+        .history-list {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            margin-top: 10px;
+        }
+
+        .history-item {
+            background: #fff;
+            border: 1px solid #e0e0e0;
+            border-left: 4px solid #00b1ca;
+            border-radius: 10px;
+            padding: 14px 16px;
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            gap: 12px;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.04);
+        }
+
+        .history-item-body {
+            flex: 1;
+            min-width: 0;
+            cursor: pointer;
+        }
+
+        .history-item-type {
+            font-size: 12px;
+            font-weight: 700;
+            letter-spacing: 0.5px;
+            text-transform: uppercase;
+            color: #00b1ca;
+            margin-bottom: 4px;
+        }
+
+        .history-item-title {
+            font-size: 15px;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 3px;
+            word-break: break-word;
+        }
+
+        .history-item-summary {
+            font-size: 13px;
+            color: #666;
+            line-height: 1.4;
+        }
+
+        .history-item-date {
+            font-size: 12px;
+            color: #999;
+            margin-top: 6px;
+        }
+
+        .history-item-actions {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            flex-shrink: 0;
+        }
+
+        .history-item-actions button {
+            width: 36px;
+            height: 36px;
+            border: none;
+            border-radius: 8px;
+            background: #f0f0f0;
+            font-size: 16px;
+            cursor: pointer;
+            touch-action: manipulation;
+        }
+
+        .history-item-actions button:active {
+            transform: scale(0.92);
+        }
+
+        .history-item-actions .delete-btn {
+            background: #ffe5e5;
+            color: #c33;
+        }
+
+        .history-clear-bar {
+            display: flex;
+            justify-content: flex-end;
+            margin-bottom: 12px;
+        }
+
+        .history-clear-btn {
+            background: transparent;
+            border: 1px solid #d33;
+            color: #d33;
+            padding: 7px 14px;
+            border-radius: 8px;
+            font-size: 13px;
+            cursor: pointer;
+            touch-action: manipulation;
+        }
+
+        .toast {
+            position: fixed;
+            bottom: 90px;
+            left: 50%;
+            transform: translateX(-50%) translateY(20px);
+            background: #222;
+            color: #fff;
+            padding: 12px 20px;
+            border-radius: 10px;
+            font-size: 14px;
+            font-weight: 500;
+            opacity: 0;
+            pointer-events: none;
+            z-index: 9999;
+            transition: opacity 0.25s ease, transform 0.25s ease;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.25);
+            max-width: calc(100% - 40px);
+        }
+
+        .toast.visible {
+            opacity: 1;
+            transform: translateX(-50%) translateY(0);
+        }
+
+        /* Settings rows & toggle */
+        .settings-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 16px;
+            padding: 16px 0;
+            border-bottom: 1px solid #eee;
+        }
+        .settings-label {
+            font-weight: 600;
+            font-size: 15px;
+            color: #333;
+            margin-bottom: 3px;
+        }
+        .settings-sub {
+            font-size: 13px;
+            color: #888;
+        }
+        .settings-action {
+            background: rgba(0,177,202,0.1);
+            color: #00b1ca;
+            border: 1px solid #00b1ca;
+            border-radius: 8px;
+            padding: 8px 14px;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            flex-shrink: 0;
+        }
+
+        .switch {
+            position: relative;
+            display: inline-block;
+            width: 50px;
+            height: 28px;
+            flex-shrink: 0;
+        }
+        .switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+        .slider-switch {
+            position: absolute;
+            cursor: pointer;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background-color: #ccc;
+            transition: 0.25s;
+            border-radius: 28px;
+        }
+        .slider-switch:before {
+            position: absolute;
+            content: "";
+            height: 22px; width: 22px;
+            left: 3px; bottom: 3px;
+            background-color: white;
+            transition: 0.25s;
+            border-radius: 50%;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+        }
+        .switch input:checked + .slider-switch {
+            background-color: #00b1ca;
+        }
+        .switch input:checked + .slider-switch:before {
+            transform: translateX(22px);
+        }
+
+        /* Segmented Light/Dark control */
+        .segmented {
+            display: inline-flex;
+            background: #f1f3f5;
+            border: 1px solid #e0e0e0;
+            border-radius: 10px;
+            padding: 3px;
+            gap: 2px;
+        }
+        .seg-btn {
+            border: none;
+            background: transparent;
+            padding: 7px 14px;
+            font-size: 13px;
+            font-weight: 600;
+            color: #555;
+            border-radius: 8px;
+            cursor: pointer;
+            touch-action: manipulation;
+            transition: background 0.15s, color 0.15s, box-shadow 0.15s;
+        }
+        .seg-btn.active {
+            background: #fff;
+            color: #00b1ca;
+            box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+        }
+        body.dark .segmented {
+            background: #1d242a;
+            border-color: #2a3238;
+        }
+        body.dark .seg-btn {
+            color: #9aa3aa;
+        }
+        body.dark .seg-btn.active {
+            background: #0e1418;
+            color: #00b1ca;
+        }
+
+        /* Settings select (language) */
+        .settings-select {
+            background: #fff;
+            border: 1px solid #d0d7de;
+            border-radius: 8px;
+            padding: 7px 10px;
+            font-size: 13px;
+            color: #333;
+            font-weight: 500;
+            min-width: 140px;
+            cursor: pointer;
+        }
+        body.dark .settings-select {
+            background: #0e1418;
+            border-color: #2a3238;
+            color: #e6e6e6;
+        }
+
+        /* Onboarding overlay */
+        .onboarding-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.75);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            z-index: 9000;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+        .onboarding-overlay.visible {
+            display: flex;
+            opacity: 1;
+        }
+        .onboarding-card {
+            background: white;
+            border-radius: 20px;
+            padding: 28px 24px;
+            max-width: 380px;
+            width: 100%;
+            box-shadow: 0 24px 48px rgba(0,0,0,0.35);
+            text-align: center;
+        }
+        .onboarding-icon {
+            font-size: 48px;
+            margin-bottom: 12px;
+        }
+        .onboarding-title {
+            font-size: 20px;
+            font-weight: 700;
+            color: #333;
+            margin-bottom: 10px;
+        }
+        .onboarding-body {
+            font-size: 14px;
+            line-height: 1.55;
+            color: #666;
+            margin-bottom: 22px;
+        }
+        .onboarding-progress {
+            display: flex;
+            justify-content: center;
+            gap: 6px;
+            margin-bottom: 18px;
+        }
+        .onboarding-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #e0e0e0;
+        }
+        .onboarding-dot.active {
+            background: #00b1ca;
+            width: 24px;
+            border-radius: 4px;
+        }
+        .onboarding-actions {
+            display: flex;
+            gap: 10px;
+            justify-content: space-between;
+        }
+        .onboarding-btn {
+            flex: 1;
+            padding: 12px 16px;
+            border-radius: 10px;
+            border: none;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            touch-action: manipulation;
+        }
+        .onboarding-btn.ghost {
+            background: transparent;
+            color: #888;
+        }
+        .onboarding-btn.primary {
+            background: linear-gradient(135deg, #00b1ca 0%, #f9bb32 100%);
+            color: white;
+            box-shadow: 0 6px 16px rgba(0, 177, 202, 0.3);
+        }
+
+        /* =======================================================
+           Dark Mode
+           ======================================================= */
+        body.dark {
+            background: #0e1418;
+            color: #e6e6e6;
+        }
+        body.dark .login-box,
+        body.dark .window,
+        body.dark .desktop {
+            background: #161c21;
+            color: #e6e6e6;
+        }
+        body.dark .window-content {
+            background: #161c21;
+        }
+        body.dark .window-content h2,
+        body.dark .window-content h3 {
+            color: #f0f0f0;
+        }
+        body.dark .window-content p {
+            color: #b5b5b5;
+        }
+        body.dark input[type="text"],
+        body.dark input[type="password"],
+        body.dark input[type="number"],
+        body.dark input[type="email"] {
+            background: #0e1418;
+            border-color: #2a3238;
+            color: #e6e6e6;
+        }
+        body.dark .app-icon {
+            background: rgba(255,255,255,0.04);
+            color: #e6e6e6;
+        }
+        body.dark .app-icon .app-name {
+            color: #e6e6e6;
+        }
+        body.dark .demo-credentials {
+            background: #0e1418;
+            color: #b5b5b5;
+        }
+        body.dark .history-item,
+        body.dark .settings-row,
+        body.dark [style*="background: #f8f9fa"],
+        body.dark [style*="background:#f8f9fa"] {
+            background: #1d242a !important;
+            color: #e6e6e6;
+            border-color: #2a3238;
+        }
+        body.dark .history-item-actions button {
+            background: #2a3238;
+            color: #e6e6e6;
+        }
+        body.dark .history-item-title,
+        body.dark .settings-label {
+            color: #f0f0f0;
+        }
+        body.dark .history-item-summary,
+        body.dark .history-item-date,
+        body.dark .settings-sub {
+            color: #9aa3aa;
+        }
+        body.dark .onboarding-card {
+            background: #161c21;
+            color: #e6e6e6;
+        }
+        body.dark .onboarding-title {
+            color: #f0f0f0;
+        }
+        body.dark .onboarding-body {
+            color: #b5b5b5;
+        }
+        body.dark .onboarding-btn.ghost {
+            color: #9aa3aa;
+        }
+        body.dark .history-empty p {
+            color: #b5b5b5 !important;
+        }
     </style>
 </head>
 <body>
@@ -581,28 +1075,28 @@
     <div class="login-screen" id="loginScreen">
         <div class="login-box">
             <div style="text-align: center; margin-bottom: 20px;">
-                <img src="Hadron_Logo.png" alt="Hadron Group" style="height: 60px; width: auto;">
+                <img src="Hadron_Logo_dark.png" alt="Hadron Group" style="height: 72px; width: auto; max-width: 100%;">
             </div>
-            <h1>Welcome Back</h1>
-            <p>Sign in to access your workspace</p>
+            <h1 data-i18n="login.welcome">Welcome Back</h1>
+            <p data-i18n="login.subtitle">Sign in to access your workspace</p>
             <form id="loginForm">
                 <div class="input-group">
-                    <label for="username">Username</label>
-                    <input type="text" id="username" placeholder="Enter your username" required>
+                    <label for="username" data-i18n="login.username">Username</label>
+                    <input type="text" id="username" data-i18n-attr="placeholder" data-i18n="login.username.placeholder" placeholder="Enter your username" required>
                 </div>
                 <div class="input-group">
-                    <label for="password">Password</label>
-                    <input type="password" id="password" placeholder="Enter your password" required>
+                    <label for="password" data-i18n="login.password">Password</label>
+                    <input type="password" id="password" data-i18n-attr="placeholder" data-i18n="login.password.placeholder" placeholder="Enter your password" required>
                 </div>
-                <button type="submit" class="login-btn">Sign In</button>
+                <button type="submit" class="login-btn" data-i18n="login.signin">Sign In</button>
             </form>
             <div class="demo-credentials">
-                <strong>Demo Credentials:</strong><br>
-                Username: <strong>demo</strong><br>
-                Password: <strong>password</strong>
+                <strong data-i18n="login.demo">Demo Credentials:</strong><br>
+                <span data-i18n="login.username">Username</span>: <strong>demo</strong><br>
+                <span data-i18n="login.password">Password</span>: <strong>password</strong>
             </div>
             <div style="text-align: center; margin-top: 18px; font-size: 12px; color: #888;">
-                <a href="privacy.html" style="color: #00b1ca; text-decoration: none;">Privacy Policy</a>
+                <a href="privacy.html" style="color: #00b1ca; text-decoration: none;" data-i18n="login.privacyPolicy">Privacy Policy</a>
                 <span style="margin: 0 6px;">&middot;</span>
                 <a href="https://hadrongrp.com" target="_blank" rel="noopener" style="color: #00b1ca; text-decoration: none;">hadrongrp.com</a>
             </div>
@@ -617,12 +1111,16 @@
                 <div class="logo">
                     <img src="Hadron_Logo.png" alt="Hadron Group">
                 </div>
-                <div class="time-display" id="timeDisplay">00:00</div>
+                <div class="datetime-display">
+                    <span class="date-display" id="dateDisplay">—</span>
+                    <span class="date-dot">·</span>
+                    <span class="time-display" id="timeDisplay">00:00</span>
+                </div>
             </div>
             <div class="user-info">
                 <div class="user-avatar" id="userAvatar">U</div>
                 <span id="userName">User</span>
-                <button class="logout-btn" onclick="logout()">Logout</button>
+                <button class="logout-btn" onclick="logout()" data-i18n="header.logout">Logout</button>
             </div>
         </div>
 
@@ -631,47 +1129,43 @@
             <div class="apps-grid">
                 <div class="app-icon" onclick="openWindow('profile')">
                     <div class="icon">👤</div>
-                    <div class="app-name">Profile</div>
+                    <div class="app-name" data-i18n="app.profile">Profile</div>
                 </div>
                 <div class="app-icon" onclick="openWindow('messages')">
                     <div class="icon">💬</div>
-                    <div class="app-name">Messages</div>
+                    <div class="app-name" data-i18n="app.messages">Messages</div>
                 </div>
                 <div class="app-icon" onclick="openWindow('settings')">
                     <div class="icon">⚙️</div>
-                    <div class="app-name">Settings</div>
+                    <div class="app-name" data-i18n="app.settings">Settings</div>
                 </div>
                 <div class="app-icon" onclick="openWindow('files')">
                     <div class="icon">📁</div>
-                    <div class="app-name">Files</div>
+                    <div class="app-name" data-i18n="app.files">Files</div>
                 </div>
-                <div class="app-icon" onclick="openWindow('calendar')">
-                    <div class="icon">📅</div>
-                    <div class="app-name">Calendar</div>
-                </div>
-                <div class="app-icon" onclick="openWindow('analytics')">
-                    <div class="icon">📊</div>
-                    <div class="app-name">Analytics</div>
+                <div class="app-icon" onclick="openLabCom()">
+                    <div class="icon icon-image"><img src="LabCom_Logo.svg" alt="LabCom"></div>
+                    <div class="app-name" data-i18n="app.labcom">LabCom</div>
                 </div>
                 <div class="app-icon" onclick="openWindow('support')">
                     <div class="icon">🎧</div>
-                    <div class="app-name">Support</div>
+                    <div class="app-name" data-i18n="app.support">Support</div>
                 </div>
                 <div class="app-icon" onclick="openWindow('store')">
                     <div class="icon">🛒</div>
-                    <div class="app-name">Store</div>
+                    <div class="app-name" data-i18n="app.store">Store</div>
                 </div>
                 <div class="app-icon" onclick="openWindow('dosage')">
                     <div class="icon">💊</div>
-                    <div class="app-name">Dosage Calculator</div>
+                    <div class="app-name" data-i18n="app.dosage">Dosage Calculator</div>
                 </div>
                 <div class="app-icon" onclick="openWindow('waterindex')">
                     <div class="icon">🧮</div>
-                    <div class="app-name">LSI &amp; RSI Index</div>
+                    <div class="app-name" data-i18n="app.waterindex">LSI &amp; RSI Index</div>
                 </div>
-                <div class="app-icon" onclick="openChatbot()">
-                    <div class="icon">🤖</div>
-                    <div class="app-name">AI Assistant</div>
+                <div class="app-icon" onclick="openWindow('history')">
+                    <div class="icon">📋</div>
+                    <div class="app-name" data-i18n="app.history">History</div>
                 </div>
             </div>
         </div>
@@ -688,11 +1182,11 @@
         </div>
         <div class="window-content">
             <div style="text-align: center; margin-bottom: 20px;">
-                <img src="Hadron_Logo.png" alt="Hadron Group" style="height: 50px; width: auto;">
+                <img src="Hadron_Logo_dark.png" alt="Hadron Group" style="height: 50px; width: auto;">
             </div>
             <h2>User Profile</h2>
             <p><strong>Name:</strong> <span id="profileName">Demo User</span></p>
-            <p><strong>Email:</strong> <a href="/cdn-cgi/l/email-protection" class="__cf_email__" data-cfemail="f99d9c9496b991989d8b96979e8b89d79a9694">[email&#160;protected]</a></p>
+            <p><strong>Email:</strong> <a href="mailto:sales@hadrongrp.com">sales@hadrongrp.com</a></p>
             <p><strong>Company:</strong> Hadron Group</p>
             <p><strong>Role:</strong> Customer</p>
             <p><strong>Member Since:</strong> February 2026</p>
@@ -719,10 +1213,41 @@
         </div>
         <div class="window-content">
             <h2>Settings</h2>
-            <p><strong>Appearance:</strong> Light Mode</p>
-            <p><strong>Language:</strong> English</p>
-            <p><strong>Notifications:</strong> Enabled</p>
-            <p><strong>Privacy:</strong> Enhanced</p>
+
+            <div class="settings-row">
+                <div>
+                    <div class="settings-label" data-i18n="settings.appearance">Appearance</div>
+                    <div class="settings-sub" data-i18n="settings.appearance.sub">Choose a light or dark theme</div>
+                </div>
+                <div class="segmented" role="group" aria-label="Appearance">
+                    <button type="button" class="seg-btn" id="btnLight" onclick="setTheme('light')" data-i18n="settings.light">☀️ Light</button>
+                    <button type="button" class="seg-btn" id="btnDark"  onclick="setTheme('dark')"  data-i18n="settings.dark">🌙 Dark</button>
+                </div>
+            </div>
+
+            <div class="settings-row">
+                <div>
+                    <div class="settings-label" data-i18n="settings.language">Language</div>
+                    <div class="settings-sub" data-i18n="settings.language.sub">Choose your preferred interface language</div>
+                </div>
+                <select id="languageSelect" class="settings-select" onchange="setLanguage(this.value)"></select>
+            </div>
+
+            <div class="settings-row">
+                <div>
+                    <div class="settings-label" data-i18n="settings.onboarding">Onboarding Tour</div>
+                    <div class="settings-sub" data-i18n="settings.onboarding.sub">Replay the first-launch walkthrough</div>
+                </div>
+                <button class="settings-action" onclick="startOnboarding(true)" data-i18n="common.replay">Replay</button>
+            </div>
+
+            <div class="settings-row">
+                <div>
+                    <div class="settings-label" data-i18n="settings.privacy">Privacy</div>
+                    <div class="settings-sub" data-i18n="settings.privacy.sub">All calculations stay on this device</div>
+                </div>
+                <a href="privacy.html" class="settings-action" style="text-decoration:none;" data-i18n="settings.privacy.link">View policy</a>
+            </div>
         </div>
     </div>
 
@@ -740,30 +1265,20 @@
         </div>
     </div>
 
-    <div class="window" id="window-calendar">
+    <div class="window" id="window-labcom">
         <div class="window-header">
-            <button class="back-button" onclick="closeWindow('calendar')">←</button>
-            <span class="window-title">Calendar</span>
+            <button class="back-button" onclick="closeWindow('labcom')">←</button>
+            <span class="window-title">LabCom</span>
         </div>
-        <div class="window-content">
-            <h2>Upcoming Events</h2>
-            <p>📅 <strong>Feb 5:</strong> Team Meeting at 10:00 AM</p>
-            <p>📅 <strong>Feb 7:</strong> Project Deadline</p>
-            <p>📅 <strong>Feb 10:</strong> Product Launch Event</p>
-        </div>
-    </div>
-
-    <div class="window" id="window-analytics">
-        <div class="window-header">
-            <button class="back-button" onclick="closeWindow('analytics')">←</button>
-            <span class="window-title">Analytics</span>
-        </div>
-        <div class="window-content">
-            <h2>Analytics Dashboard</h2>
-            <p><strong>Total Orders:</strong> 156</p>
-            <p><strong>Revenue:</strong> $12,450</p>
-            <p><strong>Active Sessions:</strong> 23</p>
-            <p><strong>Conversion Rate:</strong> 3.2%</p>
+        <div class="window-content" style="text-align:center;">
+            <img src="LabCom_Logo.svg" alt="LabCom" style="width:160px; height:160px; margin:20px auto 10px;">
+            <h2 data-i18n="labcom.title">LabCom Laboratory Platform</h2>
+            <p style="max-width:440px; margin:0 auto 24px;" data-i18n="labcom.body">
+                Opening <strong>labcom.cloud</strong> — the Hadron Group laboratory results platform. Sign in with your LabCom credentials to view and manage lab reports.
+            </p>
+            <a href="https://labcom.cloud" target="_blank" rel="noopener"
+               class="pdf-calc-btn" style="text-decoration:none; background:linear-gradient(135deg,#00b1ca 0%,#1a3d9e 100%); color:#fff; box-shadow:0 4px 12px rgba(26,61,158,0.25);"
+               data-i18n="labcom.open">🔗 Open labcom.cloud</a>
         </div>
     </div>
 
@@ -792,16 +1307,9 @@
             
             <p><strong style="color: #00b1ca;">✉️ Email:</strong></p>
             <p style="margin-left: 20px; margin-bottom: 15px;">
-                <a href="/cdn-cgi/l/email-protection#b6e5d7dad3c5f6ded7d2c4d9d8d1c4c698d5d9db" style="color: #666; text-decoration: none; display: block; margin-bottom: 5px;"><span class="__cf_email__" data-cfemail="87d4e6ebe2f4c7efe6e3f5e8e9e0f5f7a9e4e8ea">[email&#160;protected]</span></a>
-                <a href="/cdn-cgi/l/email-protection#4802292b270820292c3a27262f3a38662b2725" style="color: #666; text-decoration: none; display: block; margin-bottom: 5px;"><span class="__cf_email__" data-cfemail="501a31333f10383134223f3e3722207e333f3d">[email&#160;protected]</span></a>
-                <a href="/cdn-cgi/l/email-protection#d684bfb5b7a4b2b996beb7b2a4b9b8b1a4a6f8b5b9bb" style="color: #666; text-decoration: none; display: block;"><span class="__cf_email__" data-cfemail="16447f7577647279567e77726479787164663875797b">[email&#160;protected]</span></a>
-            </p>
-            
-            <p><strong style="color: #00b1ca;">🤖 AI Assistant:</strong></p>
-            <p style="margin-left: 20px;">
-                <button onclick="openChatbot()" style="padding: 10px 20px; background: linear-gradient(135deg, #00b1ca 0%, #f9bb32 100%); color: white; border: none; border-radius: 8px; cursor: pointer; font-size: 14px; font-weight: 600;">
-                    Start Live Chat
-                </button>
+                <a href="mailto:jaco@hadrongrp.com" style="color: #666; text-decoration: none; display: block; margin-bottom: 5px;">jaco@hadrongrp.com</a>
+                <a href="mailto:ricardo@hadrongrp.com" style="color: #666; text-decoration: none; display: block; margin-bottom: 5px;">ricardo@hadrongrp.com</a>
+                <a href="mailto:sales@hadrongrp.com" style="color: #666; text-decoration: none; display: block;">sales@hadrongrp.com</a>
             </p>
         </div>
     </div>
@@ -835,8 +1343,8 @@
                     Reach our team directly:
                 </p>
                 <p style="color: #444; font-size: 14px; line-height: 1.8;">
-                    📧 <a href="mailto:Sales@hadrongrp.com" style="color: #00b1ca; text-decoration: none;">Sales@hadrongrp.com</a><br>
-                    💬 Tap the AI Assistant icon on the home screen
+                    📧 <a href="mailto:sales@hadrongrp.com" style="color: #00b1ca; text-decoration: none;">sales@hadrongrp.com</a><br>
+                    🎧 Tap the Support icon on the home screen
                 </p>
             </div>
         </div>
@@ -918,6 +1426,8 @@
                         </div>
                     </div>
                 </div>
+                <button onclick="saveCalculation('chlorine', this)" class="save-calc-btn">💾 Save to History</button>
+                <button onclick="exportPdf('chlorine')" class="pdf-calc-btn">📄 Export PDF</button>
             </div>
 
             <!-- Chlorine Dioxide Calculator -->
@@ -959,6 +1469,8 @@
                         </div>
                     </div>
                 </div>
+                <button onclick="saveCalculation('clo2', this)" class="save-calc-btn">💾 Save to History</button>
+                <button onclick="exportPdf('clo2')" class="pdf-calc-btn">📄 Export PDF</button>
             </div>
 
             <!-- Coagulants Calculator -->
@@ -1000,6 +1512,8 @@
                         </div>
                     </div>
                 </div>
+                <button onclick="saveCalculation('coagulants', this)" class="save-calc-btn">💾 Save to History</button>
+                <button onclick="exportPdf('coagulants')" class="pdf-calc-btn">📄 Export PDF</button>
             </div>
         </div>
     </div>
@@ -1076,6 +1590,8 @@
                     </div>
                 </div>
             </div>
+            <button onclick="saveCalculation('waterindex', this)" class="save-calc-btn">💾 Save to History</button>
+            <button onclick="exportPdf('waterindex')" class="pdf-calc-btn">📄 Export PDF</button>
 
             <div style="margin-top: 20px; padding: 16px 18px; background: #f8f9fa; border-left: 4px solid #00b1ca; border-radius: 6px; font-size: 13px; color: #555; line-height: 1.55;">
                 <strong style="color: #333;">Formulas used</strong><br>
@@ -1089,7 +1605,61 @@
         </div>
     </div>
 
-    <script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script>
+    <!-- Calculation History -->
+    <div class="window" id="window-history">
+        <div class="window-header">
+            <button class="back-button" onclick="closeWindow('history')">←</button>
+            <span class="window-title">Calculation History</span>
+        </div>
+        <div class="window-content" style="overflow-y: auto;">
+            <h2 style="margin-bottom: 10px;">Saved Calculations</h2>
+            <p style="color: #666; font-size: 14px; margin-bottom: 20px; line-height: 1.5;">
+                Every calculation you save is stored on this device. Tap a card to see the full breakdown and export a branded PDF report for site records.
+            </p>
+
+            <div id="historyClearBar" class="history-clear-bar" style="display: none;">
+                <button class="history-clear-btn" onclick="clearAllHistory()">🗑 Clear all</button>
+            </div>
+
+            <div id="historyListContainer"></div>
+
+            <div id="historyEmpty" class="history-empty" style="display: none;">
+                <div class="empty-icon">📋</div>
+                <p style="font-size: 16px; color: #555; margin-bottom: 6px;">No saved calculations yet</p>
+                <p style="font-size: 13px; color: #888;">Run a calculation in the Dosage Calculator or the LSI &amp; RSI Index window, then tap <strong>💾 Save to History</strong>.</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- History detail view -->
+    <div class="window" id="window-historydetail">
+        <div class="window-header">
+            <button class="back-button" onclick="closeWindow('historydetail')">←</button>
+            <span class="window-title">Saved Calculation</span>
+        </div>
+        <div class="window-content" style="overflow-y: auto;">
+            <div id="historyDetailBody"></div>
+        </div>
+    </div>
+
+    <!-- Transient toast notifications -->
+    <div id="toast" class="toast"></div>
+
+    <!-- Onboarding overlay -->
+    <div id="onboardingOverlay" class="onboarding-overlay" aria-hidden="true">
+        <div class="onboarding-card">
+            <div class="onboarding-icon" id="onbIcon">👋</div>
+            <div class="onboarding-title" id="onbTitle">Welcome to Hadron Group</div>
+            <div class="onboarding-body" id="onbBody">Your pocket-sized toolkit for water-treatment dosage, stability indices and direct support.</div>
+            <div class="onboarding-progress" id="onbProgress"></div>
+            <div class="onboarding-actions">
+                <button class="onboarding-btn ghost" onclick="skipOnboarding()">Skip</button>
+                <button class="onboarding-btn primary" id="onbNext" onclick="nextOnboardingStep()">Next</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
         // Login functionality
         document.getElementById('loginForm').addEventListener('submit', function(e) {
             e.preventDefault();
@@ -1109,6 +1679,9 @@
             document.getElementById('userName').textContent = username;
             document.getElementById('profileName').textContent = username.charAt(0).toUpperCase() + username.slice(1) + ' User';
             document.getElementById('userAvatar').textContent = username.charAt(0).toUpperCase();
+
+            // Show onboarding tour on first successful login
+            setTimeout(function () { startOnboarding(false); }, 400);
         }
 
         function logout() {
@@ -1119,12 +1692,19 @@
             closeAllWindows();
         }
 
-        // Time display
+        // Time & date display
         function updateTime() {
             const now = new Date();
             const hours = now.getHours().toString().padStart(2, '0');
             const minutes = now.getMinutes().toString().padStart(2, '0');
             document.getElementById('timeDisplay').textContent = `${hours}:${minutes}`;
+
+            // Locale-aware date, e.g. "Sun, 19 Apr" — honours the user's language choice
+            const lang = (window.currentLanguage || navigator.language || 'en');
+            const dateStr = now.toLocaleDateString(lang, {
+                weekday: 'short', day: '2-digit', month: 'short'
+            });
+            document.getElementById('dateDisplay').textContent = dateStr;
         }
         updateTime();
         setInterval(updateTime, 1000);
@@ -1138,6 +1718,7 @@
             openWindows.add(appName);
             updateTaskbar();
             bringToFront(window);
+            if (appName === 'history') renderHistoryList();
         }
 
         function closeWindow(appName) {
@@ -1170,14 +1751,23 @@
                 messages: '💬',
                 settings: '⚙️',
                 files: '📁',
-                calendar: '📅',
-                analytics: '📊',
+                labcom: '🧪',
                 support: '🎧',
                 store: '🛒',
                 dosage: '💊',
-                waterindex: '🧮'
+                waterindex: '🧮',
+                history: '📋'
             };
             return icons[appName] || '📱';
+        }
+
+        // LabCom: open in external browser (new tab) — falls back to in-app landing window
+        function openLabCom() {
+            const url = 'https://labcom.cloud';
+            const opened = window.open(url, '_blank', 'noopener,noreferrer');
+            // If the browser blocked the popup or we're running inside a TWA that can't
+            // spawn new windows, fall back to the in-app landing window.
+            if (!opened) openWindow('labcom');
         }
 
         function toggleWindow(appName) {
@@ -1388,20 +1978,15 @@
             rsiI.textContent = rsiText;
         }
 
-        // Initialize calculator on page load
+        // Initialize calculator + theme + language on page load
         window.addEventListener('load', function() {
+            initDarkMode();
+            initLanguage();
             calculateDosage();
             calculateClO2();
             calculateCoagulants();
             calculateWaterIndex();
         });
-
-        // Chatbot integration
-        function openChatbot() {
-            if (window.chatbase) {
-                window.chatbase('open');
-            }
-        }
 
         // PWA service worker registration
         if ('serviceWorker' in navigator) {
@@ -1426,6 +2011,577 @@
                 });
             }
         };
+
+        /* =======================================================
+           Internationalization (i18n)
+           ======================================================= */
+        const LANG_KEY = 'hadron_lang';
+        window.currentLanguage = 'en';
+
+        function populateLanguageSelect() {
+            const select = document.getElementById('languageSelect');
+            if (!select || !window.HADRON_I18N) return;
+            const langs = window.HADRON_I18N.LANGUAGES;
+            select.innerHTML = langs
+                .map(l => '<option value="' + l.code + '">' + l.name + '</option>')
+                .join('');
+        }
+
+        function translate(key) {
+            const bundle = (window.HADRON_I18N && window.HADRON_I18N.TRANSLATIONS) || {};
+            return (bundle[window.currentLanguage] && bundle[window.currentLanguage][key]) ||
+                   (bundle.en && bundle.en[key]) ||
+                   key;
+        }
+
+        function applyTranslations() {
+            document.querySelectorAll('[data-i18n]').forEach(el => {
+                const key = el.getAttribute('data-i18n');
+                const attr = el.getAttribute('data-i18n-attr');
+                const value = translate(key);
+                if (attr) {
+                    el.setAttribute(attr, value);
+                } else {
+                    el.textContent = value;
+                }
+            });
+
+            // Direction for RTL languages (Arabic)
+            const langMeta = (window.HADRON_I18N.LANGUAGES || []).find(l => l.code === window.currentLanguage);
+            document.documentElement.setAttribute('lang', window.currentLanguage);
+            document.documentElement.setAttribute('dir', (langMeta && langMeta.dir) || 'ltr');
+        }
+
+        function setLanguage(code) {
+            window.currentLanguage = code;
+            try { localStorage.setItem(LANG_KEY, code); } catch (e) {}
+            const select = document.getElementById('languageSelect');
+            if (select) select.value = code;
+            applyTranslations();
+            updateTime(); // date format depends on language
+        }
+
+        function initLanguage() {
+            populateLanguageSelect();
+            let stored = null;
+            try { stored = localStorage.getItem(LANG_KEY); } catch (e) {}
+            let code = stored;
+            if (!code) {
+                // First visit: try to honor browser language
+                const browserLang = (navigator.language || 'en').split('-')[0];
+                const supported = (window.HADRON_I18N.LANGUAGES || []).map(l => l.code);
+                code = supported.indexOf(browserLang) !== -1 ? browserLang : 'en';
+            }
+            window.currentLanguage = code;
+            const select = document.getElementById('languageSelect');
+            if (select) select.value = code;
+            applyTranslations();
+        }
+
+        /* =======================================================
+           Appearance (Light / Dark)
+           ======================================================= */
+        const DARK_KEY = 'hadron_dark';
+
+        function applyTheme(theme) {
+            const enabled = theme === 'dark';
+            document.body.classList.toggle('dark', enabled);
+            const meta = document.querySelector('meta[name="theme-color"]');
+            if (meta) meta.setAttribute('content', enabled ? '#0e1418' : '#00b1ca');
+            const btnLight = document.getElementById('btnLight');
+            const btnDark  = document.getElementById('btnDark');
+            if (btnLight) btnLight.classList.toggle('active', !enabled);
+            if (btnDark)  btnDark.classList.toggle('active', enabled);
+        }
+
+        function setTheme(theme) {
+            try { localStorage.setItem(DARK_KEY, theme === 'dark' ? '1' : '0'); } catch (e) {}
+            applyTheme(theme);
+        }
+
+        function initDarkMode() {
+            let stored = null;
+            try { stored = localStorage.getItem(DARK_KEY); } catch (e) {}
+            let enabled;
+            if (stored === null) {
+                // First visit: honor OS preference
+                enabled = window.matchMedia &&
+                          window.matchMedia('(prefers-color-scheme: dark)').matches;
+            } else {
+                enabled = stored === '1';
+            }
+            applyTheme(enabled ? 'dark' : 'light');
+        }
+
+        /* =======================================================
+           First-Launch Onboarding Tour
+           ======================================================= */
+        const ONBOARD_KEY = 'hadron_onboarded';
+
+        const ONB_STEPS = [
+            {
+                icon: '👋',
+                title: 'Welcome to Hadron Group',
+                body: 'Your pocket-sized toolkit for water-treatment dosage, stability indices and direct support — built for operators on site.'
+            },
+            {
+                icon: '💊',
+                title: 'Dosage Calculators',
+                body: 'Tap Dosage Calculator for chlorine, ClO₂ and coagulants. Enter plant size in MLD and your target ppm — daily and monthly requirements update live.'
+            },
+            {
+                icon: '🧮',
+                title: 'LSI / RSI Water Balance',
+                body: 'Check whether your water is scaling, balanced or corrosive. Enter pH, temperature, TDS, calcium hardness and alkalinity — get an instant interpretation.'
+            },
+            {
+                icon: '📋',
+                title: 'Save & Export',
+                body: 'Save any calculation to History on this device, then export a branded PDF report to share with your plant or head office.'
+            },
+            {
+                icon: '🎧',
+                title: 'Support Is One Tap Away',
+                body: 'Tap Support to call, email or WhatsApp the Hadron team direct. Everything works offline once it\'s loaded — perfect for plant visits.'
+            }
+        ];
+
+        let onbStepIndex = 0;
+
+        function startOnboarding(forceReplay) {
+            if (!forceReplay) {
+                let done = null;
+                try { done = localStorage.getItem(ONBOARD_KEY); } catch (e) {}
+                if (done === '1') return;
+            }
+            onbStepIndex = 0;
+            renderOnboardingStep();
+            const overlay = document.getElementById('onboardingOverlay');
+            overlay.classList.add('visible');
+            overlay.setAttribute('aria-hidden', 'false');
+        }
+
+        function renderOnboardingStep() {
+            const step = ONB_STEPS[onbStepIndex];
+            document.getElementById('onbIcon').textContent = step.icon;
+            document.getElementById('onbTitle').textContent = step.title;
+            document.getElementById('onbBody').textContent = step.body;
+
+            const progress = document.getElementById('onbProgress');
+            progress.innerHTML = ONB_STEPS.map((_, i) =>
+                '<div class="onboarding-dot' + (i === onbStepIndex ? ' active' : '') + '"></div>'
+            ).join('');
+
+            document.getElementById('onbNext').textContent =
+                onbStepIndex === ONB_STEPS.length - 1 ? 'Get started' : 'Next';
+        }
+
+        function nextOnboardingStep() {
+            if (onbStepIndex < ONB_STEPS.length - 1) {
+                onbStepIndex++;
+                renderOnboardingStep();
+            } else {
+                finishOnboarding();
+            }
+        }
+
+        function skipOnboarding() {
+            finishOnboarding();
+        }
+
+        function finishOnboarding() {
+            try { localStorage.setItem(ONBOARD_KEY, '1'); } catch (e) {}
+            const overlay = document.getElementById('onboardingOverlay');
+            overlay.classList.remove('visible');
+            overlay.setAttribute('aria-hidden', 'true');
+        }
+
+        /* =======================================================
+           Calculation History + Branded PDF Export
+           Persistence: localStorage key 'hadron_history', capped
+           at 100 entries (newest first).
+           ======================================================= */
+        const HISTORY_KEY = 'hadron_history';
+        const HISTORY_MAX = 100;
+
+        const CALC_META = {
+            chlorine: {
+                label: 'Chlorine Dosage',
+                collect: function () {
+                    const mld  = parseFloat(document.getElementById('mldInput').value);
+                    const ppm  = parseFloat(document.getElementById('chlorinePpm').value);
+                    const day  = document.getElementById('tccaDaily').textContent;
+                    const mth  = document.getElementById('tccaMonthly').textContent;
+                    return {
+                        inputs: [
+                            { label: 'Plant Size',      value: mld + ' MLD' },
+                            { label: 'Target Chlorine', value: ppm + ' ppm' }
+                        ],
+                        results: [
+                            { label: 'Daily Requirement',   value: day + ' Kg/Day' },
+                            { label: 'Monthly Requirement', value: mth + ' Kg/Month' }
+                        ],
+                        summary: mld + ' MLD · ' + ppm + ' ppm → ' + day + ' Kg/Day'
+                    };
+                }
+            },
+            clo2: {
+                label: 'Chlorine Dioxide (ClO₂) Dosage',
+                collect: function () {
+                    const mld  = parseFloat(document.getElementById('mldInputClO2').value);
+                    const ppm  = parseFloat(document.getElementById('clo2Ppm').value);
+                    const day  = document.getElementById('clo2Daily').textContent;
+                    const mth  = document.getElementById('clo2Monthly').textContent;
+                    return {
+                        inputs: [
+                            { label: 'Plant Size',  value: mld + ' MLD' },
+                            { label: 'Target ClO2', value: ppm + ' ppm' }
+                        ],
+                        results: [
+                            { label: 'Daily Requirement',   value: day + ' Kg/Day' },
+                            { label: 'Monthly Requirement', value: mth + ' Kg/Month' }
+                        ],
+                        summary: mld + ' MLD · ' + ppm + ' ppm → ' + day + ' Kg/Day'
+                    };
+                }
+            },
+            coagulants: {
+                label: 'Coagulant Dosage',
+                collect: function () {
+                    const mld  = parseFloat(document.getElementById('mldInputCoag').value);
+                    const dose = parseFloat(document.getElementById('coagDosage').value);
+                    const day  = document.getElementById('coagDaily').textContent;
+                    const mth  = document.getElementById('coagMonthly').textContent;
+                    return {
+                        inputs: [
+                            { label: 'Plant Size',    value: mld + ' MLD' },
+                            { label: 'Target Dosage', value: dose + ' mg/L' }
+                        ],
+                        results: [
+                            { label: 'Daily Requirement',   value: day + ' Kg/Day' },
+                            { label: 'Monthly Requirement', value: mth + ' Kg/Month' }
+                        ],
+                        summary: mld + ' MLD · ' + dose + ' mg/L → ' + day + ' Kg/Day'
+                    };
+                }
+            },
+            waterindex: {
+                label: 'LSI / RSI Water Balance',
+                collect: function () {
+                    const pH   = parseFloat(document.getElementById('wiPh').value);
+                    const tC   = parseFloat(document.getElementById('wiTemp').value);
+                    const tds  = parseFloat(document.getElementById('wiTds').value);
+                    const ca   = parseFloat(document.getElementById('wiCa').value);
+                    const alk  = parseFloat(document.getElementById('wiAlk').value);
+                    const phs  = document.getElementById('wiPhs').textContent;
+                    const lsi  = document.getElementById('wiLsi').textContent;
+                    const rsi  = document.getElementById('wiRsi').textContent;
+                    const lsiI = document.getElementById('wiLsiInterp').textContent;
+                    const rsiI = document.getElementById('wiRsiInterp').textContent;
+                    return {
+                        inputs: [
+                            { label: 'pH',                value: pH },
+                            { label: 'Temperature',       value: tC + ' °C' },
+                            { label: 'TDS',               value: tds + ' mg/L' },
+                            { label: 'Calcium Hardness',  value: ca + ' mg/L as CaCO₃' },
+                            { label: 'Total Alkalinity',  value: alk + ' mg/L as CaCO₃' }
+                        ],
+                        results: [
+                            { label: 'Saturation pH (pHs)', value: phs },
+                            { label: 'LSI',                 value: lsi + ' — ' + lsiI },
+                            { label: 'RSI',                 value: rsi + ' — ' + rsiI }
+                        ],
+                        summary: 'pH ' + pH + ' · LSI ' + lsi + ' · RSI ' + rsi
+                    };
+                }
+            }
+        };
+
+        function loadHistory() {
+            try {
+                const raw = localStorage.getItem(HISTORY_KEY);
+                return raw ? JSON.parse(raw) : [];
+            } catch (e) {
+                console.warn('History read failed:', e);
+                return [];
+            }
+        }
+
+        function writeHistory(entries) {
+            try {
+                localStorage.setItem(HISTORY_KEY, JSON.stringify(entries.slice(0, HISTORY_MAX)));
+            } catch (e) {
+                console.warn('History write failed:', e);
+                showToast('Unable to save — storage full');
+            }
+        }
+
+        function saveCalculation(type, btn) {
+            const meta = CALC_META[type];
+            if (!meta) return;
+            const snapshot = meta.collect();
+            const entry = {
+                id: Date.now().toString(36) + Math.random().toString(36).slice(2, 6),
+                type: type,
+                label: meta.label,
+                summary: snapshot.summary,
+                inputs: snapshot.inputs,
+                results: snapshot.results,
+                savedAt: new Date().toISOString()
+            };
+            const list = loadHistory();
+            list.unshift(entry);
+            writeHistory(list);
+
+            // Briefly reflect the save on the button that was tapped
+            if (btn) {
+                const originalText = btn.textContent;
+                btn.classList.add('saved');
+                btn.textContent = '✓ Saved';
+                setTimeout(function () {
+                    btn.classList.remove('saved');
+                    btn.textContent = originalText;
+                }, 1600);
+            }
+            showToast('Saved to History');
+        }
+
+        function formatDate(iso) {
+            const d = new Date(iso);
+            if (isNaN(d)) return iso;
+            const pad = n => n.toString().padStart(2, '0');
+            return pad(d.getDate()) + '/' + pad(d.getMonth() + 1) + '/' + d.getFullYear() +
+                   ' · ' + pad(d.getHours()) + ':' + pad(d.getMinutes());
+        }
+
+        function escapeHtml(str) {
+            return String(str)
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#39;');
+        }
+
+        function renderHistoryList() {
+            const list = loadHistory();
+            const container = document.getElementById('historyListContainer');
+            const empty = document.getElementById('historyEmpty');
+            const clearBar = document.getElementById('historyClearBar');
+            if (!container) return;
+
+            if (list.length === 0) {
+                container.innerHTML = '';
+                empty.style.display = 'block';
+                clearBar.style.display = 'none';
+                return;
+            }
+
+            empty.style.display = 'none';
+            clearBar.style.display = 'flex';
+
+            container.innerHTML = '<div class="history-list">' + list.map(function (e) {
+                return '' +
+                    '<div class="history-item">' +
+                        '<div class="history-item-body" onclick="viewHistoryEntry(\'' + e.id + '\')">' +
+                            '<div class="history-item-type">' + escapeHtml(e.label) + '</div>' +
+                            '<div class="history-item-title">' + escapeHtml(e.summary) + '</div>' +
+                            '<div class="history-item-date">' + escapeHtml(formatDate(e.savedAt)) + '</div>' +
+                        '</div>' +
+                        '<div class="history-item-actions">' +
+                            '<button title="Export PDF" onclick="event.stopPropagation(); exportHistoryPdf(\'' + e.id + '\')">📄</button>' +
+                            '<button class="delete-btn" title="Delete" onclick="event.stopPropagation(); deleteHistoryEntry(\'' + e.id + '\')">🗑</button>' +
+                        '</div>' +
+                    '</div>';
+            }).join('') + '</div>';
+        }
+
+        function viewHistoryEntry(id) {
+            const entry = loadHistory().find(e => e.id === id);
+            if (!entry) return;
+            const body = document.getElementById('historyDetailBody');
+            const row = (lbl, val) =>
+                '<div style="display:flex; justify-content:space-between; padding:10px 0; border-bottom:1px solid #eee;">' +
+                    '<span style="color:#666; font-size:14px;">' + escapeHtml(lbl) + '</span>' +
+                    '<span style="font-weight:600; color:#333; font-size:14px; text-align:right;">' + escapeHtml(val) + '</span>' +
+                '</div>';
+
+            body.innerHTML =
+                '<h2 style="margin-bottom:6px;">' + escapeHtml(entry.label) + '</h2>' +
+                '<p style="color:#888; font-size:13px; margin-bottom:20px;">Saved ' + escapeHtml(formatDate(entry.savedAt)) + '</p>' +
+
+                '<h3 style="color:#00b1ca; font-size:15px; margin-bottom:8px;">Inputs</h3>' +
+                '<div style="background:#f8f9fa; border-radius:10px; padding:6px 16px; margin-bottom:20px;">' +
+                    entry.inputs.map(i => row(i.label, i.value)).join('') +
+                '</div>' +
+
+                '<h3 style="color:#00b1ca; font-size:15px; margin-bottom:8px;">Results</h3>' +
+                '<div style="background:#f8f9fa; border-radius:10px; padding:6px 16px; margin-bottom:24px;">' +
+                    entry.results.map(r => row(r.label, r.value)).join('') +
+                '</div>' +
+
+                '<button onclick="exportHistoryPdf(\'' + entry.id + '\')" class="pdf-calc-btn">📄 Export PDF</button>' +
+                '<button onclick="deleteHistoryEntry(\'' + entry.id + '\', true)" class="save-calc-btn" style="background:#d33; box-shadow:0 4px 12px rgba(211,51,51,0.25);">🗑 Delete</button>';
+
+            openWindow('historydetail');
+        }
+
+        function deleteHistoryEntry(id, closeDetail) {
+            const list = loadHistory().filter(e => e.id !== id);
+            writeHistory(list);
+            renderHistoryList();
+            if (closeDetail) closeWindow('historydetail');
+            showToast('Entry deleted');
+        }
+
+        function clearAllHistory() {
+            if (!confirm('Delete ALL saved calculations? This cannot be undone.')) return;
+            localStorage.removeItem(HISTORY_KEY);
+            renderHistoryList();
+            showToast('History cleared');
+        }
+
+        /* -------- Branded PDF Export (jsPDF) -------- */
+
+        function buildPdfSnapshot(type) {
+            const meta = CALC_META[type];
+            if (!meta) return null;
+            const snap = meta.collect();
+            return {
+                label: meta.label,
+                inputs: snap.inputs,
+                results: snap.results,
+                savedAt: new Date().toISOString()
+            };
+        }
+
+        function exportPdf(type) {
+            const snap = buildPdfSnapshot(type);
+            if (!snap) return;
+            generatePdf(snap);
+        }
+
+        function exportHistoryPdf(id) {
+            const entry = loadHistory().find(e => e.id === id);
+            if (!entry) return;
+            generatePdf(entry);
+        }
+
+        function generatePdf(entry) {
+            if (!(window.jspdf && window.jspdf.jsPDF)) {
+                showToast('PDF engine still loading, try again in a moment');
+                return;
+            }
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF({ unit: 'pt', format: 'a4' });
+
+            const PAGE_W = doc.internal.pageSize.getWidth();
+            const MARGIN = 48;
+            const CYAN  = [0, 177, 202];
+            const GOLD  = [249, 187, 50];
+            const GREY  = [79, 79, 79];
+            const TEXT  = [60, 60, 60];
+            const SOFT  = [120, 120, 120];
+
+            // Header band
+            doc.setFillColor.apply(doc, CYAN);
+            doc.rect(0, 0, PAGE_W, 90, 'F');
+            doc.setFillColor.apply(doc, GOLD);
+            doc.rect(0, 90, PAGE_W, 4, 'F');
+
+            doc.setTextColor(255, 255, 255);
+            doc.setFont('helvetica', 'bold');
+            doc.setFontSize(22);
+            doc.text('HADRON GROUP', MARGIN, 42);
+            doc.setFont('helvetica', 'normal');
+            doc.setFontSize(11);
+            doc.text('Customer Interface · Calculation Report', MARGIN, 62);
+            doc.setFontSize(9);
+            doc.text('hadrongrp.com', MARGIN, 78);
+
+            let y = 130;
+
+            // Title
+            doc.setTextColor.apply(doc, GREY);
+            doc.setFont('helvetica', 'bold');
+            doc.setFontSize(18);
+            doc.text(entry.label, MARGIN, y);
+            y += 18;
+
+            doc.setFont('helvetica', 'normal');
+            doc.setFontSize(10);
+            doc.setTextColor.apply(doc, SOFT);
+            doc.text('Generated: ' + formatDate(entry.savedAt), MARGIN, y);
+            y += 28;
+
+            const drawSection = (title, rows) => {
+                doc.setFont('helvetica', 'bold');
+                doc.setFontSize(12);
+                doc.setTextColor.apply(doc, CYAN);
+                doc.text(title, MARGIN, y);
+                y += 6;
+                doc.setDrawColor.apply(doc, CYAN);
+                doc.setLineWidth(0.8);
+                doc.line(MARGIN, y, PAGE_W - MARGIN, y);
+                y += 16;
+
+                doc.setFont('helvetica', 'normal');
+                doc.setFontSize(11);
+                doc.setTextColor.apply(doc, TEXT);
+                rows.forEach(r => {
+                    if (y > 760) { doc.addPage(); y = 60; }
+                    doc.setTextColor.apply(doc, SOFT);
+                    doc.text(String(r.label), MARGIN, y);
+                    doc.setTextColor.apply(doc, TEXT);
+                    doc.setFont('helvetica', 'bold');
+                    const valueText = doc.splitTextToSize(String(r.value), PAGE_W - MARGIN * 2 - 180);
+                    doc.text(valueText, PAGE_W - MARGIN, y, { align: 'right' });
+                    doc.setFont('helvetica', 'normal');
+                    y += 14 * Math.max(1, valueText.length) + 4;
+                });
+                y += 14;
+            };
+
+            drawSection('Inputs', entry.inputs);
+            drawSection('Results', entry.results);
+
+            // Disclaimer footer
+            if (y > 720) { doc.addPage(); y = 60; }
+            doc.setFillColor(248, 249, 250);
+            doc.rect(MARGIN, y, PAGE_W - MARGIN * 2, 52, 'F');
+            doc.setFont('helvetica', 'italic');
+            doc.setFontSize(9);
+            doc.setTextColor.apply(doc, SOFT);
+            const disclaimer = 'Figures are theoretical and assume the chemistries and concentrations typical of Hadron Group products. Adjust for your on-site conditions and confirm with lab testing. Contact sales@hadrongrp.com for product-specific technical support.';
+            const wrapped = doc.splitTextToSize(disclaimer, PAGE_W - MARGIN * 2 - 20);
+            doc.text(wrapped, MARGIN + 10, y + 16);
+
+            // Page footer
+            const PAGE_H = doc.internal.pageSize.getHeight();
+            doc.setFontSize(8);
+            doc.setTextColor.apply(doc, SOFT);
+            doc.text('Hadron Group · Customer Interface · hadrongrp.com', PAGE_W / 2, PAGE_H - 24, { align: 'center' });
+
+            const safeName = entry.label.replace(/[^a-z0-9]+/gi, '-').replace(/^-|-$/g, '').toLowerCase();
+            const date = new Date(entry.savedAt);
+            const stamp = date.toISOString().slice(0, 10);
+            doc.save('hadron-' + safeName + '-' + stamp + '.pdf');
+
+            showToast('PDF exported');
+        }
+
+        /* -------- Toast -------- */
+        let toastTimer = null;
+        function showToast(message) {
+            const el = document.getElementById('toast');
+            if (!el) return;
+            el.textContent = message;
+            el.classList.add('visible');
+            clearTimeout(toastTimer);
+            toastTimer = setTimeout(function () {
+                el.classList.remove('visible');
+            }, 2200);
+        }
     </script>
 </body>
 </html>
