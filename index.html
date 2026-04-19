@@ -27,6 +27,11 @@
     <!-- Translation bundle -->
     <script src="i18n.js"></script>
 
+    <!-- Default UI font: Gothic A1 (Google Fonts) -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Gothic+A1:wght@300;400;500;600;700;800;900&display=swap">
+
     <style>
         * {
             margin: 0;
@@ -35,13 +40,19 @@
             -webkit-tap-highlight-color: transparent;
         }
 
+        /* Ensure form controls inherit the app's default font
+           (most browsers default inputs and buttons to the OS system font). */
+        input, button, select, textarea {
+            font-family: inherit;
+        }
+
         html, body {
             width: 100%;
             height: 100%;
         }
 
         body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            font-family: 'Gothic A1', 'Century Gothic', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
             overflow: hidden;
             height: 100vh;
             /* Prefer the dynamic viewport so mobile browser chrome doesn't clip us */
