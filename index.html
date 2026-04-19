@@ -1,0 +1,1187 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Hadron">
+    <meta name="application-name" content="Hadron">
+    <meta name="theme-color" content="#00b1ca">
+    <meta name="description" content="Hadron Group customer interface — water treatment dosage calculators and support.">
+    <title>Hadron Group - Customer Interface</title>
+
+    <!-- PWA manifest -->
+    <link rel="manifest" href="manifest.webmanifest">
+
+    <!-- Icons -->
+    <link rel="icon" type="image/png" sizes="32x32" href="icons/favicon-32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="icons/favicon-16.png">
+    <link rel="apple-touch-icon" sizes="180x180" href="icons/apple-touch-icon.png">
+    <link rel="mask-icon" href="icons/apple-touch-icon.png" color="#00b1ca">
+    
+    <!-- Chatbase AI Integration -->
+    <script>
+    (function(){if(!window.chatbase||window.chatbase("getState")!=="initialized"){window.chatbase=(...arguments)=>{if(!window.chatbase.q){window.chatbase.q=[]}window.chatbase.q.push(arguments)};window.chatbase=new Proxy(window.chatbase,{get(target,prop){if(prop==="q"){return target.q}return(...args)=>target(prop,...args)}})}const onLoad=function(){const script=document.createElement("script");script.src="https://www.chatbase.co/embed.min.js";script.id="P8IjR80V_ZImLgIIECop4";script.domain="www.chatbase.co";document.body.appendChild(script)};if(document.readyState==="complete"){onLoad()}else{window.addEventListener("load",onLoad)}})();
+    </script>
+    
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            overflow: hidden;
+            height: 100vh;
+            touch-action: pan-y;
+        }
+
+        /* Login Screen */
+        .login-screen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, #00b1ca 0%, #f9bb32 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            transition: opacity 0.5s, visibility 0.5s;
+        }
+
+        .login-screen.hidden {
+            opacity: 0;
+            visibility: hidden;
+        }
+
+        .login-box {
+            background: rgba(255, 255, 255, 0.95);
+            padding: 40px;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            width: 400px;
+            max-width: 90%;
+        }
+
+        .login-box h1 {
+            text-align: center;
+            margin-bottom: 10px;
+            color: #333;
+            font-size: 28px;
+        }
+
+        .login-box p {
+            text-align: center;
+            color: #666;
+            margin-bottom: 30px;
+            font-size: 14px;
+        }
+
+        .input-group {
+            margin-bottom: 20px;
+        }
+
+        .input-group label {
+            display: block;
+            margin-bottom: 8px;
+            color: #333;
+            font-weight: 500;
+            font-size: 14px;
+        }
+
+        .input-group input {
+            width: 100%;
+            padding: 12px 16px;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            font-size: 14px;
+            transition: border-color 0.3s;
+        }
+
+        .input-group input:focus {
+            outline: none;
+            border-color: #00b1ca;
+        }
+
+        .login-btn {
+            width: 100%;
+            padding: 14px;
+            background: linear-gradient(135deg, #00b1ca 0%, #f9bb32 100%);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .login-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 20px rgba(0, 177, 202, 0.4);
+        }
+
+        .login-btn:active {
+            transform: translateY(0);
+        }
+
+        .demo-credentials {
+            margin-top: 20px;
+            padding: 15px;
+            background: #f5f5f5;
+            border-radius: 10px;
+            font-size: 12px;
+            color: #666;
+        }
+
+        .demo-credentials strong {
+            color: #333;
+        }
+
+        /* Desktop Environment */
+        .desktop {
+            height: 100vh;
+            background: linear-gradient(135deg, #00b1ca 0%, #f9bb32 100%);
+            display: flex;
+            flex-direction: column;
+            opacity: 0;
+            transition: opacity 0.5s;
+        }
+
+        .desktop.visible {
+            opacity: 1;
+        }
+
+        /* Top Bar */
+        .top-bar {
+            height: 50px;
+            background: rgba(0, 0, 0, 0.3);
+            backdrop-filter: blur(10px);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 15px;
+            color: white;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            flex-shrink: 0;
+        }
+
+        @media (max-width: 768px) {
+            .top-bar {
+                height: 56px;
+                padding: 0 10px;
+            }
+        }
+
+        .top-bar-left {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        @media (max-width: 480px) {
+            .top-bar-left {
+                gap: 10px;
+            }
+        }
+
+        .logo {
+            font-weight: 700;
+            font-size: 18px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .logo img {
+            height: 32px;
+            width: auto;
+        }
+
+        @media (max-width: 480px) {
+            .logo img {
+                height: 28px;
+            }
+        }
+
+        .time-display {
+            font-size: 14px;
+            font-weight: 500;
+        }
+
+        @media (max-width: 480px) {
+            .time-display {
+                font-size: 13px;
+            }
+        }
+
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 14px;
+        }
+
+        @media (max-width: 480px) {
+            .user-info {
+                gap: 8px;
+                font-size: 13px;
+            }
+            
+            .user-info span {
+                display: none;
+            }
+        }
+
+        .user-avatar {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+            font-size: 14px;
+            flex-shrink: 0;
+        }
+
+        .logout-btn {
+            padding: 6px 14px;
+            background: rgba(255, 255, 255, 0.2);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            border-radius: 6px;
+            color: white;
+            cursor: pointer;
+            font-size: 13px;
+            transition: background 0.2s;
+            touch-action: manipulation;
+        }
+
+        .logout-btn:active {
+            background: rgba(255, 255, 255, 0.3);
+        }
+
+        @media (hover: hover) {
+            .logout-btn:hover {
+                background: rgba(255, 255, 255, 0.3);
+            }
+        }
+
+        @media (max-width: 480px) {
+            .logout-btn {
+                padding: 6px 10px;
+                font-size: 12px;
+            }
+        }
+
+        /* Desktop Content */
+        .desktop-content {
+            flex: 1;
+            padding: 20px;
+            overflow-y: auto;
+            -webkit-overflow-scrolling: touch;
+        }
+
+        .apps-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+            gap: 20px;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        @media (max-width: 768px) {
+            .apps-grid {
+                grid-template-columns: repeat(3, 1fr);
+                gap: 15px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .apps-grid {
+                grid-template-columns: repeat(3, 1fr);
+                gap: 10px;
+            }
+            
+            .desktop-content {
+                padding: 15px 10px;
+            }
+        }
+
+        .app-icon {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 8px;
+            cursor: pointer;
+            transition: transform 0.2s;
+            padding: 10px;
+            border-radius: 15px;
+            touch-action: manipulation;
+        }
+
+        .app-icon:active {
+            transform: scale(0.95);
+            background: rgba(255, 255, 255, 0.15);
+        }
+
+        @media (hover: hover) {
+            .app-icon:hover {
+                transform: translateY(-5px);
+                background: rgba(255, 255, 255, 0.1);
+            }
+        }
+
+        .icon {
+            width: 70px;
+            height: 70px;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 18px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 32px;
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
+            transition: box-shadow 0.2s;
+        }
+
+        @media (max-width: 480px) {
+            .icon {
+                width: 60px;
+                height: 60px;
+                font-size: 28px;
+                border-radius: 15px;
+            }
+        }
+
+        .app-name {
+            color: white;
+            font-size: 12px;
+            font-weight: 500;
+            text-align: center;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+        }
+
+        @media (max-width: 480px) {
+            .app-name {
+                font-size: 11px;
+            }
+        }
+
+        /* Window */
+        .window {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: white;
+            display: none;
+            flex-direction: column;
+            z-index: 2000;
+            transform: translateX(100%);
+            transition: transform 0.3s ease;
+        }
+
+        .window.active {
+            display: flex;
+            transform: translateX(0);
+        }
+
+        .window-header {
+            height: 56px;
+            background: linear-gradient(135deg, #00b1ca 0%, #f9bb32 100%);
+            color: white;
+            display: flex;
+            align-items: center;
+            padding: 0 15px;
+            user-select: none;
+            flex-shrink: 0;
+            gap: 15px;
+        }
+
+        .back-button {
+            width: 40px;
+            height: 40px;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            font-size: 20px;
+            transition: background 0.2s;
+            flex-shrink: 0;
+            border: none;
+            color: white;
+        }
+
+        .back-button:active {
+            background: rgba(255, 255, 255, 0.3);
+        }
+
+        @media (hover: hover) {
+            .back-button:hover {
+                background: rgba(255, 255, 255, 0.3);
+            }
+        }
+
+        .window-title {
+            font-weight: 600;
+            font-size: 18px;
+            flex: 1;
+        }
+
+        .window-controls {
+            display: none;
+        }
+
+        .control-close {
+            background: #ff5f56;
+        }
+
+        .control-minimize {
+            background: #ffbd2e;
+        }
+
+        .control-maximize {
+            background: #27c93f;
+        }
+
+        .window-content {
+            flex: 1;
+            padding: 20px;
+            overflow-y: auto;
+            -webkit-overflow-scrolling: touch;
+        }
+
+        @media (max-width: 768px) {
+            .window-content {
+                padding: 20px 15px;
+            }
+        }
+
+        .window-content h2 {
+            margin-bottom: 15px;
+            color: #333;
+            font-size: 20px;
+        }
+
+        .window-content p {
+            color: #666;
+            line-height: 1.6;
+            margin-bottom: 10px;
+            font-size: 15px;
+        }
+
+        /* Taskbar */
+        .taskbar {
+            height: 65px;
+            background: rgba(0, 0, 0, 0.5);
+            backdrop-filter: blur(20px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            padding: 0 20px;
+            flex-shrink: 0;
+        }
+
+        @media (max-width: 768px) {
+            .taskbar {
+                height: 70px;
+                padding: 0 10px;
+                border-top: 1px solid rgba(255, 255, 255, 0.1);
+            }
+        }
+
+        .taskbar-icon {
+            width: 50px;
+            height: 50px;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: background 0.2s, transform 0.2s;
+            font-size: 24px;
+            touch-action: manipulation;
+        }
+
+        .taskbar-icon:active {
+            transform: scale(0.9);
+        }
+
+        @media (hover: hover) {
+            .taskbar-icon:hover {
+                background: rgba(255, 255, 255, 0.3);
+                transform: translateY(-5px);
+            }
+        }
+
+        .taskbar-icon.active {
+            background: rgba(255, 255, 255, 0.4);
+        }
+    </style>
+</head>
+<body>
+    <!-- Login Screen -->
+    <div class="login-screen" id="loginScreen">
+        <div class="login-box">
+            <div style="text-align: center; margin-bottom: 20px;">
+                <img src="Hadron_Logo.png" alt="Hadron Group" style="height: 60px; width: auto;">
+            </div>
+            <h1>Welcome Back</h1>
+            <p>Sign in to access your workspace</p>
+            <form id="loginForm">
+                <div class="input-group">
+                    <label for="username">Username</label>
+                    <input type="text" id="username" placeholder="Enter your username" required>
+                </div>
+                <div class="input-group">
+                    <label for="password">Password</label>
+                    <input type="password" id="password" placeholder="Enter your password" required>
+                </div>
+                <button type="submit" class="login-btn">Sign In</button>
+            </form>
+            <div class="demo-credentials">
+                <strong>Demo Credentials:</strong><br>
+                Username: <strong>demo</strong><br>
+                Password: <strong>password</strong>
+            </div>
+        </div>
+    </div>
+
+    <!-- Desktop Environment -->
+    <div class="desktop" id="desktop">
+        <!-- Top Bar -->
+        <div class="top-bar">
+            <div class="top-bar-left">
+                <div class="logo">
+                    <img src="Hadron_Logo.png" alt="Hadron Group">
+                </div>
+                <div class="time-display" id="timeDisplay">00:00</div>
+            </div>
+            <div class="user-info">
+                <div class="user-avatar" id="userAvatar">U</div>
+                <span id="userName">User</span>
+                <button class="logout-btn" onclick="logout()">Logout</button>
+            </div>
+        </div>
+
+        <!-- Desktop Content -->
+        <div class="desktop-content">
+            <div class="apps-grid">
+                <div class="app-icon" onclick="openWindow('profile')">
+                    <div class="icon">👤</div>
+                    <div class="app-name">Profile</div>
+                </div>
+                <div class="app-icon" onclick="openWindow('messages')">
+                    <div class="icon">💬</div>
+                    <div class="app-name">Messages</div>
+                </div>
+                <div class="app-icon" onclick="openWindow('settings')">
+                    <div class="icon">⚙️</div>
+                    <div class="app-name">Settings</div>
+                </div>
+                <div class="app-icon" onclick="openWindow('files')">
+                    <div class="icon">📁</div>
+                    <div class="app-name">Files</div>
+                </div>
+                <div class="app-icon" onclick="openWindow('calendar')">
+                    <div class="icon">📅</div>
+                    <div class="app-name">Calendar</div>
+                </div>
+                <div class="app-icon" onclick="openWindow('analytics')">
+                    <div class="icon">📊</div>
+                    <div class="app-name">Analytics</div>
+                </div>
+                <div class="app-icon" onclick="openWindow('support')">
+                    <div class="icon">🎧</div>
+                    <div class="app-name">Support</div>
+                </div>
+                <div class="app-icon" onclick="openWindow('store')">
+                    <div class="icon">🛒</div>
+                    <div class="app-name">Store</div>
+                </div>
+                <div class="app-icon" onclick="openWindow('dosage')">
+                    <div class="icon">💊</div>
+                    <div class="app-name">Dosage Calculator</div>
+                </div>
+                <div class="app-icon" onclick="openChatbot()">
+                    <div class="icon">🤖</div>
+                    <div class="app-name">AI Assistant</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Taskbar -->
+        <div class="taskbar" id="taskbar"></div>
+    </div>
+
+    <!-- Windows (Hidden by default) -->
+    <div class="window" id="window-profile" style="top: 100px; left: 150px;">
+        <div class="window-header">
+            <button class="back-button" onclick="closeWindow('profile')">←</button>
+            <span class="window-title">Profile</span>
+        </div>
+        <div class="window-content">
+            <div style="text-align: center; margin-bottom: 20px;">
+                <img src="Hadron_Logo.png" alt="Hadron Group" style="height: 50px; width: auto;">
+            </div>
+            <h2>User Profile</h2>
+            <p><strong>Name:</strong> <span id="profileName">Demo User</span></p>
+            <p><strong>Email:</strong> <a href="/cdn-cgi/l/email-protection" class="__cf_email__" data-cfemail="f99d9c9496b991989d8b96979e8b89d79a9694">[email&#160;protected]</a></p>
+            <p><strong>Company:</strong> Hadron Group</p>
+            <p><strong>Role:</strong> Customer</p>
+            <p><strong>Member Since:</strong> February 2026</p>
+        </div>
+    </div>
+
+    <div class="window" id="window-messages" style="top: 120px; left: 200px;">
+        <div class="window-header">
+            <button class="back-button" onclick="closeWindow('messages')">←</button>
+            <span class="window-title">Messages</span>
+        </div>
+        <div class="window-content">
+            <h2>Your Messages</h2>
+            <p>📧 Welcome to CustomerOS! You have 3 new messages.</p>
+            <p>📧 Your order #12345 has been shipped.</p>
+            <p>📧 Special offer: 20% off on premium features!</p>
+        </div>
+    </div>
+
+    <div class="window" id="window-settings" style="top: 140px; left: 250px;">
+        <div class="window-header">
+            <button class="back-button" onclick="closeWindow('settings')">←</button>
+            <span class="window-title">Settings</span>
+        </div>
+        <div class="window-content">
+            <h2>Settings</h2>
+            <p><strong>Appearance:</strong> Light Mode</p>
+            <p><strong>Language:</strong> English</p>
+            <p><strong>Notifications:</strong> Enabled</p>
+            <p><strong>Privacy:</strong> Enhanced</p>
+        </div>
+    </div>
+
+    <div class="window" id="window-files" style="top: 160px; left: 300px;">
+        <div class="window-header">
+            <button class="back-button" onclick="closeWindow('files')">←</button>
+            <span class="window-title">Files</span>
+        </div>
+        <div class="window-content">
+            <h2>My Files</h2>
+            <p>📄 Document.pdf (2.3 MB)</p>
+            <p>📄 Report_Q1.xlsx (1.8 MB)</p>
+            <p>📄 Presentation.pptx (5.2 MB)</p>
+            <p>🖼️ Image_001.png (0.8 MB)</p>
+        </div>
+    </div>
+
+    <div class="window" id="window-calendar" style="top: 180px; left: 350px;">
+        <div class="window-header">
+            <button class="back-button" onclick="closeWindow('calendar')">←</button>
+            <span class="window-title">Calendar</span>
+        </div>
+        <div class="window-content">
+            <h2>Upcoming Events</h2>
+            <p>📅 <strong>Feb 5:</strong> Team Meeting at 10:00 AM</p>
+            <p>📅 <strong>Feb 7:</strong> Project Deadline</p>
+            <p>📅 <strong>Feb 10:</strong> Product Launch Event</p>
+        </div>
+    </div>
+
+    <div class="window" id="window-analytics" style="top: 200px; left: 400px;">
+        <div class="window-header">
+            <button class="back-button" onclick="closeWindow('analytics')">←</button>
+            <span class="window-title">Analytics</span>
+        </div>
+        <div class="window-content">
+            <h2>Analytics Dashboard</h2>
+            <p><strong>Total Orders:</strong> 156</p>
+            <p><strong>Revenue:</strong> $12,450</p>
+            <p><strong>Active Sessions:</strong> 23</p>
+            <p><strong>Conversion Rate:</strong> 3.2%</p>
+        </div>
+    </div>
+
+    <div class="window" id="window-support" style="top: 220px; left: 450px;">
+        <div class="window-header">
+            <button class="back-button" onclick="closeWindow('support')">←</button>
+            <span class="window-title">Support</span>
+        </div>
+        <div class="window-content">
+            <h2>Contact Hadron Group</h2>
+            <p style="margin-bottom: 20px;">Need help? We're here for you!</p>
+            
+            <p><strong style="color: #00b1ca;">📍 Address:</strong></p>
+            <p style="margin-left: 20px; margin-bottom: 15px;">
+                Plot 442, Mooiplaats<br>
+                Boschkop Road<br>
+                Pretoria<br>
+                0040
+            </p>
+            
+            <p><strong style="color: #00b1ca;">📞 Phone:</strong></p>
+            <p style="margin-left: 20px; margin-bottom: 15px;">
+                <a href="tel:0872651711" style="color: #666; text-decoration: none;">087 265 1711</a><br>
+                <a href="tel:0823759734" style="color: #666; text-decoration: none;">082 375 9734</a>
+            </p>
+            
+            <p><strong style="color: #00b1ca;">✉️ Email:</strong></p>
+            <p style="margin-left: 20px; margin-bottom: 15px;">
+                <a href="/cdn-cgi/l/email-protection#b6e5d7dad3c5f6ded7d2c4d9d8d1c4c698d5d9db" style="color: #666; text-decoration: none; display: block; margin-bottom: 5px;"><span class="__cf_email__" data-cfemail="87d4e6ebe2f4c7efe6e3f5e8e9e0f5f7a9e4e8ea">[email&#160;protected]</span></a>
+                <a href="/cdn-cgi/l/email-protection#4802292b270820292c3a27262f3a38662b2725" style="color: #666; text-decoration: none; display: block; margin-bottom: 5px;"><span class="__cf_email__" data-cfemail="501a31333f10383134223f3e3722207e333f3d">[email&#160;protected]</span></a>
+                <a href="/cdn-cgi/l/email-protection#d684bfb5b7a4b2b996beb7b2a4b9b8b1a4a6f8b5b9bb" style="color: #666; text-decoration: none; display: block;"><span class="__cf_email__" data-cfemail="16447f7577647279567e77726479787164663875797b">[email&#160;protected]</span></a>
+            </p>
+            
+            <p><strong style="color: #00b1ca;">🤖 AI Assistant:</strong></p>
+            <p style="margin-left: 20px;">
+                <button onclick="openChatbot()" style="padding: 10px 20px; background: linear-gradient(135deg, #00b1ca 0%, #f9bb32 100%); color: white; border: none; border-radius: 8px; cursor: pointer; font-size: 14px; font-weight: 600;">
+                    Start Live Chat
+                </button>
+            </p>
+        </div>
+    </div>
+
+    <div class="window" id="window-store" style="top: 240px; left: 500px;">
+        <div class="window-header">
+            <button class="back-button" onclick="closeWindow('store')">←</button>
+            <span class="window-title">Store</span>
+        </div>
+        <div class="window-content">
+            <h2>App Store</h2>
+            <p>🎮 <strong>Featured Apps</strong></p>
+            <p>📱 Productivity Suite - $9.99/mo</p>
+            <p>🎨 Creative Tools Bundle - $14.99/mo</p>
+            <p>📊 Business Analytics Pro - $19.99/mo</p>
+        </div>
+    </div>
+
+    <div class="window" id="window-dosage" style="top: 100px; left: 100px; width: 900px; height: 600px;">
+        <div class="window-header">
+            <button class="back-button" onclick="closeWindow('dosage')">←</button>
+            <span class="window-title" id="dosageTitle">Dosage Calculators</span>
+        </div>
+        <div class="window-content" style="overflow-y: auto;">
+            <!-- Calculator Selection Menu -->
+            <div id="calculatorMenu">
+                <h2 style="margin-bottom: 25px;">Select Calculator Type</h2>
+                
+                <div style="display: grid; grid-template-columns: 1fr; gap: 15px; max-width: 600px;">
+                    <button onclick="showCalculator('chlorine')" style="padding: 20px; background: linear-gradient(135deg, #00b1ca 0%, #f9bb32 100%); color: white; border: none; border-radius: 12px; cursor: pointer; font-size: 16px; font-weight: 600; text-align: left; display: flex; align-items: center; gap: 15px; transition: transform 0.2s;">
+                        <span style="font-size: 32px;">⚗️</span>
+                        <div>
+                            <div style="font-size: 18px; margin-bottom: 5px;">Chlorine Calculator</div>
+                            <div style="font-size: 13px; opacity: 0.9; font-weight: normal;">Calculate chlorine dosage requirements</div>
+                        </div>
+                    </button>
+                    
+                    <button onclick="showCalculator('chlorinedioxide')" style="padding: 20px; background: linear-gradient(135deg, #00b1ca 0%, #f9bb32 100%); color: white; border: none; border-radius: 12px; cursor: pointer; font-size: 16px; font-weight: 600; text-align: left; display: flex; align-items: center; gap: 15px; transition: transform 0.2s;">
+                        <span style="font-size: 32px;">💧</span>
+                        <div>
+                            <div style="font-size: 18px; margin-bottom: 5px;">Chlorine Dioxide Calculator</div>
+                            <div style="font-size: 13px; opacity: 0.9; font-weight: normal;">Calculate ClO2 dosage requirements</div>
+                        </div>
+                    </button>
+                    
+                    <button onclick="showCalculator('coagulants')" style="padding: 20px; background: linear-gradient(135deg, #00b1ca 0%, #f9bb32 100%); color: white; border: none; border-radius: 12px; cursor: pointer; font-size: 16px; font-weight: 600; text-align: left; display: flex; align-items: center; gap: 15px; transition: transform 0.2s;">
+                        <span style="font-size: 32px;">🧪</span>
+                        <div>
+                            <div style="font-size: 18px; margin-bottom: 5px;">Coagulants Calculator</div>
+                            <div style="font-size: 13px; opacity: 0.9; font-weight: normal;">Calculate coagulant dosage requirements</div>
+                        </div>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Chlorine Calculator -->
+            <div id="chlorineCalculator" style="display: none;">
+                <button onclick="showCalculatorMenu()" style="padding: 8px 16px; background: rgba(0,177,202,0.1); color: #00b1ca; border: 1px solid #00b1ca; border-radius: 8px; cursor: pointer; font-size: 14px; margin-bottom: 20px;">
+                    ← Back to Menu
+                </button>
+                <h2 style="margin-bottom: 20px;">Chlorine (TCCA) Calculator</h2>
+                
+                <div style="background: #f8f9fa; padding: 20px; border-radius: 10px; margin-bottom: 25px;">
+                    <h3 style="margin-bottom: 15px; color: #00b1ca; font-size: 18px;">Plant Configuration</h3>
+                    <div style="display: flex; flex-direction: column; gap: 12px;">
+                        <label style="font-weight: 600; font-size: 15px;">Plant Size (MLD):</label>
+                        <input type="number" id="mldInput" value="0.5" step="0.1" min="0.1" 
+                               style="padding: 12px; border: 2px solid #e0e0e0; border-radius: 8px; width: 100%; font-size: 16px; max-width: 300px;"
+                               oninput="calculateDosage()">
+                        <span style="color: #666; font-size: 13px;">Megaliters per day</span>
+                    </div>
+                </div>
+
+                <div id="tccaSection" style="margin-top: 20px; padding: 20px; background: linear-gradient(135deg, #4f4f4f 0%, #f9bb32 100%); border-radius: 10px; color: white;">
+                    <h3 style="margin-bottom: 15px; font-size: 18px;">TCCA Usage Results</h3>
+                    <div style="display: grid; grid-template-columns: 1fr; gap: 15px;">
+                        <div style="background: rgba(255,255,255,0.2); padding: 20px; border-radius: 8px;">
+                            <div style="font-size: 14px; margin-bottom: 8px; opacity: 0.9;">Daily Requirement</div>
+                            <div style="font-size: 32px; font-weight: 700;" id="tccaDaily">0</div>
+                            <div style="font-size: 14px; opacity: 0.9; margin-top: 5px;">Kg/Day</div>
+                        </div>
+                        <div style="background: rgba(255,255,255,0.2); padding: 20px; border-radius: 8px;">
+                            <div style="font-size: 14px; margin-bottom: 8px; opacity: 0.9;">Monthly Requirement</div>
+                            <div style="font-size: 32px; font-weight: 700;" id="tccaMonthly">0</div>
+                            <div style="font-size: 14px; opacity: 0.9; margin-top: 5px;">Kg/Month</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Chlorine Dioxide Calculator -->
+            <div id="chlorinedioxideCalculator" style="display: none;">
+                <button onclick="showCalculatorMenu()" style="padding: 8px 16px; background: rgba(0,177,202,0.1); color: #00b1ca; border: 1px solid #00b1ca; border-radius: 8px; cursor: pointer; font-size: 14px; margin-bottom: 20px;">
+                    ← Back to Menu
+                </button>
+                <h2 style="margin-bottom: 20px;">Chlorine Dioxide (ClO2) Calculator</h2>
+                
+                <div style="background: #f8f9fa; padding: 20px; border-radius: 10px; margin-bottom: 25px;">
+                    <h3 style="margin-bottom: 15px; color: #00b1ca; font-size: 18px;">Plant Configuration</h3>
+                    <div style="display: flex; flex-direction: column; gap: 12px;">
+                        <label style="font-weight: 600; font-size: 15px;">Plant Size (MLD):</label>
+                        <input type="number" id="mldInputClO2" value="0.5" step="0.1" min="0.1" 
+                               style="padding: 12px; border: 2px solid #e0e0e0; border-radius: 8px; width: 100%; font-size: 16px; max-width: 300px;"
+                               oninput="calculateClO2()">
+                        <span style="color: #666; font-size: 13px;">Megaliters per day</span>
+                    </div>
+                </div>
+
+                <div style="margin-top: 20px; padding: 20px; background: linear-gradient(135deg, #4f4f4f 0%, #f9bb32 100%); border-radius: 10px; color: white;">
+                    <h3 style="margin-bottom: 15px; font-size: 18px;">ClO2 Usage Results</h3>
+                    <div style="display: grid; grid-template-columns: 1fr; gap: 15px;">
+                        <div style="background: rgba(255,255,255,0.2); padding: 20px; border-radius: 8px;">
+                            <div style="font-size: 14px; margin-bottom: 8px; opacity: 0.9;">Daily Requirement</div>
+                            <div style="font-size: 32px; font-weight: 700;" id="clo2Daily">0</div>
+                            <div style="font-size: 14px; opacity: 0.9; margin-top: 5px;">Kg/Day</div>
+                        </div>
+                        <div style="background: rgba(255,255,255,0.2); padding: 20px; border-radius: 8px;">
+                            <div style="font-size: 14px; margin-bottom: 8px; opacity: 0.9;">Monthly Requirement</div>
+                            <div style="font-size: 32px; font-weight: 700;" id="clo2Monthly">0</div>
+                            <div style="font-size: 14px; opacity: 0.9; margin-top: 5px;">Kg/Month</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Coagulants Calculator -->
+            <div id="coagulantsCalculator" style="display: none;">
+                <button onclick="showCalculatorMenu()" style="padding: 8px 16px; background: rgba(0,177,202,0.1); color: #00b1ca; border: 1px solid #00b1ca; border-radius: 8px; cursor: pointer; font-size: 14px; margin-bottom: 20px;">
+                    ← Back to Menu
+                </button>
+                <h2 style="margin-bottom: 20px;">Coagulants Calculator</h2>
+                
+                <div style="background: #f8f9fa; padding: 20px; border-radius: 10px; margin-bottom: 25px;">
+                    <h3 style="margin-bottom: 15px; color: #00b1ca; font-size: 18px;">Plant Configuration</h3>
+                    <div style="display: flex; flex-direction: column; gap: 12px;">
+                        <label style="font-weight: 600; font-size: 15px;">Plant Size (MLD):</label>
+                        <input type="number" id="mldInputCoag" value="0.5" step="0.1" min="0.1" 
+                               style="padding: 12px; border: 2px solid #e0e0e0; border-radius: 8px; width: 100%; font-size: 16px; max-width: 300px;"
+                               oninput="calculateCoagulants()">
+                        <span style="color: #666; font-size: 13px;">Megaliters per day</span>
+                        
+                        <label style="font-weight: 600; font-size: 15px; margin-top: 15px;">Target Dosage (mg/L):</label>
+                        <input type="number" id="coagDosage" value="10" step="1" min="1" 
+                               style="padding: 12px; border: 2px solid #e0e0e0; border-radius: 8px; width: 100%; font-size: 16px; max-width: 300px;"
+                               oninput="calculateCoagulants()">
+                        <span style="color: #666; font-size: 13px;">Milligrams per liter</span>
+                    </div>
+                </div>
+
+                <div style="margin-top: 20px; padding: 20px; background: linear-gradient(135deg, #4f4f4f 0%, #f9bb32 100%); border-radius: 10px; color: white;">
+                    <h3 style="margin-bottom: 15px; font-size: 18px;">Coagulant Usage Results</h3>
+                    <div style="display: grid; grid-template-columns: 1fr; gap: 15px;">
+                        <div style="background: rgba(255,255,255,0.2); padding: 20px; border-radius: 8px;">
+                            <div style="font-size: 14px; margin-bottom: 8px; opacity: 0.9;">Daily Requirement</div>
+                            <div style="font-size: 32px; font-weight: 700;" id="coagDaily">0</div>
+                            <div style="font-size: 14px; opacity: 0.9; margin-top: 5px;">Kg/Day</div>
+                        </div>
+                        <div style="background: rgba(255,255,255,0.2); padding: 20px; border-radius: 8px;">
+                            <div style="font-size: 14px; margin-bottom: 8px; opacity: 0.9;">Monthly Requirement</div>
+                            <div style="font-size: 32px; font-weight: 700;" id="coagMonthly">0</div>
+                            <div style="font-size: 14px; opacity: 0.9; margin-top: 5px;">Kg/Month</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script>
+        // Login functionality
+        document.getElementById('loginForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            const username = document.getElementById('username').value;
+            const password = document.getElementById('password').value;
+
+            if (username === 'demo' && password === 'password') {
+                login(username);
+            } else {
+                alert('Invalid credentials! Try username: demo, password: password');
+            }
+        });
+
+        function login(username) {
+            document.getElementById('loginScreen').classList.add('hidden');
+            document.getElementById('desktop').classList.add('visible');
+            document.getElementById('userName').textContent = username;
+            document.getElementById('profileName').textContent = username.charAt(0).toUpperCase() + username.slice(1) + ' User';
+            document.getElementById('userAvatar').textContent = username.charAt(0).toUpperCase();
+        }
+
+        function logout() {
+            document.getElementById('loginScreen').classList.remove('hidden');
+            document.getElementById('desktop').classList.remove('visible');
+            document.getElementById('username').value = '';
+            document.getElementById('password').value = '';
+            closeAllWindows();
+        }
+
+        // Time display
+        function updateTime() {
+            const now = new Date();
+            const hours = now.getHours().toString().padStart(2, '0');
+            const minutes = now.getMinutes().toString().padStart(2, '0');
+            document.getElementById('timeDisplay').textContent = `${hours}:${minutes}`;
+        }
+        updateTime();
+        setInterval(updateTime, 1000);
+
+        // Window management
+        const openWindows = new Set();
+
+        function openWindow(appName) {
+            const window = document.getElementById(`window-${appName}`);
+            window.classList.add('active');
+            openWindows.add(appName);
+            updateTaskbar();
+            bringToFront(window);
+        }
+
+        function closeWindow(appName) {
+            const window = document.getElementById(`window-${appName}`);
+            window.classList.remove('active');
+            openWindows.delete(appName);
+            updateTaskbar();
+        }
+
+        function closeAllWindows() {
+            openWindows.forEach(appName => closeWindow(appName));
+        }
+
+        function updateTaskbar() {
+            const taskbar = document.getElementById('taskbar');
+            taskbar.innerHTML = '';
+            
+            openWindows.forEach(appName => {
+                const icon = document.createElement('div');
+                icon.className = 'taskbar-icon active';
+                icon.textContent = getAppIcon(appName);
+                icon.onclick = () => toggleWindow(appName);
+                taskbar.appendChild(icon);
+            });
+        }
+
+        function getAppIcon(appName) {
+            const icons = {
+                profile: '👤',
+                messages: '💬',
+                settings: '⚙️',
+                files: '📁',
+                calendar: '📅',
+                analytics: '📊',
+                support: '🎧',
+                store: '🛒',
+                dosage: '💊'
+            };
+            return icons[appName] || '📱';
+        }
+
+        function toggleWindow(appName) {
+            const window = document.getElementById(`window-${appName}`);
+            if (window.style.display === 'none') {
+                window.style.display = 'flex';
+            }
+            bringToFront(window);
+        }
+
+        let highestZIndex = 1000;
+
+        function bringToFront(window) {
+            highestZIndex++;
+            window.style.zIndex = highestZIndex;
+        }
+
+        // Draggable windows (disabled on mobile)
+        const isMobile = window.matchMedia('(max-width: 768px)').matches;
+        
+        if (!isMobile) {
+            document.querySelectorAll('.window').forEach(window => {
+                const header = window.querySelector('.window-header');
+                let isDragging = false;
+                let currentX;
+                let currentY;
+                let initialX;
+                let initialY;
+
+                header.addEventListener('mousedown', dragStart);
+
+                function dragStart(e) {
+                    if (e.target.classList.contains('window-control')) return;
+                    
+                    initialX = e.clientX - window.offsetLeft;
+                    initialY = e.clientY - window.offsetTop;
+                    isDragging = true;
+                    bringToFront(window);
+                }
+
+                document.addEventListener('mousemove', drag);
+                document.addEventListener('mouseup', dragEnd);
+
+                function drag(e) {
+                    if (isDragging) {
+                        e.preventDefault();
+                        currentX = e.clientX - initialX;
+                        currentY = e.clientY - initialY;
+                        window.style.left = currentX + 'px';
+                        window.style.top = currentY + 'px';
+                    }
+                }
+
+                function dragEnd() {
+                    isDragging = false;
+                }
+
+                window.addEventListener('mousedown', () => bringToFront(window));
+            });
+        }
+
+        // Chlorine Product Calculator Logic
+        const products = [
+            { name: 'ClO2 (Chlorine Dioxide)', ppm: 80000, cost: 6650, ppmRequired: 0.6 },
+            { name: 'Sodium Hypochlorite', ppm: 100000, cost: 6200, ppmRequired: 5 },
+            { name: 'Calcium Hypochlorite (HTH Granules)', ppm: 650000, cost: 45000, ppmRequired: 5 },
+            { name: 'Chlorine Gas', ppm: 1000000, cost: 18000, ppmRequired: 5 },
+            { name: 'SDIC', ppm: 600000, cost: 42500, ppmRequired: 5 },
+            { name: 'TCCA', ppm: 900000, cost: 42500, ppmRequired: 5 }
+        ];
+
+        function calculateDosage() {
+            const treatmentSize = 1000000; // 1 Megaliter
+            const mld = parseFloat(document.getElementById('mldInput').value) || 0;
+
+            // Find TCCA product
+            const tccaProduct = products.find(p => p.name === 'TCCA');
+            const tccaKgPerML = treatmentSize / (tccaProduct.ppm / tccaProduct.ppmRequired);
+
+            // Calculate TCCA usage
+            const tccaDaily = mld * tccaKgPerML;
+            const tccaMonthly = tccaDaily * 30;
+
+            document.getElementById('tccaDaily').textContent = tccaDaily.toLocaleString(undefined, {maximumFractionDigits: 2});
+            document.getElementById('tccaMonthly').textContent = tccaMonthly.toLocaleString(undefined, {maximumFractionDigits: 2});
+        }
+
+        // Calculator navigation functions
+        function showCalculator(type) {
+            document.getElementById('calculatorMenu').style.display = 'none';
+            document.getElementById('chlorineCalculator').style.display = 'none';
+            document.getElementById('chlorinedioxideCalculator').style.display = 'none';
+            document.getElementById('coagulantsCalculator').style.display = 'none';
+            
+            if (type === 'chlorine') {
+                document.getElementById('chlorineCalculator').style.display = 'block';
+                document.getElementById('dosageTitle').textContent = 'Chlorine Calculator';
+                calculateDosage();
+            } else if (type === 'chlorinedioxide') {
+                document.getElementById('chlorinedioxideCalculator').style.display = 'block';
+                document.getElementById('dosageTitle').textContent = 'Chlorine Dioxide Calculator';
+                calculateClO2();
+            } else if (type === 'coagulants') {
+                document.getElementById('coagulantsCalculator').style.display = 'block';
+                document.getElementById('dosageTitle').textContent = 'Coagulants Calculator';
+                calculateCoagulants();
+            }
+        }
+
+        function showCalculatorMenu() {
+            document.getElementById('calculatorMenu').style.display = 'block';
+            document.getElementById('chlorineCalculator').style.display = 'none';
+            document.getElementById('chlorinedioxideCalculator').style.display = 'none';
+            document.getElementById('coagulantsCalculator').style.display = 'none';
+            document.getElementById('dosageTitle').textContent = 'Dosage Calculators';
+        }
+
+        // ClO2 Calculator
+        function calculateClO2() {
+            const treatmentSize = 1000000;
+            const mld = parseFloat(document.getElementById('mldInputClO2').value) || 0;
+            const clo2Product = products.find(p => p.name === 'ClO2 (Chlorine Dioxide)');
+            const clo2KgPerML = treatmentSize / (clo2Product.ppm / clo2Product.ppmRequired);
+            const clo2Daily = mld * clo2KgPerML;
+            const clo2Monthly = clo2Daily * 30;
+            document.getElementById('clo2Daily').textContent = clo2Daily.toLocaleString(undefined, {maximumFractionDigits: 2});
+            document.getElementById('clo2Monthly').textContent = clo2Monthly.toLocaleString(undefined, {maximumFractionDigits: 2});
+        }
+
+        // Coagulants Calculator
+        function calculateCoagulants() {
+            const mld = parseFloat(document.getElementById('mldInputCoag').value) || 0;
+            const dosage = parseFloat(document.getElementById('coagDosage').value) || 0;
+            const coagDaily = mld * dosage;
+            const coagMonthly = coagDaily * 30;
+            document.getElementById('coagDaily').textContent = coagDaily.toLocaleString(undefined, {maximumFractionDigits: 2});
+            document.getElementById('coagMonthly').textContent = coagMonthly.toLocaleString(undefined, {maximumFractionDigits: 2});
+        }
+
+        // Initialize calculator on page load
+        window.addEventListener('load', function() {
+            calculateDosage();
+            calculateClO2();
+            calculateCoagulants();
+        });
+
+        // Chatbot integration
+        function openChatbot() {
+            if (window.chatbase) {
+                window.chatbase('open');
+            }
+        }
+
+        // PWA service worker registration
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', function () {
+                navigator.serviceWorker.register('sw.js').catch(function (err) {
+                    console.warn('SW registration failed:', err);
+                });
+            });
+        }
+
+        // Optional: "Add to Home Screen" prompt handling for supported browsers
+        let deferredInstallPrompt = null;
+        window.addEventListener('beforeinstallprompt', function (e) {
+            e.preventDefault();
+            deferredInstallPrompt = e;
+        });
+        window.installHadronApp = function () {
+            if (deferredInstallPrompt) {
+                deferredInstallPrompt.prompt();
+                deferredInstallPrompt.userChoice.finally(function () {
+                    deferredInstallPrompt = null;
+                });
+            }
+        };
+    </script>
+</body>
+</html>
