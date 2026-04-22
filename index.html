@@ -1557,10 +1557,28 @@
                         <span style="color: #666; font-size: 13px;">Megaliters per day</span>
                         
                         <label style="font-weight: 600; font-size: 15px; margin-top: 15px;">Target Dosage (mg/L):</label>
-                        <input type="number" id="coagDosage" value="10" step="1" min="1" 
+                        <input type="number" id="coagDosage" value="10" step="1" min="1"
                                style="padding: 12px; border: 2px solid #e0e0e0; border-radius: 8px; width: 100%; font-size: 16px; max-width: 300px;"
                                oninput="calculateCoagulants()">
                         <span style="color: #666; font-size: 13px;">Milligrams per liter</span>
+
+                        <label style="font-weight: 600; font-size: 15px; margin-top: 15px;">Plant Operating Hours per Day:</label>
+                        <input type="number" id="coagHours" value="24" step="0.5" min="0.5" max="24"
+                               style="padding: 12px; border: 2px solid #e0e0e0; border-radius: 8px; width: 100%; font-size: 16px; max-width: 300px;"
+                               oninput="calculateCoagulants()">
+                        <span style="color: #666; font-size: 13px;">How many hours per day the plant runs (drives pump flow rate)</span>
+
+                        <label style="font-weight: 600; font-size: 15px; margin-top: 15px;">Product Active Strength (%):</label>
+                        <input type="number" id="coagStrength" value="100" step="0.1" min="0.1" max="100"
+                               style="padding: 12px; border: 2px solid #e0e0e0; border-radius: 8px; width: 100%; font-size: 16px; max-width: 300px;"
+                               oninput="calculateCoagulants()">
+                        <span style="color: #666; font-size: 13px;">Typical: PAC 18 % · Ferric chloride 40 % · Alum 48 % · Polymer emulsion 40 % · Dry product 100 %</span>
+
+                        <label style="font-weight: 600; font-size: 15px; margin-top: 15px;">Product Density (kg/L):</label>
+                        <input type="number" id="coagDensity" value="1.00" step="0.01" min="0.5" max="2"
+                               style="padding: 12px; border: 2px solid #e0e0e0; border-radius: 8px; width: 100%; font-size: 16px; max-width: 300px;"
+                               oninput="calculateCoagulants()">
+                        <span style="color: #666; font-size: 13px;">Typical: PAC 18 % ≈ 1.20 · Ferric 40 % ≈ 1.40 · Alum 48 % ≈ 1.33 · Water 1.00</span>
                     </div>
                 </div>
 
@@ -1570,12 +1588,22 @@
                         <div style="background: rgba(255,255,255,0.2); padding: 20px; border-radius: 8px;">
                             <div style="font-size: 14px; margin-bottom: 8px; opacity: 0.9;">Daily Requirement</div>
                             <div style="font-size: 32px; font-weight: 700;" id="coagDaily">0</div>
-                            <div style="font-size: 14px; opacity: 0.9; margin-top: 5px;">Kg/Day</div>
+                            <div style="font-size: 14px; opacity: 0.9; margin-top: 5px;">Kg/Day (active)</div>
                         </div>
                         <div style="background: rgba(255,255,255,0.2); padding: 20px; border-radius: 8px;">
                             <div style="font-size: 14px; margin-bottom: 8px; opacity: 0.9;">Monthly Requirement</div>
                             <div style="font-size: 32px; font-weight: 700;" id="coagMonthly">0</div>
-                            <div style="font-size: 14px; opacity: 0.9; margin-top: 5px;">Kg/Month</div>
+                            <div style="font-size: 14px; opacity: 0.9; margin-top: 5px;">Kg/Month (active)</div>
+                        </div>
+                        <div style="background: rgba(255,255,255,0.2); padding: 20px; border-radius: 8px;">
+                            <div style="font-size: 14px; margin-bottom: 8px; opacity: 0.9;">Pump Flow Rate</div>
+                            <div style="font-size: 32px; font-weight: 700;" id="coagPumpLh">0.00</div>
+                            <div style="font-size: 14px; opacity: 0.9; margin-top: 5px;">L/hour (as-delivered product)</div>
+                        </div>
+                        <div style="background: rgba(255,255,255,0.2); padding: 20px; border-radius: 8px;">
+                            <div style="font-size: 14px; margin-bottom: 8px; opacity: 0.9;">Pump Calibration Target</div>
+                            <div style="font-size: 32px; font-weight: 700;" id="coagPumpMlmin">0.00</div>
+                            <div style="font-size: 14px; opacity: 0.9; margin-top: 5px;">mL/min · catch in measuring cylinder for 1 min to verify</div>
                         </div>
                     </div>
                 </div>
@@ -2578,13 +2606,42 @@
         }
 
         // Coagulants Calculator
+        //
+        // Daily kg (as active) = MLD × dose(mg/L)
+        //   (1 ML × 1 mg/L = 1 kg of active chemical)
+        //
+        // Pump flow rate — we dose the product AS DELIVERED, not the active fraction:
+        //   kg product / hour     = (daily kg active / strength%) / operating hours
+        //   L product / hour      = kg product per hour / density (kg/L)
+        //   mL product / minute   = L/h × 1000 / 60
+        //
+        // 'Plant operating hours' is how long per day the plant runs and the
+        // pump meters chemical — so a 24/7 plant divides by 24, a plant that
+        // runs only during day shift divides by 8.
         function calculateCoagulants() {
-            const mld = parseFloat(document.getElementById('mldInputCoag').value) || 0;
-            const dosage = parseFloat(document.getElementById('coagDosage').value) || 0;
-            const coagDaily = mld * dosage;
+            const mld      = parseFloat(document.getElementById('mldInputCoag').value) || 0;
+            const dosage   = parseFloat(document.getElementById('coagDosage').value) || 0;
+            const hours    = parseFloat(document.getElementById('coagHours').value) || 0;
+            const strength = parseFloat(document.getElementById('coagStrength').value) || 0;
+            const density  = parseFloat(document.getElementById('coagDensity').value) || 0;
+
+            const coagDaily   = mld * dosage;             // kg/day as active ingredient
             const coagMonthly = coagDaily * 30;
-            document.getElementById('coagDaily').textContent = coagDaily.toLocaleString(undefined, {maximumFractionDigits: 2});
-            document.getElementById('coagMonthly').textContent = coagMonthly.toLocaleString(undefined, {maximumFractionDigits: 2});
+
+            // Pump flow — product as delivered
+            let pumpLh = 0;
+            let pumpMlmin = 0;
+            if (hours > 0 && strength > 0 && density > 0) {
+                const productKgDay = coagDaily / (strength / 100);   // kg of as-delivered product per day
+                const productKgH   = productKgDay / hours;
+                pumpLh   = productKgH / density;                     // L/h
+                pumpMlmin = pumpLh * 1000 / 60;                      // mL/min
+            }
+
+            document.getElementById('coagDaily').textContent    = coagDaily.toLocaleString(undefined,   { maximumFractionDigits: 2 });
+            document.getElementById('coagMonthly').textContent  = coagMonthly.toLocaleString(undefined, { maximumFractionDigits: 2 });
+            document.getElementById('coagPumpLh').textContent   = pumpLh.toLocaleString(undefined,      { maximumFractionDigits: 2 });
+            document.getElementById('coagPumpMlmin').textContent= pumpMlmin.toLocaleString(undefined,   { maximumFractionDigits: 1 });
         }
 
         // LSI / RSI Water Index Calculator
@@ -2921,20 +2978,30 @@
             coagulants: {
                 label: 'Coagulant Dosage',
                 collect: function () {
-                    const mld  = parseFloat(document.getElementById('mldInputCoag').value);
-                    const dose = parseFloat(document.getElementById('coagDosage').value);
-                    const day  = document.getElementById('coagDaily').textContent;
-                    const mth  = document.getElementById('coagMonthly').textContent;
+                    const mld      = parseFloat(document.getElementById('mldInputCoag').value);
+                    const dose     = parseFloat(document.getElementById('coagDosage').value);
+                    const hours    = parseFloat(document.getElementById('coagHours').value);
+                    const strength = parseFloat(document.getElementById('coagStrength').value);
+                    const density  = parseFloat(document.getElementById('coagDensity').value);
+                    const day      = document.getElementById('coagDaily').textContent;
+                    const mth      = document.getElementById('coagMonthly').textContent;
+                    const lh       = document.getElementById('coagPumpLh').textContent;
+                    const mlmin    = document.getElementById('coagPumpMlmin').textContent;
                     return {
                         inputs: [
-                            { label: 'Plant Size',    value: mld + ' MLD' },
-                            { label: 'Target Dosage', value: dose + ' mg/L' }
+                            { label: 'Plant Size',          value: mld + ' MLD' },
+                            { label: 'Target Dosage',       value: dose + ' mg/L' },
+                            { label: 'Operating Hours/Day', value: hours + ' h' },
+                            { label: 'Product Strength',    value: strength + ' %' },
+                            { label: 'Product Density',     value: density + ' kg/L' }
                         ],
                         results: [
-                            { label: 'Daily Requirement',   value: day + ' Kg/Day' },
-                            { label: 'Monthly Requirement', value: mth + ' Kg/Month' }
+                            { label: 'Daily Requirement',   value: day + ' Kg/Day (active)' },
+                            { label: 'Monthly Requirement', value: mth + ' Kg/Month (active)' },
+                            { label: 'Pump Flow Rate',      value: lh + ' L/h' },
+                            { label: 'Calibration Target',  value: mlmin + ' mL/min' }
                         ],
-                        summary: mld + ' MLD · ' + dose + ' mg/L → ' + day + ' Kg/Day'
+                        summary: mld + ' MLD · ' + dose + ' mg/L · ' + hours + ' h → ' + lh + ' L/h'
                     };
                 }
             },
