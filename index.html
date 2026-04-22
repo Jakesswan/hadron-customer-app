@@ -1451,6 +1451,14 @@
                             <div style="font-size: 13px; opacity: 0.9; font-weight: normal;">Calculate coagulant dosage requirements</div>
                         </div>
                     </button>
+
+                    <button onclick="showCalculator('clo2skid')" style="padding: 20px; background: linear-gradient(135deg, #00b1ca 0%, #f9bb32 100%); color: white; border: none; border-radius: 12px; cursor: pointer; font-size: 16px; font-weight: 600; text-align: left; display: flex; align-items: center; gap: 15px; transition: transform 0.2s;">
+                        <span style="font-size: 32px;">🛢️</span>
+                        <div>
+                            <div style="font-size: 18px; margin-bottom: 5px;">Chlorine Dioxide Skid Sizing</div>
+                            <div style="font-size: 13px; opacity: 0.9; font-weight: normal;">Size a ClO₂ dosing skid · pump, tank &amp; consumption</div>
+                        </div>
+                    </button>
                 </div>
             </div>
 
@@ -1609,6 +1617,100 @@
                 </div>
                 <button onclick="saveCalculation('coagulants', this)" class="save-calc-btn">💾 Save to History</button>
                 <button onclick="exportPdf('coagulants')" class="pdf-calc-btn">📄 Export PDF</button>
+            </div>
+
+            <!-- Chlorine Dioxide Skid Sizing Calculator -->
+            <div id="clo2skidCalculator" style="display: none;">
+                <button onclick="showCalculatorMenu()" style="padding: 8px 16px; background: rgba(0,177,202,0.1); color: #00b1ca; border: 1px solid #00b1ca; border-radius: 8px; cursor: pointer; font-size: 14px; margin-bottom: 20px;">
+                    ← Back to Menu
+                </button>
+                <h2 style="margin-bottom: 20px;">Chlorine Dioxide Skid Sizing</h2>
+
+                <div style="background: #f8f9fa; padding: 20px; border-radius: 10px; margin-bottom: 25px;">
+                    <h3 style="margin-bottom: 15px; color: #00b1ca; font-size: 18px;">Plant Configuration</h3>
+                    <div style="display: flex; flex-direction: column; gap: 12px;">
+                        <label style="font-weight: 600; font-size: 15px;">Application / Water Source:</label>
+                        <select id="skidApp" onchange="onSkidAppChange(); calculateClO2Skid()"
+                                style="padding: 12px; border: 2px solid #e0e0e0; border-radius: 8px; width: 100%; font-size: 16px; max-width: 300px; background: #fff;">
+                            <option value="0.5">Municipal</option>
+                            <option value="0.8">Borehole</option>
+                            <option value="1.2">Dam / River</option>
+                            <option value="1.5">Effluent – Municipal</option>
+                            <option value="2.0">Effluent – Industrial</option>
+                            <option value="custom">Custom ppm…</option>
+                        </select>
+                        <span style="color: #666; font-size: 13px;">Auto-fills a starting ClO₂ dose (editable below)</span>
+
+                        <label style="font-weight: 600; font-size: 15px; margin-top: 15px;">Target ClO₂ Dose (ppm):</label>
+                        <input type="number" id="skidDose" value="0.5" step="0.05" min="0.05"
+                               style="padding: 12px; border: 2px solid #e0e0e0; border-radius: 8px; width: 100%; font-size: 16px; max-width: 300px;"
+                               oninput="calculateClO2Skid()">
+                        <span style="color: #666; font-size: 13px;">mg/L in final water (typical 0.3 – 2.0 ppm)</span>
+
+                        <label style="font-weight: 600; font-size: 15px; margin-top: 15px;">Plant Flow Rate (L/h):</label>
+                        <input type="number" id="skidFlow" value="2200" step="50" min="10"
+                               style="padding: 12px; border: 2px solid #e0e0e0; border-radius: 8px; width: 100%; font-size: 16px; max-width: 300px;"
+                               oninput="calculateClO2Skid()">
+                        <span style="color: #666; font-size: 13px;">Litres per hour treated water</span>
+
+                        <label style="font-weight: 600; font-size: 15px; margin-top: 15px;">Operating Hours / Day:</label>
+                        <input type="number" id="skidHours" value="24" step="0.5" min="0.5" max="24"
+                               style="padding: 12px; border: 2px solid #e0e0e0; border-radius: 8px; width: 100%; font-size: 16px; max-width: 300px;"
+                               oninput="calculateClO2Skid()">
+                        <span style="color: #666; font-size: 13px;">Hours per day the plant runs</span>
+
+                        <label style="font-weight: 600; font-size: 15px; margin-top: 15px;">ClO₂ Stock Strength (ppm):</label>
+                        <input type="number" id="skidStock" value="2500" step="50" min="100"
+                               style="padding: 12px; border: 2px solid #e0e0e0; border-radius: 8px; width: 100%; font-size: 16px; max-width: 300px;"
+                               oninput="calculateClO2Skid()">
+                        <span style="color: #666; font-size: 13px;">Typical Hadron ClO₂ generator output ≈ 2500 ppm</span>
+                    </div>
+                </div>
+
+                <div style="margin-top: 20px; padding: 20px; background: linear-gradient(135deg, #4f4f4f 0%, #f9bb32 100%); border-radius: 10px; color: white;">
+                    <h3 style="margin-bottom: 15px; font-size: 18px;">ClO₂ Consumption</h3>
+                    <div style="display: grid; grid-template-columns: 1fr; gap: 15px;">
+                        <div style="background: rgba(255,255,255,0.2); padding: 20px; border-radius: 8px;">
+                            <div style="font-size: 14px; margin-bottom: 8px; opacity: 0.9;">Dosing Pump Flow</div>
+                            <div style="font-size: 32px; font-weight: 700;" id="skidLh">0.00</div>
+                            <div style="font-size: 14px; opacity: 0.9; margin-top: 5px;">L/hour ClO₂ solution</div>
+                        </div>
+                        <div style="background: rgba(255,255,255,0.2); padding: 20px; border-radius: 8px;">
+                            <div style="font-size: 14px; margin-bottom: 8px; opacity: 0.9;">Daily Consumption</div>
+                            <div style="font-size: 32px; font-weight: 700;" id="skidLday">0.00</div>
+                            <div style="font-size: 14px; opacity: 0.9; margin-top: 5px;">L/day</div>
+                        </div>
+                        <div style="background: rgba(255,255,255,0.2); padding: 20px; border-radius: 8px;">
+                            <div style="font-size: 14px; margin-bottom: 8px; opacity: 0.9;">Weekly Consumption</div>
+                            <div style="font-size: 32px; font-weight: 700;" id="skidLweek">0.00</div>
+                            <div style="font-size: 14px; opacity: 0.9; margin-top: 5px;">L/week</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div style="margin-top: 20px; padding: 20px; background: linear-gradient(135deg, #00b1ca 0%, #4f4f4f 100%); border-radius: 10px; color: white;">
+                    <h3 style="margin-bottom: 15px; font-size: 18px;">Recommended Skid</h3>
+                    <div style="display: grid; grid-template-columns: 1fr; gap: 15px;">
+                        <div style="background: rgba(255,255,255,0.2); padding: 20px; border-radius: 8px;">
+                            <div style="font-size: 14px; margin-bottom: 8px; opacity: 0.9;">Tank Size</div>
+                            <div style="font-size: 28px; font-weight: 700;" id="skidTank">—</div>
+                            <div style="font-size: 13px; opacity: 0.9; margin-top: 5px;" id="skidMaxFlow">Max plant flow: —</div>
+                        </div>
+                        <div style="background: rgba(255,255,255,0.2); padding: 20px; border-radius: 8px;">
+                            <div style="font-size: 14px; margin-bottom: 8px; opacity: 0.9;">Dosing Pump</div>
+                            <div style="font-size: 22px; font-weight: 700;" id="skidPump">—</div>
+                            <div style="font-size: 13px; opacity: 0.9; margin-top: 5px;" id="skidPressure">Max pressure: —</div>
+                        </div>
+                        <div style="background: rgba(255,255,255,0.2); padding: 20px; border-radius: 8px;">
+                            <div style="font-size: 14px; margin-bottom: 8px; opacity: 0.9;">Refill Interval (est.)</div>
+                            <div style="font-size: 28px; font-weight: 700;" id="skidRefill">—</div>
+                            <div style="font-size: 13px; opacity: 0.9; margin-top: 5px;">Days between tank refills</div>
+                        </div>
+                    </div>
+                    <div id="skidNote" style="margin-top: 15px; padding: 12px; background: rgba(255,255,255,0.15); border-radius: 8px; font-size: 13px; line-height: 1.5;"></div>
+                </div>
+                <button onclick="saveCalculation('clo2skid', this)" class="save-calc-btn">💾 Save to History</button>
+                <button onclick="exportPdf('clo2skid')" class="pdf-calc-btn">📄 Export PDF</button>
             </div>
         </div>
     </div>
@@ -2566,7 +2668,8 @@
             document.getElementById('chlorineCalculator').style.display = 'none';
             document.getElementById('chlorinedioxideCalculator').style.display = 'none';
             document.getElementById('coagulantsCalculator').style.display = 'none';
-            
+            document.getElementById('clo2skidCalculator').style.display = 'none';
+
             if (type === 'chlorine') {
                 document.getElementById('chlorineCalculator').style.display = 'block';
                 document.getElementById('dosageTitle').textContent = 'Chlorine Calculator';
@@ -2579,6 +2682,10 @@
                 document.getElementById('coagulantsCalculator').style.display = 'block';
                 document.getElementById('dosageTitle').textContent = 'Coagulants Calculator';
                 calculateCoagulants();
+            } else if (type === 'clo2skid') {
+                document.getElementById('clo2skidCalculator').style.display = 'block';
+                document.getElementById('dosageTitle').textContent = 'ClO₂ Skid Sizing';
+                calculateClO2Skid();
             }
         }
 
@@ -2587,7 +2694,92 @@
             document.getElementById('chlorineCalculator').style.display = 'none';
             document.getElementById('chlorinedioxideCalculator').style.display = 'none';
             document.getElementById('coagulantsCalculator').style.display = 'none';
+            document.getElementById('clo2skidCalculator').style.display = 'none';
             document.getElementById('dosageTitle').textContent = 'Dosage Calculators';
+        }
+
+        // --- Chlorine Dioxide Skid Sizing ---
+        // Skid catalog derived from the Hadron Borehole Dosing Skids sheet.
+        // Sorted ascending so the first match (maxFlow >= plantFlow) is the smallest adequate skid.
+        const CLO2_SKIDS = [
+            { tank:   50, maxFlow:  1500, pump: 'DP LARA PR 2 L/h',   pressure: '10 bar' },
+            { tank:  100, maxFlow:  3500, pump: 'DP LARA PR 2 L/h',   pressure: '10 bar' },
+            { tank:  200, maxFlow:  7500, pump: 'DP LARA PR 5 L/h',   pressure: '7 bar'  },
+            { tank:  500, maxFlow: 18000, pump: 'DP NOVA DMPR 10 L/h', pressure: '10 bar' },
+            { tank: 1000, maxFlow: 37000, pump: 'DP NOVA DMPR 25 L/h', pressure: '5 bar'  },
+            { tank: 5000, maxFlow: 75000, pump: 'DP NOVA DMPR 25 L/h', pressure: '5 bar'  }
+        ];
+
+        function onSkidAppChange() {
+            const sel = document.getElementById('skidApp');
+            const v = sel.value;
+            if (v !== 'custom') {
+                document.getElementById('skidDose').value = v;
+            }
+        }
+
+        function calculateClO2Skid() {
+            const dose   = parseFloat(document.getElementById('skidDose').value)  || 0;
+            const flow   = parseFloat(document.getElementById('skidFlow').value)  || 0;
+            const hours  = parseFloat(document.getElementById('skidHours').value) || 0;
+            const stock  = parseFloat(document.getElementById('skidStock').value) || 0;
+
+            let lh = 0, lday = 0, lweek = 0;
+            if (dose > 0 && flow > 0 && stock > 0) {
+                lh    = (flow * dose) / stock;   // L/h dosed stock solution
+                lday  = lh * hours;
+                lweek = lday * 7;
+            }
+
+            document.getElementById('skidLh').textContent    = lh.toLocaleString(undefined,    { maximumFractionDigits: 2 });
+            document.getElementById('skidLday').textContent  = lday.toLocaleString(undefined,  { maximumFractionDigits: 2 });
+            document.getElementById('skidLweek').textContent = lweek.toLocaleString(undefined, { maximumFractionDigits: 2 });
+
+            // Pick smallest skid whose max plant flow covers the user's plant flow
+            const skid = CLO2_SKIDS.find(s => flow <= s.maxFlow);
+            const tankEl   = document.getElementById('skidTank');
+            const maxFlowEl= document.getElementById('skidMaxFlow');
+            const pumpEl   = document.getElementById('skidPump');
+            const pressEl  = document.getElementById('skidPressure');
+            const refillEl = document.getElementById('skidRefill');
+            const noteEl   = document.getElementById('skidNote');
+
+            if (!skid) {
+                tankEl.textContent    = 'Custom';
+                maxFlowEl.textContent = 'Plant flow exceeds standard skid range (75 000 L/h)';
+                pumpEl.textContent    = 'Multiple skids / custom engineered';
+                pressEl.textContent   = '—';
+                refillEl.textContent  = '—';
+                noteEl.textContent    = 'Flow rate is above the largest standard Hadron skid. Contact engineering for a multi-skid layout or a bespoke sizing.';
+                return;
+            }
+
+            tankEl.textContent    = skid.tank + ' L';
+            maxFlowEl.textContent = 'Max plant flow: ' + skid.maxFlow.toLocaleString() + ' L/h';
+            pumpEl.textContent    = skid.pump;
+            pressEl.textContent   = 'Max pressure: ' + skid.pressure;
+
+            const refillDays = lday > 0 ? (skid.tank / lday) : 0;
+            refillEl.textContent = refillDays > 0
+                ? refillDays.toLocaleString(undefined, { maximumFractionDigits: 1 }) + ' days'
+                : '—';
+
+            // Flag if pump is over/under-utilised
+            const pumpCap = parseFloat((skid.pump.match(/([\d.]+)\s*L\/h/) || [])[1]) || 0;
+            const warn = [];
+            if (pumpCap && lh > pumpCap * 0.9) {
+                warn.push('⚠ Dose rate is near the pump\'s upper limit (' + pumpCap + ' L/h). Consider the next skid up.');
+            }
+            if (pumpCap && lh > 0 && lh < pumpCap * 0.1) {
+                warn.push('ℹ Dose rate is below 10 % of the pump stroke — control resolution may suffer. A smaller pump could give tighter control.');
+            }
+            if (refillDays && refillDays < 3) {
+                warn.push('⚠ Refill interval is short (< 3 days). A larger tank may be more practical for site logistics.');
+            }
+            if (refillDays && refillDays > 30) {
+                warn.push('ℹ Very long refill interval — verify ClO₂ stock stability for your storage conditions.');
+            }
+            noteEl.textContent = warn.join('  ');
         }
 
         // ClO2 Calculator
@@ -3002,6 +3194,43 @@
                             { label: 'Calibration Target',  value: mlmin + ' mL/min' }
                         ],
                         summary: mld + ' MLD · ' + dose + ' mg/L · ' + hours + ' h → ' + lh + ' L/h'
+                    };
+                }
+            },
+            clo2skid: {
+                label: 'ClO₂ Dosing Skid Sizing',
+                collect: function () {
+                    const appSel = document.getElementById('skidApp');
+                    const appTxt = appSel.options[appSel.selectedIndex].textContent;
+                    const dose   = parseFloat(document.getElementById('skidDose').value);
+                    const flow   = parseFloat(document.getElementById('skidFlow').value);
+                    const hours  = parseFloat(document.getElementById('skidHours').value);
+                    const stock  = parseFloat(document.getElementById('skidStock').value);
+                    const lh     = document.getElementById('skidLh').textContent;
+                    const lday   = document.getElementById('skidLday').textContent;
+                    const lweek  = document.getElementById('skidLweek').textContent;
+                    const tank   = document.getElementById('skidTank').textContent;
+                    const mxf    = document.getElementById('skidMaxFlow').textContent;
+                    const pump   = document.getElementById('skidPump').textContent;
+                    const press  = document.getElementById('skidPressure').textContent;
+                    const refill = document.getElementById('skidRefill').textContent;
+                    return {
+                        inputs: [
+                            { label: 'Application',       value: appTxt },
+                            { label: 'Target ClO₂ Dose',  value: dose + ' ppm' },
+                            { label: 'Plant Flow',        value: flow + ' L/h' },
+                            { label: 'Operating Hours',   value: hours + ' h/day' },
+                            { label: 'ClO₂ Stock',        value: stock + ' ppm' }
+                        ],
+                        results: [
+                            { label: 'Dosing Pump Flow',     value: lh + ' L/h' },
+                            { label: 'Daily Consumption',    value: lday + ' L/day' },
+                            { label: 'Weekly Consumption',   value: lweek + ' L/week' },
+                            { label: 'Recommended Tank',     value: tank + ' (' + mxf + ')' },
+                            { label: 'Recommended Pump',     value: pump + ' — ' + press },
+                            { label: 'Refill Interval',      value: refill }
+                        ],
+                        summary: appTxt + ' · ' + flow + ' L/h · ' + dose + ' ppm → ' + lh + ' L/h · ' + tank + ' tank'
                     };
                 }
             },
