@@ -1178,6 +1178,10 @@
                     <div class="icon">📋</div>
                     <div class="app-name" data-i18n="app.history">History</div>
                 </div>
+                <div class="app-icon" onclick="openWindow('protools')">
+                    <div class="icon">🧰</div>
+                    <div class="app-name" data-i18n="app.protools">Pro Tools</div>
+                </div>
             </div>
         </div>
 
@@ -1653,6 +1657,630 @@
         </div>
     </div>
 
+    <!-- ========================================================
+         PRO TOOLS — Professional feature hub
+         Categories: Calculators · Service · Effluent · Assets ·
+                     Safety · Catalogue · Troubleshoot · Jobs ·
+                     Trends · SOPs
+         ======================================================== -->
+    <div class="window" id="window-protools">
+        <div class="window-header">
+            <button class="back-button" onclick="closeWindow('protools')">←</button>
+            <span class="window-title" data-i18n="protools.title">Pro Tools</span>
+        </div>
+        <div class="window-content">
+            <p style="color:#666;margin-bottom:16px;" data-i18n="protools.intro">Professional field toolkit. Tap any tile.</p>
+            <div class="apps-grid" style="margin:0;">
+                <div class="app-icon" onclick="openWindow('coolingtower')"><div class="icon">🏭</div><div class="app-name" data-i18n="pt.coolingtower">Cooling Tower</div></div>
+                <div class="app-icon" onclick="openWindow('rocalc')"><div class="icon">💧</div><div class="app-name" data-i18n="pt.rocalc">RO Performance</div></div>
+                <div class="app-icon" onclick="openWindow('converters')"><div class="icon">🔁</div><div class="app-name" data-i18n="pt.converters">Converters</div></div>
+                <div class="app-icon" onclick="openWindow('neutralise')"><div class="icon">⚗️</div><div class="app-name" data-i18n="pt.neutralise">Acid / Alkali</div></div>
+                <div class="app-icon" onclick="openWindow('effluent')"><div class="icon">🌊</div><div class="app-name" data-i18n="pt.effluent">Effluent Tools</div></div>
+                <div class="app-icon" onclick="openWindow('servicereport')"><div class="icon">📝</div><div class="app-name" data-i18n="pt.servicereport">Service Report</div></div>
+                <div class="app-icon" onclick="openWindow('assets')"><div class="icon">🏷️</div><div class="app-name" data-i18n="pt.assets">Assets</div></div>
+                <div class="app-icon" onclick="openWindow('safety')"><div class="icon">🦺</div><div class="app-name" data-i18n="pt.safety">Safety</div></div>
+                <div class="app-icon" onclick="openWindow('catalogue')"><div class="icon">📦</div><div class="app-name" data-i18n="pt.catalogue">Catalogue</div></div>
+                <div class="app-icon" onclick="openWindow('troubleshoot')"><div class="icon">🛠️</div><div class="app-name" data-i18n="pt.troubleshoot">Troubleshoot</div></div>
+                <div class="app-icon" onclick="openWindow('jobs')"><div class="icon">📋</div><div class="app-name" data-i18n="pt.jobs">Jobs</div></div>
+                <div class="app-icon" onclick="openWindow('trends')"><div class="icon">📈</div><div class="app-name" data-i18n="pt.trends">Trends</div></div>
+                <div class="app-icon" onclick="openWindow('sops')"><div class="icon">📚</div><div class="app-name" data-i18n="pt.sops">SOPs</div></div>
+                <div class="app-icon" onclick="openWindow('calibration')"><div class="icon">⏰</div><div class="app-name" data-i18n="pt.calibration">Calibration</div></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Cooling Tower chemistry -->
+    <div class="window" id="window-coolingtower">
+        <div class="window-header">
+            <button class="back-button" onclick="closeWindow('coolingtower')">←</button>
+            <span class="window-title">Cooling Tower</span>
+        </div>
+        <div class="window-content">
+            <h2>Cooling Tower Chemistry</h2>
+            <p style="color:#666;font-size:13px;">Enter any three and the rest are derived. Units: m³/h unless noted.</p>
+            <div class="calc-form">
+                <div class="form-group"><label>Circulation rate (m³/h)</label><input type="number" id="ct_circ" step="0.01" placeholder="e.g. 500"></div>
+                <div class="form-group"><label>ΔT across tower (°C)</label><input type="number" id="ct_dt" step="0.1" value="10"></div>
+                <div class="form-group"><label>Makeup conductivity (µS/cm)</label><input type="number" id="ct_condM" step="1" placeholder="e.g. 300"></div>
+                <div class="form-group"><label>Blowdown conductivity (µS/cm)</label><input type="number" id="ct_condB" step="1" placeholder="e.g. 1200"></div>
+                <div class="form-group"><label>Drift loss factor (%)</label><input type="number" id="ct_drift" step="0.001" value="0.02"></div>
+                <button type="button" class="calc-btn" onclick="calcCoolingTower()">Calculate</button>
+            </div>
+            <div id="ct_results" class="result-box" style="display:none;">
+                <div class="result-row"><span>Cycles of concentration:</span><strong id="ct_coc">—</strong></div>
+                <div class="result-row"><span>Evaporation (m³/h):</span><strong id="ct_evap">—</strong></div>
+                <div class="result-row"><span>Drift (m³/h):</span><strong id="ct_driftL">—</strong></div>
+                <div class="result-row"><span>Blowdown (m³/h):</span><strong id="ct_bd">—</strong></div>
+                <div class="result-row"><span>Make-up (m³/h):</span><strong id="ct_mu">—</strong></div>
+                <button onclick="saveCalculation('coolingtower', this)" class="save-calc-btn">💾 Save to History</button>
+                <button onclick="exportPdf('coolingtower')" class="pdf-calc-btn">📄 Export PDF</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- RO performance -->
+    <div class="window" id="window-rocalc">
+        <div class="window-header">
+            <button class="back-button" onclick="closeWindow('rocalc')">←</button>
+            <span class="window-title">RO Performance</span>
+        </div>
+        <div class="window-content">
+            <h2>RO Performance</h2>
+            <p style="color:#666;font-size:13px;">Recovery, rejection, concentrate TDS &amp; normalised permeate flow.</p>
+            <div class="calc-form">
+                <div class="form-group"><label>Feed flow (m³/h)</label><input type="number" id="ro_feed" step="0.01"></div>
+                <div class="form-group"><label>Permeate flow (m³/h)</label><input type="number" id="ro_perm" step="0.01"></div>
+                <div class="form-group"><label>Feed TDS (ppm)</label><input type="number" id="ro_feedTds" step="1"></div>
+                <div class="form-group"><label>Permeate TDS (ppm)</label><input type="number" id="ro_permTds" step="1"></div>
+                <div class="form-group"><label>Feed pressure (bar)</label><input type="number" id="ro_pFeed" step="0.1"></div>
+                <div class="form-group"><label>Feed temperature (°C)</label><input type="number" id="ro_temp" step="0.1" value="25"></div>
+                <button type="button" class="calc-btn" onclick="calcRO()">Calculate</button>
+            </div>
+            <div id="ro_results" class="result-box" style="display:none;">
+                <div class="result-row"><span>Recovery (%):</span><strong id="ro_rec">—</strong></div>
+                <div class="result-row"><span>Salt rejection (%):</span><strong id="ro_rej">—</strong></div>
+                <div class="result-row"><span>Concentrate flow (m³/h):</span><strong id="ro_conc">—</strong></div>
+                <div class="result-row"><span>Concentrate TDS (ppm):</span><strong id="ro_concTds">—</strong></div>
+                <div class="result-row"><span>Normalised permeate @ 25 °C (m³/h):</span><strong id="ro_norm">—</strong></div>
+                <button onclick="saveCalculation('rocalc', this)" class="save-calc-btn">💾 Save to History</button>
+                <button onclick="exportPdf('rocalc')" class="pdf-calc-btn">📄 Export PDF</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Unit converters (Molarity / Normality / ppm) -->
+    <div class="window" id="window-converters">
+        <div class="window-header">
+            <button class="back-button" onclick="closeWindow('converters')">←</button>
+            <span class="window-title">Converters</span>
+        </div>
+        <div class="window-content">
+            <h2>Molarity ↔ Normality ↔ ppm</h2>
+            <div class="calc-form">
+                <div class="form-group"><label>Concentration value</label><input type="number" id="conv_val" step="0.0001"></div>
+                <div class="form-group"><label>From unit</label>
+                    <select id="conv_from" class="settings-select">
+                        <option value="M">Molarity (mol/L)</option>
+                        <option value="N">Normality (eq/L)</option>
+                        <option value="ppm">ppm (mg/L)</option>
+                        <option value="pct">% (w/v)</option>
+                    </select>
+                </div>
+                <div class="form-group"><label>To unit</label>
+                    <select id="conv_to" class="settings-select">
+                        <option value="ppm">ppm (mg/L)</option>
+                        <option value="M">Molarity (mol/L)</option>
+                        <option value="N">Normality (eq/L)</option>
+                        <option value="pct">% (w/v)</option>
+                    </select>
+                </div>
+                <div class="form-group"><label>Molar mass (g/mol)</label><input type="number" id="conv_mw" step="0.01" placeholder="e.g. 36.46 (HCl)"></div>
+                <div class="form-group"><label>Valence / equivalents (n)</label><input type="number" id="conv_n" step="1" value="1"></div>
+                <button type="button" class="calc-btn" onclick="calcConvert()">Convert</button>
+            </div>
+            <div id="conv_results" class="result-box" style="display:none;">
+                <div class="result-row"><span>Result:</span><strong id="conv_out">—</strong></div>
+                <p style="font-size:12px;color:#666;margin-top:10px;">Common MW: HCl 36.46 · H₂SO₄ 98.08 · NaOH 40.00 · NaHSO₄ 120.06 · KMnO₄ 158.03 · Ca(OH)₂ 74.10 · NaHCO₃ 84.01 · CaCO₃ 100.09</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Acid / Alkali neutralisation -->
+    <div class="window" id="window-neutralise">
+        <div class="window-header">
+            <button class="back-button" onclick="closeWindow('neutralise')">←</button>
+            <span class="window-title">Acid / Alkali</span>
+        </div>
+        <div class="window-content">
+            <h2>Neutralisation &amp; Equivalence</h2>
+            <p style="color:#666;font-size:13px;">Quick equivalence between dry acid (NaHSO₄), HCl 32 % and H₂SO₄ 98 % for pH correction.</p>
+            <div class="calc-form">
+                <div class="form-group"><label>Target acid mass-equivalent (kg as H₂SO₄ 100 %)</label><input type="number" id="neu_eq" step="0.01" placeholder="e.g. 5"></div>
+                <button type="button" class="calc-btn" onclick="calcNeutralise()">Calculate equivalents</button>
+            </div>
+            <div id="neu_results" class="result-box" style="display:none;">
+                <div class="result-row"><span>NaHSO₄ (dry acid) equivalent:</span><strong id="neu_nahso4">—</strong></div>
+                <div class="result-row"><span>HCl 32 % m/m equivalent:</span><strong id="neu_hcl">—</strong></div>
+                <div class="result-row"><span>H₂SO₄ 98 % m/m equivalent:</span><strong id="neu_h2so4">—</strong></div>
+                <p style="font-size:12px;color:#666;margin-top:10px;">Based on stoichiometric H⁺ equivalents. Confirm with titration on live systems.</p>
+            </div>
+
+            <hr style="margin:20px 0;border:none;border-top:1px solid #eee;">
+            <h3>pH Correction</h3>
+            <div class="calc-form">
+                <div class="form-group"><label>Volume to treat (m³)</label><input type="number" id="ph_vol" step="0.1"></div>
+                <div class="form-group"><label>Current pH</label><input type="number" id="ph_cur" step="0.01"></div>
+                <div class="form-group"><label>Target pH</label><input type="number" id="ph_tgt" step="0.01" value="7.00"></div>
+                <div class="form-group"><label>Alkalinity (mg/L as CaCO₃, for acid dosing)</label><input type="number" id="ph_alk" step="1" value="100"></div>
+                <button type="button" class="calc-btn" onclick="calcPh()">Calculate</button>
+            </div>
+            <div id="ph_results" class="result-box" style="display:none;">
+                <div class="result-row"><span>Direction:</span><strong id="ph_dir">—</strong></div>
+                <div class="result-row"><span>Approx. NaOH 50 % (kg):</span><strong id="ph_naoh">—</strong></div>
+                <div class="result-row"><span>Approx. H₂SO₄ 98 % (kg):</span><strong id="ph_h2so4">—</strong></div>
+                <div class="result-row"><span>Approx. HCl 32 % (kg):</span><strong id="ph_hcl">—</strong></div>
+                <p style="font-size:12px;color:#666;margin-top:10px;">Ballpark for flat, low-buffer water. Always verify in a jar test.</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Effluent tools hub (BOD/COD, F:M, SRT, polymer jar log) -->
+    <div class="window" id="window-effluent">
+        <div class="window-header">
+            <button class="back-button" onclick="closeWindow('effluent')">←</button>
+            <span class="window-title">Effluent Tools</span>
+        </div>
+        <div class="window-content">
+            <h2>Sewage &amp; Effluent</h2>
+            <div class="apps-grid" style="margin:0;">
+                <div class="app-icon" onclick="openWindow('removalcalc')"><div class="icon">🧪</div><div class="app-name">BOD / COD / TSS</div></div>
+                <div class="app-icon" onclick="openWindow('fmcalc')"><div class="icon">🌬️</div><div class="app-name">F:M · MLSS · SVI₃₀</div></div>
+                <div class="app-icon" onclick="openWindow('srtcalc')"><div class="icon">⏱️</div><div class="app-name">Sludge Age / SRT</div></div>
+                <div class="app-icon" onclick="openWindow('jartest')"><div class="icon">🥽</div><div class="app-name">Polymer Jar Log</div></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- BOD/COD/TSS removal -->
+    <div class="window" id="window-removalcalc">
+        <div class="window-header">
+            <button class="back-button" onclick="closeWindow('removalcalc')">←</button>
+            <span class="window-title">Removal Efficiency</span>
+        </div>
+        <div class="window-content">
+            <h2>BOD / COD / TSS Removal</h2>
+            <div class="calc-form">
+                <div class="form-group"><label>Influent BOD (mg/L)</label><input type="number" id="rm_bodIn" step="1"></div>
+                <div class="form-group"><label>Effluent BOD (mg/L)</label><input type="number" id="rm_bodOut" step="1"></div>
+                <div class="form-group"><label>Influent COD (mg/L)</label><input type="number" id="rm_codIn" step="1"></div>
+                <div class="form-group"><label>Effluent COD (mg/L)</label><input type="number" id="rm_codOut" step="1"></div>
+                <div class="form-group"><label>Influent TSS (mg/L)</label><input type="number" id="rm_tssIn" step="1"></div>
+                <div class="form-group"><label>Effluent TSS (mg/L)</label><input type="number" id="rm_tssOut" step="1"></div>
+                <div class="form-group"><label>Standard to check</label>
+                    <select id="rm_std" class="settings-select">
+                        <option value="none">— none —</option>
+                        <option value="ga_general">SA General Authorisation (General limits)</option>
+                        <option value="ga_special">SA General Authorisation (Special limits)</option>
+                        <option value="sans241">SANS 241 (potable)</option>
+                    </select>
+                </div>
+                <button type="button" class="calc-btn" onclick="calcRemoval()">Calculate</button>
+            </div>
+            <div id="rm_results" class="result-box" style="display:none;">
+                <div class="result-row"><span>BOD removal:</span><strong id="rm_bodEff">—</strong></div>
+                <div class="result-row"><span>COD removal:</span><strong id="rm_codEff">—</strong></div>
+                <div class="result-row"><span>TSS removal:</span><strong id="rm_tssEff">—</strong></div>
+                <div class="result-row"><span>Compliance:</span><strong id="rm_comp">—</strong></div>
+                <button onclick="saveCalculation('removalcalc', this)" class="save-calc-btn">💾 Save to History</button>
+                <button onclick="exportPdf('removalcalc')" class="pdf-calc-btn">📄 Export PDF</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- F:M, MLSS, SVI -->
+    <div class="window" id="window-fmcalc">
+        <div class="window-header">
+            <button class="back-button" onclick="closeWindow('fmcalc')">←</button>
+            <span class="window-title">F:M · MLSS · SVI</span>
+        </div>
+        <div class="window-content">
+            <h2>Activated Sludge Diagnostics</h2>
+            <div class="calc-form">
+                <div class="form-group"><label>Influent flow Q (m³/d)</label><input type="number" id="fm_q" step="1"></div>
+                <div class="form-group"><label>Influent BOD₅ S₀ (mg/L)</label><input type="number" id="fm_s" step="1"></div>
+                <div class="form-group"><label>Aeration tank volume V (m³)</label><input type="number" id="fm_v" step="1"></div>
+                <div class="form-group"><label>MLSS (mg/L)</label><input type="number" id="fm_mlss" step="1"></div>
+                <div class="form-group"><label>Settled sludge vol. (mL/L, 30 min)</label><input type="number" id="fm_sv" step="1"></div>
+                <button type="button" class="calc-btn" onclick="calcFM()">Calculate</button>
+            </div>
+            <div id="fm_results" class="result-box" style="display:none;">
+                <div class="result-row"><span>F:M ratio (kg BOD / kg MLSS·d):</span><strong id="fm_ratio">—</strong></div>
+                <div class="result-row"><span>Organic loading (kg BOD/m³·d):</span><strong id="fm_load">—</strong></div>
+                <div class="result-row"><span>SVI₃₀ (mL/g):</span><strong id="fm_svi">—</strong></div>
+                <div class="result-row"><span>Interpretation:</span><strong id="fm_int">—</strong></div>
+                <button onclick="saveCalculation('fmcalc', this)" class="save-calc-btn">💾 Save to History</button>
+                <button onclick="exportPdf('fmcalc')" class="pdf-calc-btn">📄 Export PDF</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Sludge age / SRT -->
+    <div class="window" id="window-srtcalc">
+        <div class="window-header">
+            <button class="back-button" onclick="closeWindow('srtcalc')">←</button>
+            <span class="window-title">Sludge Age / SRT</span>
+        </div>
+        <div class="window-content">
+            <h2>Sludge Age / SRT</h2>
+            <div class="calc-form">
+                <div class="form-group"><label>Aeration volume V (m³)</label><input type="number" id="srt_v" step="1"></div>
+                <div class="form-group"><label>MLSS X (mg/L)</label><input type="number" id="srt_x" step="1"></div>
+                <div class="form-group"><label>WAS flow Qw (m³/d)</label><input type="number" id="srt_qw" step="0.1"></div>
+                <div class="form-group"><label>WAS SS Xw (mg/L)</label><input type="number" id="srt_xw" step="1"></div>
+                <div class="form-group"><label>Effluent flow Qe (m³/d)</label><input type="number" id="srt_qe" step="1"></div>
+                <div class="form-group"><label>Effluent SS Xe (mg/L)</label><input type="number" id="srt_xe" step="1" value="15"></div>
+                <button type="button" class="calc-btn" onclick="calcSRT()">Calculate</button>
+            </div>
+            <div id="srt_results" class="result-box" style="display:none;">
+                <div class="result-row"><span>SRT / sludge age (days):</span><strong id="srt_out">—</strong></div>
+                <div class="result-row"><span>Interpretation:</span><strong id="srt_int">—</strong></div>
+                <button onclick="saveCalculation('srtcalc', this)" class="save-calc-btn">💾 Save to History</button>
+                <button onclick="exportPdf('srtcalc')" class="pdf-calc-btn">📄 Export PDF</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Polymer Jar-test log -->
+    <div class="window" id="window-jartest">
+        <div class="window-header">
+            <button class="back-button" onclick="closeWindow('jartest')">←</button>
+            <span class="window-title">Jar Test Log</span>
+        </div>
+        <div class="window-content">
+            <h2>Polymer Jar Test</h2>
+            <div class="calc-form">
+                <div class="form-group"><label>Site</label><input type="text" id="jt_site" placeholder="Site name"></div>
+                <div class="form-group"><label>Date</label><input type="date" id="jt_date"></div>
+                <div class="form-group"><label>Polymer product</label><input type="text" id="jt_prod" placeholder="e.g. Hadron FC-5180"></div>
+                <div class="form-group"><label>Dose (mg/L)</label><input type="number" id="jt_dose" step="0.01"></div>
+                <div class="form-group"><label>Floc formation</label>
+                    <select id="jt_floc" class="settings-select">
+                        <option>None</option><option>Pinpoint</option><option>Small</option><option>Medium</option><option>Large</option><option>Very large</option>
+                    </select>
+                </div>
+                <div class="form-group"><label>Settling time (s)</label><input type="number" id="jt_settle" step="1"></div>
+                <div class="form-group"><label>Supernatant clarity (NTU)</label><input type="number" id="jt_ntu" step="0.1"></div>
+                <div class="form-group"><label>Notes</label><textarea id="jt_notes" rows="3"></textarea></div>
+                <button type="button" class="calc-btn" onclick="saveJarTest()">💾 Save entry</button>
+            </div>
+            <div id="jt_list" style="margin-top:20px;"></div>
+        </div>
+    </div>
+
+    <!-- ================ SERVICE REPORTING ================ -->
+    <div class="window" id="window-servicereport">
+        <div class="window-header">
+            <button class="back-button" onclick="closeWindow('servicereport')">←</button>
+            <span class="window-title">Service Report</span>
+        </div>
+        <div class="window-content">
+            <h2>Digital Service Report</h2>
+            <button class="calc-btn" style="margin-bottom:14px;" onclick="newServiceReport()">+ New Report</button>
+            <button class="calc-btn" style="margin-bottom:14px;background:#666;" onclick="listServiceReports()">📋 View Saved</button>
+            <div id="sr_form" style="display:none;">
+                <div class="calc-form">
+                    <div class="form-group"><label>Site</label><input type="text" id="sr_site"></div>
+                    <div class="form-group"><label>Client contact</label><input type="text" id="sr_contact"></div>
+                    <div class="form-group"><label>Technician</label><input type="text" id="sr_tech"></div>
+                    <div class="form-group"><label>Date / time</label><input type="datetime-local" id="sr_dt"></div>
+                    <div class="form-group"><label>GPS</label><input type="text" id="sr_gps" readonly placeholder="Tap 'Capture' →"> <button type="button" class="calc-btn" style="margin-top:6px;" onclick="captureGps()">📍 Capture GPS</button></div>
+
+                    <h3 style="margin-top:16px;">Water readings</h3>
+                    <div class="form-group"><label>pH</label><input type="number" id="sr_ph" step="0.01"></div>
+                    <div class="form-group"><label>Conductivity (µS/cm)</label><input type="number" id="sr_cond" step="1"></div>
+                    <div class="form-group"><label>ORP (mV)</label><input type="number" id="sr_orp" step="1"></div>
+                    <div class="form-group"><label>Free Cl (ppm)</label><input type="number" id="sr_fcl" step="0.01"></div>
+                    <div class="form-group"><label>Total Cl (ppm)</label><input type="number" id="sr_tcl" step="0.01"></div>
+                    <div class="form-group"><label>TDS (ppm)</label><input type="number" id="sr_tds" step="1"></div>
+                    <div class="form-group"><label>Temp (°C)</label><input type="number" id="sr_temp" step="0.1"></div>
+                    <div class="form-group"><label>Total hardness (mg/L CaCO₃)</label><input type="number" id="sr_hard" step="1"></div>
+                    <div class="form-group"><label>M-alkalinity (mg/L CaCO₃)</label><input type="number" id="sr_alk" step="1"></div>
+                    <div class="form-group"><label>Iron (mg/L)</label><input type="number" id="sr_fe" step="0.01"></div>
+                    <div class="form-group"><label>Phosphate (mg/L PO₄)</label><input type="number" id="sr_po4" step="0.01"></div>
+
+                    <h3 style="margin-top:16px;">Actions</h3>
+                    <div class="form-group"><label>Observations</label><textarea id="sr_obs" rows="3"></textarea></div>
+                    <div class="form-group"><label>Actions taken</label><textarea id="sr_act" rows="3"></textarea></div>
+                    <div class="form-group"><label>Chemicals dosed</label><textarea id="sr_chem" rows="2" placeholder="Product · dose · qty"></textarea></div>
+
+                    <h3 style="margin-top:16px;">Photos</h3>
+                    <input type="file" id="sr_photo" accept="image/*" capture="environment" onchange="addServicePhoto(event)" multiple>
+                    <div id="sr_photos" style="display:flex;flex-wrap:wrap;gap:6px;margin-top:8px;"></div>
+
+                    <h3 style="margin-top:16px;">Client sign-off</h3>
+                    <canvas id="sr_sig" width="320" height="120" style="border:1px solid #ccc;border-radius:6px;background:#fff;display:block;max-width:100%;"></canvas>
+                    <div style="margin-top:6px;"><button type="button" class="calc-btn" style="background:#888;" onclick="clearSignature()">Clear signature</button></div>
+
+                    <button type="button" class="calc-btn" style="margin-top:16px;" onclick="saveServiceReport()">💾 Save report</button>
+                    <button type="button" class="calc-btn" style="background:#c59d2b;" onclick="exportServiceReportPdf()">📄 Save &amp; Export PDF</button>
+                </div>
+            </div>
+            <div id="sr_list" style="display:none;"></div>
+        </div>
+    </div>
+
+    <!-- ================ ASSETS ================ -->
+    <div class="window" id="window-assets">
+        <div class="window-header">
+            <button class="back-button" onclick="closeWindow('assets')">←</button>
+            <span class="window-title">Assets</span>
+        </div>
+        <div class="window-content">
+            <h2>Assets &amp; Sites</h2>
+            <div class="apps-grid" style="margin:0;">
+                <div class="app-icon" onclick="openWindow('sites')"><div class="icon">🏢</div><div class="app-name">Site Register</div></div>
+                <div class="app-icon" onclick="openWindow('consumables')"><div class="icon">📦</div><div class="app-name">Consumables</div></div>
+                <div class="app-icon" onclick="openWindow('qrscan')"><div class="icon">📷</div><div class="app-name">QR / Barcode</div></div>
+                <div class="app-icon" onclick="openWindow('schedule')"><div class="icon">📅</div><div class="app-name">PM Schedule</div></div>
+            </div>
+        </div>
+    </div>
+
+    <div class="window" id="window-sites">
+        <div class="window-header"><button class="back-button" onclick="closeWindow('sites')">←</button><span class="window-title">Site Register</span></div>
+        <div class="window-content">
+            <h2>Site &amp; Equipment Register</h2>
+            <button class="calc-btn" onclick="newSite()">+ Add site</button>
+            <div id="sites_list" style="margin-top:14px;"></div>
+        </div>
+    </div>
+
+    <div class="window" id="window-consumables">
+        <div class="window-header"><button class="back-button" onclick="closeWindow('consumables')">←</button><span class="window-title">Consumables</span></div>
+        <div class="window-content">
+            <h2>Consumables Stock</h2>
+            <div class="calc-form">
+                <div class="form-group"><label>Site</label><input type="text" id="cons_site"></div>
+                <div class="form-group"><label>Item</label><input type="text" id="cons_item" placeholder="e.g. TCCA 90 % tabs 200 g"></div>
+                <div class="form-group"><label>Current stock</label><input type="number" id="cons_stock" step="0.01"></div>
+                <div class="form-group"><label>Reorder level</label><input type="number" id="cons_reorder" step="0.01"></div>
+                <div class="form-group"><label>Unit</label><input type="text" id="cons_unit" value="kg"></div>
+                <button class="calc-btn" onclick="saveConsumable()">💾 Save</button>
+            </div>
+            <div id="cons_list" style="margin-top:14px;"></div>
+        </div>
+    </div>
+
+    <div class="window" id="window-qrscan">
+        <div class="window-header"><button class="back-button" onclick="closeWindow('qrscan')">←</button><span class="window-title">QR / Barcode</span></div>
+        <div class="window-content">
+            <h2>Scan Equipment Tag</h2>
+            <p style="color:#666;">Tap <em>Start scan</em>, point the camera at the QR on the pump / panel.</p>
+            <div id="qr_reader" style="width:100%;max-width:360px;margin:10px auto;"></div>
+            <button class="calc-btn" id="qr_start" onclick="startQrScan()">📷 Start scan</button>
+            <button class="calc-btn" id="qr_stop" onclick="stopQrScan()" style="display:none;background:#888;">Stop</button>
+            <div id="qr_result" style="margin-top:14px;"></div>
+        </div>
+    </div>
+
+    <div class="window" id="window-schedule">
+        <div class="window-header"><button class="back-button" onclick="closeWindow('schedule')">←</button><span class="window-title">PM Schedule</span></div>
+        <div class="window-content">
+            <h2>Preventive Maintenance Schedule</h2>
+            <div class="calc-form">
+                <div class="form-group"><label>Site</label><input type="text" id="pm_site"></div>
+                <div class="form-group"><label>Task</label><input type="text" id="pm_task"></div>
+                <div class="form-group"><label>Frequency</label>
+                    <select id="pm_freq" class="settings-select">
+                        <option value="7">Weekly</option><option value="30">Monthly</option><option value="90">Quarterly</option><option value="180">Bi-annual</option><option value="365">Annual</option>
+                    </select>
+                </div>
+                <div class="form-group"><label>Next visit</label><input type="date" id="pm_next"></div>
+                <button class="calc-btn" onclick="savePM()">💾 Save</button>
+            </div>
+            <div id="pm_list" style="margin-top:14px;"></div>
+        </div>
+    </div>
+
+    <!-- ================ SAFETY ================ -->
+    <div class="window" id="window-safety">
+        <div class="window-header"><button class="back-button" onclick="closeWindow('safety')">←</button><span class="window-title">Safety</span></div>
+        <div class="window-content">
+            <h2>Safety &amp; Compliance</h2>
+            <div class="apps-grid" style="margin:0;">
+                <div class="app-icon" onclick="openWindow('msds')"><div class="icon">📄</div><div class="app-name">MSDS Library</div></div>
+                <div class="app-icon" onclick="openWindow('spill')"><div class="icon">🚨</div><div class="app-name">Spill Response</div></div>
+                <div class="app-icon" onclick="openWindow('ppe')"><div class="icon">🧤</div><div class="app-name">PPE Checklist</div></div>
+                <div class="app-icon" onclick="openWindow('loto')"><div class="icon">🔒</div><div class="app-name">LOTO Log</div></div>
+                <div class="app-icon" onclick="openWindow('incident')"><div class="icon">⚠️</div><div class="app-name">Incident</div></div>
+            </div>
+        </div>
+    </div>
+
+    <div class="window" id="window-msds">
+        <div class="window-header"><button class="back-button" onclick="closeWindow('msds')">←</button><span class="window-title">MSDS Library</span></div>
+        <div class="window-content">
+            <h2>Safety Data Sheets</h2>
+            <p style="color:#666;">Offline-cached SDS docs. Add URLs below — the app caches them on next online launch.</p>
+            <div class="calc-form">
+                <div class="form-group"><label>Product</label><input type="text" id="sds_prod"></div>
+                <div class="form-group"><label>PDF URL (Odoo / website)</label><input type="text" id="sds_url" placeholder="https://…"></div>
+                <button class="calc-btn" onclick="saveSDS()">💾 Add</button>
+            </div>
+            <div id="sds_list" style="margin-top:14px;"></div>
+        </div>
+    </div>
+
+    <div class="window" id="window-spill">
+        <div class="window-header"><button class="back-button" onclick="closeWindow('spill')">←</button><span class="window-title">Spill Response</span></div>
+        <div class="window-content">
+            <h2>Spill Quick Reference</h2>
+            <div id="spill_pick" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:8px;">
+                <button class="calc-btn" onclick="showSpill('acid')">Acid (HCl / H₂SO₄)</button>
+                <button class="calc-btn" onclick="showSpill('caustic')">Caustic (NaOH)</button>
+                <button class="calc-btn" onclick="showSpill('chlorine')">Chlorine / TCCA</button>
+                <button class="calc-btn" onclick="showSpill('coagulant')">Coagulants</button>
+            </div>
+            <div id="spill_body" style="margin-top:14px;color:#333;"></div>
+        </div>
+    </div>
+
+    <div class="window" id="window-ppe">
+        <div class="window-header"><button class="back-button" onclick="closeWindow('ppe')">←</button><span class="window-title">PPE Checklist</span></div>
+        <div class="window-content">
+            <h2>Pre-Job PPE</h2>
+            <div class="form-group"><label>Job type</label>
+                <select id="ppe_job" class="settings-select" onchange="renderPPE()">
+                    <option value="general">General site visit</option>
+                    <option value="chlorination">Chlorination / TCCA handling</option>
+                    <option value="acid">Acid handling</option>
+                    <option value="caustic">Caustic handling</option>
+                    <option value="confined">Confined-space entry</option>
+                    <option value="cip">Membrane CIP</option>
+                </select>
+            </div>
+            <div id="ppe_body"></div>
+            <button class="calc-btn" onclick="confirmPPE()" style="margin-top:14px;">✓ Confirm &amp; log</button>
+        </div>
+    </div>
+
+    <div class="window" id="window-loto">
+        <div class="window-header"><button class="back-button" onclick="closeWindow('loto')">←</button><span class="window-title">LOTO</span></div>
+        <div class="window-content">
+            <h2>Lockout / Tagout Log</h2>
+            <div class="calc-form">
+                <div class="form-group"><label>Site</label><input type="text" id="lo_site"></div>
+                <div class="form-group"><label>Equipment</label><input type="text" id="lo_eq"></div>
+                <div class="form-group"><label>Isolation point</label><input type="text" id="lo_iso"></div>
+                <div class="form-group"><label>Locked-out by</label><input type="text" id="lo_by"></div>
+                <div class="form-group"><label>Lock tag #</label><input type="text" id="lo_tag"></div>
+                <div class="form-group"><label>Applied at</label><input type="datetime-local" id="lo_on"></div>
+                <button class="calc-btn" onclick="saveLOTO()">🔒 Apply</button>
+            </div>
+            <div id="lo_list" style="margin-top:14px;"></div>
+        </div>
+    </div>
+
+    <div class="window" id="window-incident">
+        <div class="window-header"><button class="back-button" onclick="closeWindow('incident')">←</button><span class="window-title">Incident</span></div>
+        <div class="window-content">
+            <h2>Incident Report</h2>
+            <div class="calc-form">
+                <div class="form-group"><label>Severity</label>
+                    <select id="inc_sev" class="settings-select"><option>Near-miss</option><option>First-aid</option><option>Medical</option><option>Lost-time</option><option>Environmental</option></select>
+                </div>
+                <div class="form-group"><label>Date / time</label><input type="datetime-local" id="inc_dt"></div>
+                <div class="form-group"><label>Site</label><input type="text" id="inc_site"></div>
+                <div class="form-group"><label>Description</label><textarea id="inc_desc" rows="4"></textarea></div>
+                <div class="form-group"><label>Photo</label><input type="file" id="inc_photo" accept="image/*" capture="environment" onchange="incPhoto(event)"></div>
+                <img id="inc_photo_preview" style="max-width:100%;margin-top:6px;display:none;">
+                <button class="calc-btn" onclick="saveIncident()">🚨 Submit</button>
+            </div>
+            <div id="inc_list" style="margin-top:14px;"></div>
+        </div>
+    </div>
+
+    <!-- ================ CATALOGUE ================ -->
+    <div class="window" id="window-catalogue">
+        <div class="window-header"><button class="back-button" onclick="closeWindow('catalogue')">←</button><span class="window-title">Catalogue</span></div>
+        <div class="window-content">
+            <h2>Product Catalogue</h2>
+            <input type="text" id="cat_search" placeholder="Search…" oninput="renderCatalogue()" class="settings-select" style="width:100%;margin-bottom:12px;">
+            <div id="cat_list"></div>
+            <hr style="margin:18px 0;border:none;border-top:1px solid #eee;">
+            <h3>Quote request</h3>
+            <p style="color:#666;font-size:13px;">Saves a draft locally. Sync to Odoo when the Odoo MCP is wired up.</p>
+            <div id="quote_cart"></div>
+            <button class="calc-btn" onclick="submitQuote()" id="quote_submit" style="display:none;">📧 Generate quote</button>
+        </div>
+    </div>
+
+    <!-- ================ TROUBLESHOOT ================ -->
+    <div class="window" id="window-troubleshoot">
+        <div class="window-header"><button class="back-button" onclick="closeWindow('troubleshoot')">←</button><span class="window-title">Troubleshoot</span></div>
+        <div class="window-content">
+            <h2>Decision Trees</h2>
+            <div id="ts_pick">
+                <button class="calc-btn" style="margin-bottom:8px;width:100%;" onclick="startTS('roTds')">RO permeate TDS rising</button>
+                <button class="calc-btn" style="margin-bottom:8px;width:100%;" onclick="startTS('algae')">Cooling tower algae bloom</button>
+                <button class="calc-btn" style="margin-bottom:8px;width:100%;" onclick="startTS('pump')">Dosing pump no output</button>
+                <button class="calc-btn" style="margin-bottom:8px;width:100%;" onclick="startTS('chlor')">Chlorinator not dissolving tablets</button>
+            </div>
+            <div id="ts_body" style="display:none;"></div>
+        </div>
+    </div>
+
+    <!-- ================ JOBS ================ -->
+    <div class="window" id="window-jobs">
+        <div class="window-header"><button class="back-button" onclick="closeWindow('jobs')">←</button><span class="window-title">Jobs</span></div>
+        <div class="window-content">
+            <h2>Job Cards</h2>
+            <p style="color:#666;font-size:13px;">Local job list. Assignment from office → field and chat will go live when the Odoo / chat back-end is connected.</p>
+            <button class="calc-btn" onclick="newJob()">+ New job</button>
+            <div id="jobs_list" style="margin-top:14px;"></div>
+            <hr style="margin:18px 0;border:none;border-top:1px solid #eee;">
+            <h3>Time tracking</h3>
+            <div id="time_current" style="background:#f5f5f5;padding:12px;border-radius:8px;font-family:monospace;">No active timer</div>
+            <div style="display:flex;gap:8px;margin-top:10px;">
+                <button class="calc-btn" style="flex:1;" onclick="startTimer()">▶ Start</button>
+                <button class="calc-btn" style="flex:1;background:#888;" onclick="stopTimer()">⏹ Stop</button>
+            </div>
+            <div id="time_list" style="margin-top:14px;"></div>
+        </div>
+    </div>
+
+    <!-- ================ TRENDS ================ -->
+    <div class="window" id="window-trends">
+        <div class="window-header"><button class="back-button" onclick="closeWindow('trends')">←</button><span class="window-title">Trends</span></div>
+        <div class="window-content">
+            <h2>Water-Quality Trends</h2>
+            <div class="form-group"><label>Site</label><select id="tr_site" class="settings-select" onchange="renderTrend()"></select></div>
+            <div class="form-group"><label>Parameter</label>
+                <select id="tr_param" class="settings-select" onchange="renderTrend()">
+                    <option value="ph">pH</option>
+                    <option value="cond">Conductivity</option>
+                    <option value="fcl">Free Cl</option>
+                    <option value="tds">TDS</option>
+                    <option value="orp">ORP</option>
+                    <option value="temp">Temperature</option>
+                </select>
+            </div>
+            <canvas id="tr_chart" height="220"></canvas>
+            <hr style="margin:18px 0;border:none;border-top:1px solid #eee;">
+            <h3>Management KPI</h3>
+            <div id="tr_kpi"></div>
+        </div>
+    </div>
+
+    <!-- ================ SOPs ================ -->
+    <div class="window" id="window-sops">
+        <div class="window-header"><button class="back-button" onclick="closeWindow('sops')">←</button><span class="window-title">SOPs</span></div>
+        <div class="window-content">
+            <h2>Standard Operating Procedures</h2>
+            <div id="sop_list"></div>
+            <div id="sop_body" style="display:none;"></div>
+        </div>
+    </div>
+
+    <!-- ================ CALIBRATION ================ -->
+    <div class="window" id="window-calibration">
+        <div class="window-header"><button class="back-button" onclick="closeWindow('calibration')">←</button><span class="window-title">Calibration</span></div>
+        <div class="window-content">
+            <h2>Meter Calibration Reminders</h2>
+            <div class="calc-form">
+                <div class="form-group"><label>Meter</label>
+                    <select id="cal_meter" class="settings-select">
+                        <option>pH probe</option><option>Conductivity meter</option><option>Chlorine colorimeter</option><option>ORP probe</option><option>DO meter</option><option>Turbidity meter</option>
+                    </select>
+                </div>
+                <div class="form-group"><label>Last calibration</label><input type="date" id="cal_last"></div>
+                <div class="form-group"><label>Interval (days)</label><input type="number" id="cal_int" value="30"></div>
+                <button class="calc-btn" onclick="saveCal()">💾 Save</button>
+            </div>
+            <div id="cal_list" style="margin-top:14px;"></div>
+        </div>
+    </div>
+
     <!-- Transient toast notifications -->
     <div id="toast" class="toast"></div>
 
@@ -1730,6 +2358,20 @@
             updateTaskbar();
             bringToFront(window);
             if (appName === 'history') renderHistoryList();
+            if (appName === 'jartest') renderJarTests();
+            if (appName === 'servicereport') { listServiceReports(); }
+            if (appName === 'sites') renderSites();
+            if (appName === 'consumables') renderConsumables();
+            if (appName === 'schedule') renderPMs();
+            if (appName === 'msds') renderSDS();
+            if (appName === 'loto') renderLOTO();
+            if (appName === 'incident') renderIncidents();
+            if (appName === 'catalogue') renderCatalogue();
+            if (appName === 'jobs') { renderJobs(); renderTimers(); tickActiveTimer(); }
+            if (appName === 'trends') { renderTrendSites(); renderTrend(); renderKPI(); }
+            if (appName === 'sops') renderSOPList();
+            if (appName === 'calibration') renderCals();
+            if (appName === 'ppe') renderPPE();
         }
 
         function closeWindow(appName) {
@@ -1758,16 +2400,16 @@
 
         function getAppIcon(appName) {
             const icons = {
-                profile: '👤',
-                messages: '💬',
-                settings: '⚙️',
-                files: '📁',
-                labcom: '🧪',
-                support: '🎧',
-                store: '🛒',
-                dosage: '💊',
-                waterindex: '🧮',
-                history: '📋'
+                profile: '👤', messages: '💬', settings: '⚙️', files: '📁',
+                labcom: '🧪', support: '🎧', store: '🛒', dosage: '💊',
+                waterindex: '🧮', history: '📋', protools: '🧰',
+                coolingtower: '🏭', rocalc: '💧', converters: '🔁', neutralise: '⚗️',
+                effluent: '🌊', removalcalc: '🧪', fmcalc: '🌬️', srtcalc: '⏱️',
+                jartest: '🥽', servicereport: '📝', assets: '🏷️', sites: '🏢',
+                consumables: '📦', qrscan: '📷', schedule: '📅', safety: '🦺',
+                msds: '📄', spill: '🚨', ppe: '🧤', loto: '🔒', incident: '⚠️',
+                catalogue: '📦', troubleshoot: '🛠️', jobs: '📋', trends: '📈',
+                sops: '📚', calibration: '⏰'
             };
             return icons[appName] || '📱';
         }
@@ -2305,6 +2947,114 @@
                         summary: 'pH ' + pH + ' · LSI ' + lsi + ' · RSI ' + rsi
                     };
                 }
+            },
+            coolingtower: {
+                label: 'Cooling Tower Chemistry',
+                collect: function () {
+                    return {
+                        inputs: [
+                            { label: 'Circulation', value: (document.getElementById('ct_circ').value || '-') + ' m³/h' },
+                            { label: 'ΔT',          value: (document.getElementById('ct_dt').value   || '-') + ' °C' },
+                            { label: 'Cond. makeup',value: (document.getElementById('ct_condM').value|| '-') + ' µS/cm' },
+                            { label: 'Cond. blowdown',value:(document.getElementById('ct_condB').value|| '-') + ' µS/cm' },
+                            { label: 'Drift factor',value: (document.getElementById('ct_drift').value|| '-') + ' %' }
+                        ],
+                        results: [
+                            { label: 'Cycles of concentration', value: document.getElementById('ct_coc').textContent },
+                            { label: 'Evaporation',             value: document.getElementById('ct_evap').textContent + ' m³/h' },
+                            { label: 'Drift',                   value: document.getElementById('ct_driftL').textContent + ' m³/h' },
+                            { label: 'Blowdown',                value: document.getElementById('ct_bd').textContent + ' m³/h' },
+                            { label: 'Make-up',                 value: document.getElementById('ct_mu').textContent + ' m³/h' }
+                        ],
+                        summary: 'CoC ' + document.getElementById('ct_coc').textContent + ' · MU ' + document.getElementById('ct_mu').textContent + ' m³/h'
+                    };
+                }
+            },
+            rocalc: {
+                label: 'RO Performance',
+                collect: function () {
+                    return {
+                        inputs: [
+                            { label: 'Feed flow',    value: (document.getElementById('ro_feed').value   || '-') + ' m³/h' },
+                            { label: 'Permeate',     value: (document.getElementById('ro_perm').value   || '-') + ' m³/h' },
+                            { label: 'Feed TDS',     value: (document.getElementById('ro_feedTds').value|| '-') + ' ppm' },
+                            { label: 'Permeate TDS', value: (document.getElementById('ro_permTds').value|| '-') + ' ppm' },
+                            { label: 'Feed pressure',value: (document.getElementById('ro_pFeed').value  || '-') + ' bar' },
+                            { label: 'Temperature',  value: (document.getElementById('ro_temp').value   || '-') + ' °C' }
+                        ],
+                        results: [
+                            { label: 'Recovery',              value: document.getElementById('ro_rec').textContent + ' %' },
+                            { label: 'Salt rejection',        value: document.getElementById('ro_rej').textContent + ' %' },
+                            { label: 'Concentrate flow',      value: document.getElementById('ro_conc').textContent + ' m³/h' },
+                            { label: 'Concentrate TDS',       value: document.getElementById('ro_concTds').textContent + ' ppm' },
+                            { label: 'Normalised permeate',   value: document.getElementById('ro_norm').textContent + ' m³/h @ 25 °C' }
+                        ],
+                        summary: 'Rec ' + document.getElementById('ro_rec').textContent + '% · Rej ' + document.getElementById('ro_rej').textContent + '%'
+                    };
+                }
+            },
+            removalcalc: {
+                label: 'BOD / COD / TSS Removal',
+                collect: function () {
+                    return {
+                        inputs: [
+                            { label: 'BOD in',  value: (document.getElementById('rm_bodIn').value || '-') + ' mg/L' },
+                            { label: 'BOD out', value: (document.getElementById('rm_bodOut').value|| '-') + ' mg/L' },
+                            { label: 'COD in',  value: (document.getElementById('rm_codIn').value || '-') + ' mg/L' },
+                            { label: 'COD out', value: (document.getElementById('rm_codOut').value|| '-') + ' mg/L' },
+                            { label: 'TSS in',  value: (document.getElementById('rm_tssIn').value || '-') + ' mg/L' },
+                            { label: 'TSS out', value: (document.getElementById('rm_tssOut').value|| '-') + ' mg/L' }
+                        ],
+                        results: [
+                            { label: 'BOD removal', value: document.getElementById('rm_bodEff').textContent },
+                            { label: 'COD removal', value: document.getElementById('rm_codEff').textContent },
+                            { label: 'TSS removal', value: document.getElementById('rm_tssEff').textContent },
+                            { label: 'Compliance',  value: document.getElementById('rm_comp').textContent }
+                        ],
+                        summary: 'BOD ' + document.getElementById('rm_bodEff').textContent + ' · COD ' + document.getElementById('rm_codEff').textContent
+                    };
+                }
+            },
+            fmcalc: {
+                label: 'Activated Sludge F:M · SVI',
+                collect: function () {
+                    return {
+                        inputs: [
+                            { label: 'Q',    value: (document.getElementById('fm_q').value    || '-') + ' m³/d' },
+                            { label: 'S₀',   value: (document.getElementById('fm_s').value    || '-') + ' mg/L' },
+                            { label: 'V',    value: (document.getElementById('fm_v').value    || '-') + ' m³' },
+                            { label: 'MLSS', value: (document.getElementById('fm_mlss').value || '-') + ' mg/L' },
+                            { label: 'SV',   value: (document.getElementById('fm_sv').value   || '-') + ' mL/L' }
+                        ],
+                        results: [
+                            { label: 'F:M',     value: document.getElementById('fm_ratio').textContent },
+                            { label: 'Load',    value: document.getElementById('fm_load').textContent },
+                            { label: 'SVI₃₀',   value: document.getElementById('fm_svi').textContent },
+                            { label: 'Comment', value: document.getElementById('fm_int').textContent }
+                        ],
+                        summary: 'F:M ' + document.getElementById('fm_ratio').textContent + ' · SVI ' + document.getElementById('fm_svi').textContent
+                    };
+                }
+            },
+            srtcalc: {
+                label: 'Sludge Age / SRT',
+                collect: function () {
+                    return {
+                        inputs: [
+                            { label: 'V',  value: (document.getElementById('srt_v').value  || '-') + ' m³' },
+                            { label: 'X',  value: (document.getElementById('srt_x').value  || '-') + ' mg/L' },
+                            { label: 'Qw', value: (document.getElementById('srt_qw').value || '-') + ' m³/d' },
+                            { label: 'Xw', value: (document.getElementById('srt_xw').value || '-') + ' mg/L' },
+                            { label: 'Qe', value: (document.getElementById('srt_qe').value || '-') + ' m³/d' },
+                            { label: 'Xe', value: (document.getElementById('srt_xe').value || '-') + ' mg/L' }
+                        ],
+                        results: [
+                            { label: 'SRT',         value: document.getElementById('srt_out').textContent + ' days' },
+                            { label: 'Interpretation', value: document.getElementById('srt_int').textContent }
+                        ],
+                        summary: 'SRT ' + document.getElementById('srt_out').textContent + ' d'
+                    };
+                }
             }
         };
 
@@ -2592,6 +3342,870 @@
             toastTimer = setTimeout(function () {
                 el.classList.remove('visible');
             }, 2200);
+        }
+
+        /* =========================================================
+           PRO TOOLS — JavaScript
+           - All storage via localStorage for now; easy to swap to
+             IndexedDB or Odoo later.
+           - Calculators do real chemistry; forms stub the workflows
+             that need a back-end (chat, Odoo, client portal).
+           ========================================================= */
+
+        const LS = {
+            get: (k, d) => { try { const v = localStorage.getItem(k); return v ? JSON.parse(v) : d; } catch (e) { return d; } },
+            set: (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) { showToast('Storage full'); } },
+            push: (k, item, cap) => { const list = LS.get(k, []); list.unshift(item); LS.set(k, cap ? list.slice(0, cap) : list); return list; }
+        };
+        const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+        const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+
+        /* ---------- Cooling Tower ---------- */
+        function calcCoolingTower() {
+            const circ = +document.getElementById('ct_circ').value || 0;
+            const dt   = +document.getElementById('ct_dt').value || 0;
+            const cm   = +document.getElementById('ct_condM').value || 0;
+            const cb   = +document.getElementById('ct_condB').value || 0;
+            const drift= (+document.getElementById('ct_drift').value || 0) / 100;
+            const coc  = cm > 0 ? cb / cm : 0;
+            // Evaporation ≈ 0.00085 × circulation × ΔT (°F). Convert °C→°F.
+            const evap = 0.00085 * circ * (dt * 9 / 5);
+            const driftL = drift * circ;
+            const bd = coc > 1 ? (evap - (coc - 1) * driftL) / (coc - 1) : 0;
+            const mu = evap + driftL + bd;
+            document.getElementById('ct_coc').textContent   = coc.toFixed(2);
+            document.getElementById('ct_evap').textContent  = evap.toFixed(3);
+            document.getElementById('ct_driftL').textContent= driftL.toFixed(3);
+            document.getElementById('ct_bd').textContent    = Math.max(0, bd).toFixed(3);
+            document.getElementById('ct_mu').textContent    = Math.max(0, mu).toFixed(3);
+            document.getElementById('ct_results').style.display = 'block';
+        }
+
+        /* ---------- RO performance ---------- */
+        function calcRO() {
+            const feed = +document.getElementById('ro_feed').value || 0;
+            const perm = +document.getElementById('ro_perm').value || 0;
+            const ft   = +document.getElementById('ro_feedTds').value || 0;
+            const pt   = +document.getElementById('ro_permTds').value || 0;
+            const temp = +document.getElementById('ro_temp').value || 25;
+            const rec  = feed > 0 ? (perm / feed) * 100 : 0;
+            const rej  = ft > 0 ? (1 - pt / ft) * 100 : 0;
+            const conc = Math.max(0, feed - perm);
+            // Concentrate TDS via mass balance:  Cf·Qf = Cp·Qp + Cc·Qc
+            const concTds = conc > 0 ? (ft * feed - pt * perm) / conc : 0;
+            // Temperature-correction factor (FilmTec): TCF = 1.03^(25-T)
+            const tcf   = Math.pow(1.03, 25 - temp);
+            const norm  = perm * tcf;
+            document.getElementById('ro_rec').textContent     = rec.toFixed(1);
+            document.getElementById('ro_rej').textContent     = rej.toFixed(2);
+            document.getElementById('ro_conc').textContent    = conc.toFixed(2);
+            document.getElementById('ro_concTds').textContent = concTds.toFixed(0);
+            document.getElementById('ro_norm').textContent    = norm.toFixed(2);
+            document.getElementById('ro_results').style.display = 'block';
+        }
+
+        /* ---------- Converters ---------- */
+        function calcConvert() {
+            const val  = +document.getElementById('conv_val').value || 0;
+            const from = document.getElementById('conv_from').value;
+            const to   = document.getElementById('conv_to').value;
+            const mw   = +document.getElementById('conv_mw').value || 0;
+            const n    = +document.getElementById('conv_n').value || 1;
+            if (!mw && (from !== to)) { document.getElementById('conv_out').textContent = 'Enter MW'; document.getElementById('conv_results').style.display = 'block'; return; }
+            // Normalise to mol/L (M)
+            let M = 0;
+            if (from === 'M')   M = val;
+            if (from === 'N')   M = val / n;
+            if (from === 'ppm') M = (val / 1000) / mw;       // mg/L → g/L → mol/L
+            if (from === 'pct') M = (val * 10) / mw;         // %(w/v) means g/100mL → 10× g/L
+            let out = 0, unit = '';
+            if (to === 'M')   { out = M;               unit = 'mol/L'; }
+            if (to === 'N')   { out = M * n;           unit = 'eq/L'; }
+            if (to === 'ppm') { out = M * mw * 1000;   unit = 'mg/L'; }
+            if (to === 'pct') { out = (M * mw) / 10;   unit = '% w/v'; }
+            document.getElementById('conv_out').textContent = (Math.abs(out) < 0.001 ? out.toExponential(3) : out.toFixed(4)) + ' ' + unit;
+            document.getElementById('conv_results').style.display = 'block';
+        }
+
+        /* ---------- Acid / Alkali equivalence ---------- */
+        function calcNeutralise() {
+            // Reference: 1 kg H₂SO₄ 100 % → equivalent acid mass
+            const eq = +document.getElementById('neu_eq').value || 0;
+            // Equivalents of H⁺ per kg: H₂SO₄ 98 g/mol × 2 = 49 g/eq; HCl 36.46 g/eq; NaHSO₄ 120 g/eq
+            // kg H₂SO₄100 → eq of H⁺ = eq*1000/49
+            const eqH = eq * 1000 / 49;      // mol H⁺
+            const hcl32 = (eqH * 36.46 / 1000) / 0.32;      // kg 32 % HCl
+            const h2so4_98 = eq / 0.98;                      // kg 98 % H₂SO₄
+            const nahso4 = (eqH * 120.06 / 1000);            // kg dry NaHSO₄ (1 eq per molecule)
+            document.getElementById('neu_nahso4').textContent = nahso4.toFixed(2) + ' kg';
+            document.getElementById('neu_hcl').textContent    = hcl32.toFixed(2) + ' kg';
+            document.getElementById('neu_h2so4').textContent  = h2so4_98.toFixed(2) + ' kg';
+            document.getElementById('neu_results').style.display = 'block';
+        }
+
+        function calcPh() {
+            const V    = +document.getElementById('ph_vol').value || 0;
+            const cur  = +document.getElementById('ph_cur').value || 7;
+            const tgt  = +document.getElementById('ph_tgt').value || 7;
+            const alk  = +document.getElementById('ph_alk').value || 100;
+            if (!V) { showToast('Enter volume'); return; }
+            const dir = tgt > cur ? 'Raise pH (add caustic)' : 'Lower pH (add acid)';
+            // Ballpark: acid demand (as eq of H⁺ per m³) ≈ (alk/50) × (|Δ| / 7) for low-buffered water.
+            const delta = Math.abs(tgt - cur);
+            const eqPerM3 = (alk / 50) * (delta / 7);   // rough: eq of H⁺ to shift by Δ
+            const totalEq = eqPerM3 * V;
+            const naoh_kg   = tgt > cur ? (totalEq * 40 / 1000) / 0.50 : 0; // 50 % NaOH
+            const h2so4_kg  = tgt < cur ? (totalEq * 49 / 1000) / 0.98 : 0;
+            const hcl_kg    = tgt < cur ? (totalEq * 36.46 / 1000) / 0.32 : 0;
+            document.getElementById('ph_dir').textContent   = dir;
+            document.getElementById('ph_naoh').textContent  = naoh_kg.toFixed(2);
+            document.getElementById('ph_h2so4').textContent = h2so4_kg.toFixed(2);
+            document.getElementById('ph_hcl').textContent   = hcl_kg.toFixed(2);
+            document.getElementById('ph_results').style.display = 'block';
+        }
+
+        /* ---------- Removal / compliance ---------- */
+        function calcRemoval() {
+            const num = id => +document.getElementById(id).value || 0;
+            const eff = (i, o) => (i > 0 ? ((i - o) / i) * 100 : 0);
+            const bodEff = eff(num('rm_bodIn'), num('rm_bodOut'));
+            const codEff = eff(num('rm_codIn'), num('rm_codOut'));
+            const tssEff = eff(num('rm_tssIn'), num('rm_tssOut'));
+            document.getElementById('rm_bodEff').textContent = bodEff.toFixed(1) + ' %';
+            document.getElementById('rm_codEff').textContent = codEff.toFixed(1) + ' %';
+            document.getElementById('rm_tssEff').textContent = tssEff.toFixed(1) + ' %';
+            // Compliance
+            const std = document.getElementById('rm_std').value;
+            const limits = {
+                ga_general: { COD: 75,  TSS: 25, pH: [5.5,9.5], label: 'SA GA (general)' },
+                ga_special: { COD: 30,  TSS: 10, pH: [5.5,7.5], label: 'SA GA (special)' },
+                sans241:    { TSS: 1,   label: 'SANS 241 (potable)' }
+            };
+            let comp = 'No standard selected';
+            if (limits[std]) {
+                const L = limits[std];
+                const issues = [];
+                if (L.COD && num('rm_codOut') > L.COD) issues.push('COD > ' + L.COD);
+                if (L.TSS && num('rm_tssOut') > L.TSS) issues.push('TSS > ' + L.TSS);
+                comp = issues.length ? ('❌ ' + L.label + ' — ' + issues.join(', ')) : '✅ Within ' + L.label;
+            }
+            document.getElementById('rm_comp').textContent = comp;
+            document.getElementById('rm_results').style.display = 'block';
+        }
+
+        /* ---------- F:M / MLSS / SVI ---------- */
+        function calcFM() {
+            const num = id => +document.getElementById(id).value || 0;
+            const Q = num('fm_q'), S = num('fm_s'), V = num('fm_v'), M = num('fm_mlss'), SV = num('fm_sv');
+            const fm = (V > 0 && M > 0) ? (Q * S) / (V * M) : 0;
+            const load = V > 0 ? (Q * S) / 1000 / V : 0;
+            const svi = M > 0 ? (SV * 1000) / M : 0;
+            document.getElementById('fm_ratio').textContent = fm.toFixed(3);
+            document.getElementById('fm_load').textContent  = load.toFixed(3);
+            document.getElementById('fm_svi').textContent   = svi.toFixed(0);
+            let comment = '';
+            if (fm < 0.05) comment = 'Under-loaded (extended aeration)';
+            else if (fm < 0.15) comment = 'Extended aeration range';
+            else if (fm < 0.4)  comment = 'Conventional activated sludge';
+            else comment = 'High-rate (check oxygen)';
+            if (svi > 150) comment += ' · Bulking (SVI > 150)';
+            else if (svi < 80) comment += ' · Compact sludge';
+            document.getElementById('fm_int').textContent = comment;
+            document.getElementById('fm_results').style.display = 'block';
+        }
+
+        /* ---------- Sludge age / SRT ---------- */
+        function calcSRT() {
+            const num = id => +document.getElementById(id).value || 0;
+            const V = num('srt_v'), X = num('srt_x'), Qw = num('srt_qw'), Xw = num('srt_xw'), Qe = num('srt_qe'), Xe = num('srt_xe');
+            const denom = (Qw * Xw) + (Qe * Xe);
+            const srt = denom > 0 ? (V * X) / denom : 0;
+            document.getElementById('srt_out').textContent = srt.toFixed(1);
+            let msg = '';
+            if (srt < 3) msg = 'Young sludge — BOD removal only';
+            else if (srt < 10) msg = 'Standard BOD + partial nitrification';
+            else if (srt < 20) msg = 'Full nitrification range';
+            else msg = 'Extended aeration / bio-P';
+            document.getElementById('srt_int').textContent = msg;
+            document.getElementById('srt_results').style.display = 'block';
+        }
+
+        /* ---------- Polymer jar-test log ---------- */
+        function saveJarTest() {
+            const e = {
+                id: uid(), savedAt: new Date().toISOString(),
+                site: document.getElementById('jt_site').value,
+                date: document.getElementById('jt_date').value,
+                prod: document.getElementById('jt_prod').value,
+                dose: document.getElementById('jt_dose').value,
+                floc: document.getElementById('jt_floc').value,
+                settle: document.getElementById('jt_settle').value,
+                ntu: document.getElementById('jt_ntu').value,
+                notes: document.getElementById('jt_notes').value
+            };
+            LS.push('hadron_jartest', e);
+            showToast('Jar test saved');
+            renderJarTests();
+        }
+        function renderJarTests() {
+            const list = LS.get('hadron_jartest', []);
+            const el = document.getElementById('jt_list');
+            if (!el) return;
+            el.innerHTML = '<h3>Recent</h3>' + (list.length === 0 ? '<p style="color:#888;">None yet.</p>' :
+                list.slice(0, 10).map(e => `<div style="border:1px solid #eee;border-radius:6px;padding:10px;margin-bottom:8px;"><strong>${esc(e.site)}</strong> · ${esc(e.date)}<br><small>${esc(e.prod)} @ ${esc(e.dose)} mg/L · ${esc(e.floc)} floc · ${esc(e.ntu)} NTU</small></div>`).join(''));
+        }
+
+        /* =========================================================
+           Digital Service Report
+           ========================================================= */
+        let sr_photos = [];
+        let sr_sigCtx = null, sr_drawing = false;
+
+        function newServiceReport() {
+            document.getElementById('sr_form').style.display = 'block';
+            document.getElementById('sr_list').style.display = 'none';
+            // Defaults
+            document.getElementById('sr_dt').value = new Date().toISOString().slice(0, 16);
+            sr_photos = []; document.getElementById('sr_photos').innerHTML = '';
+            initSignaturePad();
+        }
+        function listServiceReports() {
+            document.getElementById('sr_form').style.display = 'none';
+            document.getElementById('sr_list').style.display = 'block';
+            const list = LS.get('hadron_sr', []);
+            const el = document.getElementById('sr_list');
+            el.innerHTML = list.length === 0 ? '<p style="color:#888;">No saved reports yet.</p>' :
+                list.map(r => `<div style="border:1px solid #eee;border-radius:6px;padding:10px;margin-bottom:8px;">
+                    <strong>${esc(r.site)}</strong> · ${esc(r.date)}<br>
+                    <small>Tech: ${esc(r.tech)} · pH ${esc(r.ph)} · Cond ${esc(r.cond)} µS · Cl ${esc(r.fcl)} ppm</small>
+                    <div style="margin-top:6px;">
+                        <button class="pdf-calc-btn" onclick="exportStoredSrPdf('${r.id}')">📄 PDF</button>
+                        <button class="save-calc-btn" style="background:#c44;" onclick="deleteSR('${r.id}')">🗑 Delete</button>
+                    </div></div>`).join('');
+        }
+        function captureGps() {
+            if (!navigator.geolocation) { showToast('GPS not available'); return; }
+            showToast('Locating…');
+            navigator.geolocation.getCurrentPosition(p => {
+                document.getElementById('sr_gps').value = p.coords.latitude.toFixed(5) + ', ' + p.coords.longitude.toFixed(5) + ' (±' + Math.round(p.coords.accuracy) + 'm)';
+            }, e => showToast('GPS: ' + e.message), { enableHighAccuracy: true, timeout: 8000 });
+        }
+        function addServicePhoto(ev) {
+            const files = ev.target.files;
+            for (const f of files) {
+                const reader = new FileReader();
+                reader.onload = e => {
+                    sr_photos.push({ src: e.target.result, ts: new Date().toISOString() });
+                    renderSrPhotos();
+                };
+                reader.readAsDataURL(f);
+            }
+        }
+        function renderSrPhotos() {
+            document.getElementById('sr_photos').innerHTML = sr_photos.map((p,i) =>
+                `<div style="position:relative;"><img src="${p.src}" style="width:70px;height:70px;object-fit:cover;border-radius:6px;"><button onclick="sr_photos.splice(${i},1);renderSrPhotos()" style="position:absolute;top:-6px;right:-6px;background:#c44;color:#fff;border:none;border-radius:50%;width:20px;height:20px;cursor:pointer;">×</button></div>`).join('');
+        }
+        function initSignaturePad() {
+            const c = document.getElementById('sr_sig');
+            const ctx = c.getContext('2d');
+            ctx.clearRect(0,0,c.width,c.height); ctx.lineWidth = 2; ctx.strokeStyle = '#000'; ctx.lineCap = 'round';
+            sr_sigCtx = ctx;
+            const pos = e => {
+                const r = c.getBoundingClientRect();
+                const x = (e.touches ? e.touches[0].clientX : e.clientX) - r.left;
+                const y = (e.touches ? e.touches[0].clientY : e.clientY) - r.top;
+                return { x: x * (c.width / r.width), y: y * (c.height / r.height) };
+            };
+            const start = e => { sr_drawing = true; const p = pos(e); ctx.beginPath(); ctx.moveTo(p.x, p.y); e.preventDefault(); };
+            const move  = e => { if (!sr_drawing) return; const p = pos(e); ctx.lineTo(p.x, p.y); ctx.stroke(); e.preventDefault(); };
+            const end   = () => { sr_drawing = false; };
+            c.onmousedown = start; c.onmousemove = move; window.onmouseup = end;
+            c.ontouchstart = start; c.ontouchmove = move; c.ontouchend = end;
+        }
+        function clearSignature() { if (sr_sigCtx) { const c = document.getElementById('sr_sig'); sr_sigCtx.clearRect(0,0,c.width,c.height); } }
+
+        function gatherSR() {
+            const id = id_ => document.getElementById(id_).value;
+            return {
+                id: uid(),
+                site: id('sr_site'), contact: id('sr_contact'), tech: id('sr_tech'),
+                date: id('sr_dt'), gps: id('sr_gps'),
+                ph: id('sr_ph'), cond: id('sr_cond'), orp: id('sr_orp'),
+                fcl: id('sr_fcl'), tcl: id('sr_tcl'), tds: id('sr_tds'),
+                temp: id('sr_temp'), hard: id('sr_hard'), alk: id('sr_alk'),
+                fe: id('sr_fe'), po4: id('sr_po4'),
+                obs: id('sr_obs'), act: id('sr_act'), chem: id('sr_chem'),
+                photos: sr_photos, sig: document.getElementById('sr_sig').toDataURL('image/png'),
+                savedAt: new Date().toISOString()
+            };
+        }
+        function saveServiceReport() {
+            const r = gatherSR();
+            if (!r.site) { showToast('Enter site name'); return; }
+            LS.push('hadron_sr', r);
+            showToast('Report saved');
+        }
+        function deleteSR(id) {
+            const list = LS.get('hadron_sr', []).filter(r => r.id !== id);
+            LS.set('hadron_sr', list); listServiceReports();
+        }
+        function exportServiceReportPdf() {
+            const r = gatherSR();
+            if (!r.site) { showToast('Enter site name'); return; }
+            LS.push('hadron_sr', r);
+            generateSrPdf(r);
+        }
+        function exportStoredSrPdf(id) {
+            const r = LS.get('hadron_sr', []).find(x => x.id === id);
+            if (r) generateSrPdf(r);
+        }
+        function generateSrPdf(r) {
+            if (!window.jspdf) { showToast('PDF lib still loading'); return; }
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF({ unit: 'pt', format: 'a4' });
+            const PAGE_W = doc.internal.pageSize.getWidth(), PAGE_H = doc.internal.pageSize.getHeight();
+            const CYAN = [0,168,224], GOLD = [197,157,43], SOFT = [120,120,120];
+            doc.setFillColor.apply(doc, CYAN); doc.rect(0, 0, PAGE_W, 80, 'F');
+            doc.setFillColor.apply(doc, GOLD); doc.rect(0, 80, PAGE_W, 4, 'F');
+            doc.setTextColor(255,255,255); doc.setFontSize(18); doc.setFont('helvetica','bold');
+            doc.text('Hadron Group', 36, 38);
+            doc.setFontSize(11); doc.setFont('helvetica','normal');
+            doc.text('Service Report · ' + (r.site || ''), 36, 58);
+            doc.setTextColor(0,0,0); let y = 110;
+            const row = (k, v) => { if (v == null || v === '') return; doc.setFont('helvetica','bold'); doc.text(k, 36, y); doc.setFont('helvetica','normal'); doc.text(String(v), 200, y); y += 16; if (y > PAGE_H - 80) { doc.addPage(); y = 60; }};
+            doc.setFontSize(14); doc.setFont('helvetica','bold'); doc.text('Site Details', 36, y); y += 18; doc.setFontSize(10);
+            row('Date / time:', r.date); row('Technician:', r.tech); row('Contact:', r.contact); row('GPS:', r.gps);
+            y += 8; doc.setFontSize(14); doc.setFont('helvetica','bold'); doc.text('Readings', 36, y); y += 18; doc.setFontSize(10);
+            row('pH', r.ph); row('Conductivity (µS/cm)', r.cond); row('ORP (mV)', r.orp);
+            row('Free Cl (ppm)', r.fcl); row('Total Cl (ppm)', r.tcl); row('TDS (ppm)', r.tds);
+            row('Temperature (°C)', r.temp); row('Hardness (mg/L)', r.hard); row('Alkalinity (mg/L)', r.alk);
+            row('Iron (mg/L)', r.fe); row('Phosphate (mg/L)', r.po4);
+            y += 8; doc.setFontSize(14); doc.setFont('helvetica','bold'); doc.text('Observations', 36, y); y += 18; doc.setFontSize(10);
+            const writeBlock = txt => { if (!txt) return; const lines = doc.splitTextToSize(txt, PAGE_W - 72); doc.text(lines, 36, y); y += lines.length * 12 + 6; if (y > PAGE_H - 120) { doc.addPage(); y = 60; }};
+            writeBlock(r.obs); doc.setFont('helvetica','bold'); doc.text('Actions taken:', 36, y); y += 14; doc.setFont('helvetica','normal'); writeBlock(r.act);
+            doc.setFont('helvetica','bold'); doc.text('Chemicals dosed:', 36, y); y += 14; doc.setFont('helvetica','normal'); writeBlock(r.chem);
+            // Photos
+            if (r.photos && r.photos.length) {
+                if (y > PAGE_H - 180) { doc.addPage(); y = 60; }
+                doc.setFontSize(14); doc.setFont('helvetica','bold'); doc.text('Photos', 36, y); y += 18;
+                r.photos.forEach((p, i) => {
+                    try {
+                        if (y > PAGE_H - 160) { doc.addPage(); y = 60; }
+                        doc.addImage(p.src, 'JPEG', 36 + (i % 2) * 260, y, 240, 150);
+                        if (i % 2 === 1) y += 160;
+                    } catch (e) { /* skip bad image */ }
+                });
+                y += 170;
+            }
+            // Signature
+            if (r.sig && y < PAGE_H - 140) {
+                doc.setFontSize(14); doc.setFont('helvetica','bold'); doc.text('Client sign-off', 36, y); y += 18;
+                try { doc.addImage(r.sig, 'PNG', 36, y, 200, 70); } catch (e) {}
+                doc.line(240, y + 70, PAGE_W - 36, y + 70);
+            }
+            doc.setFontSize(8); doc.setTextColor.apply(doc, SOFT);
+            doc.text('Hadron Group · Customer Interface · hadrongrp.com', PAGE_W / 2, PAGE_H - 24, { align: 'center' });
+            doc.save('hadron-service-' + (r.site || 'site').replace(/\s+/g, '-').toLowerCase() + '-' + r.date.slice(0,10) + '.pdf');
+        }
+
+        /* =========================================================
+           Site / Asset register
+           ========================================================= */
+        function newSite() {
+            const name = prompt('Site name:'); if (!name) return;
+            const list = LS.get('hadron_sites', []);
+            list.push({ id: uid(), name: name, equipment: [], createdAt: new Date().toISOString() });
+            LS.set('hadron_sites', list); renderSites();
+        }
+        function renderSites() {
+            const list = LS.get('hadron_sites', []);
+            document.getElementById('sites_list').innerHTML = list.length === 0 ? '<p style="color:#888;margin-top:12px;">No sites yet.</p>' :
+                list.map(s => `<div style="border:1px solid #eee;border-radius:6px;padding:12px;margin-bottom:8px;">
+                    <strong>${esc(s.name)}</strong>
+                    <div style="margin-top:6px;font-size:13px;color:#666;">${s.equipment.length} asset(s)</div>
+                    <div style="margin-top:8px;">
+                        <button class="calc-btn" style="font-size:12px;padding:6px 10px;" onclick="addAsset('${s.id}')">+ Add asset</button>
+                        <button class="save-calc-btn" style="background:#c44;" onclick="deleteSite('${s.id}')">🗑</button>
+                    </div>
+                    ${s.equipment.map(a => `<div style="margin-top:6px;padding:8px;background:#f7f7f7;border-radius:4px;font-size:13px;"><strong>${esc(a.type)}</strong> · ${esc(a.serial)} · installed ${esc(a.installed || '-')}</div>`).join('')}
+                </div>`).join('');
+        }
+        function addAsset(siteId) {
+            const type = prompt('Asset type (e.g. Dosing pump, RO unit, Chlorinator):'); if (!type) return;
+            const serial = prompt('Serial number:') || '';
+            const installed = prompt('Install date (YYYY-MM-DD):') || '';
+            const list = LS.get('hadron_sites', []);
+            const s = list.find(x => x.id === siteId); if (!s) return;
+            s.equipment.push({ id: uid(), type, serial, installed });
+            LS.set('hadron_sites', list); renderSites();
+        }
+        function deleteSite(id) {
+            if (!confirm('Delete this site and its assets?')) return;
+            LS.set('hadron_sites', LS.get('hadron_sites', []).filter(s => s.id !== id));
+            renderSites();
+        }
+
+        /* Consumables */
+        function saveConsumable() {
+            const e = {
+                id: uid(), savedAt: new Date().toISOString(),
+                site: document.getElementById('cons_site').value,
+                item: document.getElementById('cons_item').value,
+                stock: +document.getElementById('cons_stock').value,
+                reorder: +document.getElementById('cons_reorder').value,
+                unit: document.getElementById('cons_unit').value
+            };
+            LS.push('hadron_cons', e); showToast('Saved');
+            ['cons_site','cons_item','cons_stock','cons_reorder'].forEach(i => document.getElementById(i).value = '');
+            renderConsumables();
+        }
+        function renderConsumables() {
+            const list = LS.get('hadron_cons', []);
+            document.getElementById('cons_list').innerHTML = list.length === 0 ? '<p style="color:#888;">No items.</p>' :
+                list.map(c => { const low = c.stock <= c.reorder;
+                    return `<div style="border:1px solid ${low ? '#e53935' : '#eee'};border-radius:6px;padding:10px;margin-bottom:8px;">
+                        <strong>${esc(c.item)}</strong> ${low ? '<span style="color:#e53935;"> ⚠ reorder</span>' : ''}<br>
+                        <small>${esc(c.site)} · ${c.stock} ${esc(c.unit)} (reorder @ ${c.reorder})</small>
+                    </div>`; }).join('');
+        }
+
+        /* QR scanner */
+        let qrScanner = null;
+        function ensureQrLib(cb) {
+            if (window.Html5Qrcode) return cb();
+            const s = document.createElement('script');
+            s.src = 'https://cdnjs.cloudflare.com/ajax/libs/html5-qrcode/2.3.8/html5-qrcode.min.js';
+            s.onload = cb; s.onerror = () => showToast('QR lib failed — check internet');
+            document.head.appendChild(s);
+        }
+        function startQrScan() {
+            ensureQrLib(() => {
+                qrScanner = new Html5Qrcode('qr_reader');
+                qrScanner.start({ facingMode: 'environment' }, { fps: 10, qrbox: 220 },
+                    (decoded) => { document.getElementById('qr_result').innerHTML = '<strong>Scanned:</strong> ' + esc(decoded); stopQrScan(); },
+                    () => {}
+                ).then(() => { document.getElementById('qr_start').style.display = 'none'; document.getElementById('qr_stop').style.display = ''; })
+                 .catch(e => showToast('Camera error: ' + e));
+            });
+        }
+        function stopQrScan() {
+            if (!qrScanner) return;
+            qrScanner.stop().then(() => { document.getElementById('qr_start').style.display = ''; document.getElementById('qr_stop').style.display = 'none'; qrScanner.clear(); }).catch(()=>{});
+        }
+
+        /* PM Schedule */
+        function savePM() {
+            const e = { id: uid(),
+                site: document.getElementById('pm_site').value,
+                task: document.getElementById('pm_task').value,
+                freq: +document.getElementById('pm_freq').value,
+                next: document.getElementById('pm_next').value };
+            LS.push('hadron_pm', e); showToast('Saved'); renderPMs();
+        }
+        function renderPMs() {
+            const list = LS.get('hadron_pm', []);
+            const today = new Date();
+            document.getElementById('pm_list').innerHTML = list.length === 0 ? '<p style="color:#888;">No PMs.</p>' :
+                list.map(p => { const due = new Date(p.next); const days = Math.round((due - today)/86400000);
+                    const col = days < 0 ? '#e53935' : (days < 7 ? '#c59d2b' : '#2a9d3f');
+                    return `<div style="border:1px solid #eee;border-radius:6px;padding:10px;margin-bottom:8px;">
+                        <strong>${esc(p.task)}</strong> — ${esc(p.site)}<br>
+                        <small style="color:${col};">${days < 0 ? (-days + ' days overdue') : (days + ' days to go')} · ${esc(p.next)}</small>
+                    </div>`; }).join('');
+        }
+
+        /* =========================================================
+           Safety
+           ========================================================= */
+        function saveSDS() {
+            const e = { id: uid(), prod: document.getElementById('sds_prod').value, url: document.getElementById('sds_url').value };
+            if (!e.prod || !e.url) return;
+            LS.push('hadron_sds', e); document.getElementById('sds_prod').value = ''; document.getElementById('sds_url').value = '';
+            renderSDS();
+        }
+        function renderSDS() {
+            const list = LS.get('hadron_sds', []);
+            document.getElementById('sds_list').innerHTML = list.length === 0 ? '<p style="color:#888;">No SDS files yet.</p>' :
+                list.map(s => `<div style="padding:10px;border:1px solid #eee;border-radius:6px;margin-bottom:6px;"><strong>${esc(s.prod)}</strong><br><a href="${esc(s.url)}" target="_blank" rel="noopener">📄 Open</a> · <a href="#" onclick="event.preventDefault(); deleteSDS('${s.id}')">🗑</a></div>`).join('');
+        }
+        function deleteSDS(id) { LS.set('hadron_sds', LS.get('hadron_sds', []).filter(s => s.id !== id)); renderSDS(); }
+
+        const SPILL = {
+            acid: { title: 'Acid (HCl / H₂SO₄)', body:
+                '1. Evacuate area. Wear acid-rated PPE (face shield, gauntlets, apron).\n' +
+                '2. Ventilate — HCl fumes are corrosive; H₂SO₄ generates heat on contact with water.\n' +
+                '3. Contain with absorbent berms; DO NOT add water directly to concentrated H₂SO₄.\n' +
+                '4. Neutralise with soda ash (Na₂CO₃) or lime (Ca(OH)₂) in small portions.\n' +
+                '5. Collect neutralised residue for disposal as hazardous waste.' },
+            caustic: { title: 'Caustic (NaOH)', body:
+                '1. PPE: face shield, gauntlets, chemical apron. Caustic attacks skin and eyes.\n' +
+                '2. Contain with absorbent berms.\n' +
+                '3. Neutralise with dilute acid (acetic, citric or dilute HCl).\n' +
+                '4. Rinse site copiously with water after pH is back to 6–8.' },
+            chlorine: { title: 'Chlorine / TCCA', body:
+                '1. Evacuate — evolved Cl₂ gas is toxic. Wear SCBA if large spill.\n' +
+                '2. Keep DRY tablets dry. NEVER mix TCCA with ammonia, organics, or oil — fire risk.\n' +
+                '3. Small dry spill: sweep into clean dry container; rinse area with plenty of water.\n' +
+                '4. Liquid hypo: dilute with water, neutralise with sodium thiosulfate or sulfite.' },
+            coagulant: { title: 'Coagulants (PAC / Ferric)', body:
+                '1. Slippery — cordon off.\n' +
+                '2. Contain with sand or absorbent berms.\n' +
+                '3. Neutralise acidity with soda ash for ferric/PAC spills; rinse with plenty of water.\n' +
+                '4. Dispose of slurry through effluent sump, monitoring pH.' }
+        };
+        function showSpill(k) {
+            const s = SPILL[k];
+            document.getElementById('spill_body').innerHTML = `<div style="background:#fff4e8;border:1px solid #f0c27b;border-radius:8px;padding:12px;white-space:pre-wrap;"><strong>${esc(s.title)}</strong>\n\n${esc(s.body)}</div>`;
+        }
+
+        const PPE_SETS = {
+            general: ['Safety boots','Hi-vis vest','Hard hat','Safety glasses','Gloves'],
+            chlorination: ['Safety boots','Acid-resistant apron','Full-face respirator','Chemical gauntlets','Safety glasses','Hard hat'],
+            acid: ['Safety boots','Acid apron','Face shield','Chemical gauntlets','Acid-resistant overalls'],
+            caustic: ['Safety boots','Alkali apron','Face shield','Chemical gauntlets','Splash-proof overalls'],
+            confined: ['4-gas monitor','SCBA / SABA','Harness + tripod','Safety boots','Hard hat','Comms radio','Standby person'],
+            cip: ['Splash goggles','Chemical gauntlets','Splash-proof overalls','Safety boots','Face shield (high-P)']
+        };
+        function renderPPE() {
+            const job = document.getElementById('ppe_job').value;
+            const list = PPE_SETS[job] || [];
+            document.getElementById('ppe_body').innerHTML = list.map((x,i) => `<label style="display:block;padding:10px;background:#f7f7f7;border-radius:6px;margin-bottom:6px;"><input type="checkbox" id="ppe_${i}"> ${esc(x)}</label>`).join('');
+        }
+        function confirmPPE() {
+            const job = document.getElementById('ppe_job').value;
+            const list = PPE_SETS[job] || [];
+            const missing = list.filter((_,i) => !document.getElementById('ppe_'+i).checked);
+            if (missing.length) { alert('Missing: ' + missing.join(', ')); return; }
+            LS.push('hadron_ppe', { id: uid(), job, ts: new Date().toISOString() });
+            showToast('PPE confirmed');
+        }
+
+        function saveLOTO() {
+            const e = { id: uid(),
+                site: document.getElementById('lo_site').value,
+                eq: document.getElementById('lo_eq').value,
+                iso: document.getElementById('lo_iso').value,
+                by: document.getElementById('lo_by').value,
+                tag: document.getElementById('lo_tag').value,
+                on: document.getElementById('lo_on').value,
+                off: null };
+            LS.push('hadron_loto', e); renderLOTO(); showToast('LOTO applied');
+        }
+        function renderLOTO() {
+            const list = LS.get('hadron_loto', []);
+            document.getElementById('lo_list').innerHTML = list.length === 0 ? '<p style="color:#888;">No LOTO records.</p>' :
+                list.map(l => `<div style="border:1px solid ${l.off ? '#ddd' : '#e53935'};border-radius:6px;padding:10px;margin-bottom:6px;">
+                    <strong>${esc(l.eq)}</strong> — ${esc(l.site)}<br><small>Tag ${esc(l.tag)} · by ${esc(l.by)} · ${esc(l.on)}</small>
+                    ${l.off ? '<br><small style="color:#2a9d3f;">Removed ' + esc(l.off) + '</small>' : '<br><button class="calc-btn" style="font-size:12px;margin-top:6px;" onclick="removeLOTO(\'' + l.id + '\')">🔓 Remove lock</button>'}
+                </div>`).join('');
+        }
+        function removeLOTO(id) {
+            const list = LS.get('hadron_loto', []);
+            const l = list.find(x => x.id === id); if (!l) return;
+            l.off = new Date().toISOString(); LS.set('hadron_loto', list); renderLOTO();
+        }
+
+        let inc_photoData = null;
+        function incPhoto(ev) {
+            const f = ev.target.files[0]; if (!f) return;
+            const r = new FileReader();
+            r.onload = e => { inc_photoData = e.target.result; const img = document.getElementById('inc_photo_preview'); img.src = e.target.result; img.style.display = 'block'; };
+            r.readAsDataURL(f);
+        }
+        function saveIncident() {
+            const e = { id: uid(), sev: document.getElementById('inc_sev').value,
+                dt: document.getElementById('inc_dt').value, site: document.getElementById('inc_site').value,
+                desc: document.getElementById('inc_desc').value, photo: inc_photoData,
+                savedAt: new Date().toISOString() };
+            LS.push('hadron_incident', e); showToast('Incident logged'); renderIncidents();
+        }
+        function renderIncidents() {
+            const list = LS.get('hadron_incident', []);
+            document.getElementById('inc_list').innerHTML = list.length === 0 ? '<p style="color:#888;">No incidents logged.</p>' :
+                list.map(i => `<div style="border-left:4px solid #e53935;padding:10px;background:#fff5f5;margin-bottom:6px;border-radius:4px;">
+                    <strong>${esc(i.sev)}</strong> · ${esc(i.site)} · ${esc(i.dt)}<br>
+                    <small>${esc(i.desc)}</small>
+                    ${i.photo ? `<br><img src="${i.photo}" style="max-width:100%;margin-top:6px;border-radius:4px;">` : ''}
+                </div>`).join('');
+        }
+
+        /* =========================================================
+           Catalogue & quotes
+           ========================================================= */
+        const CATALOGUE = [
+            { sku:'HAD-TCCA-90-200', name:'TCCA 90 % tablets (200 g)', unit:'25 kg bucket', cat:'Disinfection' },
+            { sku:'HAD-TCCA-90-20',  name:'TCCA 90 % tablets (20 g)',  unit:'25 kg bucket', cat:'Disinfection' },
+            { sku:'HAD-FC-5180',     name:'Hadron FC-5180 cationic flocculant', unit:'25 kg bag', cat:'Flocculants' },
+            { sku:'HAD-PAC-18',      name:'Polyaluminium chloride 18 %', unit:'25 kg IBC', cat:'Coagulants' },
+            { sku:'HAD-FECL3-40',    name:'Ferric chloride 40 %', unit:'1100 kg IBC', cat:'Coagulants' },
+            { sku:'HAD-HCL-32',      name:'Hydrochloric acid 32 %', unit:'25 L', cat:'Acids' },
+            { sku:'HAD-NAOH-50',     name:'Sodium hydroxide 50 %', unit:'25 L', cat:'Alkalis' },
+            { sku:'HAD-NAHSO4',      name:'Dry acid (NaHSO₄)', unit:'25 kg', cat:'Acids' },
+            { sku:'HAD-MEMB-4040',   name:'RO membrane BW30-4040', unit:'ea', cat:'RO' },
+            { sku:'HAD-MEMB-8040',   name:'RO membrane BW30-8040', unit:'ea', cat:'RO' },
+            { sku:'HAD-SED-5M',      name:'Sediment cartridge 5 µm 20"', unit:'ea', cat:'Filtration' },
+            { sku:'HAD-CBLOCK',      name:'Carbon block cartridge 20"', unit:'ea', cat:'Filtration' },
+            { sku:'HAD-PHPROBE',     name:'pH probe (reference)', unit:'ea', cat:'Instruments' }
+        ];
+        let QUOTE = LS.get('hadron_quote', []);
+        function renderCatalogue() {
+            const q = (document.getElementById('cat_search').value || '').toLowerCase();
+            const items = CATALOGUE.filter(p => !q || (p.name + ' ' + p.sku + ' ' + p.cat).toLowerCase().includes(q));
+            document.getElementById('cat_list').innerHTML = items.map(p =>
+                `<div style="border:1px solid #eee;border-radius:6px;padding:10px;margin-bottom:6px;">
+                    <strong>${esc(p.name)}</strong><br>
+                    <small style="color:#666;">${esc(p.sku)} · ${esc(p.unit)} · ${esc(p.cat)}</small><br>
+                    <button class="calc-btn" style="font-size:12px;margin-top:6px;padding:6px 10px;" onclick="addQuote('${p.sku}')">+ Add to quote</button>
+                </div>`).join('');
+            renderQuote();
+        }
+        function addQuote(sku) {
+            const p = CATALOGUE.find(x => x.sku === sku); if (!p) return;
+            const qty = parseInt(prompt('Quantity?', '1'), 10); if (!qty) return;
+            QUOTE.push({ sku, name: p.name, unit: p.unit, qty });
+            LS.set('hadron_quote', QUOTE); renderQuote();
+        }
+        function renderQuote() {
+            const el = document.getElementById('quote_cart');
+            if (!el) return;
+            el.innerHTML = QUOTE.length === 0 ? '<p style="color:#888;font-size:13px;">No items in quote.</p>' :
+                QUOTE.map((q,i) => `<div style="padding:6px;background:#f7f7f7;border-radius:4px;margin-bottom:4px;font-size:13px;">${q.qty} × ${esc(q.name)} <a href="#" onclick="event.preventDefault(); QUOTE.splice(${i},1); LS.set('hadron_quote',QUOTE); renderQuote();">✕</a></div>`).join('');
+            document.getElementById('quote_submit').style.display = QUOTE.length ? '' : 'none';
+        }
+        function submitQuote() {
+            const body = encodeURIComponent('Please quote the following:\n\n' +
+                QUOTE.map(q => '• ' + q.qty + ' × ' + q.name + ' (' + q.sku + ')').join('\n') +
+                '\n\n— generated from Hadron Customer Interface');
+            window.location.href = 'mailto:info@hadrongrp.com?subject=Quote request&body=' + body;
+        }
+
+        /* =========================================================
+           Troubleshoot decision trees
+           ========================================================= */
+        const TREES = {
+            roTds: { q: 'RO permeate TDS rising. Is conductivity rising on the FEED side too?',
+                yes: { q: 'Source-water change suspected. Check raw water TDS log.',
+                    yes: { end: 'Source variation — recalibrate feed/permeate setpoints and advise client.' },
+                    no:  { end: 'Feed conductivity looks stable — check probe calibration.' } },
+                no: { q: 'Only permeate is rising. Pressure differential across stages rising?',
+                    yes: { end: 'Fouling likely — schedule CIP with appropriate cleaner (low-pH for scale, high-pH for organics).' },
+                    no:  { end: 'Seal / O-ring leak suspected — inspect permeate side fittings and probe seals.' } } },
+            algae: { q: 'Free chlorine residual <0.5 ppm at tower basin?',
+                yes: { end: 'Insufficient biocide — raise TCCA dose, verify dosing pump output and tablet dissolution.' },
+                no: { q: 'SDI / turbidity rising?',
+                    yes: { end: 'Particulate/nutrient load — shock-dose non-oxidising biocide, review basin cleaning schedule.' },
+                    no:  { end: 'Unknown — take water sample for lab (TOC, heterotrophic plate count).' } } },
+            pump: { q: 'Is suction side primed?',
+                no: { end: 'Prime pump head — check foot valve and suction strainer.' },
+                yes: { q: 'Solenoid clicking?',
+                    no: { end: 'Electrical — verify power, fuse, stroke-rate controller.' },
+                    yes: { q: 'Stroke rate set to >0?',
+                        no: { end: 'Controller set to 0 — adjust rate.' },
+                        yes: { end: 'Diaphragm / check-valve failure — strip head, inspect diaphragm and balls/seats.' } } } },
+            chlor: { q: 'Water flow through chlorinator bowl visible?',
+                no: { end: 'Upstream valve closed or strainer blocked — isolate and clean.' },
+                yes: { q: 'Tablets wet but not eroding?',
+                    yes: { end: 'Water channelling around tablets — top up chamber, check bowl O-rings, replace cracked bowl.' },
+                    no:  { end: 'Tablets dry — confirm dip-tube position and flow split set correctly.' } } }
+        };
+        function startTS(key) {
+            document.getElementById('ts_pick').style.display = 'none';
+            document.getElementById('ts_body').style.display = 'block';
+            renderTS(TREES[key]);
+        }
+        function renderTS(node) {
+            const el = document.getElementById('ts_body');
+            if (node.end) {
+                el.innerHTML = `<div style="padding:14px;background:#e8f7ef;border-left:4px solid #2a9d3f;border-radius:6px;"><strong>Action:</strong><br>${esc(node.end)}</div>
+                    <button class="calc-btn" style="margin-top:14px;" onclick="document.getElementById('ts_pick').style.display='';document.getElementById('ts_body').style.display='none';">← Back</button>`;
+                return;
+            }
+            el.innerHTML = `<div style="padding:14px;background:#eef;border-left:4px solid #0ab;border-radius:6px;margin-bottom:12px;">${esc(node.q)}</div>
+                <button class="calc-btn" style="margin-right:8px;" onclick="renderTSStep(${JSON.stringify(node.yes).replace(/"/g,'&quot;')})">Yes</button>
+                <button class="calc-btn" style="background:#888;" onclick="renderTSStep(${JSON.stringify(node.no).replace(/"/g,'&quot;')})">No</button>`;
+        }
+        function renderTSStep(node) { renderTS(typeof node === 'string' ? JSON.parse(node) : node); }
+
+        /* =========================================================
+           Jobs & time tracking
+           ========================================================= */
+        function newJob() {
+            const client = prompt('Client:'); if (!client) return;
+            const site = prompt('Site:') || '';
+            const desc = prompt('Description:') || '';
+            const j = { id: uid(), client, site, desc, status: 'open', createdAt: new Date().toISOString() };
+            LS.push('hadron_jobs', j); renderJobs();
+        }
+        function renderJobs() {
+            const list = LS.get('hadron_jobs', []);
+            document.getElementById('jobs_list').innerHTML = list.length === 0 ? '<p style="color:#888;">No jobs yet.</p>' :
+                list.map(j => `<div style="border:1px solid #eee;border-radius:6px;padding:10px;margin-bottom:6px;">
+                    <strong>${esc(j.client)} — ${esc(j.site)}</strong> <span style="color:${j.status==='done'?'#2a9d3f':'#c59d2b'};">[${j.status}]</span><br>
+                    <small>${esc(j.desc)}</small><br>
+                    <button class="calc-btn" style="font-size:12px;margin-top:6px;" onclick="toggleJob('${j.id}')">${j.status==='done'?'Reopen':'Mark done'}</button>
+                </div>`).join('');
+        }
+        function toggleJob(id) {
+            const list = LS.get('hadron_jobs', []);
+            const j = list.find(x => x.id === id); if (!j) return;
+            j.status = j.status === 'done' ? 'open' : 'done';
+            LS.set('hadron_jobs', list); renderJobs();
+        }
+        let timerInterval = null;
+        function startTimer() {
+            let t = LS.get('hadron_timer_active', null);
+            if (t) { showToast('Timer already running'); return; }
+            const label = prompt('What are you working on?') || 'Work';
+            t = { label, start: Date.now() };
+            LS.set('hadron_timer_active', t); tickActiveTimer();
+        }
+        function stopTimer() {
+            const t = LS.get('hadron_timer_active', null);
+            if (!t) { showToast('No active timer'); return; }
+            const entry = { id: uid(), label: t.label, start: t.start, end: Date.now() };
+            LS.push('hadron_timers', entry); LS.set('hadron_timer_active', null);
+            document.getElementById('time_current').textContent = 'No active timer';
+            if (timerInterval) { clearInterval(timerInterval); timerInterval = null; }
+            renderTimers();
+        }
+        function tickActiveTimer() {
+            const t = LS.get('hadron_timer_active', null);
+            const el = document.getElementById('time_current');
+            if (!t) { el.textContent = 'No active timer'; return; }
+            const render = () => {
+                const d = Date.now() - t.start;
+                const h = Math.floor(d/3600000), m = Math.floor(d/60000)%60, s = Math.floor(d/1000)%60;
+                el.textContent = t.label + ' · ' + String(h).padStart(2,'0') + ':' + String(m).padStart(2,'0') + ':' + String(s).padStart(2,'0');
+            };
+            render();
+            if (timerInterval) clearInterval(timerInterval);
+            timerInterval = setInterval(render, 1000);
+        }
+        function renderTimers() {
+            const list = LS.get('hadron_timers', []);
+            document.getElementById('time_list').innerHTML = '<h4>Recent</h4>' + (list.length === 0 ? '<p style="color:#888;">None.</p>' :
+                list.slice(0, 10).map(t => { const d = t.end - t.start; const h = (d/3600000).toFixed(2);
+                    return `<div style="padding:6px;background:#f7f7f7;border-radius:4px;margin-bottom:4px;font-size:13px;">${esc(t.label)} · ${h} h · ${new Date(t.start).toLocaleString()}</div>`; }).join(''));
+        }
+
+        /* =========================================================
+           Trends (uses service-report storage)
+           ========================================================= */
+        function renderTrendSites() {
+            const list = LS.get('hadron_sr', []);
+            const sites = Array.from(new Set(list.map(r => r.site).filter(Boolean))).sort();
+            const sel = document.getElementById('tr_site');
+            sel.innerHTML = sites.length ? sites.map(s => `<option>${esc(s)}</option>`).join('') : '<option value="">— no data —</option>';
+        }
+        function ensureChartLib(cb) {
+            if (window.Chart) return cb();
+            const s = document.createElement('script');
+            s.src = 'https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js';
+            s.onload = cb; s.onerror = () => showToast('Chart lib failed');
+            document.head.appendChild(s);
+        }
+        let trendChart = null;
+        function renderTrend() {
+            ensureChartLib(() => {
+                const site = document.getElementById('tr_site').value;
+                const param = document.getElementById('tr_param').value;
+                const all = LS.get('hadron_sr', []).filter(r => r.site === site).sort((a,b) => new Date(a.date) - new Date(b.date));
+                const labels = all.map(r => (r.date || '').slice(0, 10));
+                const data = all.map(r => +r[param] || null);
+                const ctx = document.getElementById('tr_chart').getContext('2d');
+                if (trendChart) trendChart.destroy();
+                trendChart = new Chart(ctx, {
+                    type: 'line',
+                    data: { labels, datasets: [{ label: param, data, borderColor: '#00a8e0', backgroundColor: 'rgba(0,168,224,0.12)', tension: 0.2 }] },
+                    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } }
+                });
+            });
+        }
+        function renderKPI() {
+            const srs = LS.get('hadron_sr', []);
+            const jobs = LS.get('hadron_jobs', []);
+            const pm = LS.get('hadron_pm', []);
+            const today = new Date();
+            const overdue = pm.filter(p => new Date(p.next) < today).length;
+            const openJ = jobs.filter(j => j.status === 'open').length;
+            const last30 = srs.filter(r => (today - new Date(r.date)) < 30*86400000).length;
+            document.getElementById('tr_kpi').innerHTML =
+                `<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(110px,1fr));gap:8px;">
+                    <div style="background:#00a8e0;color:#fff;padding:12px;border-radius:8px;text-align:center;"><div style="font-size:22px;font-weight:700;">${last30}</div><small>Services (30d)</small></div>
+                    <div style="background:#c59d2b;color:#fff;padding:12px;border-radius:8px;text-align:center;"><div style="font-size:22px;font-weight:700;">${overdue}</div><small>Overdue PMs</small></div>
+                    <div style="background:#2a9d3f;color:#fff;padding:12px;border-radius:8px;text-align:center;"><div style="font-size:22px;font-weight:700;">${openJ}</div><small>Open jobs</small></div>
+                </div>`;
+        }
+
+        /* =========================================================
+           SOPs (embedded library)
+           ========================================================= */
+        const SOPS = [
+            { key:'jartest', title:'Jar Test SOP', body:
+                'Purpose: Find optimum coagulant / polymer dose before plant adjustment.\n\n' +
+                '1. Collect 6× 1 L samples of raw water from common point.\n' +
+                '2. Arrange on jar-test rack; start slow mix 100 rpm.\n' +
+                '3. Add increasing doses (0, 5, 10, 15, 20, 30 mg/L) to jars 1–6.\n' +
+                '4. Flash mix 150 rpm for 60 s, slow mix 30 rpm for 10 min.\n' +
+                '5. Settle 10 min. Note floc size, settling time, supernatant clarity.\n' +
+                '6. Pipette 100 mL from 2 cm below surface; measure NTU.\n' +
+                '7. Optimum dose = lowest NTU at the lowest residual aluminium/iron.' },
+            { key:'coliform', title:'Coliform Test SOP', body:
+                '1. Flame sterilise bottle neck if open-mouth; use sterile 100 mL bottle.\n' +
+                '2. Add sodium thiosulfate (≈18 mg/L) if chlorinated source.\n' +
+                '3. Collect at consumer tap after 2 min flush; avoid splashing.\n' +
+                '4. Chill to 4 °C within 30 min; deliver to lab within 6 h.\n' +
+                '5. Record site, time, temp, Cl-residual on chain-of-custody.' },
+            { key:'cip', title:'Membrane CIP Procedure', body:
+                '1. Isolate the skid; drain to the point of use.\n' +
+                '2. Fill CIP tank with RO permeate; heat to 30 °C max.\n' +
+                '3. Low-pH cleaner (citric 2 %) for scale; recirculate 60 min.\n' +
+                '4. Flush with permeate until pH back to feed pH.\n' +
+                '5. High-pH cleaner (caustic 0.1 %) for organics; recirculate 60 min.\n' +
+                '6. Final rinse until conductivity stable; recommission with low-pressure flush.' },
+            { key:'pHcal', title:'pH Probe Calibration', body:
+                '1. Rinse probe with DI water.\n' +
+                '2. Place in pH 7.00 buffer — allow 30 s stabilisation; slope 1st point.\n' +
+                '3. Rinse; place in pH 4.00 (acid systems) or 10.00 (alkaline) — 2nd point.\n' +
+                '4. Accept if slope 95–102 %. If not, replace probe.\n' +
+                '5. Rinse and store in 3 M KCl storage solution.' },
+            { key:'condcal', title:'Conductivity Meter Calibration', body:
+                '1. Rinse cell with DI water then with 1413 µS/cm KCl standard.\n' +
+                '2. Immerse cell; tap to remove bubbles; read after 30 s.\n' +
+                '3. Adjust cell constant until reading matches standard at temperature.\n' +
+                '4. Rinse again; store in DI water or dry per manufacturer.' }
+        ];
+        function renderSOPList() {
+            document.getElementById('sop_list').innerHTML = SOPS.map(s =>
+                `<button class="calc-btn" style="width:100%;margin-bottom:6px;text-align:left;" onclick="openSOP('${s.key}')">${esc(s.title)}</button>`).join('');
+            document.getElementById('sop_list').style.display = ''; document.getElementById('sop_body').style.display = 'none';
+        }
+        function openSOP(key) {
+            const s = SOPS.find(x => x.key === key); if (!s) return;
+            document.getElementById('sop_list').style.display = 'none';
+            const el = document.getElementById('sop_body');
+            el.style.display = 'block';
+            el.innerHTML = `<button class="calc-btn" style="background:#888;margin-bottom:10px;" onclick="renderSOPList()">← Back</button>
+                <h3>${esc(s.title)}</h3><pre style="white-space:pre-wrap;font-family:inherit;background:#f7f7f7;padding:12px;border-radius:6px;">${esc(s.body)}</pre>`;
+        }
+
+        /* =========================================================
+           Calibration reminders
+           ========================================================= */
+        function saveCal() {
+            const e = { id: uid(), meter: document.getElementById('cal_meter').value,
+                last: document.getElementById('cal_last').value, int: +document.getElementById('cal_int').value };
+            LS.push('hadron_cal', e); renderCals(); showToast('Saved');
+        }
+        function renderCals() {
+            const list = LS.get('hadron_cal', []);
+            const today = new Date();
+            document.getElementById('cal_list').innerHTML = list.length === 0 ? '<p style="color:#888;">No meters yet.</p>' :
+                list.map(c => { const due = new Date(c.last); due.setDate(due.getDate() + c.int); const days = Math.round((due-today)/86400000);
+                    const col = days < 0 ? '#e53935' : (days < 7 ? '#c59d2b' : '#2a9d3f');
+                    return `<div style="border:1px solid #eee;border-radius:6px;padding:10px;margin-bottom:6px;">
+                        <strong>${esc(c.meter)}</strong><br><small>Last ${esc(c.last)} · every ${c.int}d · <span style="color:${col};">${days < 0 ? (-days + ' days overdue') : (days + ' days left')}</span></small>
+                    </div>`; }).join('');
         }
     </script>
 </body>
