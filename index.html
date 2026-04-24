@@ -27,6 +27,9 @@
     <!-- Translation bundle -->
     <script src="i18n.js"></script>
 
+    <!-- LIMS module (loaded at end of body via defer) -->
+    <script src="lims.js" defer></script>
+
     <!-- Default UI font: Gothic A1 (Google Fonts) -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -1079,6 +1082,402 @@
         body.dark .history-empty p {
             color: #b5b5b5 !important;
         }
+
+        /* ===========================================================
+           LIMS — Laboratory Information Management System
+           Odoo-inspired app-tile hub, with wide/deep modules.
+           All classes namespaced with .lims- to avoid collisions.
+           =========================================================== */
+        .lims-shell {
+            background: linear-gradient(135deg, #f7f9fb 0%, #eef4f8 100%);
+            min-height: 100%;
+            padding: 16px 8px 40px;
+        }
+        body.dark .lims-shell {
+            background: linear-gradient(135deg, #1a1d21 0%, #15171a 100%);
+            color: #e8ecef;
+        }
+        .lims-breadcrumb {
+            display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
+            font-size: 13px; color: #6b7684; margin-bottom: 14px;
+        }
+        .lims-breadcrumb a {
+            color: #00b1ca; cursor: pointer; text-decoration: none; font-weight: 600;
+        }
+        .lims-breadcrumb a:hover { text-decoration: underline; }
+        .lims-breadcrumb .sep { color: #cfd6dd; }
+        .lims-breadcrumb .current { color: #2e3742; font-weight: 600; }
+        body.dark .lims-breadcrumb { color: #9aa3aa; }
+        body.dark .lims-breadcrumb .current { color: #e8ecef; }
+
+        /* ---------- Dashboard strip ---------- */
+        .lims-kpis {
+            display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+            gap: 10px; margin-bottom: 20px;
+        }
+        .lims-kpi {
+            background: #fff; border-radius: 12px; padding: 14px 16px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+            border-left: 4px solid var(--k, #00b1ca);
+        }
+        body.dark .lims-kpi { background: #22272b; box-shadow: 0 2px 10px rgba(0,0,0,0.4); }
+        .lims-kpi .v { font-size: 26px; font-weight: 700; color: #2e3742; line-height: 1; }
+        .lims-kpi .l { font-size: 11px; color: #6b7684; text-transform: uppercase; letter-spacing: 0.6px; margin-top: 6px; }
+        body.dark .lims-kpi .v { color: #f0f4f7; }
+        body.dark .lims-kpi .l { color: #b5b5b5; }
+
+        /* ---------- Odoo-style app tiles ---------- */
+        .lims-apps {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+            gap: 14px;
+            margin-top: 6px;
+        }
+        .lims-app {
+            background: #fff;
+            border-radius: 16px;
+            padding: 20px 16px;
+            cursor: pointer;
+            text-align: center;
+            box-shadow: 0 4px 14px rgba(0,0,0,0.06);
+            transition: transform 0.18s ease, box-shadow 0.18s ease;
+            position: relative; overflow: hidden;
+            border: 1px solid rgba(0,0,0,0.04);
+            user-select: none;
+        }
+        .lims-app:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 10px 24px rgba(0,0,0,0.12);
+        }
+        .lims-app:active { transform: translateY(-1px) scale(0.99); }
+        body.dark .lims-app {
+            background: #22272b; border-color: rgba(255,255,255,0.05);
+            box-shadow: 0 4px 14px rgba(0,0,0,0.4);
+        }
+        body.dark .lims-app:hover { box-shadow: 0 10px 24px rgba(0,0,0,0.55); }
+        .lims-app .ribbon {
+            position: absolute; top: 0; left: 0; right: 0; height: 6px;
+            background: var(--c, #00b1ca);
+        }
+        .lims-app .appicon {
+            width: 54px; height: 54px;
+            margin: 4px auto 10px;
+            border-radius: 14px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 28px;
+            background: var(--g, linear-gradient(135deg, #00b1ca 0%, #4f4f4f 100%));
+            color: #fff;
+            box-shadow: 0 6px 14px rgba(0,0,0,0.15);
+        }
+        .lims-app .appname {
+            font-weight: 700; color: #2e3742; font-size: 15px; margin-bottom: 4px;
+        }
+        .lims-app .appsub {
+            font-size: 11px; color: #6b7684; line-height: 1.35; min-height: 28px;
+        }
+        .lims-app .appbadge {
+            position: absolute; top: 10px; right: 10px;
+            min-width: 20px; height: 20px; padding: 0 6px;
+            background: #ff5252; color: #fff; border-radius: 10px;
+            font-size: 11px; font-weight: 700; display: flex; align-items: center; justify-content: center;
+        }
+        body.dark .lims-app .appname { color: #f0f4f7; }
+        body.dark .lims-app .appsub { color: #b5b5b5; }
+
+        /* ---------- Module toolbar ---------- */
+        .lims-toolbar {
+            display: flex; flex-wrap: wrap; gap: 8px; align-items: center;
+            margin-bottom: 14px;
+        }
+        .lims-title {
+            font-size: 22px; font-weight: 700; color: #2e3742; margin-right: auto;
+        }
+        body.dark .lims-title { color: #f0f4f7; }
+        .lims-btn {
+            padding: 9px 16px; border: none; border-radius: 10px; cursor: pointer;
+            font-weight: 600; font-size: 14px;
+            background: #eef2f6; color: #2e3742;
+            transition: background 0.15s, transform 0.1s;
+        }
+        .lims-btn:hover { background: #e2e8ee; }
+        .lims-btn:active { transform: scale(0.98); }
+        .lims-btn.primary {
+            background: linear-gradient(135deg, #00b1ca 0%, #008aa3 100%); color: #fff;
+            box-shadow: 0 3px 10px rgba(0,177,202,0.35);
+        }
+        .lims-btn.primary:hover { filter: brightness(1.08); }
+        .lims-btn.warn { background: #ff5252; color: #fff; }
+        .lims-btn.ghost { background: transparent; color: #00b1ca; border: 1px solid #00b1ca; }
+        body.dark .lims-btn { background: #2f353a; color: #e8ecef; }
+        body.dark .lims-btn:hover { background: #394045; }
+        .lims-search {
+            flex: 1 1 200px; min-width: 180px; padding: 9px 14px; font-size: 14px;
+            border: 1px solid #dfe6ec; border-radius: 10px; background: #fff;
+        }
+        body.dark .lims-search { background: #22272b; color: #e8ecef; border-color: #394045; }
+
+        /* ---------- List / table view ---------- */
+        .lims-table {
+            width: 100%; border-collapse: separate; border-spacing: 0;
+            background: #fff; border-radius: 12px; overflow: hidden;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+        }
+        body.dark .lims-table { background: #22272b; box-shadow: 0 2px 10px rgba(0,0,0,0.4); }
+        .lims-table th {
+            text-align: left; padding: 12px 14px; font-size: 12px;
+            text-transform: uppercase; letter-spacing: 0.5px; color: #6b7684;
+            background: #f5f8fa; border-bottom: 1px solid #e6ebef;
+        }
+        body.dark .lims-table th { background: #1d2125; color: #9aa3aa; border-bottom-color: #2f353a; }
+        .lims-table td {
+            padding: 12px 14px; font-size: 14px; color: #2e3742;
+            border-bottom: 1px solid #f0f3f5;
+        }
+        body.dark .lims-table td { color: #e8ecef; border-bottom-color: #2f353a; }
+        .lims-table tr { cursor: pointer; transition: background 0.12s; }
+        .lims-table tr:hover td { background: #f7fbfd; }
+        body.dark .lims-table tr:hover td { background: #262c31; }
+        .lims-table tr:last-child td { border-bottom: none; }
+
+        /* ---------- Kanban ---------- */
+        .lims-kanban {
+            display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 14px;
+        }
+        .lims-kcol {
+            background: #eef3f7; border-radius: 14px; padding: 12px; min-height: 160px;
+        }
+        body.dark .lims-kcol { background: #1d2125; }
+        .lims-kcol h4 {
+            margin: 0 0 10px; font-size: 13px; text-transform: uppercase;
+            letter-spacing: 0.5px; color: #6b7684; display: flex; gap: 6px; align-items: center;
+        }
+        .lims-kcol h4 .count {
+            background: #00b1ca; color: #fff; font-size: 11px; font-weight: 700;
+            border-radius: 10px; padding: 1px 8px; letter-spacing: 0;
+        }
+        .lims-kcard {
+            background: #fff; border-radius: 10px; padding: 10px 12px; margin-bottom: 8px;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.05); cursor: pointer;
+            border-left: 3px solid var(--cc, #00b1ca);
+            transition: transform 0.12s, box-shadow 0.12s;
+        }
+        .lims-kcard:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
+        body.dark .lims-kcard { background: #22272b; box-shadow: 0 2px 6px rgba(0,0,0,0.4); }
+        .lims-kcard .t { font-weight: 700; color: #2e3742; font-size: 14px; margin-bottom: 4px; }
+        .lims-kcard .s { font-size: 12px; color: #6b7684; line-height: 1.4; }
+        body.dark .lims-kcard .t { color: #f0f4f7; }
+        body.dark .lims-kcard .s { color: #b5b5b5; }
+
+        /* ---------- Forms ---------- */
+        .lims-form { background: #fff; border-radius: 12px; padding: 20px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); }
+        body.dark .lims-form { background: #22272b; box-shadow: 0 2px 10px rgba(0,0,0,0.4); }
+        .lims-fieldgrid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 14px; }
+        .lims-field { display: flex; flex-direction: column; gap: 5px; }
+        .lims-field label { font-size: 12px; font-weight: 600; color: #6b7684; text-transform: uppercase; letter-spacing: 0.4px; }
+        .lims-field input, .lims-field select, .lims-field textarea {
+            padding: 10px 12px; border: 1px solid #dfe6ec; border-radius: 9px; font-size: 14px;
+            background: #fff; color: #2e3742; font-family: inherit;
+        }
+        body.dark .lims-field input, body.dark .lims-field select, body.dark .lims-field textarea {
+            background: #2f353a; color: #e8ecef; border-color: #394045;
+        }
+        .lims-field input:focus, .lims-field select:focus, .lims-field textarea:focus {
+            outline: none; border-color: #00b1ca; box-shadow: 0 0 0 3px rgba(0,177,202,0.15);
+        }
+        .lims-field textarea { resize: vertical; min-height: 60px; }
+        .lims-section-title {
+            font-size: 15px; font-weight: 700; color: #00b1ca; text-transform: uppercase;
+            letter-spacing: 0.5px; margin: 18px 0 10px; padding-bottom: 6px; border-bottom: 2px solid #eef3f7;
+        }
+        body.dark .lims-section-title { border-bottom-color: #2f353a; }
+
+        /* ---------- Status badges ---------- */
+        .lims-chip {
+            display: inline-block; padding: 3px 10px; border-radius: 20px;
+            font-size: 11px; font-weight: 700; letter-spacing: 0.3px;
+            text-transform: uppercase;
+        }
+        .lims-chip.received    { background: #e8f4fd; color: #0077c2; }
+        .lims-chip.in-progress { background: #fff4de; color: #b37600; }
+        .lims-chip.review      { background: #ede7fc; color: #5a3dcf; }
+        .lims-chip.authorised  { background: #dcf5e4; color: #157b3a; }
+        .lims-chip.released    { background: #d2f1dc; color: #0a5a26; }
+        .lims-chip.failed      { background: #fde0e0; color: #b10f0f; }
+        .lims-chip.expired     { background: #fde0e0; color: #b10f0f; }
+        .lims-chip.ok          { background: #dcf5e4; color: #157b3a; }
+        .lims-chip.warn        { background: #fff4de; color: #b37600; }
+        .lims-chip.neutral     { background: #e8ecef; color: #4f4f4f; }
+        body.dark .lims-chip.received    { background: rgba(0,119,194,0.15);  color: #6ebef5; }
+        body.dark .lims-chip.in-progress { background: rgba(179,118,0,0.18);  color: #ffc761; }
+        body.dark .lims-chip.review      { background: rgba(90,61,207,0.18);  color: #b098ff; }
+        body.dark .lims-chip.authorised  { background: rgba(21,123,58,0.18);  color: #7cd893; }
+        body.dark .lims-chip.released    { background: rgba(10,90,38,0.2);    color: #7cd893; }
+        body.dark .lims-chip.failed,
+        body.dark .lims-chip.expired     { background: rgba(177,15,15,0.18);  color: #ff8585; }
+        body.dark .lims-chip.ok          { background: rgba(21,123,58,0.18);  color: #7cd893; }
+        body.dark .lims-chip.warn        { background: rgba(179,118,0,0.18);  color: #ffc761; }
+        body.dark .lims-chip.neutral     { background: #2f353a; color: #e8ecef; }
+
+        /* ---------- Empty state ---------- */
+        .lims-empty {
+            text-align: center; padding: 50px 20px; color: #8a97a4;
+        }
+        .lims-empty .emoji { font-size: 48px; margin-bottom: 10px; }
+        .lims-empty h3 { margin: 0 0 6px; color: #2e3742; font-weight: 700; }
+        body.dark .lims-empty h3 { color: #e8ecef; }
+
+        /* ---------- Toast ---------- */
+        #limsToastHost {
+            position: fixed; bottom: 80px; left: 50%; transform: translateX(-50%);
+            z-index: 99999; display: flex; flex-direction: column; gap: 8px; pointer-events: none;
+        }
+        .lims-toast {
+            background: #2e3742; color: #fff; padding: 10px 18px; border-radius: 24px;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.25); font-size: 14px; font-weight: 600;
+            opacity: 0; transform: translateY(10px); transition: all 0.25s;
+            pointer-events: auto; max-width: 90vw;
+        }
+        .lims-toast.show { opacity: 1; transform: translateY(0); }
+        .lims-toast.ok { background: #157b3a; }
+        .lims-toast.err { background: #b10f0f; }
+        .lims-toast.warn { background: #b37600; }
+
+        /* ---------- QR sticker preview ---------- */
+        .lims-sticker {
+            background: #fff; border: 2px dashed #00b1ca; border-radius: 10px;
+            padding: 12px; text-align: center; font-family: 'Courier New', monospace;
+            max-width: 220px;
+        }
+        body.dark .lims-sticker { background: #22272b; }
+        .lims-sticker canvas { display: block; margin: 0 auto; background: #fff; border-radius: 4px; }
+        .lims-sticker .bid { font-weight: 700; margin-top: 6px; font-size: 14px; color: #2e3742; }
+        body.dark .lims-sticker .bid { color: #e8ecef; }
+
+        /* ---------- Chain of custody / audit list ---------- */
+        .lims-timeline { list-style: none; padding: 0; margin: 0; }
+        .lims-timeline li {
+            padding: 10px 14px; border-left: 3px solid #00b1ca;
+            background: #f7fbfd; border-radius: 0 8px 8px 0; margin-bottom: 6px;
+        }
+        body.dark .lims-timeline li { background: #262c31; }
+        .lims-timeline li .ev { font-weight: 700; color: #2e3742; font-size: 14px; }
+        .lims-timeline li .meta { font-size: 12px; color: #6b7684; margin-top: 2px; }
+        body.dark .lims-timeline li .ev { color: #e8ecef; }
+
+        /* ---------- Control charts ---------- */
+        .lims-chart-wrap { background: #fff; border-radius: 12px; padding: 16px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); }
+        body.dark .lims-chart-wrap { background: #22272b; box-shadow: 0 2px 10px rgba(0,0,0,0.4); }
+
+        @media (max-width: 480px) {
+            .lims-apps { grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 10px; }
+            .lims-app { padding: 14px 10px; border-radius: 14px; }
+            .lims-app .appicon { width: 44px; height: 44px; font-size: 22px; }
+            .lims-app .appname { font-size: 13px; }
+            .lims-app .appsub { font-size: 10px; min-height: 22px; }
+            .lims-table th, .lims-table td { padding: 9px 10px; font-size: 13px; }
+            .lims-title { font-size: 18px; }
+        }
+
+        /* ---------- LIMS supplementary styles (hub, dashboard, detail, kanban, charts) ---------- */
+        .lims-hub-header { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 18px; padding: 16px 18px; background: linear-gradient(135deg, #00b1ca 0%, #0078a3 100%); border-radius: 16px; color: #fff; box-shadow: 0 4px 16px rgba(0,125,150,0.25); }
+        .lims-hub-hello { font-size: 19px; font-weight: 700; }
+        .lims-hub-sub { font-size: 12px; opacity: 0.85; margin-top: 3px; }
+        .lims-hub-clock { font-size: 13px; font-variant-numeric: tabular-nums; background: rgba(255,255,255,0.18); padding: 8px 12px; border-radius: 10px; backdrop-filter: blur(6px); }
+        .lims-footer-note { text-align: center; color: #9aa3aa; margin-top: 20px; font-size: 11px; }
+
+        .lims-count { display: inline-block; background: #e8ecef; color: #4f4f4f; padding: 2px 10px; border-radius: 999px; font-size: 13px; font-weight: 500; margin-left: 6px; vertical-align: middle; }
+        body.dark .lims-count { background: #2f353a; color: #b5b5b5; }
+        .lims-viewtoggle { display: flex; gap: 6px; margin-right: 6px; }
+        .lims-badge-row { display: flex; gap: 6px; margin-left: 6px; }
+
+        .lims-card { background: #fff; border-radius: 12px; padding: 16px 18px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); margin-bottom: 14px; }
+        body.dark .lims-card { background: #22272b; box-shadow: 0 2px 10px rgba(0,0,0,0.4); }
+
+        .lims-detail-grid { display: grid; grid-template-columns: 2fr 1fr; gap: 14px; }
+        @media (max-width: 820px) { .lims-detail-grid { grid-template-columns: 1fr; } }
+        .lims-detail-main { display: flex; flex-direction: column; gap: 14px; }
+        .lims-detail-side { display: flex; flex-direction: column; gap: 14px; }
+
+        .lims-field-wide { grid-column: span 2; }
+        @media (max-width: 560px) { .lims-field-wide { grid-column: span 1; } }
+
+        .lims-dashgrid { display: grid; grid-template-columns: 2fr 1fr; gap: 14px; }
+        @media (max-width: 900px) { .lims-dashgrid { grid-template-columns: 1fr; } }
+        .lims-dashcard { background: #fff; border-radius: 12px; padding: 16px 18px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); }
+        body.dark .lims-dashcard { background: #22272b; box-shadow: 0 2px 10px rgba(0,0,0,0.4); }
+
+        .lims-alerts { list-style: none; padding: 0; margin: 0; }
+        .lims-alerts li { padding: 10px 12px; border-radius: 8px; margin-bottom: 6px; font-size: 13px; line-height: 1.5; }
+        .lims-alerts li a { color: inherit; font-weight: 600; text-decoration: underline; }
+        .lims-alerts .alert-fail { background: #fde0e0; color: #b10f0f; }
+        .lims-alerts .alert-warn { background: #fff4de; color: #8a5a00; }
+        .lims-alerts .alert-ok   { background: #dcf5e4; color: #157b3a; }
+        body.dark .lims-alerts .alert-fail { background: rgba(177,15,15,0.18); color: #ff8585; }
+        body.dark .lims-alerts .alert-warn { background: rgba(179,118,0,0.18); color: #ffc761; }
+        body.dark .lims-alerts .alert-ok   { background: rgba(21,123,58,0.18); color: #7cd893; }
+
+        .lims-kcol-head { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.6px; color: #6b7684; margin-bottom: 10px; padding: 0 2px; display: flex; align-items: center; justify-content: space-between; }
+        .lims-kcol-head span { background: #e8ecef; color: #4f4f4f; padding: 1px 8px; border-radius: 999px; font-size: 11px; }
+        body.dark .lims-kcol-head span { background: #2f353a; color: #b5b5b5; }
+        .lims-kcard .kcard-title { font-weight: 700; color: #2e3742; font-size: 13px; margin-bottom: 3px; }
+        .lims-kcard .kcard-sub { font-size: 12px; color: #2e3742; line-height: 1.4; margin-bottom: 4px; }
+        .lims-kcard .kcard-meta { font-size: 11px; color: #6b7684; margin-top: 3px; }
+        .lims-kcard .kcard-empty { color: #cfd6dd; font-size: 12px; text-align: center; padding: 20px 0; }
+        body.dark .lims-kcard .kcard-title { color: #f0f4f7; }
+        body.dark .lims-kcard .kcard-sub { color: #e8ecef; }
+        body.dark .lims-kcard .kcard-meta { color: #b5b5b5; }
+
+        /* Compact table variant */
+        .lims-table.compact th, .lims-table.compact td { padding: 8px 10px; font-size: 13px; }
+
+        /* Timeline */
+        .lims-timeline { position: relative; padding-left: 22px; }
+        .lims-timeline::before { content: ''; position: absolute; left: 7px; top: 4px; bottom: 4px; width: 2px; background: #d8e1e9; border-radius: 1px; }
+        body.dark .lims-timeline::before { background: #2f353a; }
+        .lims-timeline .tl-event { position: relative; padding: 6px 0; }
+        .lims-timeline .tl-dot { position: absolute; left: -21px; top: 10px; width: 12px; height: 12px; border-radius: 50%; background: #00b1ca; border: 3px solid #fff; box-shadow: 0 0 0 1px #d8e1e9; }
+        body.dark .lims-timeline .tl-dot { border-color: #22272b; box-shadow: 0 0 0 1px #2f353a; }
+        .lims-timeline .tl-title { font-size: 13px; font-weight: 600; color: #2e3742; }
+        .lims-timeline .tl-meta { font-size: 11px; color: #6b7684; margin-top: 2px; }
+        body.dark .lims-timeline .tl-title { color: #e8ecef; }
+
+        /* Sticker (QR preview) */
+        .lims-sticker { text-align: center; }
+        .lims-sticker .sticker-barcode { font-family: monospace; font-weight: 700; font-size: 13px; color: #2e3742; margin-bottom: 8px; }
+        body.dark .lims-sticker .sticker-barcode { color: #e8ecef; }
+        .lims-sticker .sticker-qr { width: 120px; height: 120px; margin: 0 auto 10px; display: block; background: #fff; padding: 6px; border-radius: 6px; }
+        .lims-sticker .sticker-client { font-size: 12px; font-weight: 600; color: #2e3742; }
+        .lims-sticker .sticker-desc { font-size: 11px; color: #6b7684; margin: 4px 0 10px; }
+        body.dark .lims-sticker .sticker-client { color: #e8ecef; }
+
+        /* Checkbox grid for sample creation */
+        .lims-checkgrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 8px; margin-top: 8px; }
+        .lims-check { display: flex; align-items: center; gap: 8px; padding: 8px 10px; background: #f7f9fb; border-radius: 8px; font-size: 13px; cursor: pointer; transition: background 0.12s; }
+        .lims-check:hover { background: #eef4f8; }
+        .lims-check input { margin: 0; }
+        body.dark .lims-check { background: #262c31; color: #e8ecef; }
+        body.dark .lims-check:hover { background: #2f353a; }
+
+        /* QC test cards */
+        .lims-tests-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 10px; margin-top: 8px; }
+        .lims-testcard { background: #f7f9fb; border-radius: 10px; padding: 12px; cursor: pointer; transition: transform 0.15s, box-shadow 0.15s; }
+        .lims-testcard:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,0.08); }
+        body.dark .lims-testcard { background: #262c31; }
+        .lims-sparkline svg { width: 100%; height: 40px; display: block; }
+
+        /* Toast host */
+        #limsToastHost { position: fixed; right: 20px; bottom: 20px; z-index: 9999; display: flex; flex-direction: column; gap: 8px; pointer-events: none; }
+        #limsToastHost .lims-toast { position: static; transform: translateY(0); opacity: 1; pointer-events: auto; transition: opacity 0.3s, transform 0.3s; }
+
+        /* Form wide layout */
+        .lims-form .lims-section-title { margin-top: 18px; }
+
+        @media (max-width: 480px) {
+            .lims-hub-header { flex-direction: column; align-items: flex-start; gap: 8px; }
+            .lims-hub-clock { align-self: flex-end; }
+            .lims-detail-grid, .lims-dashgrid { grid-template-columns: 1fr; }
+        }
     </style>
 </head>
 <body>
@@ -1233,6 +1632,10 @@
                 <div class="app-icon" onclick="openWindow('calibration')">
                     <div class="icon">⏰</div>
                     <div class="app-name" data-i18n="pt.calibration">Calibration</div>
+                </div>
+                <div class="app-icon" onclick="openWindow('lims')">
+                    <div class="icon" style="background: linear-gradient(135deg, #7a59d4 0%, #00b1ca 100%); color: white;">🧬</div>
+                    <div class="app-name" data-i18n="app.lims">LIMS</div>
                 </div>
             </div>
         </div>
@@ -2431,6 +2834,20 @@
         </div>
     </div>
 
+    <!-- ================ LIMS ================ -->
+    <div class="window" id="window-lims">
+        <div class="window-header">
+            <button class="back-button" onclick="limsBack()">←</button>
+            <span class="window-title" id="limsWinTitle">LIMS</span>
+        </div>
+        <div class="window-content" style="padding: 0;">
+            <div class="lims-shell" id="limsShell">
+                <!-- Injected by JS: breadcrumb + view content -->
+            </div>
+        </div>
+    </div>
+    <div id="limsToastHost"></div>
+
     <!-- Transient toast notifications -->
     <div id="toast" class="toast"></div>
 
@@ -2522,6 +2939,7 @@
             if (appName === 'sops') renderSOPList();
             if (appName === 'calibration') renderCals();
             if (appName === 'ppe') renderPPE();
+            if (appName === 'lims') limsOpen();
         }
 
         function closeWindow(appName) {
@@ -2559,7 +2977,7 @@
                 consumables: '📦', qrscan: '📷', schedule: '📅', safety: '🦺',
                 msds: '📄', spill: '🚨', ppe: '🧤', loto: '🔒', incident: '⚠️',
                 catalogue: '📦', troubleshoot: '🛠️', jobs: '📋', trends: '📈',
-                sops: '📚', calibration: '⏰'
+                sops: '📚', calibration: '⏰', lims: '🧬'
             };
             return icons[appName] || '📱';
         }
