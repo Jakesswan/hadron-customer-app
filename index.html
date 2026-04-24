@@ -27,6 +27,15 @@
     <!-- Translation bundle -->
     <script src="i18n.js"></script>
 
+    <!-- QR encoder (MIT, Kazuhiko Arase) -->
+    <script src="qr.js"></script>
+
+    <!-- QR Builder app -->
+    <script src="qr-app.js" defer></script>
+
+    <!-- Pool Water module -->
+    <script src="pool.js" defer></script>
+
     <!-- LIMS module (loaded at end of body via defer) -->
     <script src="lims.js" defer></script>
 
@@ -1478,6 +1487,188 @@
             .lims-hub-clock { align-self: flex-end; }
             .lims-detail-grid, .lims-dashgrid { grid-template-columns: 1fr; }
         }
+
+        /* ---------- QR Builder ---------- */
+        .qr-shell { background: linear-gradient(135deg, #f7f9fb 0%, #eef4f8 100%); min-height: 100%; padding: 16px; }
+        body.dark .qr-shell { background: linear-gradient(135deg, #1a1e22 0%, #20262b 100%); }
+        .qr-wrap { display: grid; grid-template-columns: 1.2fr 1fr; gap: 16px; max-width: 1100px; margin: 0 auto; }
+        @media (max-width: 820px) { .qr-wrap { grid-template-columns: 1fr; } }
+        .qr-left, .qr-right { display: flex; flex-direction: column; gap: 14px; }
+        .qr-card { background: #fff; border-radius: 14px; padding: 16px 18px; box-shadow: 0 2px 12px rgba(0,0,0,0.06); }
+        body.dark .qr-card { background: #22272b; box-shadow: 0 2px 12px rgba(0,0,0,0.4); color: #e8ecef; }
+        .qr-section-title { font-size: 13px; font-weight: 700; color: #2e3742; margin-bottom: 10px; padding-bottom: 6px; border-bottom: 1px solid #eef2f5; }
+        body.dark .qr-section-title { color: #f0f4f7; border-bottom-color: #2f353a; }
+
+        .qr-typegrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 8px; }
+        .qr-typebtn { padding: 12px 10px; background: #f3f6f9; border: 2px solid transparent; border-radius: 10px; font-size: 13px; cursor: pointer; transition: all 0.15s; text-align: left; }
+        .qr-typebtn:hover { background: #eaf2f6; }
+        .qr-typebtn.active { background: linear-gradient(135deg, #00b1ca 0%, #2e3742 100%); color: #fff; border-color: #00b1ca; box-shadow: 0 4px 12px rgba(0,177,202,0.25); }
+        body.dark .qr-typebtn { background: #2a3035; color: #e8ecef; }
+        body.dark .qr-typebtn:hover { background: #2f353a; }
+
+        .qr-fieldgrid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 10px; }
+        .qr-field { display: flex; flex-direction: column; gap: 4px; }
+        .qr-field label { font-size: 11px; color: #6b7684; text-transform: uppercase; letter-spacing: 0.5px; font-weight: 600; }
+        .qr-field-wide { grid-column: 1 / -1; }
+        .qr-input, .qr-field input, .qr-field select, .qr-field textarea, .qr-textarea {
+            padding: 9px 10px; border: 1px solid #d8e1e9; border-radius: 8px; font-size: 14px; font-family: inherit; background: #fff; color: #2e3742;
+        }
+        body.dark .qr-input, body.dark .qr-field input, body.dark .qr-field select, body.dark .qr-field textarea, body.dark .qr-textarea {
+            background: #2a3035; color: #e8ecef; border-color: #3a4146;
+        }
+        .qr-input:focus, .qr-textarea:focus { outline: none; border-color: #00b1ca; box-shadow: 0 0 0 3px rgba(0,177,202,0.12); }
+        .qr-textarea { width: 100%; min-height: 80px; resize: vertical; box-sizing: border-box; }
+        .qr-hint { font-size: 11px; color: #6b7684; margin-top: 6px; line-height: 1.5; }
+
+        .qr-preview-card { text-align: center; }
+        .qr-sticker { background: #fff; border: 2px dashed #d8e1e9; border-radius: 12px; padding: 18px; display: inline-block; margin: 6px auto 10px; }
+        body.dark .qr-sticker { background: #fff; border-color: #3a4146; } /* keep white sticker for print consistency */
+        .qr-sticker-inner { display: flex; flex-direction: column; align-items: center; gap: 8px; }
+        .qr-sticker-label { font-family: 'Courier New', monospace; font-weight: 700; font-size: 14px; color: #2e3742; }
+        .qr-sticker-code svg { display: block; }
+        .qr-sticker-sub { font-size: 12px; color: #4f4f4f; max-width: 280px; line-height: 1.3; }
+        .qr-sticker-brand { font-size: 10px; color: #00b1ca; letter-spacing: 1.5px; font-weight: 700; margin-top: 2px; }
+        .qr-payload { font-family: 'Courier New', monospace; font-size: 11px; color: #6b7684; background: #f3f6f9; padding: 8px 10px; border-radius: 6px; margin: 10px 0; word-break: break-all; max-height: 60px; overflow-y: auto; text-align: left; }
+        body.dark .qr-payload { background: #2a3035; color: #b5b5b5; }
+
+        .qr-actions { display: flex; gap: 8px; flex-wrap: wrap; justify-content: center; margin-top: 6px; }
+        .qr-btn { padding: 9px 14px; background: #e8ecef; color: #2e3742; border: none; border-radius: 8px; font-size: 13px; font-weight: 600; cursor: pointer; transition: background 0.15s, transform 0.1s; }
+        .qr-btn:hover:not(:disabled) { background: #dce3e8; }
+        .qr-btn:active:not(:disabled) { transform: scale(0.97); }
+        .qr-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+        .qr-btn.primary { background: linear-gradient(135deg, #00b1ca 0%, #0088a3 100%); color: #fff; }
+        .qr-btn.primary:hover:not(:disabled) { filter: brightness(1.08); }
+        .qr-btn.small { padding: 4px 10px; font-size: 12px; }
+        body.dark .qr-btn { background: #2f353a; color: #e8ecef; }
+        body.dark .qr-btn:hover:not(:disabled) { background: #394045; }
+
+        .qr-badge { display: inline-block; background: #00b1ca; color: #fff; font-size: 11px; font-weight: 700; padding: 2px 8px; border-radius: 999px; margin-left: 6px; vertical-align: middle; min-width: 18px; text-align: center; }
+        .qr-sheet-list { max-height: 260px; overflow-y: auto; margin: 6px 0 10px; }
+        .qr-sheet-item { display: flex; justify-content: space-between; align-items: center; padding: 8px 10px; background: #f7f9fb; border-radius: 8px; margin-bottom: 6px; font-size: 13px; }
+        body.dark .qr-sheet-item { background: #262c31; color: #e8ecef; }
+        .qr-sheet-label { font-weight: 600; font-family: 'Courier New', monospace; }
+        .qr-sheet-sub { font-size: 11px; color: #6b7684; margin-top: 1px; }
+        body.dark .qr-sheet-sub { color: #b5b5b5; }
+        .qr-empty { color: #9aa3aa; font-size: 12px; text-align: center; padding: 14px; font-style: italic; }
+        .qr-error { color: #b10f0f; font-size: 12px; padding: 14px; text-align: center; background: #fde0e0; border-radius: 8px; }
+
+        /* ====================================================================
+           Hadron Group design language (.hg-*) — global restyle
+           ==================================================================== */
+        .hg-toolbar { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-bottom: 14px; }
+        .hg-title { font-size: 22px; font-weight: 700; color: #2e3742; margin-right: auto; }
+        body.dark .hg-title { color: #f0f4f7; }
+        .hg-subtitle { font-size: 13px; color: #6b7684; margin-bottom: 14px; line-height: 1.5; }
+        body.dark .hg-subtitle { color: #a3adb6; }
+        .hg-count { display: inline-block; background: #e8ecef; color: #4f4f4f; padding: 2px 10px; border-radius: 999px; font-size: 13px; font-weight: 500; margin-left: 6px; vertical-align: middle; }
+        body.dark .hg-count { background: #2f353a; color: #b5b5b5; }
+
+        .hg-card { background: #fff; border-radius: 12px; padding: 16px 18px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); margin-bottom: 14px; }
+        body.dark .hg-card { background: #22272b; box-shadow: 0 2px 10px rgba(0,0,0,0.4); color: #e8ecef; }
+        .hg-card.pad-sm { padding: 12px 14px; }
+        .hg-card.pad-lg { padding: 22px 24px; }
+
+        .hg-section-title { font-size: 13px; font-weight: 700; color: #00b1ca; text-transform: uppercase; letter-spacing: 0.5px; margin: 0 0 12px; padding-bottom: 6px; border-bottom: 2px solid #eef3f7; }
+        body.dark .hg-section-title { border-bottom-color: #2f353a; }
+
+        .hg-btn { padding: 9px 16px; border: none; border-radius: 10px; cursor: pointer; font-weight: 600; font-size: 14px; background: #eef2f6; color: #2e3742; transition: background 0.15s, transform 0.1s; font-family: inherit; }
+        .hg-btn:hover { background: #e2e8ee; }
+        .hg-btn:active { transform: scale(0.98); }
+        .hg-btn.primary { background: linear-gradient(135deg, #00b1ca 0%, #008aa3 100%); color: #fff; box-shadow: 0 3px 10px rgba(0,177,202,0.35); }
+        .hg-btn.primary:hover { filter: brightness(1.08); }
+        .hg-btn.ghost { background: transparent; color: #00b1ca; border: 1px solid #00b1ca; }
+        .hg-btn.warn { background: #ff5252; color: #fff; }
+        .hg-btn.full { width: 100%; padding: 12px 16px; font-size: 15px; }
+        body.dark .hg-btn { background: #2f353a; color: #e8ecef; }
+        body.dark .hg-btn:hover { background: #394045; }
+
+        .hg-fieldgrid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 14px; }
+        .hg-field { display: flex; flex-direction: column; gap: 5px; }
+        .hg-field label { font-size: 12px; font-weight: 600; color: #6b7684; text-transform: uppercase; letter-spacing: 0.4px; }
+        .hg-field input, .hg-field select, .hg-field textarea {
+            padding: 10px 12px; border: 1px solid #dfe6ec; border-radius: 9px; font-size: 14px;
+            background: #fff; color: #2e3742; font-family: inherit; width: 100%; box-sizing: border-box;
+        }
+        body.dark .hg-field input, body.dark .hg-field select, body.dark .hg-field textarea {
+            background: #2f353a; color: #e8ecef; border-color: #394045;
+        }
+        .hg-field input:focus, .hg-field select:focus, .hg-field textarea:focus {
+            outline: none; border-color: #00b1ca; box-shadow: 0 0 0 3px rgba(0,177,202,0.15);
+        }
+        .hg-field textarea { resize: vertical; min-height: 60px; }
+        .hg-field .hint { font-size: 11px; color: #9aa3aa; margin-top: 2px; }
+        .hg-field-wide { grid-column: 1 / -1; }
+
+        .hg-chip { display: inline-block; padding: 3px 10px; border-radius: 20px; font-size: 11px; font-weight: 700; letter-spacing: 0.3px; text-transform: uppercase; }
+        .hg-chip.ok { background: #dcf5e4; color: #157b3a; }
+        .hg-chip.warn { background: #fff4de; color: #b37600; }
+        .hg-chip.fail { background: #fde0e0; color: #b10f0f; }
+        .hg-chip.info { background: #e8f4fd; color: #0077c2; }
+        .hg-chip.neutral { background: #e8ecef; color: #4f4f4f; }
+        .hg-chip.accent { background: rgba(0,177,202,0.15); color: #00758a; }
+        body.dark .hg-chip.ok { background: rgba(21,123,58,0.18); color: #7cd893; }
+        body.dark .hg-chip.warn { background: rgba(179,118,0,0.18); color: #ffc761; }
+        body.dark .hg-chip.fail { background: rgba(177,15,15,0.18); color: #ff8585; }
+        body.dark .hg-chip.info { background: rgba(0,119,194,0.18); color: #6ebef5; }
+        body.dark .hg-chip.neutral { background: #2f353a; color: #e8ecef; }
+        body.dark .hg-chip.accent { background: rgba(0,177,202,0.2); color: #6bd9ec; }
+
+        .hg-table { width: 100%; border-collapse: separate; border-spacing: 0; background: #fff; border-radius: 12px; overflow: hidden; box-shadow: 0 2px 10px rgba(0,0,0,0.05); }
+        body.dark .hg-table { background: #22272b; box-shadow: 0 2px 10px rgba(0,0,0,0.4); }
+        .hg-table th { text-align: left; padding: 12px 14px; font-size: 12px; text-transform: uppercase; letter-spacing: 0.5px; color: #6b7684; background: #f5f8fa; border-bottom: 1px solid #e6ebef; }
+        body.dark .hg-table th { background: #1d2125; color: #9aa3aa; border-bottom-color: #2f353a; }
+        .hg-table td { padding: 12px 14px; font-size: 14px; color: #2e3742; border-bottom: 1px solid #f0f3f5; }
+        body.dark .hg-table td { color: #e8ecef; border-bottom-color: #2f353a; }
+        .hg-table tr:last-child td { border-bottom: none; }
+        .hg-table tr:hover td { background: #f7fbfd; }
+        body.dark .hg-table tr:hover td { background: #262c31; }
+        .hg-table.compact th, .hg-table.compact td { padding: 8px 10px; font-size: 13px; }
+
+        .hg-empty { text-align: center; padding: 40px 20px; color: #8a97a4; }
+        .hg-empty .emoji { font-size: 44px; margin-bottom: 10px; display: block; }
+        .hg-empty h3 { margin: 0 0 6px; color: #2e3742; font-weight: 700; font-size: 16px; }
+        body.dark .hg-empty h3 { color: #e8ecef; }
+
+        .hg-hero { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 18px; padding: 18px 20px; background: linear-gradient(135deg, #00b1ca 0%, #0078a3 100%); border-radius: 16px; color: #fff; box-shadow: 0 4px 16px rgba(0,125,150,0.25); }
+        .hg-hero-title { font-size: 19px; font-weight: 700; margin: 0; }
+        .hg-hero-sub { font-size: 12px; opacity: 0.9; margin-top: 3px; }
+        .hg-hero-icon { font-size: 40px; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.2)); }
+
+        .hg-kvgrid { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 10px; }
+        .hg-kv { background: #f7f9fb; border-radius: 10px; padding: 10px 12px; }
+        body.dark .hg-kv { background: #262c31; }
+        .hg-kv .k { font-size: 11px; color: #6b7684; text-transform: uppercase; letter-spacing: 0.3px; }
+        .hg-kv .v { font-size: 18px; font-weight: 700; color: #2e3742; margin-top: 3px; }
+        body.dark .hg-kv .v { color: #f0f4f7; }
+        .hg-kv .v small { font-size: 12px; color: #6b7684; margin-left: 4px; font-weight: 500; }
+
+        .hg-actions { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 14px; }
+        .hg-breadcrumb { display: flex; flex-wrap: wrap; gap: 4px; font-size: 12px; color: #6b7684; margin-bottom: 10px; }
+        .hg-breadcrumb a { color: #00b1ca; cursor: pointer; text-decoration: none; }
+        .hg-breadcrumb .sep { color: #cfd6dd; }
+
+        .hg-recipe { background: #f7fbfd; border-left: 4px solid #00b1ca; border-radius: 0 10px 10px 0; padding: 12px 14px; margin: 10px 0; font-size: 14px; line-height: 1.5; color: #2e3742; }
+        body.dark .hg-recipe { background: #1f2a2f; color: #e8ecef; }
+        .hg-recipe strong { color: #00758a; }
+        body.dark .hg-recipe strong { color: #6bd9ec; }
+
+        .hg-alert { padding: 12px 14px; border-radius: 10px; font-size: 13px; line-height: 1.5; margin-bottom: 10px; }
+        .hg-alert.ok { background: #dcf5e4; color: #0e5a28; border-left: 4px solid #157b3a; }
+        .hg-alert.warn { background: #fff4de; color: #8a5a00; border-left: 4px solid #b37600; }
+        .hg-alert.fail { background: #fde0e0; color: #8a0c0c; border-left: 4px solid #b10f0f; }
+        .hg-alert.info { background: #e8f4fd; color: #005080; border-left: 4px solid #0077c2; }
+        body.dark .hg-alert.ok { background: rgba(21,123,58,0.2); color: #b4e8c4; }
+        body.dark .hg-alert.warn { background: rgba(179,118,0,0.2); color: #ffd98a; }
+        body.dark .hg-alert.fail { background: rgba(177,15,15,0.2); color: #ffb0b0; }
+        body.dark .hg-alert.info { background: rgba(0,119,194,0.2); color: #b1dafb; }
+
+        @media (max-width: 480px) {
+            .hg-title { font-size: 18px; }
+            .hg-hero { padding: 14px 16px; }
+            .hg-hero-title { font-size: 16px; }
+            .hg-hero-icon { font-size: 32px; }
+            .hg-table th, .hg-table td { padding: 9px 10px; font-size: 13px; }
+        }
     </style>
 </head>
 <body>
@@ -1637,6 +1828,14 @@
                     <div class="icon" style="background: linear-gradient(135deg, #7a59d4 0%, #00b1ca 100%); color: white;">🧬</div>
                     <div class="app-name" data-i18n="app.lims">LIMS</div>
                 </div>
+                <div class="app-icon" onclick="openWindow('qr')">
+                    <div class="icon" style="background: linear-gradient(135deg, #2e3742 0%, #00b1ca 100%); color: white;">⬛</div>
+                    <div class="app-name" data-i18n="app.qr">QR Builder</div>
+                </div>
+                <div class="app-icon" onclick="openWindow('pool')">
+                    <div class="icon" style="background: linear-gradient(135deg, #00b1ca 0%, #1a3d9e 100%); color: white;">🏊</div>
+                    <div class="app-name" data-i18n="app.pool">Pool Water</div>
+                </div>
             </div>
         </div>
 
@@ -1682,41 +1881,60 @@
             <span class="window-title">Settings</span>
         </div>
         <div class="window-content">
-            <h2>Settings</h2>
-
-            <div class="settings-row">
+            <div class="hg-hero">
                 <div>
-                    <div class="settings-label" data-i18n="settings.appearance">Appearance</div>
-                    <div class="settings-sub" data-i18n="settings.appearance.sub">Choose a light or dark theme</div>
+                    <h2 class="hg-hero-title">Settings</h2>
+                    <div class="hg-hero-sub">Personalise how the Hadron app looks and behaves</div>
                 </div>
-                <div class="segmented" role="group" aria-label="Appearance">
-                    <button type="button" class="seg-btn" id="btnLight" onclick="setTheme('light')" data-i18n="settings.light">☀️ Light</button>
-                    <button type="button" class="seg-btn" id="btnDark"  onclick="setTheme('dark')"  data-i18n="settings.dark">🌙 Dark</button>
+                <div class="hg-hero-icon">⚙️</div>
+            </div>
+
+            <div class="hg-card">
+                <div class="hg-section-title">Appearance & language</div>
+                <div class="settings-row">
+                    <div>
+                        <div class="settings-label" data-i18n="settings.appearance">Appearance</div>
+                        <div class="settings-sub" data-i18n="settings.appearance.sub">Choose a light or dark theme</div>
+                    </div>
+                    <div class="segmented" role="group" aria-label="Appearance">
+                        <button type="button" class="seg-btn" id="btnLight" onclick="setTheme('light')" data-i18n="settings.light">☀️ Light</button>
+                        <button type="button" class="seg-btn" id="btnDark"  onclick="setTheme('dark')"  data-i18n="settings.dark">🌙 Dark</button>
+                    </div>
+                </div>
+                <div class="settings-row">
+                    <div>
+                        <div class="settings-label" data-i18n="settings.language">Language</div>
+                        <div class="settings-sub" data-i18n="settings.language.sub">Choose your preferred interface language</div>
+                    </div>
+                    <select id="languageSelect" class="settings-select" onchange="setLanguage(this.value)"></select>
                 </div>
             </div>
 
-            <div class="settings-row">
-                <div>
-                    <div class="settings-label" data-i18n="settings.language">Language</div>
-                    <div class="settings-sub" data-i18n="settings.language.sub">Choose your preferred interface language</div>
+            <div class="hg-card">
+                <div class="hg-section-title">Help & privacy</div>
+                <div class="settings-row">
+                    <div>
+                        <div class="settings-label" data-i18n="settings.onboarding">Onboarding Tour</div>
+                        <div class="settings-sub" data-i18n="settings.onboarding.sub">Replay the first-launch walkthrough</div>
+                    </div>
+                    <button class="hg-btn ghost" onclick="startOnboarding(true)" data-i18n="common.replay">Replay</button>
                 </div>
-                <select id="languageSelect" class="settings-select" onchange="setLanguage(this.value)"></select>
+                <div class="settings-row">
+                    <div>
+                        <div class="settings-label" data-i18n="settings.privacy">Privacy</div>
+                        <div class="settings-sub" data-i18n="settings.privacy.sub">All calculations stay on this device</div>
+                    </div>
+                    <a href="privacy.html" class="hg-btn ghost" style="text-decoration:none;" data-i18n="settings.privacy.link">View policy</a>
+                </div>
             </div>
 
-            <div class="settings-row">
-                <div>
-                    <div class="settings-label" data-i18n="settings.onboarding">Onboarding Tour</div>
-                    <div class="settings-sub" data-i18n="settings.onboarding.sub">Replay the first-launch walkthrough</div>
+            <div class="hg-card">
+                <div class="hg-section-title">About</div>
+                <div class="hg-kvgrid">
+                    <div class="hg-kv"><div class="k">App</div><div class="v">Hadron Group</div></div>
+                    <div class="hg-kv"><div class="k">Version</div><div class="v">v17</div></div>
+                    <div class="hg-kv"><div class="k">Platform</div><div class="v">PWA</div></div>
                 </div>
-                <button class="settings-action" onclick="startOnboarding(true)" data-i18n="common.replay">Replay</button>
-            </div>
-
-            <div class="settings-row">
-                <div>
-                    <div class="settings-label" data-i18n="settings.privacy">Privacy</div>
-                    <div class="settings-sub" data-i18n="settings.privacy.sub">All calculations stay on this device</div>
-                </div>
-                <a href="privacy.html" class="settings-action" style="text-decoration:none;" data-i18n="settings.privacy.link">View policy</a>
             </div>
         </div>
     </div>
@@ -1740,15 +1958,22 @@
             <button class="back-button" onclick="closeWindow('labcom')">←</button>
             <span class="window-title">LabCom</span>
         </div>
-        <div class="window-content" style="text-align:center;">
-            <img src="LabCom_Logo.svg" alt="LabCom" style="width:160px; height:160px; margin:20px auto 10px;">
-            <h2 data-i18n="labcom.title">LabCom Laboratory Platform</h2>
-            <p style="max-width:440px; margin:0 auto 24px;" data-i18n="labcom.body">
-                Opening <strong>labcom.cloud</strong> — the Hadron Group laboratory results platform. Sign in with your LabCom credentials to view and manage lab reports.
-            </p>
-            <a href="https://labcom.cloud" target="_blank" rel="noopener"
-               class="pdf-calc-btn" style="text-decoration:none; background:linear-gradient(135deg,#00b1ca 0%,#1a3d9e 100%); color:#fff; box-shadow:0 4px 12px rgba(26,61,158,0.25);"
-               data-i18n="labcom.open">🔗 Open labcom.cloud</a>
+        <div class="window-content">
+            <div class="hg-hero" style="background:linear-gradient(135deg,#00b1ca 0%,#1a3d9e 100%);">
+                <div>
+                    <h2 class="hg-hero-title" data-i18n="labcom.title">LabCom Laboratory Platform</h2>
+                    <div class="hg-hero-sub">labcom.cloud · Laboratory results portal</div>
+                </div>
+                <img src="LabCom_Logo.svg" alt="LabCom" style="width:64px; height:64px; filter:drop-shadow(0 2px 4px rgba(0,0,0,0.25));">
+            </div>
+            <div class="hg-card" style="text-align:center;">
+                <p class="hg-subtitle" style="max-width:440px; margin:0 auto 20px;" data-i18n="labcom.body">
+                    Sign in to <strong>labcom.cloud</strong> with your LabCom credentials to view and manage Hadron Group laboratory reports.
+                </p>
+                <a href="https://labcom.cloud" target="_blank" rel="noopener"
+                   class="hg-btn primary" style="text-decoration:none; display:inline-block;"
+                   data-i18n="labcom.open">🔗 Open labcom.cloud</a>
+            </div>
         </div>
     </div>
 
@@ -1758,29 +1983,40 @@
             <span class="window-title">Support</span>
         </div>
         <div class="window-content">
-            <h2>Contact Hadron Group</h2>
-            <p style="margin-bottom: 20px;">Need help? We're here for you!</p>
-            
-            <p><strong style="color: #00b1ca;">📍 Address:</strong></p>
-            <p style="margin-left: 20px; margin-bottom: 15px;">
-                Plot 442, Mooiplaats<br>
-                Boschkop Road<br>
-                Pretoria<br>
-                0040
-            </p>
-            
-            <p><strong style="color: #00b1ca;">📞 Phone:</strong></p>
-            <p style="margin-left: 20px; margin-bottom: 15px;">
-                <a href="tel:0872651711" style="color: #666; text-decoration: none;">087 265 1711</a><br>
-                <a href="tel:0823759734" style="color: #666; text-decoration: none;">082 375 9734</a>
-            </p>
-            
-            <p><strong style="color: #00b1ca;">✉️ Email:</strong></p>
-            <p style="margin-left: 20px; margin-bottom: 15px;">
-                <a href="mailto:jaco@hadrongrp.com" style="color: #666; text-decoration: none; display: block; margin-bottom: 5px;">jaco@hadrongrp.com</a>
-                <a href="mailto:ricardo@hadrongrp.com" style="color: #666; text-decoration: none; display: block; margin-bottom: 5px;">ricardo@hadrongrp.com</a>
-                <a href="mailto:sales@hadrongrp.com" style="color: #666; text-decoration: none; display: block;">sales@hadrongrp.com</a>
-            </p>
+            <div class="hg-hero">
+                <div>
+                    <h2 class="hg-hero-title">Contact Hadron Group</h2>
+                    <div class="hg-hero-sub">We're here to help — reach us any time</div>
+                </div>
+                <div class="hg-hero-icon">📞</div>
+            </div>
+
+            <div class="hg-card">
+                <div class="hg-section-title">📍 Address</div>
+                <div style="line-height:1.7; color:#2e3742;">
+                    Plot 442, Mooiplaats<br>
+                    Boschkop Road<br>
+                    Pretoria, 0040<br>
+                    South Africa
+                </div>
+            </div>
+
+            <div class="hg-card">
+                <div class="hg-section-title">📞 Phone</div>
+                <div style="display:flex; flex-direction:column; gap:6px;">
+                    <a href="tel:0872651711" class="hg-btn ghost" style="text-decoration:none; justify-self:start; width:fit-content;">087 265 1711</a>
+                    <a href="tel:0823759734" class="hg-btn ghost" style="text-decoration:none; justify-self:start; width:fit-content;">082 375 9734</a>
+                </div>
+            </div>
+
+            <div class="hg-card">
+                <div class="hg-section-title">✉️ Email</div>
+                <div style="display:flex; flex-direction:column; gap:6px;">
+                    <a href="mailto:jaco@hadrongrp.com" class="hg-btn ghost" style="text-decoration:none; width:fit-content;">jaco@hadrongrp.com</a>
+                    <a href="mailto:ricardo@hadrongrp.com" class="hg-btn ghost" style="text-decoration:none; width:fit-content;">ricardo@hadrongrp.com</a>
+                    <a href="mailto:sales@hadrongrp.com" class="hg-btn ghost" style="text-decoration:none; width:fit-content;">sales@hadrongrp.com</a>
+                </div>
+            </div>
         </div>
     </div>
 
@@ -1790,32 +2026,32 @@
             <span class="window-title">Hadron Store</span>
         </div>
         <div class="window-content">
-            <div style="max-width: 520px; margin: 0 auto; padding: 30px 10px 20px; text-align: center;">
-                <div style="width: 110px; height: 110px; margin: 0 auto 24px; border-radius: 24px; background: linear-gradient(135deg, #00b1ca 0%, #f9bb32 100%); display: flex; align-items: center; justify-content: center; box-shadow: 0 10px 30px rgba(0,177,202,0.35);">
-                    <span style="font-size: 58px;">🛒</span>
+            <div class="hg-hero" style="background:linear-gradient(135deg,#00b1ca 0%,#f9bb32 100%);">
+                <div>
+                    <h2 class="hg-hero-title">Hadron Store</h2>
+                    <div class="hg-hero-sub">Water treatment products · Quotes · Orders</div>
                 </div>
-                <h2 style="margin-bottom: 10px; color: #333;">Hadron Store</h2>
-                <p style="color: #666; font-size: 15px; line-height: 1.55; margin-bottom: 28px;">
+                <div class="hg-hero-icon">🛒</div>
+            </div>
+
+            <div class="hg-card" style="text-align:center;">
+                <p class="hg-subtitle" style="max-width:440px; margin:0 auto 20px;">
                     Browse our full range of water treatment products, request quotes, and place orders directly from the Hadron Group website.
                 </p>
                 <a href="https://hadrongrp.com" target="_blank" rel="noopener"
-                   style="display: inline-block; background: linear-gradient(135deg, #00b1ca 0%, #f9bb32 100%); color: white; text-decoration: none; font-weight: 600; padding: 16px 34px; border-radius: 12px; font-size: 16px; box-shadow: 0 6px 18px rgba(0,0,0,0.12);">
+                   class="hg-btn primary" style="text-decoration:none; display:inline-block; padding:14px 30px; font-size:15px;">
                     Visit Hadron Store ↗
                 </a>
-                <div style="margin-top: 14px; color: #999; font-size: 12px;">
-                    Opens hadrongrp.com in your browser
-                </div>
+                <div style="margin-top:10px; color:#9aa3aa; font-size:11px;">Opens hadrongrp.com in your browser</div>
             </div>
 
-            <div style="max-width: 520px; margin: 30px auto 0; padding: 20px; background: #f8f9fa; border-radius: 12px; border: 1px solid #eee;">
-                <h3 style="color: #00b1ca; font-size: 16px; margin-bottom: 12px;">Need help with an order?</h3>
-                <p style="color: #666; font-size: 14px; line-height: 1.55; margin-bottom: 10px;">
-                    Reach our team directly:
-                </p>
-                <p style="color: #444; font-size: 14px; line-height: 1.8;">
-                    📧 <a href="mailto:sales@hadrongrp.com" style="color: #00b1ca; text-decoration: none;">sales@hadrongrp.com</a><br>
-                    🎧 Tap the Support icon on the home screen
-                </p>
+            <div class="hg-card">
+                <div class="hg-section-title">Need help with an order?</div>
+                <p class="hg-subtitle" style="margin-bottom:12px;">Reach our team directly:</p>
+                <div style="display:flex; gap:8px; flex-wrap:wrap;">
+                    <a href="mailto:sales@hadrongrp.com" class="hg-btn ghost" style="text-decoration:none;">📧 sales@hadrongrp.com</a>
+                    <button class="hg-btn ghost" onclick="openWindow('support')">🎧 Open Support</button>
+                </div>
             </div>
         </div>
     </div>
@@ -1828,40 +2064,51 @@
         <div class="window-content" style="overflow-y: auto;">
             <!-- Calculator Selection Menu -->
             <div id="calculatorMenu">
-                <h2 style="margin-bottom: 25px;">Select Calculator Type</h2>
-                
-                <div style="display: grid; grid-template-columns: 1fr; gap: 15px; max-width: 600px;">
-                    <button onclick="showCalculator('chlorine')" style="padding: 20px; background: linear-gradient(135deg, #00b1ca 0%, #f9bb32 100%); color: white; border: none; border-radius: 12px; cursor: pointer; font-size: 16px; font-weight: 600; text-align: left; display: flex; align-items: center; gap: 15px; transition: transform 0.2s;">
-                        <span style="font-size: 32px;">⚗️</span>
-                        <div>
-                            <div style="font-size: 18px; margin-bottom: 5px;">Chlorine Calculator</div>
-                            <div style="font-size: 13px; opacity: 0.9; font-weight: normal;">Calculate chlorine dosage requirements</div>
-                        </div>
-                    </button>
-                    
-                    <button onclick="showCalculator('chlorinedioxide')" style="padding: 20px; background: linear-gradient(135deg, #00b1ca 0%, #f9bb32 100%); color: white; border: none; border-radius: 12px; cursor: pointer; font-size: 16px; font-weight: 600; text-align: left; display: flex; align-items: center; gap: 15px; transition: transform 0.2s;">
-                        <span style="font-size: 32px;">💧</span>
-                        <div>
-                            <div style="font-size: 18px; margin-bottom: 5px;">Chlorine Dioxide Calculator</div>
-                            <div style="font-size: 13px; opacity: 0.9; font-weight: normal;">Calculate ClO2 dosage requirements</div>
-                        </div>
-                    </button>
-                    
-                    <button onclick="showCalculator('coagulants')" style="padding: 20px; background: linear-gradient(135deg, #00b1ca 0%, #f9bb32 100%); color: white; border: none; border-radius: 12px; cursor: pointer; font-size: 16px; font-weight: 600; text-align: left; display: flex; align-items: center; gap: 15px; transition: transform 0.2s;">
-                        <span style="font-size: 32px;">🧪</span>
-                        <div>
-                            <div style="font-size: 18px; margin-bottom: 5px;">Coagulants Calculator</div>
-                            <div style="font-size: 13px; opacity: 0.9; font-weight: normal;">Calculate coagulant dosage requirements</div>
-                        </div>
-                    </button>
+                <div class="hg-hero">
+                    <div>
+                        <h2 class="hg-hero-title">Dosage Calculators</h2>
+                        <div class="hg-hero-sub">Pick a chemical dosing calculation</div>
+                    </div>
+                    <div class="hg-hero-icon">⚗️</div>
+                </div>
 
-                    <button onclick="showCalculator('clo2skid')" style="padding: 20px; background: linear-gradient(135deg, #00b1ca 0%, #f9bb32 100%); color: white; border: none; border-radius: 12px; cursor: pointer; font-size: 16px; font-weight: 600; text-align: left; display: flex; align-items: center; gap: 15px; transition: transform 0.2s;">
-                        <span style="font-size: 32px;">🛢️</span>
-                        <div>
-                            <div style="font-size: 18px; margin-bottom: 5px;">Chlorine Dioxide Skid Sizing</div>
-                            <div style="font-size: 13px; opacity: 0.9; font-weight: normal;">Size a ClO₂ dosing skid · pump, tank &amp; consumption</div>
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 14px;">
+                    <div class="hg-card" style="cursor:pointer; margin:0;" onclick="showCalculator('chlorine')">
+                        <div style="display:flex; align-items:center; gap:14px;">
+                            <div style="width:48px; height:48px; border-radius:12px; background:linear-gradient(135deg,#00b1ca 0%,#f9bb32 100%); display:flex; align-items:center; justify-content:center; font-size:24px; flex-shrink:0;">⚗️</div>
+                            <div>
+                                <div style="font-weight:700; font-size:15px; color:#2e3742;">Chlorine (TCCA)</div>
+                                <div style="font-size:12px; color:#6b7684; margin-top:2px;">Calculate chlorine dosage requirements</div>
+                            </div>
                         </div>
-                    </button>
+                    </div>
+                    <div class="hg-card" style="cursor:pointer; margin:0;" onclick="showCalculator('chlorinedioxide')">
+                        <div style="display:flex; align-items:center; gap:14px;">
+                            <div style="width:48px; height:48px; border-radius:12px; background:linear-gradient(135deg,#00b1ca 0%,#1a3d9e 100%); display:flex; align-items:center; justify-content:center; font-size:24px; flex-shrink:0;">💧</div>
+                            <div>
+                                <div style="font-weight:700; font-size:15px; color:#2e3742;">Chlorine Dioxide (ClO₂)</div>
+                                <div style="font-size:12px; color:#6b7684; margin-top:2px;">Calculate ClO₂ dosage requirements</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="hg-card" style="cursor:pointer; margin:0;" onclick="showCalculator('coagulants')">
+                        <div style="display:flex; align-items:center; gap:14px;">
+                            <div style="width:48px; height:48px; border-radius:12px; background:linear-gradient(135deg,#7a59d4 0%,#00b1ca 100%); display:flex; align-items:center; justify-content:center; font-size:24px; flex-shrink:0;">🧪</div>
+                            <div>
+                                <div style="font-weight:700; font-size:15px; color:#2e3742;">Coagulants</div>
+                                <div style="font-size:12px; color:#6b7684; margin-top:2px;">Calculate coagulant dosage requirements</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="hg-card" style="cursor:pointer; margin:0;" onclick="showCalculator('clo2skid')">
+                        <div style="display:flex; align-items:center; gap:14px;">
+                            <div style="width:48px; height:48px; border-radius:12px; background:linear-gradient(135deg,#2e3742 0%,#00b1ca 100%); display:flex; align-items:center; justify-content:center; font-size:24px; flex-shrink:0;">🛢️</div>
+                            <div>
+                                <div style="font-weight:700; font-size:15px; color:#2e3742;">ClO₂ Skid Sizing</div>
+                                <div style="font-size:12px; color:#6b7684; margin-top:2px;">Pump, tank &amp; consumption</div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
 
@@ -2212,21 +2459,30 @@
             <span class="window-title">Calculation History</span>
         </div>
         <div class="window-content" style="overflow-y: auto;">
-            <h2 style="margin-bottom: 10px;">Saved Calculations</h2>
-            <p style="color: #666; font-size: 14px; margin-bottom: 20px; line-height: 1.5;">
-                Every calculation you save is stored on this device. Tap a card to see the full breakdown and export a branded PDF report for site records.
-            </p>
-
-            <div id="historyClearBar" class="history-clear-bar" style="display: none;">
-                <button class="history-clear-btn" onclick="clearAllHistory()">🗑 Clear all</button>
+            <div class="hg-hero">
+                <div>
+                    <h2 class="hg-hero-title">Saved Calculations</h2>
+                    <div class="hg-hero-sub">Stored on this device · PDF export ready</div>
+                </div>
+                <div class="hg-hero-icon">📋</div>
             </div>
 
-            <div id="historyListContainer"></div>
+            <div class="hg-card">
+                <p class="hg-subtitle" style="margin-bottom:14px;">
+                    Every calculation you save is stored on this device. Tap a card to see the full breakdown and export a branded PDF report for site records.
+                </p>
 
-            <div id="historyEmpty" class="history-empty" style="display: none;">
-                <div class="empty-icon">📋</div>
-                <p style="font-size: 16px; color: #555; margin-bottom: 6px;">No saved calculations yet</p>
-                <p style="font-size: 13px; color: #888;">Run a calculation in the Dosage Calculator or the LSI &amp; RSI Index window, then tap <strong>💾 Save to History</strong>.</p>
+                <div id="historyClearBar" class="history-clear-bar" style="display: none;">
+                    <button class="hg-btn warn" onclick="clearAllHistory()">🗑 Clear all</button>
+                </div>
+
+                <div id="historyListContainer"></div>
+
+                <div id="historyEmpty" class="hg-empty" style="display: none;">
+                    <div class="emoji">📋</div>
+                    <h3>No saved calculations yet</h3>
+                    <p style="font-size:13px; color:#8a97a4; max-width:320px; margin:0 auto;">Run a calculation in the Dosage Calculator or the LSI &amp; RSI Index, then tap <strong>💾 Save to History</strong>.</p>
+                </div>
             </div>
         </div>
     </div>
@@ -2848,6 +3104,27 @@
     </div>
     <div id="limsToastHost"></div>
 
+    <!-- ================ QR Builder ================ -->
+    <div class="window" id="window-qr">
+        <div class="window-header">
+            <button class="back-button" onclick="closeWindow('qr')">←</button>
+            <span class="window-title">QR Builder</span>
+        </div>
+        <div class="window-content" style="padding: 0;">
+            <div class="qr-shell" id="qrShell"></div>
+        </div>
+    </div>
+
+    <div class="window" id="window-pool">
+        <div class="window-header">
+            <button class="back-button" onclick="closeWindow('pool')">←</button>
+            <span class="window-title">Pool Water</span>
+        </div>
+        <div class="window-content">
+            <div id="poolShell"></div>
+        </div>
+    </div>
+
     <!-- Transient toast notifications -->
     <div id="toast" class="toast"></div>
 
@@ -2940,6 +3217,8 @@
             if (appName === 'calibration') renderCals();
             if (appName === 'ppe') renderPPE();
             if (appName === 'lims') limsOpen();
+            if (appName === 'qr') qrOpen();
+            if (appName === 'pool') poolOpen();
         }
 
         function closeWindow(appName) {
@@ -2977,7 +3256,7 @@
                 consumables: '📦', qrscan: '📷', schedule: '📅', safety: '🦺',
                 msds: '📄', spill: '🚨', ppe: '🧤', loto: '🔒', incident: '⚠️',
                 catalogue: '📦', troubleshoot: '🛠️', jobs: '📋', trends: '📈',
-                sops: '📚', calibration: '⏰', lims: '🧬'
+                sops: '📚', calibration: '⏰', lims: '🧬', qr: '⬛', pool: '🏊'
             };
             return icons[appName] || '📱';
         }

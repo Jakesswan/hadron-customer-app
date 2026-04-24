@@ -643,12 +643,14 @@
             <div class="lims-section-title">QR / Barcode</div>
             <div class="lims-sticker">
               <div class="sticker-barcode">${esc(s.barcode)}</div>
-              <svg viewBox="0 0 80 80" class="sticker-qr" xmlns="http://www.w3.org/2000/svg">
-                ${qrStub(s.barcode)}
-              </svg>
+              <div class="sticker-qr-real">${realQR(s.id, 'sample', 140)}</div>
               <div class="sticker-client">${esc(client?client.name:'')}</div>
-              <div class="sticker-desc">${esc(s.description).slice(0,30)}</div>
-              <button class="lims-btn ghost" onclick="window.print()">Print sticker</button>
+              <div class="sticker-desc">${esc(s.description).slice(0,40)}</div>
+              <div style="display:flex;gap:6px;justify-content:center;flex-wrap:wrap;margin-top:4px;">
+                <button class="lims-btn" onclick="limsQrPrint('sample','${s.id}','${esc(s.barcode)}','${esc(s.description).replace(/'/g,'')}')">🖨 Sticker</button>
+                <button class="lims-btn ghost" onclick="limsQrBuilder('sample','${s.id}')">⬛ QR Builder</button>
+              </div>
+              <div style="font-size:10px;color:#6b7684;margin-top:6px;word-break:break-all;">${qrURL('sample', s.id)}</div>
             </div>
           </div>
         </div>
@@ -656,7 +658,64 @@
     `;
   }
 
-  // Simple decorative "QR" grid (not a real QR)
+  // Real QR via qr-app.js helpers (falls back to decorative stub if not loaded)
+  function realQR(id, kind, size) {
+    const sz = size || 140;
+    if (typeof window.qrMakeSVG === 'function' && typeof window.qrBuildAssetURL === 'function') {
+      const url = window.qrBuildAssetURL(kind, id);
+      return window.qrMakeSVG(url, 'M', 2, '#111', '#fff', sz);
+    }
+    // Fallback: decorative
+    return `<svg viewBox="0 0 80 80" width="${sz}" height="${sz}">${qrStub(id)}</svg>`;
+  }
+
+  function qrURL(kind, id) {
+    if (typeof window.qrBuildAssetURL === 'function') return window.qrBuildAssetURL(kind, id);
+    return `${location.origin}${location.pathname}#lims/${kind}/${id}`;
+  }
+
+  // Print a single sticker (70mm × 50mm) via a popup window
+  window.limsQrPrint = function(kind, id, label, sublabel) {
+    const url = qrURL(kind, id);
+    const qrSVG = (typeof window.qrMakeSVG === 'function')
+      ? window.qrMakeSVG(url, 'M', 2, '#111', '#fff', 280)
+      : `<svg viewBox="0 0 80 80" width="280" height="280">${qrStub(id)}</svg>`;
+    const w = window.open('', '_blank', 'width=420,height=340');
+    if (!w) { toast('Pop-up blocked — please allow pop-ups to print', 'warn'); return; }
+    const safeLabel = String(label||'').replace(/[<>]/g,'');
+    const safeSub = String(sublabel||'').replace(/[<>]/g,'');
+    w.document.write(`<!doctype html><html><head><meta charset="utf-8"><title>QR Sticker</title>
+<style>
+  @page { size: 70mm 50mm; margin: 0; }
+  body { margin:0; font-family: Arial, sans-serif; }
+  .sticker { width:70mm; height:50mm; padding:3mm; box-sizing:border-box; display:grid; grid-template-columns: 38mm 1fr; gap:3mm; align-items:center; }
+  .sticker .qr { width:38mm; height:38mm; }
+  .sticker .qr svg { width:100%; height:100%; display:block; }
+  .sticker .meta { font-size:9pt; }
+  .sticker .meta .lbl { font-weight:700; font-size:11pt; margin-bottom:2mm; word-break:break-all; }
+  .sticker .meta .sub { color:#333; font-size:8pt; line-height:1.2; max-height:16mm; overflow:hidden; }
+  .sticker .meta .url { color:#666; font-size:6pt; margin-top:2mm; word-break:break-all; }
+</style></head><body>
+<div class="sticker">
+  <div class="qr">${qrSVG}</div>
+  <div class="meta">
+    <div class="lbl">${safeLabel}</div>
+    <div class="sub">${safeSub}</div>
+    <div class="url">${url}</div>
+  </div>
+</div>
+<script>window.onload = function(){ setTimeout(function(){ window.print(); }, 200); };<\/script>
+</body></html>`);
+    w.document.close();
+  };
+
+  // Open the QR Builder app pre-filled with this asset
+  window.limsQrBuilder = function(kind, id) {
+    if (typeof openWindow === 'function') openWindow('qr');
+    setTimeout(() => { if (typeof window.qrOpen === 'function') window.qrOpen('lims-' + kind, id); }, 150);
+  };
+
+  // Simple decorative "QR" grid (fallback only)
   function qrStub(seed) {
     let h = 0; for (let i=0;i<seed.length;i++) h = (h*31 + seed.charCodeAt(i)) >>> 0;
     const rand = () => { h = (h*1103515245 + 12345) >>> 0; return h; };
@@ -1177,6 +1236,22 @@
             </table>
           </div>
         </div>
+        <div class="lims-detail-side">
+          <div class="lims-card">
+            <div class="lims-section-title">QR / Asset tag</div>
+            <div class="lims-sticker">
+              <div class="sticker-barcode">${esc(i.serial)}</div>
+              <div class="sticker-qr-real">${realQR(i.id, 'instrument', 140)}</div>
+              <div class="sticker-client">${esc(i.name)}</div>
+              <div class="sticker-desc">${esc(i.model)} · ${esc(i.location)}</div>
+              <div style="display:flex;gap:6px;justify-content:center;flex-wrap:wrap;margin-top:4px;">
+                <button class="lims-btn" onclick="limsQrPrint('instrument','${i.id}','${esc(i.name).replace(/'/g,'')}','${esc(i.model).replace(/'/g,'')} · SN ${esc(i.serial).replace(/'/g,'')}')">🖨 Sticker</button>
+                <button class="lims-btn ghost" onclick="limsQrBuilder('instrument','${i.id}')">⬛ QR Builder</button>
+              </div>
+              <div style="font-size:10px;color:#6b7684;margin-top:6px;word-break:break-all;">${qrURL('instrument', i.id)}</div>
+            </div>
+          </div>
+        </div>
       </div>
     `;
   }
@@ -1204,11 +1279,13 @@
       ${breadcrumb([{label:'LIMS',view:'hub'},{label:'Inventory',view:'inventory'}])}
       <div class="lims-toolbar"><h2 class="lims-title">Inventory <span class="lims-count">${list.length}</span></h2></div>
       <table class="lims-table">
-        <thead><tr><th>Item</th><th>Lot</th><th>Supplier</th><th>Received</th><th>Expiry</th><th>Qty</th><th>Storage</th><th>Status</th></tr></thead>
+        <thead><tr><th>Item</th><th>Lot</th><th>Supplier</th><th>Received</th><th>Expiry</th><th>Qty</th><th>Storage</th><th>Status</th><th>QR</th></tr></thead>
         <tbody>${list.map(it => {
           const exp = daysBetween(now, it.expiry);
           const statusC = exp < 0 ? chip('Expired','fail') : (exp <= 30 ? chip('Expires '+exp+'d','warn') : chip('OK','ok'));
           const lowC = it.qty < it.min ? chip('Low stock','warn') : '';
+          const safeName = esc(it.name).replace(/'/g,'');
+          const safeLot = esc(it.lot).replace(/'/g,'');
           return `<tr>
             <td><strong>${esc(it.name)}</strong></td>
             <td>${esc(it.lot)}</td>
@@ -1218,6 +1295,10 @@
             <td>${esc(it.qty)} ${esc(it.unit)} ${lowC}</td>
             <td>${esc(it.storage)}</td>
             <td>${statusC}</td>
+            <td style="white-space:nowrap;">
+              <button class="lims-btn" title="Print sticker" onclick="limsQrPrint('inventory','${it.id}','${safeName}','Lot ${safeLot} · Exp ${fmtDate(it.expiry)}')">🖨</button>
+              <button class="lims-btn ghost" title="QR Builder" onclick="limsQrBuilder('inventory','${it.id}')">⬛</button>
+            </td>
           </tr>`;
         }).join('')}</tbody>
       </table>
