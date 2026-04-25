@@ -453,8 +453,8 @@
         .app-icon[data-app="qrscan"]        .icon { background: linear-gradient(135deg, #4b5b6d 0%, #2e3742 100%); }
         .app-icon[data-app="qrgen"]         .icon { background: linear-gradient(135deg, #2e3742 0%, #00b1ca 100%); }
         .app-icon[data-app="schedule"]      .icon { background: linear-gradient(135deg, #5a73c2 0%, #1a3d9e 100%); }
-        .app-icon[data-app="msds"]          .icon { background: linear-gradient(135deg, #b07a3f 0%, #6c4a1f 100%); }
-        .app-icon[data-app="spill"]         .icon { background: linear-gradient(135deg, #ec5d6a 0%, #b3284f 100%); }
+        .app-icon[data-app="msds"]          .icon { background: linear-gradient(135deg, #5a73c2 0%, #2a3d8a 100%); }
+        .app-icon[data-app="spill"]         .icon { background: linear-gradient(135deg, #d44a26 0%, #8a1f0a 100%); }
         .app-icon[data-app="ppe"]           .icon { background: linear-gradient(135deg, #f5a623 0%, #d44a26 100%); }
         .app-icon[data-app="loto"]          .icon { background: linear-gradient(135deg, #4b5b6d 0%, #2e3742 100%); }
         .app-icon[data-app="incident"]      .icon { background: linear-gradient(135deg, #ff7f3f 0%, #e0492b 100%); }
@@ -599,11 +599,19 @@
             overflow-x: hidden;
             -webkit-overflow-scrolling: touch;
             overscroll-behavior: contain;
+            background: #f7f9fb;
         }
+        body.dark .window-content { background: #161c21; }
 
-        .window-content * {
-            max-width: 100%;
-        }
+        /* Centre the content column on wide desktop screens so cards don't sprawl
+           full-width. Phones / tablets stay full-width because of the 100vw window. */
+        .window-content > *:not(.window-content-fluid) { max-width: 1100px; margin-left: auto; margin-right: auto; }
+        .window-content * { max-width: 100%; }
+        /* Heroes and tables still want to fill the centred column */
+        .window-content .hg-hero,
+        .window-content .lims-hub-header,
+        .window-content .hg-table,
+        .window-content .lims-table { width: 100%; }
 
         @media (max-width: 768px) {
             .window-content {
@@ -1217,9 +1225,10 @@
         /* ---------- Odoo-style app tiles ---------- */
         .lims-apps {
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+            grid-template-columns: repeat(auto-fill, minmax(170px, 1fr));
             gap: 14px;
             margin-top: 6px;
+            max-width: 1100px;
         }
         .lims-app {
             background: #fff;
@@ -1303,6 +1312,10 @@
             border: 1px solid #dfe6ec; border-radius: 10px; background: #fff;
         }
         body.dark .lims-search { background: #22272b; color: #e8ecef; border-color: #394045; }
+        /* When .lims-search is reused for a vertically-stacked form input, kill the
+           horizontal flex behaviour so it doesn't grow into a giant 200px-tall box. */
+        .lims-field .lims-search,
+        .hg-field .lims-search { flex: 0 0 auto; min-width: 0; width: 100%; box-sizing: border-box; }
 
         /* ---------- List / table view ---------- */
         .lims-table {
@@ -1748,6 +1761,146 @@
             .hg-hero-icon { font-size: 32px; }
             .hg-table th, .hg-table td { padding: 9px 10px; font-size: 13px; }
         }
+
+        /* =======================================================
+           Legacy class aliases — promote old .calc-* / .form-group
+           styling to the new Hadron design language so every legacy
+           window gets the upgrade without per-window edits.
+           ======================================================= */
+        .calc-form {
+            display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 14px; background: #fff; border-radius: 12px; padding: 16px 18px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05); margin-bottom: 14px;
+        }
+        body.dark .calc-form { background: #22272b; box-shadow: 0 2px 10px rgba(0,0,0,0.4); color: #e8ecef; }
+        .calc-form .form-group { display: flex; flex-direction: column; gap: 5px; }
+        .calc-form .form-group label,
+        .form-group > label {
+            font-size: 12px; font-weight: 600; color: #6b7684;
+            text-transform: uppercase; letter-spacing: 0.4px;
+        }
+        body.dark .calc-form .form-group label,
+        body.dark .form-group > label { color: #9aa3aa; }
+        .calc-form .form-group input,
+        .calc-form .form-group select,
+        .calc-form .form-group textarea,
+        .form-group > input,
+        .form-group > select,
+        .form-group > textarea {
+            padding: 10px 12px; border: 1px solid #dfe6ec; border-radius: 9px; font-size: 14px;
+            background: #fff; color: #2e3742; font-family: inherit; width: 100%; box-sizing: border-box;
+        }
+        body.dark .calc-form .form-group input,
+        body.dark .calc-form .form-group select,
+        body.dark .calc-form .form-group textarea,
+        body.dark .form-group > input,
+        body.dark .form-group > select,
+        body.dark .form-group > textarea {
+            background: #2f353a; color: #e8ecef; border-color: #394045;
+        }
+        .calc-form .form-group input:focus,
+        .calc-form .form-group select:focus,
+        .calc-form .form-group textarea:focus,
+        .form-group > input:focus,
+        .form-group > select:focus,
+        .form-group > textarea:focus {
+            outline: none; border-color: #00b1ca; box-shadow: 0 0 0 3px rgba(0,177,202,0.15);
+        }
+        .calc-form .form-group textarea,
+        .form-group > textarea { resize: vertical; min-height: 70px; }
+
+        /* Buttons used across the legacy windows */
+        .calc-btn, .save-calc-btn, .pdf-calc-btn {
+            padding: 9px 16px; border: none; border-radius: 10px; cursor: pointer;
+            font-weight: 600; font-size: 14px;
+            background: #eef2f6; color: #2e3742;
+            transition: background 0.15s, transform 0.1s, filter 0.15s;
+            font-family: inherit;
+        }
+        .calc-btn:hover, .save-calc-btn:hover, .pdf-calc-btn:hover { background: #e2e8ee; }
+        .calc-btn:active, .save-calc-btn:active, .pdf-calc-btn:active { transform: scale(0.98); }
+        body.dark .calc-btn,
+        body.dark .save-calc-btn,
+        body.dark .pdf-calc-btn { background: #2f353a; color: #e8ecef; }
+        body.dark .calc-btn:hover,
+        body.dark .save-calc-btn:hover,
+        body.dark .pdf-calc-btn:hover { background: #394045; }
+        /* primary action — first .calc-btn in a row gets the brand teal */
+        .save-calc-btn {
+            background: linear-gradient(135deg, #00b1ca 0%, #008aa3 100%); color: #fff;
+            box-shadow: 0 3px 10px rgba(0,177,202,0.35);
+            margin-right: 6px;
+        }
+        .save-calc-btn:hover { filter: brightness(1.08); }
+        body.dark .save-calc-btn { color: #fff; }
+        .pdf-calc-btn {
+            background: linear-gradient(135deg, #f5a623 0%, #e07b00 100%); color: #fff;
+            box-shadow: 0 3px 10px rgba(245,166,35,0.35);
+        }
+        .pdf-calc-btn:hover { filter: brightness(1.08); }
+        body.dark .pdf-calc-btn { color: #fff; }
+
+        /* Result containers used by Chlorine / ClO₂ / Coagulants */
+        .result-box {
+            background: #fff; border-radius: 12px; padding: 16px 18px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05); margin-bottom: 14px;
+        }
+        body.dark .result-box { background: #22272b; box-shadow: 0 2px 10px rgba(0,0,0,0.4); color: #e8ecef; }
+        .result-row {
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 8px 0; border-bottom: 1px solid #f0f3f5;
+        }
+        .result-row:last-child { border-bottom: none; }
+        body.dark .result-row { border-bottom-color: #2f353a; }
+        .result-row > strong { font-weight: 700; color: #00758a; }
+        body.dark .result-row > strong { color: #6bd9ec; }
+
+        /* =======================================================
+           Legacy inline-style upgrades — reskin the older
+           "Plant Configuration" grey panels and the dated
+           "#4f4f4f → #f9bb32" result-gradient panels to match
+           the new Hadron design language without rewriting HTML.
+           ======================================================= */
+        /* Light grey input panels → white card with shadow */
+        [style*="background: #f8f9fa"][style*="border-radius: 10px"] {
+            background: #fff !important;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05) !important;
+            border-radius: 12px !important;
+        }
+        body.dark [style*="background: #f8f9fa"][style*="border-radius: 10px"] {
+            background: #22272b !important;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.4) !important;
+            color: #e8ecef !important;
+        }
+        body.dark [style*="background: #f8f9fa"][style*="border-radius: 10px"] h3 { color: #6bd9ec !important; }
+
+        /* Dated grey-yellow gradient result panels → brand teal */
+        [style*="linear-gradient(135deg, #4f4f4f 0%, #f9bb32"] {
+            background: linear-gradient(135deg, #00b1ca 0%, #0078a3 100%) !important;
+            box-shadow: 0 4px 16px rgba(0,125,150,0.25) !important;
+        }
+        /* Brand teal-grey gradient (Skid Sizing recommended panel) → deeper navy variant */
+        [style*="linear-gradient(135deg, #00b1ca 0%, #4f4f4f"] {
+            background: linear-gradient(135deg, #1a3d9e 0%, #00b1ca 100%) !important;
+            box-shadow: 0 4px 16px rgba(26,61,158,0.25) !important;
+        }
+
+        /* Inner result tiles (translucent white) → tighten + crisp typography */
+        [style*="background: rgba(255,255,255,0.2)"][style*="border-radius: 8px"] {
+            background: rgba(255,255,255,0.18) !important;
+            backdrop-filter: blur(2px);
+            border: 1px solid rgba(255,255,255,0.18);
+        }
+
+        /* Calculator "Back to Menu" pill — promote to hg-btn ghost styling */
+        [style*="background: rgba(0,177,202,0.1)"][style*="color: #00b1ca"][style*="border: 1px solid #00b1ca"] {
+            background: transparent !important; color: #00b1ca !important;
+            border: 1px solid #00b1ca !important; border-radius: 10px !important;
+            padding: 9px 16px !important; font-weight: 600 !important;
+        }
+        body.dark [style*="background: rgba(0,177,202,0.1)"][style*="color: #00b1ca"][style*="border: 1px solid #00b1ca"] {
+            color: #6bd9ec !important; border-color: #6bd9ec !important;
+        }
     </style>
 </head>
 <body>
@@ -2011,7 +2164,7 @@
                 <div class="hg-section-title">About</div>
                 <div class="hg-kvgrid">
                     <div class="hg-kv"><div class="k">App</div><div class="v">Hadron Group</div></div>
-                    <div class="hg-kv"><div class="k">Version</div><div class="v">v18</div></div>
+                    <div class="hg-kv"><div class="k">Version</div><div class="v">v19</div></div>
                     <div class="hg-kv"><div class="k">Platform</div><div class="v">PWA</div></div>
                 </div>
             </div>
@@ -2148,7 +2301,7 @@
                         <h2 class="hg-hero-title">Dosage Calculators</h2>
                         <div class="hg-hero-sub">Pick a chemical dosing calculation</div>
                     </div>
-                    <div class="hg-hero-icon">⚗️</div>
+                    <div class="hg-hero-icon">💊</div>
                 </div>
 
                 <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 14px;">
@@ -2852,9 +3005,17 @@
             <span class="window-title">Service Report</span>
         </div>
         <div class="window-content">
-            <h2>Digital Service Report</h2>
-            <button class="calc-btn" style="margin-bottom:14px;" onclick="newServiceReport()">+ New Report</button>
-            <button class="calc-btn" style="margin-bottom:14px;background:#666;" onclick="listServiceReports()">📋 View Saved</button>
+            <div class="hg-hero" style="background: linear-gradient(135deg, #7a59d4 0%, #4b3a8c 100%);">
+                <div>
+                    <h2 class="hg-hero-title">Digital Service Report</h2>
+                    <div class="hg-hero-sub">Capture site visits, readings, photos &amp; client sign-off</div>
+                </div>
+                <div class="hg-hero-icon">📝</div>
+            </div>
+            <div class="hg-card">
+                <button class="hg-btn primary" style="margin-right:8px;" onclick="newServiceReport()">＋ New Report</button>
+                <button class="hg-btn" onclick="listServiceReports()">📋 View Saved</button>
+            </div>
             <div id="sr_form" style="display:none;">
                 <div class="calc-form">
                     <div class="form-group"><label>Site</label><input type="text" id="sr_site"></div>
@@ -2918,9 +3079,17 @@
     <div class="window" id="window-sites">
         <div class="window-header"><button class="back-button" onclick="closeWindow('sites')">←</button><span class="window-title">Site Register</span></div>
         <div class="window-content">
-            <h2>Site &amp; Equipment Register</h2>
-            <button class="calc-btn" onclick="newSite()">+ Add site</button>
-            <div id="sites_list" style="margin-top:14px;"></div>
+            <div class="hg-hero" style="background: linear-gradient(135deg, #00b1ca 0%, #007a8a 100%);">
+                <div>
+                    <h2 class="hg-hero-title">Site &amp; Equipment Register</h2>
+                    <div class="hg-hero-sub">Track sites, dosing pumps, RO units &amp; chlorinators</div>
+                </div>
+                <div class="hg-hero-icon">🏢</div>
+            </div>
+            <div class="hg-card">
+                <button class="hg-btn primary" onclick="newSite()">＋ Add site</button>
+                <div id="sites_list" style="margin-top:14px;"></div>
+            </div>
         </div>
     </div>
 
