@@ -53,6 +53,9 @@
             'app.waterindex':           'LSI & RSI Index',
             'app.history':              'History',
             'app.protools':             'Pro Tools',
+            'app.lims':                 'LIMS',
+            'app.qr':                   'QR Builder',
+            'app.pool':                 'Pool Water',
 
             'protools.title':           'Pro Tools',
             'protools.intro':           'Professional field toolkit. Tap any tile.',

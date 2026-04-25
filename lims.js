@@ -356,6 +356,8 @@
         case 'reports':     return await renderReports(root);
         case 'clients':     return await renderClients(root);
         case 'client':      return await renderClientDetail(root);
+        case 'client-form': return await renderClientForm(root);
+        case 'person-form': return await renderPersonForm(root);
         case 'admin':       return await renderAdmin(root);
         default: S.view = 'hub'; return render();
       }
@@ -1426,25 +1428,109 @@
     cms.forEach(cm => { (cmByUser[cm.userId]=cmByUser[cm.userId]||[]).push(cm); });
     root.innerHTML = `
       ${breadcrumb([{label:'LIMS',view:'hub'},{label:'Personnel',view:'personnel'}])}
-      <div class="lims-toolbar"><h2 class="lims-title">Personnel & Competency</h2></div>
+      <div class="lims-toolbar">
+        <h2 class="lims-title">Personnel & Competency <span class="lims-count">${users.length}</span></h2>
+        <button class="lims-btn primary" onclick="limsGo('person-form',{})">➕ Add operator</button>
+      </div>
       <table class="lims-table">
-        <thead><tr><th>Name</th><th>Role</th><th>Email</th><th>Authorised tests</th><th>In training</th><th>Status</th></tr></thead>
-        <tbody>${users.map(u => {
+        <thead><tr><th>Name</th><th>Role</th><th>Email</th><th>Authorised tests</th><th>In training</th><th>Status</th><th></th></tr></thead>
+        <tbody>${users.length ? users.map(u => {
           const mine = cmByUser[u.id] || [];
           const auth = mine.filter(c=>c.status==='authorised');
           const train = mine.filter(c=>c.status==='training');
-          return `<tr onclick="limsGo('person',{id:'${u.id}'})">
-            <td><strong>${esc(u.name)}</strong></td>
-            <td>${chip(u.role,'neutral')}</td>
-            <td>${esc(u.email)}</td>
-            <td>${auth.length?auth.map(c=>chip(testMap[c.testId]?testMap[c.testId].code:'?','ok')).join(' '):'—'}</td>
-            <td>${train.length?train.map(c=>chip(testMap[c.testId]?testMap[c.testId].code:'?','warn')).join(' '):'—'}</td>
-            <td>${chip(u.active?'active':'inactive', u.active?'ok':'neutral')}</td>
+          return `<tr>
+            <td onclick="limsGo('person',{id:'${u.id}'})"><strong>${esc(u.name)}</strong></td>
+            <td onclick="limsGo('person',{id:'${u.id}'})">${chip(u.role,'neutral')}</td>
+            <td onclick="limsGo('person',{id:'${u.id}'})">${esc(u.email)}</td>
+            <td onclick="limsGo('person',{id:'${u.id}'})">${auth.length?auth.map(c=>chip(testMap[c.testId]?testMap[c.testId].code:'?','ok')).join(' '):'—'}</td>
+            <td onclick="limsGo('person',{id:'${u.id}'})">${train.length?train.map(c=>chip(testMap[c.testId]?testMap[c.testId].code:'?','warn')).join(' '):'—'}</td>
+            <td onclick="limsGo('person',{id:'${u.id}'})">${chip(u.active?'active':'inactive', u.active?'ok':'neutral')}</td>
+            <td style="white-space:nowrap;">
+              <button class="lims-btn ghost" onclick="event.stopPropagation();limsGo('person-form',{id:'${u.id}'})">✏️</button>
+              <button class="lims-btn ghost" onclick="event.stopPropagation();limsDeleteUser('${u.id}')">🗑️</button>
+            </td>
           </tr>`;
-        }).join('')}</tbody>
+        }).join('') : '<tr><td colspan="7" class="lims-empty">No operators yet — click ➕ Add operator to create one</td></tr>'}</tbody>
       </table>
     `;
   }
+
+  /* ---------- PERSON FORM (add / edit) ---------- */
+  async function renderPersonForm(root) {
+    const id = S.params.id || null;
+    const u = id ? (await DB.get('users', id)) : { id:'', name:'', role:'analyst', email:'', signature:'', active:true };
+    const isNew = !id;
+    const roles = [
+      { v:'admin',      label:'Admin (full access)' },
+      { v:'authoriser', label:'Authoriser (signs off reports)' },
+      { v:'reviewer',   label:'Reviewer (reviews results)' },
+      { v:'analyst',    label:'Analyst (enters results)' },
+      { v:'sampler',    label:'Sampler (collects samples)' },
+      { v:'viewer',     label:'Viewer (read-only)' }
+    ];
+    root.innerHTML = `
+      ${breadcrumb([{label:'LIMS',view:'hub'},{label:'Personnel',view:'personnel'},{label:isNew?'Add operator':'Edit '+u.name,view:'person-form'}])}
+      <div class="lims-toolbar"><h2 class="lims-title">${isNew?'Add new operator':'Edit '+esc(u.name)}</h2></div>
+      <div class="lims-card">
+        <div class="lims-section-title">Operator details</div>
+        <div class="lims-fieldgrid">
+          <div class="lims-field lims-field-wide"><label>Full name *</label><input id="pf_name" class="lims-search" value="${esc(u.name)}" placeholder="e.g. Dr. J. Smith"></div>
+          <div class="lims-field"><label>Role *</label>
+            <select id="pf_role" class="lims-search">
+              ${roles.map(r=>`<option value="${r.v}" ${u.role===r.v?'selected':''}>${r.label}</option>`).join('')}
+            </select>
+          </div>
+          <div class="lims-field"><label>Signature initials</label><input id="pf_sig" class="lims-search" value="${esc(u.signature)}" placeholder="e.g. JS" maxlength="6"></div>
+          <div class="lims-field"><label>Email *</label><input id="pf_email" type="email" class="lims-search" value="${esc(u.email)}" placeholder="user@company.com"></div>
+          <div class="lims-field"><label>Status</label>
+            <select id="pf_active" class="lims-search">
+              <option value="1" ${u.active?'selected':''}>Active</option>
+              <option value="0" ${!u.active?'selected':''}>Inactive</option>
+            </select>
+          </div>
+        </div>
+        <div style="margin-top:14px;display:flex;gap:8px;flex-wrap:wrap;">
+          <button class="lims-btn primary" onclick="limsSaveUser(${isNew?'null':"'"+id+"'"})">💾 Save operator</button>
+          <button class="lims-btn ghost" onclick="limsBack()">Cancel</button>
+        </div>
+        <p style="font-size:12px;color:#6b7684;margin-top:10px;">Roles control what this operator can do. <strong>Authoriser</strong> can sign off reports, <strong>Reviewer</strong> can approve results, <strong>Analyst</strong> enters data. Separation of duties is enforced for 21 CFR Part 11-style audit trails.</p>
+      </div>
+    `;
+  }
+
+  window.limsSaveUser = async function(existingId) {
+    const name = document.getElementById('pf_name').value.trim();
+    const email = document.getElementById('pf_email').value.trim();
+    if (!name) { toast('Name is required', 'warn'); return; }
+    if (!email) { toast('Email is required', 'warn'); return; }
+    const role = document.getElementById('pf_role').value;
+    let signature = document.getElementById('pf_sig').value.trim().toUpperCase();
+    if (!signature) {
+      // auto-generate signature from initials
+      signature = name.split(/\s+/).map(w=>w[0]||'').join('').toUpperCase().slice(0,4);
+    }
+    const u = {
+      id: existingId || uid('u'),
+      name, role, email, signature,
+      active: document.getElementById('pf_active').value === '1'
+    };
+    await DB.put('users', u);
+    await DB.audit(existingId?'UPDATE':'CREATE', 'user', u.id, null, u);
+    toast(existingId ? 'Operator updated' : 'Operator added', 'ok');
+    limsGo('personnel');
+  };
+
+  window.limsDeleteUser = async function(id) {
+    if (S.currentUser && S.currentUser.id === id) {
+      toast('Cannot delete the currently logged-in operator', 'warn');
+      return;
+    }
+    if (!confirm('Delete this operator? Their audit trail entries will be kept.')) return;
+    await DB.del('users', id);
+    await DB.audit('DELETE', 'user', id, null, null);
+    toast('Operator deleted', 'ok');
+    render();
+  };
 
   async function renderPersonDetail(root) {
     const u = await DB.get('users', S.params.id);
@@ -1454,7 +1540,10 @@
     const userMap = Object.fromEntries((await DB.all('users')).map(x=>[x.id,x.name]));
     root.innerHTML = `
       ${breadcrumb([{label:'LIMS',view:'hub'},{label:'Personnel',view:'personnel'},{label:u.name,view:'person',params:{id:u.id}}])}
-      <div class="lims-toolbar"><h2 class="lims-title">${esc(u.name)}</h2>${chip(u.role,'neutral')}</div>
+      <div class="lims-toolbar">
+        <h2 class="lims-title">${esc(u.name)}</h2>${chip(u.role,'neutral')}
+        <button class="lims-btn primary" onclick="limsGo('person-form',{id:'${u.id}'})">✏️ Edit</button>
+      </div>
       <div class="lims-card">
         <div class="lims-section-title">Contact</div>
         <div class="lims-fieldgrid">
@@ -1644,24 +1733,89 @@
     const quotes = await DB.all('quotes');
     root.innerHTML = `
       ${breadcrumb([{label:'LIMS',view:'hub'},{label:'Clients',view:'clients'}])}
-      <div class="lims-toolbar"><h2 class="lims-title">Clients <span class="lims-count">${clients.length}</span></h2></div>
+      <div class="lims-toolbar">
+        <h2 class="lims-title">Clients <span class="lims-count">${clients.length}</span></h2>
+        <button class="lims-btn primary" onclick="limsGo('client-form',{})">➕ Add client</button>
+      </div>
       <table class="lims-table">
-        <thead><tr><th>Client</th><th>Industry</th><th>Contact</th><th>Email</th><th>Samples</th><th>Quotes</th></tr></thead>
-        <tbody>${clients.map(c=>{
+        <thead><tr><th>Client</th><th>Industry</th><th>Contact</th><th>Email</th><th>Samples</th><th>Quotes</th><th></th></tr></thead>
+        <tbody>${clients.length ? clients.map(c=>{
           const sc = samples.filter(s=>s.clientId===c.id).length;
           const qc = quotes.filter(q=>q.clientId===c.id).length;
-          return `<tr onclick="limsGo('client',{id:'${c.id}'})">
-            <td><strong>${esc(c.name)}</strong></td>
-            <td>${chip(c.industry,'neutral')}</td>
-            <td>${esc(c.contact)}</td>
-            <td>${esc(c.email)}</td>
-            <td>${sc}</td>
-            <td>${qc}</td>
+          return `<tr>
+            <td onclick="limsGo('client',{id:'${c.id}'})"><strong>${esc(c.name)}</strong></td>
+            <td onclick="limsGo('client',{id:'${c.id}'})">${chip(c.industry,'neutral')}</td>
+            <td onclick="limsGo('client',{id:'${c.id}'})">${esc(c.contact)}</td>
+            <td onclick="limsGo('client',{id:'${c.id}'})">${esc(c.email)}</td>
+            <td onclick="limsGo('client',{id:'${c.id}'})">${sc}</td>
+            <td onclick="limsGo('client',{id:'${c.id}'})">${qc}</td>
+            <td style="white-space:nowrap;">
+              <button class="lims-btn ghost" onclick="event.stopPropagation();limsGo('client-form',{id:'${c.id}'})">✏️</button>
+              <button class="lims-btn ghost" onclick="event.stopPropagation();limsDeleteClient('${c.id}')">🗑️</button>
+            </td>
           </tr>`;
-        }).join('')}</tbody>
+        }).join('') : '<tr><td colspan="7" class="lims-empty">No clients yet — click ➕ Add client to create one</td></tr>'}</tbody>
       </table>
     `;
   }
+
+  /* ---------- CLIENT FORM (add / edit) ---------- */
+  async function renderClientForm(root) {
+    const id = S.params.id || null;
+    const c = id ? (await DB.get('clients', id)) : { id:'', name:'', industry:'Municipal', contact:'', email:'', phone:'', address:'' };
+    const isNew = !id;
+    const industries = ['Municipal','Petrochemical','Mining','Agriculture','Industrial','Pharmaceutical','Food & Beverage','Hospitality','Healthcare','Other'];
+    root.innerHTML = `
+      ${breadcrumb([{label:'LIMS',view:'hub'},{label:'Clients',view:'clients'},{label:isNew?'Add client':'Edit '+c.name,view:'client-form'}])}
+      <div class="lims-toolbar"><h2 class="lims-title">${isNew?'Add new client':'Edit '+esc(c.name)}</h2></div>
+      <div class="lims-card">
+        <div class="lims-section-title">Client details</div>
+        <div class="lims-fieldgrid">
+          <div class="lims-field lims-field-wide"><label>Company name *</label><input id="cf_name" class="lims-search" value="${esc(c.name)}" placeholder="e.g. ACME Industries (Pty) Ltd"></div>
+          <div class="lims-field"><label>Industry</label>
+            <select id="cf_industry" class="lims-search">
+              ${industries.map(i=>`<option value="${i}" ${c.industry===i?'selected':''}>${i}</option>`).join('')}
+            </select>
+          </div>
+          <div class="lims-field"><label>Contact person</label><input id="cf_contact" class="lims-search" value="${esc(c.contact)}" placeholder="e.g. Mr. J. Smith"></div>
+          <div class="lims-field"><label>Email</label><input id="cf_email" type="email" class="lims-search" value="${esc(c.email)}" placeholder="contact@company.com"></div>
+          <div class="lims-field"><label>Phone</label><input id="cf_phone" class="lims-search" value="${esc(c.phone)}" placeholder="012-345-6789"></div>
+          <div class="lims-field lims-field-wide"><label>Address</label><input id="cf_address" class="lims-search" value="${esc(c.address)}" placeholder="Street, City, Province"></div>
+        </div>
+        <div style="margin-top:14px;display:flex;gap:8px;flex-wrap:wrap;">
+          <button class="lims-btn primary" onclick="limsSaveClient(${isNew?'null':"'"+id+"'"})">💾 Save client</button>
+          <button class="lims-btn ghost" onclick="limsBack()">Cancel</button>
+        </div>
+      </div>
+    `;
+  }
+
+  window.limsSaveClient = async function(existingId) {
+    const name = document.getElementById('cf_name').value.trim();
+    if (!name) { toast('Company name is required', 'warn'); return; }
+    const c = {
+      id: existingId || uid('c'),
+      name,
+      industry: document.getElementById('cf_industry').value,
+      contact: document.getElementById('cf_contact').value.trim(),
+      email: document.getElementById('cf_email').value.trim(),
+      phone: document.getElementById('cf_phone').value.trim(),
+      address: document.getElementById('cf_address').value.trim(),
+      created: existingId ? (await DB.get('clients', existingId)).created : nowISO()
+    };
+    await DB.put('clients', c);
+    await DB.audit(existingId?'UPDATE':'CREATE', 'client', c.id, null, c);
+    toast(existingId ? 'Client updated' : 'Client added', 'ok');
+    limsGo('clients');
+  };
+
+  window.limsDeleteClient = async function(id) {
+    if (!confirm('Delete this client? Samples linked to it will keep the reference.')) return;
+    await DB.del('clients', id);
+    await DB.audit('DELETE', 'client', id, null, null);
+    toast('Client deleted', 'ok');
+    render();
+  };
 
   async function renderClientDetail(root) {
     const c = await DB.get('clients', S.params.id);
@@ -1671,7 +1825,10 @@
     const profMap = Object.fromEntries(profiles.map(p=>[p.id,p]));
     root.innerHTML = `
       ${breadcrumb([{label:'LIMS',view:'hub'},{label:'Clients',view:'clients'},{label:c.name,view:'client',params:{id:c.id}}])}
-      <div class="lims-toolbar"><h2 class="lims-title">${esc(c.name)}</h2></div>
+      <div class="lims-toolbar">
+        <h2 class="lims-title">${esc(c.name)}</h2>
+        <button class="lims-btn primary" onclick="limsGo('client-form',{id:'${c.id}'})">✏️ Edit</button>
+      </div>
       <div class="lims-card">
         <div class="lims-fieldgrid">
           <div class="lims-field"><label>Industry</label><div>${esc(c.industry)}</div></div>
@@ -1723,10 +1880,23 @@
       </div>
 
       <div class="lims-card">
-        <div class="lims-section-title">Users</div>
+        <div class="lims-section-title" style="display:flex;justify-content:space-between;align-items:center;">
+          <span>Users</span>
+          <button class="lims-btn primary" onclick="limsGo('person-form',{})">➕ Add user</button>
+        </div>
         <table class="lims-table compact">
-          <thead><tr><th>Name</th><th>Role</th><th>Email</th><th>Signature</th><th>Active</th></tr></thead>
-          <tbody>${users.map(u=>`<tr><td>${esc(u.name)}</td><td>${chip(u.role,'neutral')}</td><td>${esc(u.email)}</td><td>${esc(u.signature)}</td><td>${chip(u.active?'yes':'no', u.active?'ok':'neutral')}</td></tr>`).join('')}</tbody>
+          <thead><tr><th>Name</th><th>Role</th><th>Email</th><th>Signature</th><th>Active</th><th></th></tr></thead>
+          <tbody>${users.map(u=>`<tr>
+            <td>${esc(u.name)}</td>
+            <td>${chip(u.role,'neutral')}</td>
+            <td>${esc(u.email)}</td>
+            <td>${esc(u.signature)}</td>
+            <td>${chip(u.active?'yes':'no', u.active?'ok':'neutral')}</td>
+            <td style="white-space:nowrap;">
+              <button class="lims-btn ghost" onclick="limsGo('person-form',{id:'${u.id}'})">✏️</button>
+              <button class="lims-btn ghost" onclick="limsDeleteUser('${u.id}')">🗑️</button>
+            </td>
+          </tr>`).join('')}</tbody>
         </table>
       </div>
 

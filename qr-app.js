@@ -13,7 +13,7 @@
   })();
 
   const STATE = {
-    type: 'text',      // text | url | lims-sample | lims-instrument | lims-inventory | vcard | wifi
+    type: 'text',      // text | url | lims-sample | lims-instrument | lims-inventory | hg-site | hg-asset | vcard | wifi
     payload: 'https://hadrongrp.com',
     label: '',
     sublabel: '',
@@ -61,6 +61,8 @@
       case 'lims-sample':    return BASE_URL + '#lims/sample/' + encodeURIComponent(s.payload);
       case 'lims-instrument':return BASE_URL + '#lims/instrument/' + encodeURIComponent(s.payload);
       case 'lims-inventory': return BASE_URL + '#lims/inventory/' + encodeURIComponent(s.payload);
+      case 'hg-site':        return BASE_URL + '#asset/site/' + encodeURIComponent(s.payload);
+      case 'hg-asset':       return BASE_URL + '#asset/equip/' + encodeURIComponent(s.payload); // payload = "siteId|equipId"
       case 'vcard':          return s.payload; // built as full vCard string in the form handler
       case 'wifi':           return s.payload; // built as WIFI: string
       default: return s.payload;
@@ -80,6 +82,8 @@
               ${[
                 ['text','📝 Free text'],
                 ['url','🔗 URL'],
+                ['hg-asset','🏷️ Hadron asset'],
+                ['hg-site','🏢 Hadron site'],
                 ['lims-sample','🧪 LIMS sample'],
                 ['lims-instrument','⚙️ LIMS instrument'],
                 ['lims-inventory','📦 LIMS reagent / lot'],
@@ -179,6 +183,31 @@
         </select>
         <div class="qr-hint">Scanning opens the Hadron app directly to this asset (${esc(BASE_URL)}#lims/${s.type.replace('lims-','')}/…).</div>
         ${list.length===0?'<div class="qr-hint" style="color:#c59d2b;">No LIMS entries loaded yet — open LIMS once to seed the demo data.</div>':''}`;
+    } else if (s.type === 'hg-site' || s.type === 'hg-asset') {
+      const sites = loadHGSites();
+      if (s.type === 'hg-site') {
+        inner = `<div class="qr-section-title">2 · Pick site</div>
+          <select class="qr-input" onchange="qrPickHGSite(this.value)">
+            <option value="">— select a site —</option>
+            ${sites.map(st => `<option value="${esc(st.id)}" ${s.payload===st.id?'selected':''}>${esc(st.name)} · ${st.equipment.length} asset(s)</option>`).join('')}
+          </select>
+          <div class="qr-hint">Scanning opens the Site Register (Assets app) for this site.</div>
+          ${sites.length===0?'<div class="qr-hint" style="color:#c59d2b;">No sites yet — open Assets → Site Register to add one.</div>':''}`;
+      } else {
+        // hg-asset: dropdown of all equipment across all sites
+        const allEquip = [];
+        sites.forEach(st => (st.equipment||[]).forEach(eq => allEquip.push({ siteId:st.id, siteName:st.name, eq })));
+        inner = `<div class="qr-section-title">2 · Pick asset</div>
+          <select class="qr-input" onchange="qrPickHGAsset(this.value)">
+            <option value="">— select an asset —</option>
+            ${allEquip.map(a => {
+              const v = a.siteId + '|' + a.eq.id;
+              return `<option value="${esc(v)}" ${s.payload===v?'selected':''}>${esc(a.eq.type)} · ${esc(a.eq.serial||'no serial')} · ${esc(a.siteName)}</option>`;
+            }).join('')}
+          </select>
+          <div class="qr-hint">Scanning opens the asset's site in the Site Register.</div>
+          ${allEquip.length===0?'<div class="qr-hint" style="color:#c59d2b;">No assets yet — open Assets → Site Register and click "+ Add asset" on a site.</div>':''}`;
+      }
     } else if (s.type === 'vcard') {
       inner = `<div class="qr-section-title">2 · Contact card</div>
         <div class="qr-fieldgrid">
@@ -211,6 +240,15 @@
   const _limsCache = { samples: null, instruments: null, inventory: null };
   function await_asLIMSItems_sync() {
     return _limsCache;
+  }
+
+  // Hadron Sites/Assets are stored in localStorage by the Assets app — synchronous read
+  function loadHGSites() {
+    try {
+      const raw = localStorage.getItem('hadron_sites');
+      const list = raw ? JSON.parse(raw) : [];
+      return Array.isArray(list) ? list.map(s => ({ id:s.id, name:s.name||'(unnamed site)', equipment: s.equipment||[] })) : [];
+    } catch (e) { return []; }
   }
   async function preloadLIMS() {
     try {
@@ -245,10 +283,35 @@
     if (t === 'url')  STATE.payload = STATE.payload.startsWith('http') ? STATE.payload : 'https://hadrongrp.com';
     if (t === 'text') STATE.payload = STATE.payload || 'Hello from Hadron';
     if (t.startsWith('lims-')) STATE.payload = '';
+    if (t === 'hg-site' || t === 'hg-asset') { STATE.payload = ''; STATE.label = ''; STATE.sublabel = ''; }
     renderShell();
   };
   window.qrSetPayload = function(v) { STATE.payload = v; refreshPreview(); };
   window.qrSetOpt = function(k, v) { STATE[k] = v; refreshPreview(); };
+  window.qrPickHGSite = function(siteId) {
+    STATE.payload = siteId;
+    const site = loadHGSites().find(s => s.id === siteId);
+    if (site) {
+      STATE.label = site.name;
+      STATE.sublabel = (site.equipment.length||0) + ' asset(s) on site';
+    }
+    renderShell();
+  };
+
+  window.qrPickHGAsset = function(combined) {
+    // combined = "siteId|equipId"
+    STATE.payload = combined;
+    if (!combined) { renderShell(); return; }
+    const [siteId, equipId] = combined.split('|');
+    const site = loadHGSites().find(s => s.id === siteId);
+    const eq = site && (site.equipment||[]).find(e => e.id === equipId);
+    if (eq) {
+      STATE.label = (eq.type || 'Asset') + (eq.serial ? ' ' + eq.serial : '');
+      STATE.sublabel = site.name + (eq.installed ? ' · installed ' + eq.installed : '');
+    }
+    renderShell();
+  };
+
   window.qrPickLimsAsset = function(id) {
     STATE.payload = id;
     // auto-populate label with the item's display string
@@ -409,22 +472,41 @@
       STATE.type = presetType;
       if (presetId) STATE.payload = presetId;
       // preset labels
-      const store = presetType === 'lims-sample' ? 'samples' : (presetType === 'lims-instrument' ? 'instruments' : 'inventory');
-      const item = (_limsCache[store]||[]).find(x => x.id === presetId);
-      if (item) {
-        if (presetType === 'lims-sample')     { STATE.label = item.barcode; STATE.sublabel = item.description||''; }
-        else if (presetType === 'lims-instrument') { STATE.label = item.name;    STATE.sublabel = (item.model||'')+' · '+(item.serial||''); }
-        else                                  { STATE.label = item.name;    STATE.sublabel = 'Lot '+(item.lot||'')+(item.expiry?(' · exp '+item.expiry):''); }
+      if (presetType === 'lims-sample' || presetType === 'lims-instrument' || presetType === 'lims-inventory') {
+        const store = presetType === 'lims-sample' ? 'samples' : (presetType === 'lims-instrument' ? 'instruments' : 'inventory');
+        const item = (_limsCache[store]||[]).find(x => x.id === presetId);
+        if (item) {
+          if (presetType === 'lims-sample')     { STATE.label = item.barcode; STATE.sublabel = item.description||''; }
+          else if (presetType === 'lims-instrument') { STATE.label = item.name;    STATE.sublabel = (item.model||'')+' · '+(item.serial||''); }
+          else                                  { STATE.label = item.name;    STATE.sublabel = 'Lot '+(item.lot||'')+(item.expiry?(' · exp '+item.expiry):''); }
+        }
+      } else if (presetType === 'hg-site' && presetId) {
+        const site = loadHGSites().find(s => s.id === presetId);
+        if (site) { STATE.label = site.name; STATE.sublabel = (site.equipment.length||0) + ' asset(s) on site'; }
+      } else if (presetType === 'hg-asset' && presetId) {
+        const [siteId, equipId] = String(presetId).split('|');
+        const site = loadHGSites().find(s => s.id === siteId);
+        const eq = site && (site.equipment||[]).find(e => e.id === equipId);
+        if (eq) {
+          STATE.label = (eq.type || 'Asset') + (eq.serial ? ' ' + eq.serial : '');
+          STATE.sublabel = site.name + (eq.installed ? ' · installed ' + eq.installed : '');
+        }
       }
     }
     renderShell();
   };
 
-  // Expose the raw renderer for LIMS to use
+  // Expose the raw renderer for LIMS / Assets to use
   window.qrMakeSVG = makeQR;
   window.qrBuildAssetURL = function(kind, id) {
-    // kind = 'sample' | 'instrument' | 'inventory'
+    // kind = 'sample' | 'instrument' | 'inventory'  (LIMS deep link)
     return BASE_URL + '#lims/' + kind + '/' + encodeURIComponent(id);
+  };
+  window.qrBuildSiteURL = function(siteId) {
+    return BASE_URL + '#asset/site/' + encodeURIComponent(siteId);
+  };
+  window.qrBuildEquipURL = function(siteId, equipId) {
+    return BASE_URL + '#asset/equip/' + encodeURIComponent(siteId + '|' + equipId);
   };
 
   /* ---------- Deep-link handler ---------- */
@@ -450,6 +532,26 @@
     } else if (parts[0] === 'qr') {
       if (typeof window.openWindow === 'function') window.openWindow('qr');
       setTimeout(()=>window.qrOpen(), 200);
+      history.replaceState(null, '', window.location.pathname + window.location.search);
+    } else if (parts[0] === 'asset' && parts[1] && parts[2]) {
+      // #asset/site/<siteId>  or  #asset/equip/<siteId|equipId>
+      if (typeof window.openWindow === 'function') {
+        window.openWindow('assets');
+        setTimeout(() => window.openWindow('sites'), 250);
+      }
+      // Highlight the asset/site after sites window renders
+      setTimeout(() => {
+        if (typeof window.renderSites === 'function') window.renderSites();
+        const target = decodeURIComponent(parts[2]);
+        const flashId = parts[1] === 'equip' ? 'site-equip-' + target.replace('|','-') : 'site-' + target;
+        const el = document.getElementById(flashId);
+        if (el) {
+          el.scrollIntoView({ behavior:'smooth', block:'center' });
+          el.style.transition = 'box-shadow 0.4s, background 0.4s';
+          el.style.boxShadow = '0 0 0 3px #00b1ca';
+          setTimeout(()=>{ el.style.boxShadow = 'none'; }, 1800);
+        }
+      }, 600);
       history.replaceState(null, '', window.location.pathname + window.location.search);
     }
   }

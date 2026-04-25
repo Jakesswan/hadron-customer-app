@@ -406,15 +406,62 @@
             box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
             transition: box-shadow 0.2s;
             overflow: hidden;
+            color: white;
         }
         .icon.icon-image {
             padding: 8px;
+            background: white !important;
+            color: inherit;
         }
         .icon.icon-image img {
             width: 100%;
             height: 100%;
             object-fit: contain;
         }
+
+        /* Branded tile gradients — each app gets its own colour */
+        .app-icon[data-app="profile"]       .icon { background: linear-gradient(135deg, #7a59d4 0%, #1a3d9e 100%); }
+        .app-icon[data-app="messages"]      .icon { background: linear-gradient(135deg, #00b1ca 0%, #1a3d9e 100%); }
+        .app-icon[data-app="settings"]      .icon { background: linear-gradient(135deg, #4b5b6d 0%, #2e3742 100%); }
+        .app-icon[data-app="files"]         .icon { background: linear-gradient(135deg, #f5a623 0%, #e07b00 100%); }
+        .app-icon[data-app="labcom"]        .icon { background: linear-gradient(135deg, #00b1ca 0%, #7a59d4 100%); }
+        .app-icon[data-app="support"]       .icon { background: linear-gradient(135deg, #ec5d6a 0%, #b3284f 100%); }
+        .app-icon[data-app="store"]         .icon { background: linear-gradient(135deg, #ff7f3f 0%, #e0492b 100%); }
+        .app-icon[data-app="dosage"]        .icon { background: linear-gradient(135deg, #2bb673 0%, #008f6b 100%); }
+        .app-icon[data-app="waterindex"]    .icon { background: linear-gradient(135deg, #4ec5d4 0%, #1a3d9e 100%); }
+        .app-icon[data-app="history"]       .icon { background: linear-gradient(135deg, #5a73c2 0%, #2a3d8a 100%); }
+        .app-icon[data-app="coolingtower"]  .icon { background: linear-gradient(135deg, #6c8a9a 0%, #2c4658 100%); }
+        .app-icon[data-app="rocalc"]        .icon { background: linear-gradient(135deg, #00b1ca 0%, #1a3d9e 100%); }
+        .app-icon[data-app="converters"]    .icon { background: linear-gradient(135deg, #2bb673 0%, #00b1ca 100%); }
+        .app-icon[data-app="neutralise"]    .icon { background: linear-gradient(135deg, #f5a623 0%, #d44a26 100%); }
+        .app-icon[data-app="effluent"]      .icon { background: linear-gradient(135deg, #4ec5d4 0%, #2c5e8a 100%); }
+        .app-icon[data-app="servicereport"] .icon { background: linear-gradient(135deg, #7a59d4 0%, #4b3a8c 100%); }
+        .app-icon[data-app="assets"]        .icon { background: linear-gradient(135deg, #00b1ca 0%, #007a8a 100%); }
+        .app-icon[data-app="safety"]        .icon { background: linear-gradient(135deg, #ff9a3f 0%, #d44a26 100%); }
+        .app-icon[data-app="catalogue"]     .icon { background: linear-gradient(135deg, #b07a3f 0%, #6c4a1f 100%); }
+        .app-icon[data-app="troubleshoot"]  .icon { background: linear-gradient(135deg, #ec5d6a 0%, #b3284f 100%); }
+        .app-icon[data-app="jobs"]          .icon { background: linear-gradient(135deg, #5a73c2 0%, #1a3d9e 100%); }
+        .app-icon[data-app="trends"]        .icon { background: linear-gradient(135deg, #2bb673 0%, #156c4d 100%); }
+        .app-icon[data-app="sops"]          .icon { background: linear-gradient(135deg, #1a3d9e 0%, #0a1f5e 100%); }
+        .app-icon[data-app="calibration"]   .icon { background: linear-gradient(135deg, #b366d4 0%, #7a59d4 100%); }
+        .app-icon[data-app="lims"]          .icon { background: linear-gradient(135deg, #7a59d4 0%, #00b1ca 100%); }
+        .app-icon[data-app="qr"]            .icon { background: linear-gradient(135deg, #2e3742 0%, #00b1ca 100%); }
+        .app-icon[data-app="pool"]          .icon { background: linear-gradient(135deg, #00b1ca 0%, #1a3d9e 100%); }
+        /* Sub-tiles inside hub windows */
+        .app-icon[data-app="sites"]         .icon { background: linear-gradient(135deg, #00b1ca 0%, #007a8a 100%); }
+        .app-icon[data-app="consumables"]   .icon { background: linear-gradient(135deg, #b07a3f 0%, #6c4a1f 100%); }
+        .app-icon[data-app="qrscan"]        .icon { background: linear-gradient(135deg, #4b5b6d 0%, #2e3742 100%); }
+        .app-icon[data-app="qrgen"]         .icon { background: linear-gradient(135deg, #2e3742 0%, #00b1ca 100%); }
+        .app-icon[data-app="schedule"]      .icon { background: linear-gradient(135deg, #5a73c2 0%, #1a3d9e 100%); }
+        .app-icon[data-app="msds"]          .icon { background: linear-gradient(135deg, #b07a3f 0%, #6c4a1f 100%); }
+        .app-icon[data-app="spill"]         .icon { background: linear-gradient(135deg, #ec5d6a 0%, #b3284f 100%); }
+        .app-icon[data-app="ppe"]           .icon { background: linear-gradient(135deg, #f5a623 0%, #d44a26 100%); }
+        .app-icon[data-app="loto"]          .icon { background: linear-gradient(135deg, #4b5b6d 0%, #2e3742 100%); }
+        .app-icon[data-app="incident"]      .icon { background: linear-gradient(135deg, #ff7f3f 0%, #e0492b 100%); }
+        .app-icon[data-app="removalcalc"]   .icon { background: linear-gradient(135deg, #4ec5d4 0%, #2c5e8a 100%); }
+        .app-icon[data-app="fmcalc"]        .icon { background: linear-gradient(135deg, #2bb673 0%, #008f6b 100%); }
+        .app-icon[data-app="srtcalc"]       .icon { background: linear-gradient(135deg, #5a73c2 0%, #2a3d8a 100%); }
+        .app-icon[data-app="jartest"]       .icon { background: linear-gradient(135deg, #7a59d4 0%, #4b3a8c 100%); }
 
         @media (max-width: 480px) {
             .icon {
@@ -431,6 +478,17 @@
             font-weight: 500;
             text-align: center;
             text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+        }
+
+        /* When app tiles are reused inside a window (Safety / Assets / Effluent submenus,
+           Calculator menu, etc.) the white-on-coloured-desktop label colour becomes
+           invisible. Flip them to dark text in light mode and light text in dark mode. */
+        .window-content .app-name {
+            color: #2e3742;
+            text-shadow: none;
+        }
+        body.dark .window-content .app-name {
+            color: #e8ecef;
         }
 
         @media (max-width: 480px) {
@@ -565,6 +623,16 @@
             color: #333;
             font-size: 20px;
         }
+        .window-content h1,
+        .window-content h3,
+        .window-content h4,
+        .window-content h5 { color: #333; }
+        .window-content,
+        .window-content li,
+        .window-content td,
+        .window-content th,
+        .window-content label,
+        .window-content span:not([class]) { color: #2e3742; }
 
         .window-content p {
             color: #666;
@@ -1028,9 +1096,20 @@
         body.dark .window-content {
             background: #161c21;
         }
+        body.dark .window-content h1,
         body.dark .window-content h2,
-        body.dark .window-content h3 {
+        body.dark .window-content h3,
+        body.dark .window-content h4,
+        body.dark .window-content h5 {
             color: #f0f0f0;
+        }
+        body.dark .window-content,
+        body.dark .window-content li,
+        body.dark .window-content td,
+        body.dark .window-content th,
+        body.dark .window-content label,
+        body.dark .window-content span:not([class]) {
+            color: #e8ecef;
         }
         body.dark .window-content p {
             color: #b5b5b5;
@@ -1728,112 +1807,112 @@
         <!-- Desktop Content -->
         <div class="desktop-content">
             <div class="apps-grid">
-                <div class="app-icon" onclick="openWindow('profile')">
+                <div class="app-icon" data-app="profile" onclick="openWindow('profile')">
                     <div class="icon">👤</div>
                     <div class="app-name" data-i18n="app.profile">Profile</div>
                 </div>
-                <div class="app-icon" onclick="openWindow('messages')">
+                <div class="app-icon" data-app="messages" onclick="openWindow('messages')">
                     <div class="icon">💬</div>
                     <div class="app-name" data-i18n="app.messages">Messages</div>
                 </div>
-                <div class="app-icon" onclick="openWindow('settings')">
+                <div class="app-icon" data-app="settings" onclick="openWindow('settings')">
                     <div class="icon">⚙️</div>
                     <div class="app-name" data-i18n="app.settings">Settings</div>
                 </div>
-                <div class="app-icon" onclick="openWindow('files')">
+                <div class="app-icon" data-app="files" onclick="openWindow('files')">
                     <div class="icon">📁</div>
                     <div class="app-name" data-i18n="app.files">Files</div>
                 </div>
-                <div class="app-icon" onclick="openLabCom()">
+                <div class="app-icon" data-app="labcom" onclick="openLabCom()">
                     <div class="icon icon-image"><img src="LabCom_Logo.svg" alt="LabCom"></div>
                     <div class="app-name" data-i18n="app.labcom">LabCom</div>
                 </div>
-                <div class="app-icon" onclick="openWindow('support')">
+                <div class="app-icon" data-app="support" onclick="openWindow('support')">
                     <div class="icon">🎧</div>
                     <div class="app-name" data-i18n="app.support">Support</div>
                 </div>
-                <div class="app-icon" onclick="openWindow('store')">
+                <div class="app-icon" data-app="store" onclick="openWindow('store')">
                     <div class="icon">🛒</div>
                     <div class="app-name" data-i18n="app.store">Store</div>
                 </div>
-                <div class="app-icon" onclick="openWindow('dosage')">
+                <div class="app-icon" data-app="dosage" onclick="openWindow('dosage')">
                     <div class="icon">💊</div>
                     <div class="app-name" data-i18n="app.dosage">Dosage Calculator</div>
                 </div>
-                <div class="app-icon" onclick="openWindow('waterindex')">
+                <div class="app-icon" data-app="waterindex" onclick="openWindow('waterindex')">
                     <div class="icon">🧮</div>
                     <div class="app-name" data-i18n="app.waterindex">LSI &amp; RSI Index</div>
                 </div>
-                <div class="app-icon" onclick="openWindow('history')">
+                <div class="app-icon" data-app="history" onclick="openWindow('history')">
                     <div class="icon">📋</div>
                     <div class="app-name" data-i18n="app.history">History</div>
                 </div>
-                <div class="app-icon" onclick="openWindow('coolingtower')">
+                <div class="app-icon" data-app="coolingtower" onclick="openWindow('coolingtower')">
                     <div class="icon">🏭</div>
                     <div class="app-name" data-i18n="pt.coolingtower">Cooling Tower</div>
                 </div>
-                <div class="app-icon" onclick="openWindow('rocalc')">
+                <div class="app-icon" data-app="rocalc" onclick="openWindow('rocalc')">
                     <div class="icon">💧</div>
                     <div class="app-name" data-i18n="pt.rocalc">RO Performance</div>
                 </div>
-                <div class="app-icon" onclick="openWindow('converters')">
+                <div class="app-icon" data-app="converters" onclick="openWindow('converters')">
                     <div class="icon">🔁</div>
                     <div class="app-name" data-i18n="pt.converters">Converters</div>
                 </div>
-                <div class="app-icon" onclick="openWindow('neutralise')">
+                <div class="app-icon" data-app="neutralise" onclick="openWindow('neutralise')">
                     <div class="icon">⚗️</div>
                     <div class="app-name" data-i18n="pt.neutralise">Acid / Alkali</div>
                 </div>
-                <div class="app-icon" onclick="openWindow('effluent')">
+                <div class="app-icon" data-app="effluent" onclick="openWindow('effluent')">
                     <div class="icon">🌊</div>
                     <div class="app-name" data-i18n="pt.effluent">Effluent Tools</div>
                 </div>
-                <div class="app-icon" onclick="openWindow('servicereport')">
+                <div class="app-icon" data-app="servicereport" onclick="openWindow('servicereport')">
                     <div class="icon">📝</div>
                     <div class="app-name" data-i18n="pt.servicereport">Service Report</div>
                 </div>
-                <div class="app-icon" onclick="openWindow('assets')">
+                <div class="app-icon" data-app="assets" onclick="openWindow('assets')">
                     <div class="icon">🏷️</div>
                     <div class="app-name" data-i18n="pt.assets">Assets</div>
                 </div>
-                <div class="app-icon" onclick="openWindow('safety')">
+                <div class="app-icon" data-app="safety" onclick="openWindow('safety')">
                     <div class="icon">🦺</div>
                     <div class="app-name" data-i18n="pt.safety">Safety</div>
                 </div>
-                <div class="app-icon" onclick="openWindow('catalogue')">
+                <div class="app-icon" data-app="catalogue" onclick="openWindow('catalogue')">
                     <div class="icon">📦</div>
                     <div class="app-name" data-i18n="pt.catalogue">Catalogue</div>
                 </div>
-                <div class="app-icon" onclick="openWindow('troubleshoot')">
+                <div class="app-icon" data-app="troubleshoot" onclick="openWindow('troubleshoot')">
                     <div class="icon">🛠️</div>
                     <div class="app-name" data-i18n="pt.troubleshoot">Troubleshoot</div>
                 </div>
-                <div class="app-icon" onclick="openWindow('jobs')">
+                <div class="app-icon" data-app="jobs" onclick="openWindow('jobs')">
                     <div class="icon">📒</div>
                     <div class="app-name" data-i18n="pt.jobs">Jobs</div>
                 </div>
-                <div class="app-icon" onclick="openWindow('trends')">
+                <div class="app-icon" data-app="trends" onclick="openWindow('trends')">
                     <div class="icon">📈</div>
                     <div class="app-name" data-i18n="pt.trends">Trends</div>
                 </div>
-                <div class="app-icon" onclick="openWindow('sops')">
+                <div class="app-icon" data-app="sops" onclick="openWindow('sops')">
                     <div class="icon">📚</div>
                     <div class="app-name" data-i18n="pt.sops">SOPs</div>
                 </div>
-                <div class="app-icon" onclick="openWindow('calibration')">
+                <div class="app-icon" data-app="calibration" onclick="openWindow('calibration')">
                     <div class="icon">⏰</div>
                     <div class="app-name" data-i18n="pt.calibration">Calibration</div>
                 </div>
-                <div class="app-icon" onclick="openWindow('lims')">
-                    <div class="icon" style="background: linear-gradient(135deg, #7a59d4 0%, #00b1ca 100%); color: white;">🧬</div>
+                <div class="app-icon" data-app="lims" onclick="openWindow('lims')">
+                    <div class="icon">🧬</div>
                     <div class="app-name" data-i18n="app.lims">LIMS</div>
                 </div>
-                <div class="app-icon" onclick="openWindow('qr')">
-                    <div class="icon" style="background: linear-gradient(135deg, #2e3742 0%, #00b1ca 100%); color: white;">⬛</div>
+                <div class="app-icon" data-app="qr" onclick="openWindow('qr')">
+                    <div class="icon">⬛</div>
                     <div class="app-name" data-i18n="app.qr">QR Builder</div>
                 </div>
-                <div class="app-icon" onclick="openWindow('pool')">
-                    <div class="icon" style="background: linear-gradient(135deg, #00b1ca 0%, #1a3d9e 100%); color: white;">🏊</div>
+                <div class="app-icon" data-app="pool" onclick="openWindow('pool')">
+                    <div class="icon">🏊</div>
                     <div class="app-name" data-i18n="app.pool">Pool Water</div>
                 </div>
             </div>
@@ -1932,7 +2011,7 @@
                 <div class="hg-section-title">About</div>
                 <div class="hg-kvgrid">
                     <div class="hg-kv"><div class="k">App</div><div class="v">Hadron Group</div></div>
-                    <div class="hg-kv"><div class="k">Version</div><div class="v">v17</div></div>
+                    <div class="hg-kv"><div class="k">Version</div><div class="v">v18</div></div>
                     <div class="hg-kv"><div class="k">Platform</div><div class="v">PWA</div></div>
                 </div>
             </div>
@@ -2642,10 +2721,10 @@
         <div class="window-content">
             <h2>Sewage &amp; Effluent</h2>
             <div class="apps-grid" style="margin:0;">
-                <div class="app-icon" onclick="openWindow('removalcalc')"><div class="icon">🧪</div><div class="app-name">BOD / COD / TSS</div></div>
-                <div class="app-icon" onclick="openWindow('fmcalc')"><div class="icon">🌬️</div><div class="app-name">F:M · MLSS · SVI₃₀</div></div>
-                <div class="app-icon" onclick="openWindow('srtcalc')"><div class="icon">⏱️</div><div class="app-name">Sludge Age / SRT</div></div>
-                <div class="app-icon" onclick="openWindow('jartest')"><div class="icon">🥽</div><div class="app-name">Polymer Jar Log</div></div>
+                <div class="app-icon" data-app="removalcalc" onclick="openWindow('removalcalc')"><div class="icon">🧪</div><div class="app-name">BOD / COD / TSS</div></div>
+                <div class="app-icon" data-app="fmcalc" onclick="openWindow('fmcalc')"><div class="icon">🌬️</div><div class="app-name">F:M · MLSS · SVI₃₀</div></div>
+                <div class="app-icon" data-app="srtcalc" onclick="openWindow('srtcalc')"><div class="icon">⏱️</div><div class="app-name">Sludge Age / SRT</div></div>
+                <div class="app-icon" data-app="jartest" onclick="openWindow('jartest')"><div class="icon">🥽</div><div class="app-name">Polymer Jar Log</div></div>
             </div>
         </div>
     </div>
@@ -2827,10 +2906,11 @@
         <div class="window-content">
             <h2>Assets &amp; Sites</h2>
             <div class="apps-grid" style="margin:0;">
-                <div class="app-icon" onclick="openWindow('sites')"><div class="icon">🏢</div><div class="app-name">Site Register</div></div>
-                <div class="app-icon" onclick="openWindow('consumables')"><div class="icon">📦</div><div class="app-name">Consumables</div></div>
-                <div class="app-icon" onclick="openWindow('qrscan')"><div class="icon">📷</div><div class="app-name">QR / Barcode</div></div>
-                <div class="app-icon" onclick="openWindow('schedule')"><div class="icon">📅</div><div class="app-name">PM Schedule</div></div>
+                <div class="app-icon" data-app="sites" onclick="openWindow('sites')"><div class="icon">🏢</div><div class="app-name">Site Register</div></div>
+                <div class="app-icon" data-app="consumables" onclick="openWindow('consumables')"><div class="icon">📦</div><div class="app-name">Consumables</div></div>
+                <div class="app-icon" data-app="qrscan" onclick="openWindow('qrscan')"><div class="icon">📷</div><div class="app-name">QR Scan</div></div>
+                <div class="app-icon" data-app="qrgen" onclick="openAssetsQR()"><div class="icon">⬛</div><div class="app-name">QR Generator</div></div>
+                <div class="app-icon" data-app="schedule" onclick="openWindow('schedule')"><div class="icon">📅</div><div class="app-name">PM Schedule</div></div>
             </div>
         </div>
     </div>
@@ -2897,11 +2977,11 @@
         <div class="window-content">
             <h2>Safety &amp; Compliance</h2>
             <div class="apps-grid" style="margin:0;">
-                <div class="app-icon" onclick="openWindow('msds')"><div class="icon">📄</div><div class="app-name">MSDS Library</div></div>
-                <div class="app-icon" onclick="openWindow('spill')"><div class="icon">🚨</div><div class="app-name">Spill Response</div></div>
-                <div class="app-icon" onclick="openWindow('ppe')"><div class="icon">🧤</div><div class="app-name">PPE Checklist</div></div>
-                <div class="app-icon" onclick="openWindow('loto')"><div class="icon">🔒</div><div class="app-name">LOTO Log</div></div>
-                <div class="app-icon" onclick="openWindow('incident')"><div class="icon">⚠️</div><div class="app-name">Incident</div></div>
+                <div class="app-icon" data-app="msds" onclick="openWindow('msds')"><div class="icon">📄</div><div class="app-name">MSDS Library</div></div>
+                <div class="app-icon" data-app="spill" onclick="openWindow('spill')"><div class="icon">🚨</div><div class="app-name">Spill Response</div></div>
+                <div class="app-icon" data-app="ppe" onclick="openWindow('ppe')"><div class="icon">🧤</div><div class="app-name">PPE Checklist</div></div>
+                <div class="app-icon" data-app="loto" onclick="openWindow('loto')"><div class="icon">🔒</div><div class="app-name">LOTO Log</div></div>
+                <div class="app-icon" data-app="incident" onclick="openWindow('incident')"><div class="icon">⚠️</div><div class="app-name">Incident</div></div>
             </div>
         </div>
     </div>
@@ -4732,16 +4812,57 @@
         }
         function renderSites() {
             const list = LS.get('hadron_sites', []);
-            document.getElementById('sites_list').innerHTML = list.length === 0 ? '<p style="color:#888;margin-top:12px;">No sites yet.</p>' :
-                list.map(s => `<div style="border:1px solid #eee;border-radius:6px;padding:12px;margin-bottom:8px;">
-                    <strong>${esc(s.name)}</strong>
-                    <div style="margin-top:6px;font-size:13px;color:#666;">${s.equipment.length} asset(s)</div>
-                    <div style="margin-top:8px;">
-                        <button class="calc-btn" style="font-size:12px;padding:6px 10px;" onclick="addAsset('${s.id}')">+ Add asset</button>
-                        <button class="save-calc-btn" style="background:#c44;" onclick="deleteSite('${s.id}')">🗑</button>
+            document.getElementById('sites_list').innerHTML = list.length === 0 ? '<p style="color:#888;margin-top:12px;">No sites yet — click "+ Add site" to create one.</p>' :
+                list.map(s => `<div id="site-${s.id}" class="hg-card" style="margin-bottom:10px;">
+                    <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+                        <strong style="font-size:15px;">${esc(s.name)}</strong>
+                        <span class="hg-chip neutral">${s.equipment.length} asset${s.equipment.length===1?'':'s'}</span>
                     </div>
-                    ${s.equipment.map(a => `<div style="margin-top:6px;padding:8px;background:#f7f7f7;border-radius:4px;font-size:13px;"><strong>${esc(a.type)}</strong> · ${esc(a.serial)} · installed ${esc(a.installed || '-')}</div>`).join('')}
+                    <div style="margin-top:10px;display:flex;gap:6px;flex-wrap:wrap;">
+                        <button class="hg-btn" onclick="addAsset('${s.id}')">+ Add asset</button>
+                        <button class="hg-btn ghost" onclick="qrSite('${s.id}')">⬛ Site QR</button>
+                        <button class="hg-btn ghost" onclick="renameSite('${s.id}')">✏️ Rename</button>
+                        <button class="hg-btn warn" onclick="deleteSite('${s.id}')">🗑 Delete site</button>
+                    </div>
+                    ${s.equipment.length ? '<div style="margin-top:10px;display:grid;gap:6px;">' + s.equipment.map(a => `
+                        <div id="site-equip-${s.id}-${a.id}" style="padding:10px 12px;background:#f7fbfd;border-left:3px solid #00b1ca;border-radius:6px;font-size:13px;display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+                            <div style="flex:1;min-width:160px;">
+                                <strong>${esc(a.type)}</strong>
+                                <div style="font-size:12px;color:#6b7684;">${esc(a.serial||'no serial')} · installed ${esc(a.installed || '—')}</div>
+                            </div>
+                            <button class="hg-btn ghost" style="padding:4px 10px;font-size:12px;" onclick="qrEquip('${s.id}','${a.id}')">⬛ Asset QR</button>
+                            <button class="hg-btn warn" style="padding:4px 10px;font-size:12px;" onclick="deleteAsset('${s.id}','${a.id}')">🗑</button>
+                        </div>`).join('') + '</div>' : ''}
                 </div>`).join('');
+        }
+        // Expose for the deep-link handler in qr-app.js
+        window.renderSites = renderSites;
+
+        function renameSite(id) {
+            const list = LS.get('hadron_sites', []);
+            const s = list.find(x => x.id === id); if (!s) return;
+            const v = prompt('Site name:', s.name); if (v == null) return;
+            s.name = v.trim() || s.name;
+            LS.set('hadron_sites', list); renderSites();
+        }
+        function deleteAsset(siteId, equipId) {
+            if (!confirm('Delete this asset?')) return;
+            const list = LS.get('hadron_sites', []);
+            const s = list.find(x => x.id === siteId); if (!s) return;
+            s.equipment = (s.equipment||[]).filter(e => e.id !== equipId);
+            LS.set('hadron_sites', list); renderSites();
+        }
+        function qrSite(id) {
+            openWindow('qr');
+            setTimeout(() => { if (window.qrOpen) window.qrOpen('hg-site', id); }, 200);
+        }
+        function qrEquip(siteId, equipId) {
+            openWindow('qr');
+            setTimeout(() => { if (window.qrOpen) window.qrOpen('hg-asset', siteId + '|' + equipId); }, 200);
+        }
+        function openAssetsQR() {
+            openWindow('qr');
+            setTimeout(() => { if (window.qrOpen) window.qrOpen('hg-asset'); }, 200);
         }
         function addAsset(siteId) {
             const type = prompt('Asset type (e.g. Dosing pump, RO unit, Chlorinator):'); if (!type) return;
