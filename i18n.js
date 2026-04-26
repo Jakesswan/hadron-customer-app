@@ -56,6 +56,7 @@
             'app.lims':                 'LIMS',
             'app.qr':                   'QR Builder',
             'app.pool':                 'Pool Water',
+            'app.academy':              'Hadron Academy',
 
             'protools.title':           'Pro Tools',
             'protools.intro':           'Professional field toolkit. Tap any tile.',

@@ -35,6 +35,7 @@
 
     <!-- Pool Water module -->
     <script src="pool.js" defer></script>
+    <script src="academy.js" defer></script>
 
     <!-- LIMS module (loaded at end of body via defer) -->
     <script src="lims.js" defer></script>
@@ -447,6 +448,7 @@
         .app-icon[data-app="lims"]          .icon { background: linear-gradient(135deg, #7a59d4 0%, #00b1ca 100%); }
         .app-icon[data-app="qr"]            .icon { background: linear-gradient(135deg, #2e3742 0%, #00b1ca 100%); }
         .app-icon[data-app="pool"]          .icon { background: linear-gradient(135deg, #00b1ca 0%, #1a3d9e 100%); }
+        .app-icon[data-app="academy"]       .icon { background: linear-gradient(135deg, #7a59d4 0%, #00b1ca 100%); }
         /* Sub-tiles inside hub windows */
         .app-icon[data-app="sites"]         .icon { background: linear-gradient(135deg, #00b1ca 0%, #007a8a 100%); }
         .app-icon[data-app="consumables"]   .icon { background: linear-gradient(135deg, #b07a3f 0%, #6c4a1f 100%); }
@@ -1949,6 +1951,93 @@
         body.dark [style*="background: rgba(0,177,202,0.1)"][style*="color: #00b1ca"][style*="border: 1px solid #00b1ca"] {
             color: #6bd9ec !important; border-color: #6bd9ec !important;
         }
+
+        /* =======================================================
+           HADRON ACADEMY — courseware UI
+           ======================================================= */
+        .academy-tracks {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+            gap: 14px;
+        }
+        .academy-track {
+            border-radius: 14px;
+            padding: 18px;
+            color: #fff;
+            cursor: pointer;
+            transition: transform 0.12s, box-shadow 0.12s;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+            position: relative;
+            overflow: hidden;
+        }
+        .academy-track:hover { transform: translateY(-3px); box-shadow: 0 6px 20px rgba(0,0,0,0.18); }
+        .academy-track-icon { font-size: 32px; margin-bottom: 8px; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.25)); }
+        .academy-track-name { font-size: 16px; font-weight: 700; margin-bottom: 4px; }
+        .academy-track-sub { font-size: 12px; opacity: 0.92; line-height: 1.4; min-height: 32px; }
+        .academy-track-meta { font-size: 11px; opacity: 0.8; margin-top: 10px; padding-top: 8px; border-top: 1px solid rgba(255,255,255,0.25); }
+
+        .academy-course {
+            padding: 14px;
+            border-radius: 10px;
+            border: 1px solid #e6ebef;
+            margin-bottom: 10px;
+            cursor: pointer;
+            transition: background 0.12s, border-color 0.12s;
+            background: #fff;
+        }
+        .academy-course:hover { background: #f7fbfd; border-color: #00b1ca; }
+        body.dark .academy-course { background: #22272b; border-color: #2f353a; }
+        body.dark .academy-course:hover { background: #262c31; border-color: #6bd9ec; }
+        body.dark .academy-course div[style*="color:#2e3742"] { color: #f0f4f7 !important; }
+        body.dark .academy-course div[style*="color:#6b7684"] { color: #b5b5b5 !important; }
+
+        .academy-progress-bar {
+            background: #e8ecef;
+            height: 6px;
+            border-radius: 3px;
+            margin-top: 6px;
+            overflow: hidden;
+        }
+        body.dark .academy-progress-bar { background: #2f353a; }
+        .academy-progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #00b1ca, #7a59d4);
+            border-radius: 3px;
+            transition: width 0.4s ease;
+        }
+
+        .academy-module {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 14px;
+            border-radius: 10px;
+            margin-bottom: 8px;
+            border: 1px solid #eef3f7;
+            cursor: pointer;
+            transition: background 0.12s, border-color 0.12s;
+            background: #fff;
+        }
+        .academy-module:hover { background: #f7fbfd; border-color: #00b1ca; }
+        body.dark .academy-module { background: #22272b; border-color: #2f353a; }
+        body.dark .academy-module:hover { background: #262c31; border-color: #6bd9ec; }
+        .academy-module.done { background: rgba(21,123,58,0.08); border-color: rgba(21,123,58,0.4); }
+        body.dark .academy-module.done { background: rgba(21,123,58,0.18); border-color: rgba(21,123,58,0.5); }
+        .academy-module-num {
+            width: 32px; height: 32px;
+            border-radius: 50%;
+            background: #eef3f7; color: #00b1ca;
+            display: flex; align-items: center; justify-content: center;
+            font-weight: 700; flex-shrink: 0; font-size: 14px;
+        }
+        body.dark .academy-module-num { background: #2f353a; color: #6bd9ec; }
+        .academy-module.done .academy-module-num { background: #157b3a; color: #fff; }
+
+        @media (max-width: 480px) {
+            .academy-tracks { grid-template-columns: 1fr; }
+            .academy-track-icon { font-size: 28px; }
+            .academy-track-name { font-size: 15px; }
+        }
     </style>
 </head>
 <body>
@@ -2116,6 +2205,10 @@
                     <div class="icon">🏊</div>
                     <div class="app-name" data-i18n="app.pool">Pool Water</div>
                 </div>
+                <div class="app-icon" data-app="academy" onclick="openWindow('academy')">
+                    <div class="icon">🎓</div>
+                    <div class="app-name" data-i18n="app.academy">Hadron Academy</div>
+                </div>
             </div>
         </div>
 
@@ -2212,7 +2305,7 @@
                 <div class="hg-section-title">About</div>
                 <div class="hg-kvgrid">
                     <div class="hg-kv"><div class="k">App</div><div class="v">Hadron Group</div></div>
-                    <div class="hg-kv"><div class="k">Version</div><div class="v">v20</div></div>
+                    <div class="hg-kv"><div class="k">Version</div><div class="v">v21</div></div>
                     <div class="hg-kv"><div class="k">Platform</div><div class="v">PWA</div></div>
                 </div>
             </div>
@@ -3422,6 +3515,16 @@
         </div>
     </div>
 
+    <div class="window" id="window-academy">
+        <div class="window-header">
+            <button class="back-button" onclick="academyBack()">←</button>
+            <span class="window-title">Hadron Academy</span>
+        </div>
+        <div class="window-content">
+            <div id="academyShell"></div>
+        </div>
+    </div>
+
     <!-- Transient toast notifications -->
     <div id="toast" class="toast"></div>
 
@@ -3516,6 +3619,7 @@
             if (appName === 'lims') limsOpen();
             if (appName === 'qr') qrOpen();
             if (appName === 'pool') poolOpen();
+            if (appName === 'academy') academyOpen();
         }
 
         function closeWindow(appName) {
@@ -3553,7 +3657,7 @@
                 consumables: '📦', qrscan: '📷', schedule: '📅', safety: '🦺',
                 msds: '📄', spill: '🚨', ppe: '🧤', loto: '🔒', incident: '⚠️',
                 catalogue: '📦', troubleshoot: '🛠️', jobs: '📋', trends: '📈',
-                sops: '📚', calibration: '⏰', lims: '🧬', qr: '⬛', pool: '🏊'
+                sops: '📚', calibration: '⏰', lims: '🧬', qr: '⬛', pool: '🏊', academy: '🎓'
             };
             return icons[appName] || '📱';
         }
