@@ -1539,13 +1539,9 @@
         </ul>
       </div>
 
-      <div class="hg-card">
+      <div class="hg-card academy-lesson">
         <div class="hg-section-title">Lesson content</div>
-        <div class="hg-alert info" style="margin-bottom: 0;">
-          📚 The full multimedia lesson for <strong>${esc(m.title)}</strong> is rolling out as part of the Hadron Academy product launch.
-          The outline above gives you the structure of what's covered. Use the <em>Linked tools</em> on the course page to practise the practical
-          parts now — pH calcs, dosing, jar tests, LSI — and the written content will follow.
-        </div>
+        ${renderLessonBody(STATE.courseId, m.id, m.title)}
       </div>
 
       ${c.linkedTools && c.linkedTools.length ? `
@@ -1588,4 +1584,94 @@
       window.openWindow(key);
     }
   };
+
+  /* ---------- Lesson body lookup + tiny markdown renderer ----------
+     Bodies live in window._ACADEMY_BODIES (set by academy-content.js).
+     Keys are 'courseId/moduleId'. Bodies use a tiny subset of markdown:
+
+       ## Subheading           → <h3>
+       ### Subheading 2        → <h4>
+       (blank line)            → paragraph break
+       - bullet                → unordered list item
+       1. numbered             → ordered list item
+       **bold**                → <strong>
+       _italic_                → <em>
+       `code`                  → <code>
+
+     Anything else is treated as plain prose. Paragraphs are wrapped in <p>. */
+  function renderLessonBody(courseId, moduleId, title) {
+    const bodies = window._ACADEMY_BODIES || {};
+    const key = courseId + '/' + moduleId;
+    const md  = bodies[key];
+    if (!md) {
+      return `<div class="hg-alert info" style="margin-bottom: 0;">
+        📚 The full lesson body for <strong>${esc(title)}</strong> is being written.
+        The outline above shows what's covered, and the <em>Linked tools</em> let you practise the
+        calculations now — written material is rolling out.
+      </div>`;
+    }
+    return '<div class="academy-body">' + mdLight(md) + '</div>';
+  }
+
+  function mdLight(src) {
+    // Normalise line endings
+    const lines = String(src).replace(/\r\n?/g, '\n').split('\n');
+    let html = '';
+    let listType = null;        // 'ul' | 'ol' | null
+    let paragraphBuf = [];
+
+    function flushPara() {
+      if (paragraphBuf.length) {
+        html += '<p>' + inline(paragraphBuf.join(' ')) + '</p>';
+        paragraphBuf = [];
+      }
+    }
+    function closeList() { if (listType) { html += '</' + listType + '>'; listType = null; } }
+    function openList(t) { if (listType !== t) { closeList(); html += '<' + t + '>'; listType = t; } }
+
+    function inline(s) {
+      // Escape HTML first, then re-insert formatting markers
+      let out = String(s).replace(/[&<>"']/g, m => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[m]));
+      out = out.replace(/`([^`]+)`/g, '<code>$1</code>');
+      out = out.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
+      out = out.replace(/_([^_\n]+)_/g, '<em>$1</em>');
+      return out;
+    }
+
+    for (let i = 0; i < lines.length; i++) {
+      const raw = lines[i];
+      const line = raw.replace(/\s+$/, '');
+
+      if (!line.trim()) { flushPara(); closeList(); continue; }
+
+      let m;
+      if ((m = line.match(/^###\s+(.*)/))) {
+        flushPara(); closeList();
+        html += '<h4 class="academy-h4">' + inline(m[1]) + '</h4>';
+        continue;
+      }
+      if ((m = line.match(/^##\s+(.*)/))) {
+        flushPara(); closeList();
+        html += '<h3 class="academy-h3">' + inline(m[1]) + '</h3>';
+        continue;
+      }
+      if ((m = line.match(/^[-*]\s+(.*)/))) {
+        flushPara();
+        openList('ul');
+        html += '<li>' + inline(m[1]) + '</li>';
+        continue;
+      }
+      if ((m = line.match(/^\d+\.\s+(.*)/))) {
+        flushPara();
+        openList('ol');
+        html += '<li>' + inline(m[1]) + '</li>';
+        continue;
+      }
+      // Plain text — accumulate into the current paragraph
+      closeList();
+      paragraphBuf.push(line.trim());
+    }
+    flushPara(); closeList();
+    return html;
+  }
 })();
