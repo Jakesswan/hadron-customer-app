@@ -1480,6 +1480,54 @@
             .lims-title { font-size: 18px; }
         }
 
+        /* =======================================================
+           Mobile horizontal-scroll for wide data tables.
+           On phones, any .lims-card / .hg-card containing a wide
+           table becomes a horizontal scroll viewport, so all
+           columns remain readable without re-flowing the layout.
+           Tables not in a card (e.g. Results) become block-scroll
+           themselves as a fallback.
+           ======================================================= */
+        @media (max-width: 768px) {
+            .lims-card, .hg-card {
+                overflow-x: auto;
+                -webkit-overflow-scrolling: touch;
+            }
+            .lims-card .lims-table,
+            .lims-card .hg-table,
+            .hg-card .lims-table,
+            .hg-card .hg-table {
+                min-width: 640px;
+            }
+            /* Direct-child tables fall back to scrolling themselves */
+            .window-content > .lims-table,
+            .window-content > .hg-table,
+            #limsRoot > .lims-table,
+            #limsRoot > .hg-table,
+            #poolShell > .lims-table,
+            #poolShell > .hg-table {
+                display: block;
+                overflow-x: auto;
+                overflow-y: hidden;
+                -webkit-overflow-scrolling: touch;
+                max-width: 100%;
+                white-space: nowrap;
+            }
+            .window-content > .lims-table > thead,
+            .window-content > .lims-table > tbody,
+            .window-content > .hg-table > thead,
+            .window-content > .hg-table > tbody,
+            #limsRoot > .lims-table > thead,
+            #limsRoot > .lims-table > tbody,
+            #poolShell > .lims-table > thead,
+            #poolShell > .lims-table > tbody {
+                display: table; width: 100%; min-width: 640px;
+            }
+            /* Subtle scroll-shadow hint so users know there's more to the right */
+            .lims-card::-webkit-scrollbar, .hg-card::-webkit-scrollbar { height: 6px; }
+            .lims-card::-webkit-scrollbar-thumb, .hg-card::-webkit-scrollbar-thumb { background: #cfd6dd; border-radius: 3px; }
+        }
+
         /* ---------- LIMS supplementary styles (hub, dashboard, detail, kanban, charts) ---------- */
         .lims-hub-header { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 18px; padding: 16px 18px; background: linear-gradient(135deg, #00b1ca 0%, #0078a3 100%); border-radius: 16px; color: #fff; box-shadow: 0 4px 16px rgba(0,125,150,0.25); }
         .lims-hub-hello { font-size: 19px; font-weight: 700; }
@@ -2164,7 +2212,7 @@
                 <div class="hg-section-title">About</div>
                 <div class="hg-kvgrid">
                     <div class="hg-kv"><div class="k">App</div><div class="v">Hadron Group</div></div>
-                    <div class="hg-kv"><div class="k">Version</div><div class="v">v19</div></div>
+                    <div class="hg-kv"><div class="k">Version</div><div class="v">v20</div></div>
                     <div class="hg-kv"><div class="k">Platform</div><div class="v">PWA</div></div>
                 </div>
             </div>

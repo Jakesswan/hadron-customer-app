@@ -128,11 +128,111 @@
     }
   };
 
+  // Bump this when the test catalogue / profile bundles change so existing
+  // devices pick up the new reference data without wiping their samples,
+  // clients, results or audit trail.
+  const CATALOGUE_VERSION = 2; // v2 = SANS 241:2015 full library, prices removed
+
+  /* ---------- SANS 241:2015 Drinking-Water Reference Catalogue ----------
+     Specs are the SANS 241 health / aesthetic / operational maximum allowable
+     limits. Where SANS lists chronic + acute, the chronic (lower) limit is
+     used as specMax. Cited methods follow APHA Standard Methods (24th ed.),
+     EPA 200.7 / 200.8 / 245.1, and SANS 5667 / 5221 / 5215 / 6222 / 9308 /
+     ISO 10705-2 / EPA 1623.
+     Module-scope so SEED.refreshCatalogue() can reuse without duplicating. */
+  const _SANS241_TESTS = [
+    // ── Microbiological ─────────────────────────────────────────────────
+    { id:'t-ec',     code:'ECOLI',  name:'Escherichia coli',             method:'SANS 5221 / 9308-1',    methodVer:'v2.0', unit:'cfu/100mL',  lod:1,    loq:1,    range:'0–>2000',  tat:3, specMin:0, specMax:0,     category:'Microbiological', accredited:true,  sans241:'Acute health' },
+    { id:'t-colif',  code:'TC',     name:'Total Coliforms',              method:'SANS 5221',             methodVer:'v2.0', unit:'cfu/100mL',  lod:1,    loq:1,    range:'0–>2000',  tat:3, specMin:0, specMax:10,    category:'Microbiological', accredited:true,  sans241:'Operational' },
+    { id:'t-hpc',    code:'HPC',    name:'Heterotrophic Plate Count',    method:'SANS 5221 / 6222',      methodVer:'v1.8', unit:'cfu/mL',     lod:1,    loq:1,    range:'0–>10000', tat:3, specMin:0, specMax:1000,  category:'Microbiological', accredited:true,  sans241:'Operational' },
+    { id:'t-crypto', code:'CRYPT',  name:'Cryptosporidium',              method:'SANS / EPA 1623',       methodVer:'v1.0', unit:'oocysts/10L',lod:1,    loq:1,    range:'0–>100',   tat:5, specMin:0, specMax:0,     category:'Microbiological', accredited:false, sans241:'Acute health' },
+    { id:'t-giardia',code:'GIARD',  name:'Giardia',                      method:'SANS / EPA 1623',       methodVer:'v1.0', unit:'cysts/10L',  lod:1,    loq:1,    range:'0–>100',   tat:5, specMin:0, specMax:0,     category:'Microbiological', accredited:false, sans241:'Acute health' },
+    { id:'t-somph',  code:'SOMPH',  name:'Somatic Coliphages',           method:'ISO 10705-2',           methodVer:'v1.0', unit:'pfu/10mL',   lod:1,    loq:1,    range:'0–>1000',  tat:3, specMin:0, specMax:1,     category:'Microbiological', accredited:false, sans241:'Operational' },
+
+    // ── Physical / Aesthetic ────────────────────────────────────────────
+    { id:'t-ph',     code:'PH',     name:'pH',                           method:'SANS 5667 / APHA 4500-H+', methodVer:'v3.0', unit:'pH units',   lod:0.1,  loq:0.1,  range:'0–14',     tat:1, specMin:5.0, specMax:9.7,   category:'Physico-chemical', accredited:true,  sans241:'Operational' },
+    { id:'t-cond',   code:'EC',     name:'Electrical Conductivity',      method:'APHA 2510-B',           methodVer:'v2.1', unit:'mS/m',       lod:1,    loq:2,    range:'0–10000',  tat:1, specMin:0, specMax:170,   category:'Physico-chemical', accredited:true,  sans241:'Aesthetic' },
+    { id:'t-tds',    code:'TDS',    name:'Total Dissolved Solids',       method:'APHA 2540-C',           methodVer:'v1.2', unit:'mg/L',       lod:5,    loq:10,   range:'0–50000',  tat:2, specMin:0, specMax:1200,  category:'Physico-chemical', accredited:true,  sans241:'Aesthetic' },
+    { id:'t-turb',   code:'TURB',   name:'Turbidity',                    method:'APHA 2130-B',           methodVer:'v1.4', unit:'NTU',        lod:0.1,  loq:0.5,  range:'0–1000',   tat:1, specMin:0, specMax:1.0,   category:'Physico-chemical', accredited:true,  sans241:'Operational' },
+    { id:'t-colour', code:'COL',    name:'Colour',                       method:'APHA 2120-C',           methodVer:'v1.0', unit:'mg/L Pt',    lod:1,    loq:5,    range:'0–500',    tat:1, specMin:0, specMax:15,    category:'Physico-chemical', accredited:true,  sans241:'Aesthetic' },
+    { id:'t-taste',  code:'TASTE',  name:'Taste',                        method:'SANS 5215 (Sensory)',   methodVer:'v1.0', unit:'TON',        lod:1,    loq:1,    range:'0–10',     tat:1, specMin:0, specMax:1,     category:'Physico-chemical', accredited:false, sans241:'Aesthetic' },
+    { id:'t-odour',  code:'ODOUR',  name:'Odour',                        method:'SANS 5215 (Sensory)',   methodVer:'v1.0', unit:'TON',        lod:1,    loq:1,    range:'0–10',     tat:1, specMin:0, specMax:1,     category:'Physico-chemical', accredited:false, sans241:'Aesthetic' },
+
+    // ── Disinfectants & Disinfection By-Products ────────────────────────
+    { id:'t-fcl',    code:'FCL',    name:'Free Chlorine',                method:'APHA 4500-Cl G',        methodVer:'v1.1', unit:'mg/L',       lod:0.02, loq:0.05, range:'0–5',      tat:1, specMin:0.2, specMax:5.0, category:'Disinfectant',     accredited:true,  sans241:'Operational' },
+    { id:'t-mchla',  code:'MCHLA',  name:'Monochloramine',               method:'APHA 4500-Cl G',        methodVer:'v1.0', unit:'mg/L',       lod:0.05, loq:0.1,  range:'0–5',      tat:1, specMin:0, specMax:3.0,   category:'Disinfectant',     accredited:false, sans241:'Chronic health' },
+    { id:'t-cl2',    code:'CLO2',   name:'Chlorine Dioxide (residual)',  method:'DPD-Glycine APHA 4500', methodVer:'v1.0', unit:'mg/L',       lod:0.05, loq:0.1,  range:'0–5',      tat:1, specMin:0.2, specMax:0.8, category:'Disinfectant',     accredited:false, sans241:'Operational' },
+    { id:'t-thm',    code:'THM',    name:'Total Trihalomethanes',        method:'APHA 6232-B (GC-ECD)',  methodVer:'v1.0', unit:'µg/L',       lod:1,    loq:5,    range:'0–500',    tat:5, specMin:0, specMax:100,   category:'Disinfectant',     accredited:false, sans241:'Chronic health' },
+
+    // ── Macro-determinands (Inorganic chemistry) ────────────────────────
+    { id:'t-no3',    code:'NO3',    name:'Nitrate (as N)',               method:'APHA 4500-NO3 B',       methodVer:'v1.0', unit:'mg/L',       lod:0.05, loq:0.1,  range:'0–100',    tat:2, specMin:0, specMax:11,    category:'Inorganic',        accredited:true,  sans241:'Acute health' },
+    { id:'t-no2',    code:'NO2',    name:'Nitrite (as N)',               method:'APHA 4500-NO2 B',       methodVer:'v1.0', unit:'mg/L',       lod:0.01, loq:0.05, range:'0–50',     tat:2, specMin:0, specMax:0.9,   category:'Inorganic',        accredited:true,  sans241:'Acute health' },
+    { id:'t-nh4',    code:'NH4',    name:'Ammonia (as N)',               method:'APHA 4500-NH3',         methodVer:'v1.0', unit:'mg/L',       lod:0.05, loq:0.1,  range:'0–100',    tat:2, specMin:0, specMax:1.5,   category:'Inorganic',        accredited:true,  sans241:'Aesthetic' },
+    { id:'t-so4',    code:'SO4',    name:'Sulfate',                      method:'APHA 4500-SO4 E',       methodVer:'v1.0', unit:'mg/L',       lod:1,    loq:5,    range:'0–2000',   tat:2, specMin:0, specMax:250,   category:'Inorganic',        accredited:true,  sans241:'Aesthetic' },
+    { id:'t-cl',     code:'CL',     name:'Chloride',                     method:'APHA 4500-Cl B',        methodVer:'v1.0', unit:'mg/L',       lod:1,    loq:5,    range:'0–10000',  tat:1, specMin:0, specMax:300,   category:'Inorganic',        accredited:true,  sans241:'Aesthetic' },
+    { id:'t-f',      code:'F',      name:'Fluoride',                     method:'APHA 4500-F C',         methodVer:'v1.0', unit:'mg/L',       lod:0.05, loq:0.1,  range:'0–10',     tat:2, specMin:0, specMax:1.5,   category:'Inorganic',        accredited:true,  sans241:'Chronic health' },
+    { id:'t-cn',     code:'CN',     name:'Cyanide (Total)',              method:'APHA 4500-CN E',        methodVer:'v1.0', unit:'mg/L',       lod:0.005,loq:0.01, range:'0–5',      tat:3, specMin:0, specMax:0.07,  category:'Inorganic',        accredited:false, sans241:'Acute health' },
+    { id:'t-hard',   code:'HARD',   name:'Total Hardness (as CaCO₃)',    method:'APHA 2340-C',           methodVer:'v1.0', unit:'mg/L',       lod:1,    loq:2,    range:'0–1000',   tat:2, specMin:0, specMax:500,   category:'Inorganic',        accredited:true,  sans241:'Operational' },
+    { id:'t-alk',    code:'ALK',    name:'Total Alkalinity (as CaCO₃)',  method:'APHA 2320-B',           methodVer:'v1.0', unit:'mg/L',       lod:1,    loq:2,    range:'0–1000',   tat:1, specMin:0, specMax:500,   category:'Inorganic',        accredited:true,  sans241:'Operational' },
+
+    // ── Trace Metals (ICP-OES / ICP-MS) ─────────────────────────────────
+    { id:'t-al',     code:'AL',     name:'Aluminium',                    method:'ICP-OES (EPA 200.7)',   methodVer:'v2.3', unit:'mg/L',       lod:0.005,loq:0.01, range:'0–10',     tat:3, specMin:0, specMax:0.3,   category:'Metals',           accredited:true,  sans241:'Operational' },
+    { id:'t-sb',     code:'SB',     name:'Antimony',                     method:'ICP-MS (EPA 200.8)',    methodVer:'v1.0', unit:'mg/L',       lod:0.001,loq:0.005,range:'0–1',      tat:5, specMin:0, specMax:0.02,  category:'Metals',           accredited:true,  sans241:'Chronic health' },
+    { id:'t-as',     code:'AS',     name:'Arsenic',                      method:'ICP-MS (EPA 200.8)',    methodVer:'v1.0', unit:'mg/L',       lod:0.001,loq:0.005,range:'0–1',      tat:5, specMin:0, specMax:0.01,  category:'Metals',           accredited:true,  sans241:'Chronic health' },
+    { id:'t-ba',     code:'BA',     name:'Barium',                       method:'ICP-MS (EPA 200.8)',    methodVer:'v1.0', unit:'mg/L',       lod:0.001,loq:0.005,range:'0–10',     tat:5, specMin:0, specMax:0.7,   category:'Metals',           accredited:false, sans241:'Chronic health' },
+    { id:'t-b',      code:'B',      name:'Boron',                        method:'ICP-OES (EPA 200.7)',   methodVer:'v2.3', unit:'mg/L',       lod:0.01, loq:0.05, range:'0–10',     tat:3, specMin:0, specMax:2.4,   category:'Metals',           accredited:false, sans241:'Chronic health' },
+    { id:'t-cd',     code:'CD',     name:'Cadmium',                      method:'ICP-MS (EPA 200.8)',    methodVer:'v1.0', unit:'mg/L',       lod:0.0005,loq:0.001,range:'0–1',     tat:5, specMin:0, specMax:0.003, category:'Metals',           accredited:true,  sans241:'Chronic health' },
+    { id:'t-ca',     code:'CA',     name:'Calcium',                      method:'ICP-OES (EPA 200.7)',   methodVer:'v2.3', unit:'mg/L',       lod:0.5,  loq:1,    range:'0–500',    tat:3, specMin:0, specMax:150,   category:'Metals',           accredited:true,  sans241:'Operational' },
+    { id:'t-cr',     code:'CR',     name:'Chromium (Total)',             method:'ICP-OES (EPA 200.7)',   methodVer:'v2.3', unit:'mg/L',       lod:0.005,loq:0.01, range:'0–10',     tat:3, specMin:0, specMax:0.05,  category:'Metals',           accredited:true,  sans241:'Chronic health' },
+    { id:'t-cu',     code:'CU',     name:'Copper',                       method:'ICP-OES (EPA 200.7)',   methodVer:'v2.3', unit:'mg/L',       lod:0.005,loq:0.01, range:'0–10',     tat:3, specMin:0, specMax:2.0,   category:'Metals',           accredited:true,  sans241:'Chronic health' },
+    { id:'t-fe',     code:'FE',     name:'Iron (Total)',                 method:'ICP-OES (EPA 200.7)',   methodVer:'v2.3', unit:'mg/L',       lod:0.01, loq:0.05, range:'0–50',     tat:3, specMin:0, specMax:0.3,   category:'Metals',           accredited:true,  sans241:'Aesthetic' },
+    { id:'t-pb',     code:'PB',     name:'Lead',                         method:'ICP-MS (EPA 200.8)',    methodVer:'v1.0', unit:'mg/L',       lod:0.001,loq:0.005,range:'0–1',      tat:5, specMin:0, specMax:0.01,  category:'Metals',           accredited:true,  sans241:'Chronic health' },
+    { id:'t-mg',     code:'MG',     name:'Magnesium',                    method:'ICP-OES (EPA 200.7)',   methodVer:'v2.3', unit:'mg/L',       lod:0.5,  loq:1,    range:'0–500',    tat:3, specMin:0, specMax:70,    category:'Metals',           accredited:true,  sans241:'Operational' },
+    { id:'t-mn',     code:'MN',     name:'Manganese',                    method:'ICP-OES (EPA 200.7)',   methodVer:'v2.3', unit:'mg/L',       lod:0.005,loq:0.01, range:'0–10',     tat:3, specMin:0, specMax:0.4,   category:'Metals',           accredited:true,  sans241:'Aesthetic' },
+    { id:'t-hg',     code:'HG',     name:'Mercury',                      method:'CVAA (EPA 245.1)',      methodVer:'v1.0', unit:'mg/L',       lod:0.0002,loq:0.001,range:'0–0.1',   tat:5, specMin:0, specMax:0.006, category:'Metals',           accredited:true,  sans241:'Chronic health' },
+    { id:'t-ni',     code:'NI',     name:'Nickel',                       method:'ICP-OES (EPA 200.7)',   methodVer:'v2.3', unit:'mg/L',       lod:0.005,loq:0.01, range:'0–10',     tat:3, specMin:0, specMax:0.07,  category:'Metals',           accredited:true,  sans241:'Chronic health' },
+    { id:'t-na',     code:'NA',     name:'Sodium',                       method:'ICP-OES (EPA 200.7)',   methodVer:'v2.3', unit:'mg/L',       lod:0.5,  loq:1,    range:'0–10000',  tat:3, specMin:0, specMax:200,   category:'Metals',           accredited:true,  sans241:'Aesthetic' },
+    { id:'t-se',     code:'SE',     name:'Selenium',                     method:'ICP-MS (EPA 200.8)',    methodVer:'v1.0', unit:'mg/L',       lod:0.001,loq:0.005,range:'0–1',      tat:5, specMin:0, specMax:0.04,  category:'Metals',           accredited:true,  sans241:'Chronic health' },
+    { id:'t-u',      code:'U',      name:'Uranium',                      method:'ICP-MS (EPA 200.8)',    methodVer:'v1.0', unit:'mg/L',       lod:0.0005,loq:0.001,range:'0–1',     tat:5, specMin:0, specMax:0.03,  category:'Metals',           accredited:false, sans241:'Chronic health' },
+    { id:'t-v',      code:'V',      name:'Vanadium',                     method:'ICP-MS (EPA 200.8)',    methodVer:'v1.0', unit:'mg/L',       lod:0.001,loq:0.005,range:'0–1',      tat:5, specMin:0, specMax:0.2,   category:'Metals',           accredited:false, sans241:'Chronic health' },
+    { id:'t-zn',     code:'ZN',     name:'Zinc',                         method:'ICP-OES (EPA 200.7)',   methodVer:'v2.3', unit:'mg/L',       lod:0.005,loq:0.01, range:'0–10',     tat:3, specMin:0, specMax:5,     category:'Metals',           accredited:true,  sans241:'Aesthetic' },
+
+    // ── Organic determinands ────────────────────────────────────────────
+    { id:'t-toc',    code:'TOC',    name:'Total Organic Carbon',         method:'APHA 5310-B',           methodVer:'v1.0', unit:'mg/L',       lod:0.5,  loq:1,    range:'0–100',    tat:3, specMin:0, specMax:10,    category:'Organic',          accredited:false, sans241:'Chronic health' },
+    { id:'t-phen',   code:'PHEN',   name:'Phenols (Total)',              method:'APHA 5530-D',           methodVer:'v1.0', unit:'mg/L',       lod:0.001,loq:0.005,range:'0–1',      tat:5, specMin:0, specMax:0.01,  category:'Organic',          accredited:false, sans241:'Aesthetic' },
+    { id:'t-mcyst',  code:'MCYST',  name:'Microcystin-LR (free)',        method:'ELISA / LC-MS',         methodVer:'v1.0', unit:'µg/L',       lod:0.05, loq:0.1,  range:'0–10',     tat:5, specMin:0, specMax:1,     category:'Organic',          accredited:false, sans241:'Acute health' }
+  ];
+
+  const _SANS241_PROFILES = [
+    { id:'p-sans241-acute',     name:'SANS 241 — Acute Health Suite',         tests:['t-ec','t-no3','t-no2','t-cn','t-mcyst'] },
+    { id:'p-sans241-micro',     name:'SANS 241 — Microbiological',            tests:['t-ec','t-colif','t-hpc','t-somph'] },
+    { id:'p-sans241-physical',  name:'SANS 241 — Physical / Aesthetic',       tests:['t-ph','t-cond','t-tds','t-turb','t-colour','t-taste','t-odour'] },
+    { id:'p-sans241-disinf',    name:'SANS 241 — Disinfectants / By-products',tests:['t-fcl','t-mchla','t-thm'] },
+    { id:'p-sans241-macro',     name:'SANS 241 — Macro-determinands',         tests:['t-nh4','t-no3','t-no2','t-cl','t-so4','t-f','t-cn','t-hard','t-alk'] },
+    { id:'p-sans241-metals',    name:'SANS 241 — Trace Metals (full)',        tests:['t-al','t-sb','t-as','t-ba','t-b','t-cd','t-ca','t-cr','t-cu','t-fe','t-pb','t-mg','t-mn','t-hg','t-ni','t-na','t-se','t-u','t-v','t-zn'] },
+    { id:'p-sans241-organic',   name:'SANS 241 — Organic determinands',       tests:['t-toc','t-phen','t-mcyst'] },
+    { id:'p-sans241-operational',name:'SANS 241 — Operational Monitoring',    tests:['t-ph','t-cond','t-turb','t-fcl','t-ec','t-colif'] },
+    { id:'p-sans241-full',      name:'SANS 241 — FULL Compliance Suite',      tests:['t-ec','t-colif','t-hpc','t-somph','t-ph','t-cond','t-tds','t-turb','t-colour','t-fcl','t-mchla','t-thm','t-nh4','t-no3','t-no2','t-cl','t-so4','t-f','t-cn','t-hard','t-alk','t-al','t-sb','t-as','t-cd','t-cr','t-cu','t-fe','t-pb','t-mn','t-hg','t-ni','t-na','t-se','t-u','t-zn','t-toc'] },
+    { id:'p-bore',              name:'Borehole Potability Screen',            tests:['t-ph','t-cond','t-tds','t-turb','t-ec','t-colif','t-no3','t-fe','t-mn','t-hard','t-na'] }
+  ];
+
   /* ---------- Seed Data ---------- */
   const SEED = {
     async run() {
       const existing = await DB.get('settings','seeded');
-      if (existing) return;
+      if (existing) {
+        // Already seeded — only refresh the test catalogue + profiles if the
+        // catalogue version has bumped. User data (samples, clients, results,
+        // users, instruments, inventory, audit) is left untouched.
+        const cv = await DB.get('settings','catalogueVersion');
+        const haveVersion = cv ? cv.value : 1;
+        if (haveVersion < CATALOGUE_VERSION) {
+          await SEED.refreshCatalogue();
+          await DB.put('settings', { id:'catalogueVersion', value:CATALOGUE_VERSION, ts: nowISO() });
+          await DB.audit('CATALOGUE_REFRESH', 'system', 'tests+profiles', { from: haveVersion }, { to: CATALOGUE_VERSION });
+        }
+        return;
+      }
 
       // Users
       const users = [
@@ -155,31 +255,10 @@
       ];
       for (const c of clients) await DB.put('clients', c);
 
-      // Tests catalogue (SANS 241 + general water)
-      const tests = [
-        { id:'t-ph',    code:'PH',     name:'pH',                           method:'SANS 5667-part',       methodVer:'v3.0', unit:'pH units',   lod:0.1, loq:0.1, range:'0–14',       tat:1, price:75,  specMin:5.0,  specMax:9.7,   category:'Physico-chemical', accredited:true },
-        { id:'t-cond',  code:'EC',     name:'Electrical Conductivity',      method:'APHA 2510-B',          methodVer:'v2.1', unit:'mS/m',       lod:1,   loq:2,   range:'0–10000',   tat:1, price:75,  specMin:0,    specMax:170,   category:'Physico-chemical', accredited:true },
-        { id:'t-turb',  code:'TURB',   name:'Turbidity',                    method:'APHA 2130-B',          methodVer:'v1.4', unit:'NTU',        lod:0.1, loq:0.5, range:'0–1000',    tat:1, price:85,  specMin:0,    specMax:1.0,   category:'Physico-chemical', accredited:true },
-        { id:'t-tds',   code:'TDS',    name:'Total Dissolved Solids',       method:'APHA 2540-C',          methodVer:'v1.2', unit:'mg/L',       lod:5,   loq:10,  range:'0–50000',   tat:2, price:120, specMin:0,    specMax:1200,  category:'Physico-chemical', accredited:true },
-        { id:'t-colif', code:'TC',     name:'Total Coliforms',              method:'SANS 5221',            methodVer:'v2.0', unit:'cfu/100mL',  lod:1,   loq:1,   range:'0–>2000',   tat:3, price:280, specMin:0,    specMax:10,    category:'Microbiological', accredited:true },
-        { id:'t-ec',    code:'ECOLI',  name:'Escherichia coli',             method:'SANS 5221',            methodVer:'v2.0', unit:'cfu/100mL',  lod:1,   loq:1,   range:'0–>2000',   tat:3, price:280, specMin:0,    specMax:0,     category:'Microbiological', accredited:true },
-        { id:'t-hpc',   code:'HPC',    name:'Heterotrophic Plate Count',    method:'SANS 5221',            methodVer:'v1.8', unit:'cfu/mL',     lod:1,   loq:1,   range:'0–>10000',  tat:3, price:210, specMin:0,    specMax:1000,  category:'Microbiological', accredited:true },
-        { id:'t-no3',   code:'NO3',    name:'Nitrate (as N)',               method:'APHA 4500-NO3 B',      methodVer:'v1.0', unit:'mg/L',       lod:0.05,loq:0.1, range:'0–100',     tat:2, price:150, specMin:0,    specMax:11,    category:'Inorganic',        accredited:true },
-        { id:'t-fcl',   code:'FCL',    name:'Free Chlorine',                method:'APHA 4500-Cl G',       methodVer:'v1.1', unit:'mg/L',       lod:0.02,loq:0.05,range:'0–5',       tat:1, price:95,  specMin:0.2,  specMax:5.0,   category:'Disinfectant',     accredited:true },
-        { id:'t-fe',    code:'FE',     name:'Iron (Total)',                 method:'ICP-OES (EPA 200.7)',  methodVer:'v2.3', unit:'mg/L',       lod:0.01,loq:0.05,range:'0–50',      tat:3, price:180, specMin:0,    specMax:0.3,   category:'Metals',           accredited:true },
-        { id:'t-mn',    code:'MN',     name:'Manganese',                    method:'ICP-OES (EPA 200.7)',  methodVer:'v2.3', unit:'mg/L',       lod:0.005,loq:0.01,range:'0–10',     tat:3, price:180, specMin:0,    specMax:0.4,   category:'Metals',           accredited:true },
-        { id:'t-cl2',   code:'CLO2',   name:'Chlorine Dioxide (residual)',  method:'DPD-Glycine APHA 4500',methodVer:'v1.0', unit:'mg/L',       lod:0.05,loq:0.1, range:'0–5',       tat:1, price:140, specMin:0.2,  specMax:0.8,   category:'Disinfectant',     accredited:false },
-        { id:'t-hard',  code:'HARD',   name:'Total Hardness (as CaCO₃)',    method:'APHA 2340-C',          methodVer:'v1.0', unit:'mg/L',       lod:1,   loq:2,   range:'0–1000',    tat:2, price:120, specMin:0,    specMax:300,   category:'Inorganic',        accredited:true }
-      ];
-      for (const t of tests) await DB.put('tests', t);
-
-      // Test profiles (packages)
-      const profiles = [
-        { id:'p-sans241-basic', name:'SANS 241 — Operational Monitoring', tests:['t-ph','t-cond','t-turb','t-fcl','t-ec'], price:720 },
-        { id:'p-sans241-full',  name:'SANS 241 — Full Compliance',        tests:['t-ph','t-cond','t-turb','t-tds','t-colif','t-ec','t-hpc','t-no3','t-fcl','t-fe','t-mn','t-hard'], price:1950 },
-        { id:'p-bore',          name:'Borehole Portability',              tests:['t-ph','t-cond','t-turb','t-tds','t-ec','t-no3','t-fe','t-mn','t-hard'], price:1400 }
-      ];
-      for (const p of profiles) await DB.put('profiles', p);
+      // Tests + profiles come from module-scope constants so refreshCatalogue()
+      // can reuse them without re-entering the seed flow.
+      for (const t of _SANS241_TESTS) await DB.put('tests', t);
+      for (const p of _SANS241_PROFILES) await DB.put('profiles', p);
 
       // Instruments
       const instruments = [
@@ -294,17 +373,43 @@
       ];
       for (const n of ncs) await DB.put('ncs', n);
 
-      // Quotes
+      // Quotes — sample requests / bookings (no commercial pricing)
       const quotes = [
-        { id:'q-001', clientId:'c-muni',  date:dIso(-14), items:[{profileId:'p-sans241-basic', qty:120, price:720}], total:86400, status:'accepted' },
-        { id:'q-002', clientId:'c-farm',  date:dIso(-7),  items:[{profileId:'p-bore', qty:4, price:1400}],  total:5600,  status:'sent' },
-        { id:'q-003', clientId:'c-sasol', date:dIso(-2),  items:[{profileId:null, testId:'t-cl2', qty:24, price:140},{testId:'t-ph', qty:24, price:75}], total:5160, status:'draft' }
+        { id:'q-001', clientId:'c-muni',  date:dIso(-14), items:[{profileId:'p-sans241-operational', qty:120}], status:'accepted' },
+        { id:'q-002', clientId:'c-farm',  date:dIso(-7),  items:[{profileId:'p-bore', qty:4}],                 status:'sent' },
+        { id:'q-003', clientId:'c-sasol', date:dIso(-2),  items:[{profileId:null, testId:'t-cl2', qty:24},{testId:'t-ph', qty:24}], status:'draft' }
       ];
       for (const q of quotes) await DB.put('quotes', q);
 
       await DB.put('settings', { id:'seeded', value:true, ts: nowISO() });
+      await DB.put('settings', { id:'catalogueVersion', value:CATALOGUE_VERSION, ts: nowISO() });
       await DB.audit('SEED', 'system', 'seeded', null, { count: 'initial seed' });
-    }
+    },
+
+    // Replace just the tests + profiles tables with the latest reference set
+    // (defined in run() above). Called from run() when CATALOGUE_VERSION has
+    // moved on past the value stored on this device.
+    async refreshCatalogue() {
+      // Drop existing rows in tests + profiles, then re-add from the source of
+      // truth — re-running run() with a flag would double-seed, so instead we
+      // pull the canonical arrays out of the closure via a marker constant.
+      // Easiest: clear, then re-run the seed which will skip because seeded:true
+      // is already there. So we manually duplicate the catalogue arrays here.
+      const tests = SEED._tests();
+      const profiles = SEED._profiles();
+      // Wipe + replace
+      const existingTests = await DB.all('tests');
+      for (const t of existingTests) await DB.del('tests', t.id);
+      const existingProfiles = await DB.all('profiles');
+      for (const p of existingProfiles) await DB.del('profiles', p.id);
+      for (const t of tests) await DB.put('tests', t);
+      for (const p of profiles) await DB.put('profiles', p);
+    },
+
+    // Canonical reference arrays — kept in helper functions so refreshCatalogue
+    // can reach them without re-entering the full seed flow.
+    _tests() { return _SANS241_TESTS; },
+    _profiles() { return _SANS241_PROFILES; }
   };
 
   /* ---------- Module config: tiles and meta ---------- */
@@ -792,7 +897,7 @@
         <div class="lims-section-title">Tests</div>
         <div class="lims-checkgrid" id="f_tests">
           ${tests.map(t => `
-            <label class="lims-check"><input type="checkbox" value="${t.id}"> <strong>${esc(t.code)}</strong> ${esc(t.name)} <span style="color:#888;">R${t.price}</span></label>
+            <label class="lims-check"><input type="checkbox" value="${t.id}"> <strong>${esc(t.code)}</strong> ${esc(t.name)} <span style="color:#888;">${esc(t.unit||'')}</span></label>
           `).join('')}
         </div>
 
@@ -859,7 +964,7 @@
         <div class="lims-card">
           <div class="lims-section-title">${esc(cat)}</div>
           <table class="lims-table compact">
-            <thead><tr><th>Code</th><th>Name</th><th>Method</th><th>Ver</th><th>Unit</th><th>LOD / LOQ</th><th>Spec</th><th>TAT</th><th>Price</th><th>Accred.</th></tr></thead>
+            <thead><tr><th>Code</th><th>Name</th><th>Method</th><th>Ver</th><th>Unit</th><th>LOD / LOQ</th><th>SANS 241 limit</th><th>Risk class</th><th>TAT</th><th>Accred.</th></tr></thead>
             <tbody>
               ${tests.filter(t=>t.category===cat).map(t => `
                 <tr onclick="limsGo('test',{id:'${t.id}'})">
@@ -870,8 +975,8 @@
                   <td>${esc(t.unit)}</td>
                   <td>${esc(t.lod)} / ${esc(t.loq)}</td>
                   <td>${t.specMin!=null?esc(t.specMin+'–'+t.specMax):'—'}</td>
+                  <td>${esc(t.sans241||'—')}</td>
                   <td>${t.tat}d</td>
-                  <td>R${t.price}</td>
                   <td>${t.accredited?chip('SANAS','ok'):chip('Non-accred','warn')}</td>
                 </tr>`).join('')}
             </tbody>
@@ -903,7 +1008,7 @@
           <div class="lims-field"><label>Working range</label><div>${esc(t.range)}</div></div>
           <div class="lims-field"><label>Spec (SANS 241)</label><div>${t.specMin!=null?esc(t.specMin+' – '+t.specMax+' '+t.unit):'—'}</div></div>
           <div class="lims-field"><label>TAT</label><div>${t.tat} day(s)</div></div>
-          <div class="lims-field"><label>Price</label><div>R ${t.price}</div></div>
+          <div class="lims-field"><label>SANS 241 risk class</label><div>${esc(t.sans241||'—')}</div></div>
         </div>
       </div>
       <div class="lims-card">
@@ -1846,15 +1951,14 @@
         </table>
       </div>
       <div class="lims-card">
-        <div class="lims-section-title">Quotes (${quotes.length})</div>
+        <div class="lims-section-title">Bookings &amp; Requests (${quotes.length})</div>
         <table class="lims-table compact">
-          <thead><tr><th>Date</th><th>Items</th><th>Total</th><th>Status</th></tr></thead>
+          <thead><tr><th>Date</th><th>Items requested</th><th>Status</th></tr></thead>
           <tbody>${quotes.map(q=>`<tr>
             <td>${fmtDate(q.date)}</td>
             <td>${q.items.map(it=>(it.profileId?(profMap[it.profileId]?profMap[it.profileId].name:it.profileId):it.testId)+' ×'+it.qty).join(', ')}</td>
-            <td>R ${q.total.toLocaleString()}</td>
             <td>${chip(q.status, q.status==='accepted'?'ok':(q.status==='draft'?'neutral':'warn'))}</td>
-          </tr>`).join('') || '<tr><td colspan="4">No quotes</td></tr>'}</tbody>
+          </tr>`).join('') || '<tr><td colspan="3">No bookings yet</td></tr>'}</tbody>
         </table>
       </div>
     `;
