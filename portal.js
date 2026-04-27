@@ -243,7 +243,7 @@
   };
 
   // ── Boot on profile load ────────────────────────────────
-  document.addEventListener('hg:profile:loaded', () => {
+  function onProfileLoaded() {
     ensureMounted();
     ensureTile();
 
@@ -260,7 +260,10 @@
       const anyOpen = document.querySelector('.window.active');
       if (!anyOpen) setTimeout(() => window.openWindow('portal'), 250);
     }
-  });
+  }
+
+  if (window.HG_PROFILE) onProfileLoaded();
+  document.addEventListener('hg:profile:loaded', onProfileLoaded);
 
   // Refresh content when LIMS sync delivers new data.
   document.addEventListener('hg:lims:synced', () => {

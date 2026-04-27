@@ -287,7 +287,9 @@
     state
   };
 
-  // Wire to auth lifecycle
+  // Wire to auth lifecycle. If profile is already loaded by the time we run
+  // (race with auth-ui's event dispatch), kick off immediately.
+  if (window.HG_PROFILE) activate();
   document.addEventListener('hg:profile:loaded', () => activate());
   document.addEventListener('hg:auth:changed', (e) => {
     if (!e.detail || !e.detail.session) deactivate();

@@ -387,6 +387,12 @@
     await window.HG_AUTH.signOut();
   };
 
-  // Wait for supabase-client.js to finish initialising.
-  document.addEventListener('hg:supa:ready', boot);
+  // Wait for supabase-client.js to finish initialising. If it's already
+  // initialised by the time we get here (race: defer script vs setTimeout(0)),
+  // boot synchronously instead of waiting for an event we missed.
+  if (window.HG_AUTH) {
+    boot();
+  } else {
+    document.addEventListener('hg:supa:ready', boot, { once: true });
+  }
 })();
