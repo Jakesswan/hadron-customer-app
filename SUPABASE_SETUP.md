@@ -57,19 +57,23 @@ Estimated time: **30–45 minutes**.
 
 ## 5. Plug the keys into the app
 
-1. In the project dashboard, **Project Settings → API**.
+1. In the project dashboard, **Project Settings → API Keys**.
 2. Copy:
-   - **Project URL** (e.g. `https://abcd1234.supabase.co`)
-   - **anon public key** (a long JWT)
+   - **Project URL** — visible at the top of Project Settings → General, formatted `https://<project-ref>.supabase.co`
+   - **Publishable key** — under "Publishable and secret API keys", starts with `sb_publishable_…`
+     (older projects may show this as "anon public" instead — both work)
 3. Open `supabase-client.js` and replace the two placeholders near the top:
 
    ```js
    const SUPABASE_URL      = 'https://abcd1234.supabase.co';
-   const SUPABASE_ANON_KEY = 'eyJhbGciOi...the-rest-of-the-jwt';
+   const SUPABASE_ANON_KEY = 'sb_publishable_…';
    ```
 
 4. Both values are public-facing. Row-level security in
    `supabase-schema.sql` is what actually guards the data.
+
+   ⚠️ Do NOT paste the **Secret key** (`sb_secret_…`). That one is server-side only
+   and we'll only use it later when deploying the push-notification Edge Function.
 
 ## 6. Create your first user (Hadron staff)
 

@@ -55,7 +55,7 @@ as $$
   select organisation_id from public.profiles where id = auth.uid();
 $$;
 
-create or replace function public.current_role()
+create or replace function public.current_app_role()
 returns text
 language sql stable security definer set search_path = public
 as $$
@@ -376,12 +376,12 @@ create policy "profiles_select" on public.profiles for select
 drop policy if exists "profiles_self_update" on public.profiles;
 create policy "profiles_self_update" on public.profiles for update
   using (id = auth.uid())
-  with check (id = auth.uid() and role = current_role()); -- can't escalate own role
+  with check (id = auth.uid() and role = current_app_role()); -- can't escalate own role
 
 drop policy if exists "profiles_admin_update" on public.profiles;
 create policy "profiles_admin_update" on public.profiles for update
-  using (is_hadron_admin() or (current_role() = 'customer_admin' and organisation_id = current_org()))
-  with check (is_hadron_admin() or (current_role() = 'customer_admin' and organisation_id = current_org()));
+  using (is_hadron_admin() or (current_app_role() = 'customer_admin' and organisation_id = current_org()))
+  with check (is_hadron_admin() or (current_app_role() = 'customer_admin' and organisation_id = current_org()));
 
 drop policy if exists "profiles_admin_insert" on public.profiles;
 create policy "profiles_admin_insert" on public.profiles for insert
@@ -392,7 +392,7 @@ do $$
 declare t text;
 begin
   for t in select unnest(array[
-    'customers','sites','equipment','samples','sample_results','jobs','audit_log','messages',
+    'customers','sites','equipment','samples','sample_results','jobs','audit_log',
     'lims_tests','lims_test_profiles','lims_worksheets','lims_instruments','lims_inventory','lims_documents'
   ]) loop
     execute format('drop policy if exists "%I_select" on public.%I', t||'_select', t);
@@ -406,20 +406,36 @@ begin
       create policy "%I_write" on public.%I for all
         using (
           is_hadron_admin()
-          or (current_role() in ('customer_admin','operator') and organisation_id = current_org())
+          or (current_app_role() in ('customer_admin','operator') and organisation_id = current_org())
         )
         with check (
           is_hadron_admin()
-          or (current_role() in ('customer_admin','operator') and organisation_id = current_org())
+          or (current_app_role() in ('customer_admin','operator') and organisation_id = current_org())
         )
     $f$, t||'_write', t);
   end loop;
 end $$;
 
--- messages: recipient_user sees their own DMs too
-drop policy if exists "messages_dm_select" on public.messages;
-create policy "messages_dm_select" on public.messages for select
-  using (recipient_user = auth.uid());
+-- messages: special-cased because it uses recipient_org / recipient_user
+-- instead of the generic organisation_id column.
+drop policy if exists "messages_select" on public.messages;
+create policy "messages_select" on public.messages for select
+  using (
+    is_hadron_admin()
+    or recipient_org = current_org()
+    or recipient_user = auth.uid()
+  );
+
+drop policy if exists "messages_write" on public.messages;
+create policy "messages_write" on public.messages for all
+  using (
+    is_hadron_admin()
+    or (current_app_role() in ('customer_admin','operator') and recipient_org = current_org())
+  )
+  with check (
+    is_hadron_admin()
+    or (current_app_role() in ('customer_admin','operator') and recipient_org = current_org())
+  );
 
 -- push subscriptions: user manages their own
 drop policy if exists "push_self" on public.push_subscriptions;

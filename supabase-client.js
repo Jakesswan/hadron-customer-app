@@ -16,12 +16,15 @@
   'use strict';
 
   // ── EDIT ME ─────────────────────────────────────────────
-  const SUPABASE_URL      = 'https://YOUR-PROJECT.supabase.co';
-  const SUPABASE_ANON_KEY = 'YOUR-ANON-KEY';
+  // SUPABASE_ANON_KEY is the "Publishable key" in newer Supabase dashboards
+  // (Project Settings → API Keys → Publishable key, sb_publishable_…). Both
+  // values are public-facing; row-level security guards the data.
+  const SUPABASE_URL      = 'https://flttrqcstzprtxcdvexx.supabase.co';
+  const SUPABASE_ANON_KEY = 'sb_publishable_7_PDTLJxHx7tXxDbDeI6ow_DnEvoJGC';
   // ────────────────────────────────────────────────────────
 
   const CONFIGURED = !SUPABASE_URL.includes('YOUR-PROJECT')
-                  && !SUPABASE_ANON_KEY.includes('YOUR-ANON-KEY');
+                  && !SUPABASE_ANON_KEY.includes('YOUR-');
 
   // Wait for supabase-js (loaded via CDN in index.html) before initialising.
   // Always defers the callback so listeners registered by deferred scripts
