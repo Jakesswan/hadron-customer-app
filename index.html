@@ -2247,31 +2247,58 @@
     <div class="window" id="window-profile">
         <div class="window-header">
             <button class="back-button" onclick="closeWindow('profile')">←</button>
-            <span class="window-title">Profile</span>
+            <span class="window-title" data-i18n="app.profile">Profile</span>
         </div>
         <div class="window-content">
-            <div style="text-align: center; margin-bottom: 20px;">
-                <img src="Hadron_Logo_dark.png" alt="Hadron Group" style="height: 50px; width: auto;">
+            <div class="hg-hero" style="background: linear-gradient(135deg, #7a59d4 0%, #1a3d9e 100%);">
+                <div>
+                    <h2 class="hg-hero-title">Your account</h2>
+                    <div class="hg-hero-sub">Profile details, organisation &amp; access</div>
+                </div>
+                <div class="hg-hero-icon">👤</div>
             </div>
-            <h2>User Profile</h2>
-            <p><strong>Name:</strong> <span id="profileName">Demo User</span></p>
-            <p><strong>Email:</strong> <a href="mailto:sales@hadrongrp.com">sales@hadrongrp.com</a></p>
-            <p><strong>Company:</strong> Hadron Group</p>
-            <p><strong>Role:</strong> Customer</p>
-            <p><strong>Member Since:</strong> February 2026</p>
+
+            <div class="hg-card">
+                <div class="hg-section-title">Account</div>
+                <div class="hg-fieldgrid">
+                    <div class="hg-field"><label data-i18n="field.name">Name</label><div id="profileName">Demo User</div></div>
+                    <div class="hg-field"><label data-i18n="field.email">Email</label><div><a href="mailto:sales@hadrongrp.com">sales@hadrongrp.com</a></div></div>
+                    <div class="hg-field"><label>Company</label><div>Hadron Group</div></div>
+                    <div class="hg-field"><label data-i18n="field.role">Role</label><div>Customer</div></div>
+                    <div class="hg-field"><label>Member since</label><div>February 2026</div></div>
+                </div>
+            </div>
+
+            <div class="hg-card">
+                <div class="hg-section-title">Need to update your details?</div>
+                <p style="margin: 0 0 12px;">Account changes are handled by the Hadron Group team. Reach us via Support and we'll update your profile within 1 business day.</p>
+                <button class="hg-btn ghost" onclick="openWindow('support')">🎧 Open Support</button>
+            </div>
         </div>
     </div>
 
     <div class="window" id="window-messages">
         <div class="window-header">
             <button class="back-button" onclick="closeWindow('messages')">←</button>
-            <span class="window-title">Messages</span>
+            <span class="window-title" data-i18n="app.messages">Messages</span>
         </div>
         <div class="window-content">
-            <h2>Your Messages</h2>
-            <p>📧 Welcome to CustomerOS! You have 3 new messages.</p>
-            <p>📧 Your order #12345 has been shipped.</p>
-            <p>📧 Special offer: 20% off on premium features!</p>
+            <div class="hg-hero" style="background: linear-gradient(135deg, #00b1ca 0%, #1a3d9e 100%);">
+                <div>
+                    <h2 class="hg-hero-title">Your inbox</h2>
+                    <div class="hg-hero-sub">Service notifications &amp; updates from the Hadron Group team</div>
+                </div>
+                <div class="hg-hero-icon">💬</div>
+            </div>
+
+            <div class="hg-card">
+                <div class="hg-section-title">Inbox</div>
+                <div class="hg-empty" style="padding: 30px 20px;">
+                    <span class="emoji">📬</span>
+                    <h3 style="margin: 4px 0 6px;">No messages yet</h3>
+                    <p style="margin: 0; font-size: 13px;">When the Hadron Group team posts a service update — site-visit reminders, new lab reports, billing — it'll appear here.</p>
+                </div>
+            </div>
         </div>
     </div>
 
@@ -2332,7 +2359,7 @@
                 <div class="hg-section-title">About</div>
                 <div class="hg-kvgrid">
                     <div class="hg-kv"><div class="k">App</div><div class="v">Hadron Group</div></div>
-                    <div class="hg-kv"><div class="k">Version</div><div class="v">v23</div></div>
+                    <div class="hg-kv"><div class="k">Version</div><div class="v">v24</div></div>
                     <div class="hg-kv"><div class="k">Platform</div><div class="v">PWA</div></div>
                 </div>
             </div>
@@ -2342,14 +2369,29 @@
     <div class="window" id="window-files">
         <div class="window-header">
             <button class="back-button" onclick="closeWindow('files')">←</button>
-            <span class="window-title">Files</span>
+            <span class="window-title" data-i18n="app.files">Files</span>
         </div>
         <div class="window-content">
-            <h2>My Files</h2>
-            <p>📄 Document.pdf (2.3 MB)</p>
-            <p>📄 Report_Q1.xlsx (1.8 MB)</p>
-            <p>📄 Presentation.pptx (5.2 MB)</p>
-            <p>🖼️ Image_001.png (0.8 MB)</p>
+            <div class="hg-hero" style="background: linear-gradient(135deg, #f5a623 0%, #e07b00 100%);">
+                <div>
+                    <h2 class="hg-hero-title">Your files</h2>
+                    <div class="hg-hero-sub">PDFs, reports &amp; documents shared with you by the Hadron Group team</div>
+                </div>
+                <div class="hg-hero-icon">📁</div>
+            </div>
+
+            <div class="hg-card">
+                <div class="hg-section-title">Recent files</div>
+                <div class="hg-empty" style="padding: 30px 20px;">
+                    <span class="emoji">📄</span>
+                    <h3 style="margin: 4px 0 6px;">No files yet</h3>
+                    <p style="margin: 0; font-size: 13px;">Service reports, COAs and other documents shared with you by Hadron will appear here. PDFs you generate from the calculator suite are stored under <strong>History</strong>.</p>
+                </div>
+                <div style="margin-top: 12px; display: flex; gap: 8px; flex-wrap: wrap;">
+                    <button class="hg-btn ghost" onclick="openWindow('history')">📋 Open History</button>
+                    <button class="hg-btn ghost" onclick="openWindow('servicereport')">📝 Service Reports</button>
+                </div>
+            </div>
         </div>
     </div>
 
@@ -2520,7 +2562,7 @@
                 <h2 style="margin-bottom: 20px;">Chlorine (TCCA) Calculator</h2>
                 
                 <div style="background: #f8f9fa; padding: 20px; border-radius: 10px; margin-bottom: 25px;">
-                    <h3 style="margin-bottom: 15px; color: #00b1ca; font-size: 18px;">Plant Configuration</h3>
+                    <h3 style="margin-bottom: 15px; color: #00b1ca; font-size: 18px;" data-i18n="calc.plantConfig">Plant Configuration</h3>
                     <div style="display: flex; flex-direction: column; gap: 12px;">
                         <label style="font-weight: 600; font-size: 15px;">Plant Size (MLD):</label>
                         <input type="number" id="mldInput" value="0.5" step="0.1" min="0.1"
@@ -2537,15 +2579,15 @@
                 </div>
 
                 <div id="tccaSection" style="margin-top: 20px; padding: 20px; background: linear-gradient(135deg, #4f4f4f 0%, #f9bb32 100%); border-radius: 10px; color: white;">
-                    <h3 style="margin-bottom: 15px; font-size: 18px;">TCCA Usage Results</h3>
+                    <h3 style="margin-bottom: 15px; font-size: 18px;" data-i18n="calc.tccaResults">TCCA Usage Results</h3>
                     <div style="display: grid; grid-template-columns: 1fr; gap: 15px;">
                         <div style="background: rgba(255,255,255,0.2); padding: 20px; border-radius: 8px;">
-                            <div style="font-size: 14px; margin-bottom: 8px; opacity: 0.9;">Daily Requirement</div>
+                            <div style="font-size: 14px; margin-bottom: 8px; opacity: 0.9;" data-i18n="calc.dailyReq">Daily Requirement</div>
                             <div style="font-size: 32px; font-weight: 700;" id="tccaDaily">0</div>
                             <div style="font-size: 14px; opacity: 0.9; margin-top: 5px;">Kg/Day</div>
                         </div>
                         <div style="background: rgba(255,255,255,0.2); padding: 20px; border-radius: 8px;">
-                            <div style="font-size: 14px; margin-bottom: 8px; opacity: 0.9;">Monthly Requirement</div>
+                            <div style="font-size: 14px; margin-bottom: 8px; opacity: 0.9;" data-i18n="calc.monthlyReq">Monthly Requirement</div>
                             <div style="font-size: 32px; font-weight: 700;" id="tccaMonthly">0</div>
                             <div style="font-size: 14px; opacity: 0.9; margin-top: 5px;">Kg/Month</div>
                         </div>
@@ -2563,7 +2605,7 @@
                 <h2 style="margin-bottom: 20px;">Chlorine Dioxide (ClO2) Calculator</h2>
                 
                 <div style="background: #f8f9fa; padding: 20px; border-radius: 10px; margin-bottom: 25px;">
-                    <h3 style="margin-bottom: 15px; color: #00b1ca; font-size: 18px;">Plant Configuration</h3>
+                    <h3 style="margin-bottom: 15px; color: #00b1ca; font-size: 18px;" data-i18n="calc.plantConfig">Plant Configuration</h3>
                     <div style="display: flex; flex-direction: column; gap: 12px;">
                         <label style="font-weight: 600; font-size: 15px;">Plant Size (MLD):</label>
                         <input type="number" id="mldInputClO2" value="0.5" step="0.1" min="0.1"
@@ -2580,15 +2622,15 @@
                 </div>
 
                 <div style="margin-top: 20px; padding: 20px; background: linear-gradient(135deg, #4f4f4f 0%, #f9bb32 100%); border-radius: 10px; color: white;">
-                    <h3 style="margin-bottom: 15px; font-size: 18px;">ClO2 Usage Results</h3>
+                    <h3 style="margin-bottom: 15px; font-size: 18px;" data-i18n="calc.clo2Results">ClO2 Usage Results</h3>
                     <div style="display: grid; grid-template-columns: 1fr; gap: 15px;">
                         <div style="background: rgba(255,255,255,0.2); padding: 20px; border-radius: 8px;">
-                            <div style="font-size: 14px; margin-bottom: 8px; opacity: 0.9;">Daily Requirement</div>
+                            <div style="font-size: 14px; margin-bottom: 8px; opacity: 0.9;" data-i18n="calc.dailyReq">Daily Requirement</div>
                             <div style="font-size: 32px; font-weight: 700;" id="clo2Daily">0</div>
                             <div style="font-size: 14px; opacity: 0.9; margin-top: 5px;">Kg/Day</div>
                         </div>
                         <div style="background: rgba(255,255,255,0.2); padding: 20px; border-radius: 8px;">
-                            <div style="font-size: 14px; margin-bottom: 8px; opacity: 0.9;">Monthly Requirement</div>
+                            <div style="font-size: 14px; margin-bottom: 8px; opacity: 0.9;" data-i18n="calc.monthlyReq">Monthly Requirement</div>
                             <div style="font-size: 32px; font-weight: 700;" id="clo2Monthly">0</div>
                             <div style="font-size: 14px; opacity: 0.9; margin-top: 5px;">Kg/Month</div>
                         </div>
@@ -2606,7 +2648,7 @@
                 <h2 style="margin-bottom: 20px;">Coagulants Calculator</h2>
                 
                 <div style="background: #f8f9fa; padding: 20px; border-radius: 10px; margin-bottom: 25px;">
-                    <h3 style="margin-bottom: 15px; color: #00b1ca; font-size: 18px;">Plant Configuration</h3>
+                    <h3 style="margin-bottom: 15px; color: #00b1ca; font-size: 18px;" data-i18n="calc.plantConfig">Plant Configuration</h3>
                     <div style="display: flex; flex-direction: column; gap: 12px;">
                         <label style="font-weight: 600; font-size: 15px;">Plant Size (MLD):</label>
                         <input type="number" id="mldInputCoag" value="0.5" step="0.1" min="0.1" 
@@ -2641,25 +2683,25 @@
                 </div>
 
                 <div style="margin-top: 20px; padding: 20px; background: linear-gradient(135deg, #4f4f4f 0%, #f9bb32 100%); border-radius: 10px; color: white;">
-                    <h3 style="margin-bottom: 15px; font-size: 18px;">Coagulant Usage Results</h3>
+                    <h3 style="margin-bottom: 15px; font-size: 18px;" data-i18n="calc.coagResults">Coagulant Usage Results</h3>
                     <div style="display: grid; grid-template-columns: 1fr; gap: 15px;">
                         <div style="background: rgba(255,255,255,0.2); padding: 20px; border-radius: 8px;">
-                            <div style="font-size: 14px; margin-bottom: 8px; opacity: 0.9;">Daily Requirement</div>
+                            <div style="font-size: 14px; margin-bottom: 8px; opacity: 0.9;" data-i18n="calc.dailyReq">Daily Requirement</div>
                             <div style="font-size: 32px; font-weight: 700;" id="coagDaily">0</div>
                             <div style="font-size: 14px; opacity: 0.9; margin-top: 5px;">Kg/Day (active)</div>
                         </div>
                         <div style="background: rgba(255,255,255,0.2); padding: 20px; border-radius: 8px;">
-                            <div style="font-size: 14px; margin-bottom: 8px; opacity: 0.9;">Monthly Requirement</div>
+                            <div style="font-size: 14px; margin-bottom: 8px; opacity: 0.9;" data-i18n="calc.monthlyReq">Monthly Requirement</div>
                             <div style="font-size: 32px; font-weight: 700;" id="coagMonthly">0</div>
                             <div style="font-size: 14px; opacity: 0.9; margin-top: 5px;">Kg/Month (active)</div>
                         </div>
                         <div style="background: rgba(255,255,255,0.2); padding: 20px; border-radius: 8px;">
-                            <div style="font-size: 14px; margin-bottom: 8px; opacity: 0.9;">Pump Flow Rate</div>
+                            <div style="font-size: 14px; margin-bottom: 8px; opacity: 0.9;" data-i18n="calc.pumpFlow">Pump Flow Rate</div>
                             <div style="font-size: 32px; font-weight: 700;" id="coagPumpLh">0.00</div>
                             <div style="font-size: 14px; opacity: 0.9; margin-top: 5px;">L/hour (as-delivered product)</div>
                         </div>
                         <div style="background: rgba(255,255,255,0.2); padding: 20px; border-radius: 8px;">
-                            <div style="font-size: 14px; margin-bottom: 8px; opacity: 0.9;">Pump Calibration Target</div>
+                            <div style="font-size: 14px; margin-bottom: 8px; opacity: 0.9;" data-i18n="calc.pumpCalibration">Pump Calibration Target</div>
                             <div style="font-size: 32px; font-weight: 700;" id="coagPumpMlmin">0.00</div>
                             <div style="font-size: 14px; opacity: 0.9; margin-top: 5px;">mL/min · catch in measuring cylinder for 1 min to verify</div>
                         </div>
@@ -2677,7 +2719,7 @@
                 <h2 style="margin-bottom: 20px;">Chlorine Dioxide Skid Sizing</h2>
 
                 <div style="background: #f8f9fa; padding: 20px; border-radius: 10px; margin-bottom: 25px;">
-                    <h3 style="margin-bottom: 15px; color: #00b1ca; font-size: 18px;">Plant Configuration</h3>
+                    <h3 style="margin-bottom: 15px; color: #00b1ca; font-size: 18px;" data-i18n="calc.plantConfig">Plant Configuration</h3>
                     <div style="display: flex; flex-direction: column; gap: 12px;">
                         <label style="font-weight: 600; font-size: 15px;">Application / Water Source:</label>
                         <select id="skidApp" onchange="onSkidAppChange(); calculateClO2Skid()"
@@ -2718,20 +2760,20 @@
                 </div>
 
                 <div style="margin-top: 20px; padding: 20px; background: linear-gradient(135deg, #4f4f4f 0%, #f9bb32 100%); border-radius: 10px; color: white;">
-                    <h3 style="margin-bottom: 15px; font-size: 18px;">ClO₂ Consumption</h3>
+                    <h3 style="margin-bottom: 15px; font-size: 18px;" data-i18n="calc.clo2Consumption">ClO₂ Consumption</h3>
                     <div style="display: grid; grid-template-columns: 1fr; gap: 15px;">
                         <div style="background: rgba(255,255,255,0.2); padding: 20px; border-radius: 8px;">
-                            <div style="font-size: 14px; margin-bottom: 8px; opacity: 0.9;">Dosing Pump Flow</div>
+                            <div style="font-size: 14px; margin-bottom: 8px; opacity: 0.9;" data-i18n="calc.dosingPumpFlow">Dosing Pump Flow</div>
                             <div style="font-size: 32px; font-weight: 700;" id="skidLh">0.00</div>
                             <div style="font-size: 14px; opacity: 0.9; margin-top: 5px;">L/hour ClO₂ solution</div>
                         </div>
                         <div style="background: rgba(255,255,255,0.2); padding: 20px; border-radius: 8px;">
-                            <div style="font-size: 14px; margin-bottom: 8px; opacity: 0.9;">Daily Consumption</div>
+                            <div style="font-size: 14px; margin-bottom: 8px; opacity: 0.9;" data-i18n="calc.dailyConsumption">Daily Consumption</div>
                             <div style="font-size: 32px; font-weight: 700;" id="skidLday">0.00</div>
                             <div style="font-size: 14px; opacity: 0.9; margin-top: 5px;">L/day</div>
                         </div>
                         <div style="background: rgba(255,255,255,0.2); padding: 20px; border-radius: 8px;">
-                            <div style="font-size: 14px; margin-bottom: 8px; opacity: 0.9;">Weekly Consumption</div>
+                            <div style="font-size: 14px; margin-bottom: 8px; opacity: 0.9;" data-i18n="calc.weeklyConsumption">Weekly Consumption</div>
                             <div style="font-size: 32px; font-weight: 700;" id="skidLweek">0.00</div>
                             <div style="font-size: 14px; opacity: 0.9; margin-top: 5px;">L/week</div>
                         </div>
@@ -2739,22 +2781,22 @@
                 </div>
 
                 <div style="margin-top: 20px; padding: 20px; background: linear-gradient(135deg, #00b1ca 0%, #4f4f4f 100%); border-radius: 10px; color: white;">
-                    <h3 style="margin-bottom: 15px; font-size: 18px;">Recommended Skid</h3>
+                    <h3 style="margin-bottom: 15px; font-size: 18px;" data-i18n="calc.recommendedSkid">Recommended Skid</h3>
                     <div style="display: grid; grid-template-columns: 1fr; gap: 15px;">
                         <div style="background: rgba(255,255,255,0.2); padding: 20px; border-radius: 8px;">
-                            <div style="font-size: 14px; margin-bottom: 8px; opacity: 0.9;">Tank Size</div>
+                            <div style="font-size: 14px; margin-bottom: 8px; opacity: 0.9;" data-i18n="calc.tankSize">Tank Size</div>
                             <div style="font-size: 28px; font-weight: 700;" id="skidTank">—</div>
                             <div style="font-size: 13px; opacity: 0.9; margin-top: 5px;" id="skidMaxFlow">Max plant flow: —</div>
                         </div>
                         <div style="background: rgba(255,255,255,0.2); padding: 20px; border-radius: 8px;">
-                            <div style="font-size: 14px; margin-bottom: 8px; opacity: 0.9;">Dosing Pump</div>
+                            <div style="font-size: 14px; margin-bottom: 8px; opacity: 0.9;" data-i18n="calc.dosingPump">Dosing Pump</div>
                             <div style="font-size: 22px; font-weight: 700;" id="skidPump">—</div>
                             <div style="font-size: 13px; opacity: 0.9; margin-top: 5px;" id="skidPressure">Max pressure: —</div>
                         </div>
                         <div style="background: rgba(255,255,255,0.2); padding: 20px; border-radius: 8px;">
                             <div style="font-size: 14px; margin-bottom: 8px; opacity: 0.9;">Refill Interval (est.)</div>
                             <div style="font-size: 28px; font-weight: 700;" id="skidRefill">—</div>
-                            <div style="font-size: 13px; opacity: 0.9; margin-top: 5px;">Days between tank refills</div>
+                            <div style="font-size: 13px; opacity: 0.9; margin-top: 5px;" data-i18n="calc.refillInterval">Days between tank refills</div>
                         </div>
                     </div>
                     <div id="skidNote" style="margin-top: 15px; padding: 12px; background: rgba(255,255,255,0.15); border-radius: 8px; font-size: 13px; line-height: 1.5;"></div>

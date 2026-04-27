@@ -496,6 +496,13 @@
     renderShell();
   };
 
+  // Re-render the QR Builder when the user switches UI language so any
+  // localised section titles + button labels update without re-opening.
+  window.qrRerender = function () {
+    const host = document.getElementById('qrShell');
+    if (host && host.children.length) renderShell();
+  };
+
   // Expose the raw renderer for LIMS / Assets to use
   window.qrMakeSVG = makeQR;
   window.qrBuildAssetURL = function(kind, id) {
