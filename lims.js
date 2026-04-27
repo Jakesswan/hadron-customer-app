@@ -20,6 +20,17 @@
   };
 
   /* ---------- IndexedDB wrapper ---------- */
+  // Cloud sync hook: when window.HG_LIMS_SYNC is wired, every put/del also
+  // mirrors to Supabase. The hook is best-effort; failures are swallowed so
+  // local IndexedDB stays the source of truth.
+  function _hook(op, store, payload) {
+    try {
+      if (window.HG_LIMS_SYNC && typeof window.HG_LIMS_SYNC.onLocalChange === 'function') {
+        window.HG_LIMS_SYNC.onLocalChange(op, store, payload);
+      }
+    } catch (e) { /* sync errors must never block local writes */ }
+  }
+
   const DB = {
     open() {
       return new Promise((res, rej) => {
@@ -40,6 +51,15 @@
     put(store, obj) {
       return new Promise((res, rej) => {
         const r = this.tx(store,'readwrite').put(obj);
+        r.onsuccess = () => { _hook('put', store, obj); res(obj); };
+        r.onerror = () => rej(r.error);
+      });
+    },
+    // putLocal — used by sync layer to write incoming cloud changes WITHOUT
+    // re-firing the sync hook (would create an echo loop).
+    putLocal(store, obj) {
+      return new Promise((res, rej) => {
+        const r = this.tx(store,'readwrite').put(obj);
         r.onsuccess = () => res(obj); r.onerror = () => rej(r.error);
       });
     },
@@ -56,6 +76,13 @@
       });
     },
     del(store, id) {
+      return new Promise((res, rej) => {
+        const r = this.tx(store,'readwrite').delete(id);
+        r.onsuccess = () => { _hook('del', store, id); res(); };
+        r.onerror = () => rej(r.error);
+      });
+    },
+    delLocal(store, id) {
       return new Promise((res, rej) => {
         const r = this.tx(store,'readwrite').delete(id);
         r.onsuccess = () => res(); r.onerror = () => rej(r.error);
@@ -110,6 +137,10 @@
   const tt = (k, en) => (typeof window.t === 'function') ? window.t(k) : en;
 
   // Re-render the current view (used when user switches UI language)
+  // Exposed for the cloud-sync layer (lims-sync.js).
+  window.HG_LIMS_DB    = DB;
+  window.HG_LIMS_STORES = STORES;
+
   window.limsRerender = function() {
     const root = document.getElementById('limsRoot');
     if (root && root.children.length) render();

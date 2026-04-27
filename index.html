@@ -24,6 +24,18 @@
     <!-- jsPDF for branded PDF export of calculator results -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js" defer></script>
 
+    <!-- Supabase JS SDK (auth + cloud sync) -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+
+    <!-- Hadron Supabase bridge -->
+    <script src="supabase-client.js"></script>
+
+    <!-- Auth UI (login/signup gate, profile binding) -->
+    <script src="auth-ui.js" defer></script>
+
+    <!-- Push notifications -->
+    <script src="push.js" defer></script>
+
     <!-- Translation bundle -->
     <script src="i18n.js"></script>
 
@@ -40,6 +52,8 @@
 
     <!-- LIMS module (loaded at end of body via defer) -->
     <script src="lims.js" defer></script>
+    <script src="lims-sync.js" defer></script>
+    <script src="portal.js" defer></script>
 
     <!-- Default UI font: Gothic A1 (Google Fonts) -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -2261,18 +2275,28 @@
             <div class="hg-card">
                 <div class="hg-section-title">Account</div>
                 <div class="hg-fieldgrid">
-                    <div class="hg-field"><label data-i18n="field.name">Name</label><div id="profileName">Demo User</div></div>
-                    <div class="hg-field"><label data-i18n="field.email">Email</label><div><a href="mailto:sales@hadrongrp.com">sales@hadrongrp.com</a></div></div>
-                    <div class="hg-field"><label>Company</label><div>Hadron Group</div></div>
-                    <div class="hg-field"><label data-i18n="field.role">Role</label><div>Customer</div></div>
-                    <div class="hg-field"><label>Member since</label><div>February 2026</div></div>
+                    <div class="hg-field"><label data-i18n="field.name">Name</label><div id="profileName">—</div></div>
+                    <div class="hg-field"><label data-i18n="field.email">Email</label><div id="profileEmail">—</div></div>
+                    <div class="hg-field"><label>Company</label><div id="profileCompany">—</div></div>
+                    <div class="hg-field"><label data-i18n="field.role">Role</label><div id="profileRole">—</div></div>
+                    <div class="hg-field"><label>Member since</label><div id="profileMemberSince">—</div></div>
                 </div>
             </div>
 
             <div class="hg-card">
-                <div class="hg-section-title">Need to update your details?</div>
-                <p style="margin: 0 0 12px;">Account changes are handled by the Hadron Group team. Reach us via Support and we'll update your profile within 1 business day.</p>
-                <button class="hg-btn ghost" onclick="openWindow('support')">🎧 Open Support</button>
+                <div class="hg-section-title">Notifications</div>
+                <p style="margin: 0 0 12px; font-size: 13px; opacity: 0.8;">Get push alerts when a new lab report is ready, a job is assigned, or a service visit is scheduled.</p>
+                <button class="hg-btn primary" id="profileEnablePush" onclick="hgEnablePush()">🔔 Enable push notifications</button>
+                <div id="profilePushStatus" style="margin-top: 10px; font-size: 12px; opacity: 0.7;"></div>
+            </div>
+
+            <div class="hg-card">
+                <div class="hg-section-title">Session</div>
+                <p style="margin: 0 0 12px; font-size: 13px; opacity: 0.8;">Account changes are handled by the Hadron Group team. Reach us via Support and we'll update your profile within 1 business day.</p>
+                <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+                    <button class="hg-btn ghost" onclick="openWindow('support')">🎧 Open Support</button>
+                    <button class="hg-btn ghost" onclick="hgSignOut && hgSignOut()" style="color: #d32f2f; border-color: #d32f2f;">⏻ Sign out</button>
+                </div>
             </div>
         </div>
     </div>
