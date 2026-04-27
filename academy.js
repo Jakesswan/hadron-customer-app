@@ -1307,6 +1307,15 @@
     render();
   };
 
+  // Re-render the current Academy view (called when user changes language).
+  window.academyRerender = function () {
+    const shell = document.getElementById('academyShell');
+    if (shell && shell.children.length) render();
+  };
+
+  // Tiny translator helper — falls back to provided English if i18n absent.
+  function tt(key, en) { return (typeof window.t === 'function') ? window.t(key) : en; }
+
   /* ---------- Render ---------- */
   function render() {
     const root = document.getElementById('academyShell');
@@ -1334,21 +1343,21 @@
     root.innerHTML = `
       <div class="hg-hero" style="background: linear-gradient(135deg, #7a59d4 0%, #00b1ca 100%);">
         <div>
-          <h2 class="hg-hero-title">Hadron Academy</h2>
-          <div class="hg-hero-sub">Water-treatment courseware — wired to the Hadron calc &amp; LIMS suite</div>
+          <h2 class="hg-hero-title">${esc(tt('academy.heroTitle','Hadron Academy'))}</h2>
+          <div class="hg-hero-sub">${esc(tt('academy.heroSub','Water-treatment courseware'))}</div>
         </div>
         <div class="hg-hero-icon">🎓</div>
       </div>
 
       <div class="hg-kvgrid" style="margin-bottom: 18px;">
-        <div class="hg-kv"><div class="k">Tracks</div><div class="v">${TRACKS.length}</div></div>
-        <div class="hg-kv"><div class="k">Courses</div><div class="v">${totalCourses}</div></div>
-        <div class="hg-kv"><div class="k">Started</div><div class="v">${startedCourses}</div></div>
-        <div class="hg-kv"><div class="k">Modules done</div><div class="v">${totalCompleted}</div></div>
+        <div class="hg-kv"><div class="k">${esc(tt('academy.tracks','Tracks'))}</div><div class="v">${TRACKS.length}</div></div>
+        <div class="hg-kv"><div class="k">${esc(tt('academy.courses','Courses'))}</div><div class="v">${totalCourses}</div></div>
+        <div class="hg-kv"><div class="k">${esc(tt('academy.started','Started'))}</div><div class="v">${startedCourses}</div></div>
+        <div class="hg-kv"><div class="k">${esc(tt('academy.modulesDone','Modules done'))}</div><div class="v">${totalCompleted}</div></div>
       </div>
 
       <div class="hg-card">
-        <div class="hg-section-title">Pick a track</div>
+        <div class="hg-section-title">${esc(tt('academy.pickTrack','Pick a track'))}</div>
         <div class="academy-tracks">
           ${TRACKS.map(t => {
             const trackCourses = COURSES.filter(c => c.trackId === t.id);
@@ -1369,7 +1378,7 @@
       </div>
 
       <div class="hg-card">
-        <div class="hg-section-title">How it works</div>
+        <div class="hg-section-title">${esc(tt('academy.howItWorks','How it works'))}</div>
         <p style="margin-bottom: 8px;">Each course is a series of focused modules with explicit learning outcomes. Where a topic links to one of the Hadron calculator tools or LIMS, the lesson hands you straight there so you can practise on real data.</p>
         <p style="font-size: 13px; color: #6b7684;">Progress is saved on this device. Sources are credited per course (WRC, WHO, Nalco, Rand Water, WISA, etc.) and full lesson content is rolled out per the Hadron Group product roadmap.</p>
       </div>
@@ -1383,7 +1392,7 @@
     const progress = loadProgress();
 
     root.innerHTML = `
-      ${breadcrumb([{ label: 'Academy', view: 'home' }, { label: t.name, view: 'track', params: { trackId: t.id } }])}
+      ${breadcrumb([{ label: tt('academy.heroTitle','Academy'), view: 'home' }, { label: t.name, view: 'track', params: { trackId: t.id } }])}
       <div class="hg-hero" style="background: ${t.g};">
         <div>
           <h2 class="hg-hero-title">${esc(t.name)}</h2>
@@ -1393,7 +1402,7 @@
       </div>
 
       <div class="hg-card">
-        <div class="hg-section-title">Courses in this track</div>
+        <div class="hg-section-title">${esc(tt('academy.coursesInTrack','Courses in this track'))}</div>
         ${courses.map(c => {
           const p = progress[c.id] || { completed: [] };
           const pct = c.modules.length ? Math.round(p.completed.length / c.modules.length * 100) : 0;
@@ -1430,16 +1439,22 @@
     const p = progressFor(c.id);
     const pct = courseProgressPct(c);
 
+    // Localise the level chip
+    const levelLabel = c.level === 'Foundation' ? tt('academy.foundation','Foundation')
+                     : c.level === 'Intermediate' ? tt('academy.intermediate','Intermediate')
+                     : c.level === 'Advanced' ? tt('academy.advanced','Advanced')
+                     : c.level;
+
     root.innerHTML = `
       ${breadcrumb([
-        { label: 'Academy', view: 'home' },
+        { label: tt('academy.heroTitle','Academy'), view: 'home' },
         { label: t.name, view: 'track', params: { trackId: t.id } },
         { label: c.code, view: 'course', params: { courseId: c.id } }
       ])}
 
       <div class="hg-hero" style="background: ${t.g};">
         <div>
-          <div style="font-size:12px; opacity:0.85; letter-spacing:0.4px;">${esc(c.code)} · ${esc(c.level)} · ${esc(c.duration)}</div>
+          <div style="font-size:12px; opacity:0.85; letter-spacing:0.4px;">${esc(c.code)} · ${esc(levelLabel)} · ${esc(c.duration)}</div>
           <h2 class="hg-hero-title" style="margin-top:4px;">${esc(c.title)}</h2>
           <div class="hg-hero-sub">${esc(c.summary)}</div>
         </div>
@@ -1447,7 +1462,7 @@
       </div>
 
       <div class="hg-card">
-        <div class="hg-section-title">Learning outcomes</div>
+        <div class="hg-section-title">${esc(tt('academy.outcomes','Learning outcomes'))}</div>
         <ul style="margin: 0; padding-left: 20px; line-height: 1.7;">
           ${c.outcomes.map(o => `<li>${esc(o)}</li>`).join('')}
         </ul>
@@ -1455,7 +1470,7 @@
 
       ${c.linkedTools && c.linkedTools.length ? `
         <div class="hg-card">
-          <div class="hg-section-title">Linked Hadron tools</div>
+          <div class="hg-section-title">${esc(tt('academy.linkedTools','Linked Hadron tools'))}</div>
           <div style="display:flex; gap:8px; flex-wrap:wrap;">
             ${c.linkedTools.map(k => {
               const tool = TOOLS[k]; if (!tool) return '';
@@ -1467,7 +1482,7 @@
 
       ${c.prereqs && c.prereqs.length ? `
         <div class="hg-card">
-          <div class="hg-section-title">Prerequisites</div>
+          <div class="hg-section-title">${esc(tt('academy.prerequisites','Prerequisites'))}</div>
           <div style="display:flex; gap:8px; flex-wrap:wrap;">
             ${c.prereqs.map(pid => {
               const pc = COURSES.find(x => x.id === pid); if (!pc) return '';
@@ -1478,8 +1493,8 @@
 
       <div class="hg-card">
         <div class="hg-section-title" style="display:flex; justify-content:space-between; align-items:center;">
-          <span>Modules</span>
-          <span style="font-size:13px; font-weight:500; color:${pct === 100 ? '#157b3a' : '#6b7684'};">${pct}% complete</span>
+          <span>${esc(tt('academy.modules','Modules'))}</span>
+          <span style="font-size:13px; font-weight:500; color:${pct === 100 ? '#157b3a' : '#6b7684'};">${pct}${esc(tt('academy.percentComplete','% complete'))}</span>
         </div>
         ${c.modules.map((m, i) => {
           const done = p.completed.indexOf(m.id) !== -1;
@@ -1496,7 +1511,7 @@
       </div>
 
       <div class="hg-card">
-        <div class="hg-section-title">Sources &amp; references</div>
+        <div class="hg-section-title">${esc(tt('academy.sources','Sources & references'))}</div>
         <ul style="margin:0; padding-left:20px; line-height:1.7; font-size:13px; color:#4f4f4f;">
           ${c.sources.map(s => `<li>${esc(s)}</li>`).join('')}
         </ul>
@@ -1517,7 +1532,7 @@
 
     root.innerHTML = `
       ${breadcrumb([
-        { label: 'Academy', view: 'home' },
+        { label: tt('academy.heroTitle','Academy'), view: 'home' },
         { label: t.name, view: 'track', params: { trackId: t.id } },
         { label: c.code, view: 'course', params: { courseId: c.id } },
         { label: m.title, view: 'module', params: { moduleId: m.id } }
@@ -1525,7 +1540,7 @@
 
       <div class="hg-hero" style="background: ${t.g};">
         <div>
-          <div style="font-size:12px; opacity:0.85; letter-spacing:0.4px;">Module ${idx + 1} of ${c.modules.length} · ${esc(m.duration)}</div>
+          <div style="font-size:12px; opacity:0.85; letter-spacing:0.4px;">${esc(tt('academy.modules','Modules'))} ${idx + 1} / ${c.modules.length} · ${esc(m.duration)}</div>
           <h2 class="hg-hero-title" style="margin-top:4px;">${esc(m.title)}</h2>
           <div class="hg-hero-sub">${esc(m.summary)}</div>
         </div>
@@ -1533,20 +1548,20 @@
       </div>
 
       <div class="hg-card">
-        <div class="hg-section-title">What you'll learn</div>
+        <div class="hg-section-title">${esc(tt('academy.whatYoullLearn',"What you'll learn"))}</div>
         <ul style="margin:0; padding-left:20px; line-height:1.8;">
           ${m.sections.map(s => `<li>${esc(s)}</li>`).join('')}
         </ul>
       </div>
 
       <div class="hg-card academy-lesson">
-        <div class="hg-section-title">Lesson content</div>
+        <div class="hg-section-title">${esc(tt('academy.lessonContent','Lesson content'))}</div>
         ${renderLessonBody(STATE.courseId, m.id, m.title)}
       </div>
 
       ${c.linkedTools && c.linkedTools.length ? `
         <div class="hg-card">
-          <div class="hg-section-title">Practise with these tools</div>
+          <div class="hg-section-title">${esc(tt('academy.practiseTools','Practise with these tools'))}</div>
           <div style="display:flex; gap:8px; flex-wrap:wrap;">
             ${c.linkedTools.map(k => {
               const tool = TOOLS[k]; if (!tool) return '';
@@ -1559,10 +1574,10 @@
         <div style="display:flex; gap:8px; flex-wrap:wrap; align-items:center; justify-content:space-between;">
           <div style="display:flex; gap:8px; flex-wrap:wrap;">
             ${prev ? `<button class="hg-btn" onclick="academyGo('module', { moduleId: '${prev.id}' })">← ${esc(prev.title)}</button>` : ''}
-            ${next ? `<button class="hg-btn primary" onclick="academyMarkAndNext('${m.id}', '${next.id}')">${isDone ? 'Next' : 'Mark complete &amp; next'}: ${esc(next.title)} →</button>`
-                   : `<button class="hg-btn primary" onclick="academyMarkAndFinish('${m.id}')">${isDone ? 'Finish course ✓' : 'Mark complete &amp; finish course ✓'}</button>`}
+            ${next ? `<button class="hg-btn primary" onclick="academyMarkAndNext('${m.id}', '${next.id}')">${isDone ? esc(tt('common.next','Next')) : esc(tt('academy.markComplete','Mark complete & next'))}: ${esc(next.title)} →</button>`
+                   : `<button class="hg-btn primary" onclick="academyMarkAndFinish('${m.id}')">${isDone ? esc(tt('academy.finishCourse','Finish course'))+' ✓' : esc(tt('academy.markComplete','Mark complete & next'))+' — '+esc(tt('academy.finishCourse','Finish course'))+' ✓'}</button>`}
           </div>
-          ${isDone ? '<span class="hg-chip ok">✓ Completed</span>' : ''}
+          ${isDone ? '<span class="hg-chip ok">✓ '+esc(tt('common.done','Completed'))+'</span>' : ''}
         </div>
       </div>
     `;

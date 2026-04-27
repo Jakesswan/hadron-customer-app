@@ -106,6 +106,15 @@
   }
 
   /* ---------- Router ---------- */
+  // Tiny localiser for chrome — falls back to English when t() unavailable
+  const tt = (k, en) => (typeof window.t === 'function') ? window.t(k) : en;
+
+  // Re-render the current view (used when user switches UI language)
+  window.limsRerender = function() {
+    const root = document.getElementById('limsRoot');
+    if (root && root.children.length) render();
+  };
+
   window.limsGo = function(view, params) {
     S.stack.push({ view: S.view, params: S.params });
     S.view = view;
@@ -483,17 +492,17 @@
     root.innerHTML = `
       <div class="lims-hub-header">
         <div class="lims-hub-welcome">
-          <div class="lims-hub-hello">Welcome back, ${esc((S.currentUser&&S.currentUser.name)||'Analyst')} 👋</div>
+          <div class="lims-hub-hello">${esc(tt('lims.welcome','Welcome back'))}, ${esc((S.currentUser&&S.currentUser.name)||'Analyst')} 👋</div>
           <div class="lims-hub-sub">Hadron Group · ISO/IEC 17025:2017 Laboratory · SANAS T0492</div>
         </div>
         <div class="lims-hub-clock" id="limsClock">${new Date().toLocaleString()}</div>
       </div>
 
       <div class="lims-kpis">
-        <div class="lims-kpi" onclick="limsGo('samples',{filter:'active'})"><div class="v">${active}</div><div class="l">Active samples</div></div>
-        <div class="lims-kpi" onclick="limsGo('results',{filter:'pending-review'})"><div class="v">${pending}</div><div class="l">Pending review</div></div>
-        <div class="lims-kpi" onclick="limsGo('instruments',{filter:'cal-due'})"><div class="v">${overdueCals}</div><div class="l">Cal overdue/due</div></div>
-        <div class="lims-kpi" onclick="limsGo('qc')"><div class="v">${openNCs}</div><div class="l">Open NCs / CAPAs</div></div>
+        <div class="lims-kpi" onclick="limsGo('samples',{filter:'active'})"><div class="v">${active}</div><div class="l">${esc(tt('lims.activeSamples','Active samples'))}</div></div>
+        <div class="lims-kpi" onclick="limsGo('results',{filter:'pending-review'})"><div class="v">${pending}</div><div class="l">${esc(tt('lims.pendingReview','Pending review'))}</div></div>
+        <div class="lims-kpi" onclick="limsGo('instruments',{filter:'cal-due'})"><div class="v">${overdueCals}</div><div class="l">${esc(tt('lims.calOverdue','Cal overdue/due'))}</div></div>
+        <div class="lims-kpi" onclick="limsGo('qc')"><div class="v">${openNCs}</div><div class="l">${esc(tt('lims.openNCs','Open NCs / CAPAs'))}</div></div>
       </div>
 
       <div class="lims-apps">
@@ -501,7 +510,7 @@
           <div class="lims-app" style="--g:${m.g};--c:${m.g.split(',')[1].trim().split(' ')[0]}" onclick="limsGo('${m.key}')">
             <div class="ribbon"></div>
             <div class="appicon">${m.icon}</div>
-            <div class="appname">${esc(m.label)}</div>
+            <div class="appname">${esc(tt('lims.'+m.key, m.label))}</div>
             <div class="appsub">${esc(m.sub)}</div>
           </div>
         `).join('')}

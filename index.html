@@ -2332,7 +2332,7 @@
                 <div class="hg-section-title">About</div>
                 <div class="hg-kvgrid">
                     <div class="hg-kv"><div class="k">App</div><div class="v">Hadron Group</div></div>
-                    <div class="hg-kv"><div class="k">Version</div><div class="v">v22</div></div>
+                    <div class="hg-kv"><div class="k">Version</div><div class="v">v23</div></div>
                     <div class="hg-kv"><div class="k">Platform</div><div class="v">PWA</div></div>
                 </div>
             </div>
@@ -4106,6 +4106,13 @@
             if (select) select.value = code;
             applyTranslations();
             updateTime(); // date format depends on language
+
+            // Tell every dynamic module to re-render so its JS-built UI picks up
+            // the new translations. Each module exposes its own re-render fn.
+            try { if (typeof window.limsRerender === 'function')    window.limsRerender(); } catch (e) {}
+            try { if (typeof window.poolRerender === 'function')    window.poolRerender(); } catch (e) {}
+            try { if (typeof window.academyRerender === 'function') window.academyRerender(); } catch (e) {}
+            try { if (typeof window.qrRerender === 'function')      window.qrRerender(); } catch (e) {}
         }
 
         function initLanguage() {

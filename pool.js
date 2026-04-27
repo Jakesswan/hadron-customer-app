@@ -339,20 +339,23 @@
     const isBromine = t === 'bromine';
     const isSalt = t === 'saltwater';
 
+    // Tiny localised label helper (falls back to the English passed in)
+    const tt = (k, en) => (typeof window.t === 'function') ? window.t(k) : en;
+
     shell.innerHTML = `
       <div class="hg-hero" style="background:linear-gradient(135deg,#00b1ca 0%,#1a3d9e 100%);">
         <div>
-          <h2 class="hg-hero-title">Pool Water Chemistry</h2>
-          <div class="hg-hero-sub">Analyse, dose & troubleshoot your pool</div>
+          <h2 class="hg-hero-title">${esc(tt('pool.heroTitle','Pool Water Chemistry'))}</h2>
+          <div class="hg-hero-sub">${esc(tt('pool.heroSub','Analyse, dose & troubleshoot your pool'))}</div>
         </div>
         <div class="hg-hero-icon">🏊</div>
       </div>
 
       <div class="hg-card">
-        <div class="hg-section-title">1. Pool setup</div>
+        <div class="hg-section-title">1. ${esc(tt('pool.setup','Pool setup'))}</div>
         <div class="hg-fieldgrid">
           <div class="hg-field">
-            <label>Pool type</label>
+            <label>${esc(tt('pool.poolType','Pool type'))}</label>
             <select id="poolTypeSel" onchange="poolSet('poolType', this.value)">
               <option value="chlorine" ${t==='chlorine'?'selected':''}>Chlorine (tabs/liquid)</option>
               <option value="saltwater" ${t==='saltwater'?'selected':''}>Saltwater (SWG)</option>
@@ -360,19 +363,19 @@
             </select>
           </div>
           <div class="hg-field">
-            <label>Pool volume (litres)</label>
+            <label>${esc(tt('pool.volume','Pool volume (litres)'))}</label>
             <input type="number" id="poolVol" value="${STATE.volumeL}" min="1000" step="1000" oninput="poolSet('volumeL', this.value)">
             <div class="hint">${fmt(STATE.volumeL/1000, 1)} kL · ${fmt(STATE.volumeL*0.264,0)} US gal</div>
           </div>
           <div class="hg-field">
-            <label>Or calculate volume</label>
+            <label>${esc(tt('pool.calcVolume','Or calculate volume'))}</label>
             <button class="hg-btn ghost" onclick="poolCalcVol()">📐 Length × Width × Depth</button>
           </div>
         </div>
       </div>
 
       <div class="hg-card">
-        <div class="hg-section-title">2. Water analysis (enter your test results)</div>
+        <div class="hg-section-title">2. ${esc(tt('pool.analysis','Water analysis (enter your test results)'))}</div>
         <div class="hg-fieldgrid">
           <div class="hg-field">
             <label>pH</label>
@@ -428,8 +431,8 @@
           </div>
         </div>
         <div class="hg-actions">
-          <button class="hg-btn primary" onclick="poolAnalyse()">🧪 Analyse & recommend</button>
-          <button class="hg-btn ghost" onclick="poolLoadExample()">Load example</button>
+          <button class="hg-btn primary" onclick="poolAnalyse()">🧪 ${esc(tt('pool.analyse','Analyse & recommend'))}</button>
+          <button class="hg-btn ghost" onclick="poolLoadExample()">${esc(tt('pool.loadExample','Load example'))}</button>
         </div>
       </div>
 
@@ -645,5 +648,14 @@ ${a.recs.length === 0 ? '<p>All parameters are in range — maintain current rou
   /* ---------- Entry point ---------- */
   window.poolOpen = function() {
     render();
+  };
+
+  // Re-render when the user changes UI language so headers update.
+  window.poolRerender = function() {
+    const shell = document.getElementById('poolShell');
+    if (shell && shell.children.length) {
+      render();
+      if (STATE.analysis) renderResults();
+    }
   };
 })();
