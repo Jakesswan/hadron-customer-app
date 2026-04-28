@@ -143,8 +143,8 @@
     const cfg = titles[mode];
 
     card.innerHTML = `
-      <img class="hg-auth-logo light" src="Hadron_Logo.png" alt="Hadron Group" />
-      <img class="hg-auth-logo dark"  src="Hadron_Logo_dark.png" alt="Hadron Group" />
+      <img class="hg-auth-logo light" src="Hadron_Logo_dark.png" alt="Hadron Group" />
+      <img class="hg-auth-logo dark"  src="Hadron_Logo.png" alt="Hadron Group" />
       <h1 class="hg-auth-title">${cfg.h1}</h1>
       <div class="hg-auth-sub">${cfg.sub}</div>
 
