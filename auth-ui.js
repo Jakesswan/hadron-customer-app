@@ -38,12 +38,17 @@
       border-color: rgba(255,255,255,0.08);
     }
     .hg-auth-logo {
-      width: 56px; height: 56px; border-radius: 14px;
-      background: linear-gradient(135deg, #00b1ca, #1a3d9e);
-      display: flex; align-items: center; justify-content: center;
-      color: #fff; font-weight: 800; font-size: 22px;
-      margin: 0 auto 14px;
+      display: block;
+      height: 56px;
+      width: auto;
+      max-width: 240px;
+      margin: 0 auto 18px;
+      object-fit: contain;
     }
+    /* Swap to the light-on-dark logo when dark theme is active */
+    .hg-auth-logo.dark { display: none; }
+    [data-theme="dark"] .hg-auth-logo.light { display: none; }
+    [data-theme="dark"] .hg-auth-logo.dark  { display: block; }
     .hg-auth-title { text-align: center; font-size: 22px; font-weight: 700; margin: 0 0 4px; }
     .hg-auth-sub   { text-align: center; font-size: 13px; opacity: 0.7; margin: 0 0 22px; }
     .hg-auth-row   { display: flex; flex-direction: column; gap: 6px; margin-bottom: 14px; }
@@ -138,7 +143,8 @@
     const cfg = titles[mode];
 
     card.innerHTML = `
-      <div class="hg-auth-logo">H</div>
+      <img class="hg-auth-logo light" src="Hadron_Logo.png" alt="Hadron Group" />
+      <img class="hg-auth-logo dark"  src="Hadron_Logo_dark.png" alt="Hadron Group" />
       <h1 class="hg-auth-title">${cfg.h1}</h1>
       <div class="hg-auth-sub">${cfg.sub}</div>
 
