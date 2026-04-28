@@ -38,9 +38,12 @@ create table if not exists public.profiles (
   role            text not null default 'operator'
                   check (role in ('admin','customer_admin','operator','viewer')),
   language        text default 'en',
+  preferences     jsonb default '{}'::jsonb,
   created_at      timestamptz default now(),
   updated_at      timestamptz default now()
 );
+-- Keep preferences column in sync for projects that ran the schema before this column was added.
+alter table public.profiles add column if not exists preferences jsonb default '{}'::jsonb;
 
 create index if not exists profiles_org_idx on public.profiles (organisation_id);
 

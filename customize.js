@@ -70,15 +70,31 @@
   }
 
   // ── Persistence ─────────────────────────────────────────
+  // Cloud-first when signed in (profiles.preferences.home_order), with
+  // localStorage as a fallback for offline / local-only mode.
   function loadOrder() {
+    // Cloud takes priority if a profile is loaded with a saved order.
+    const cloud = window.HG_PROFILE?.preferences?.home_order;
+    if (Array.isArray(cloud) && cloud.length) return cloud;
     try { return JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]'); }
     catch { return []; }
   }
   function saveOrder(order) {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(order || []));
+    const arr = order || [];
+    // Always write local — keeps the device usable offline.
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(arr));
+    // Mirror to cloud if we're signed in.
+    if (window.HG_AUTH && window.HG_AUTH.configured && typeof window.HG_AUTH.setPreference === 'function') {
+      window.HG_AUTH.setPreference('home_order', arr).catch(err => {
+        console.warn('[HG_CUSTOMIZE] cloud save failed (local copy preserved)', err);
+      });
+    }
   }
   function clearOrder() {
     localStorage.removeItem(STORAGE_KEY);
+    if (window.HG_AUTH && window.HG_AUTH.configured && typeof window.HG_AUTH.setPreference === 'function') {
+      window.HG_AUTH.setPreference('home_order', null).catch(() => {});
+    }
   }
 
   function getGrid() {

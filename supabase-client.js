@@ -110,7 +110,7 @@
         if (!session) return null;
         const { data, error } = await client
           .from('profiles')
-          .select('id, email, full_name, phone, organisation_id, role, language, created_at, organisations(name,slug,type)')
+          .select('id, email, full_name, phone, organisation_id, role, language, preferences, created_at, organisations(name,slug,type)')
           .eq('id', session.user.id)
           .maybeSingle();
         if (error) { console.warn('[HG_AUTH] getProfile error', error); return null; }
@@ -154,6 +154,24 @@
       async signOut() {
         if (!client) return;
         await client.auth.signOut();
+      },
+
+      // Patch a single key into profiles.preferences (jsonb merge).
+      async setPreference(key, value) {
+        if (!client) return null;
+        const session = await this.getSession();
+        if (!session) return null;
+        const current = (window.HG_PROFILE && window.HG_PROFILE.preferences) || {};
+        const next = Object.assign({}, current, { [key]: value });
+        const { data, error } = await client
+          .from('profiles')
+          .update({ preferences: next })
+          .eq('id', session.user.id)
+          .select('preferences')
+          .maybeSingle();
+        if (error) { console.warn('[HG_AUTH] setPreference error', error); return null; }
+        if (window.HG_PROFILE) window.HG_PROFILE.preferences = data?.preferences || next;
+        return data?.preferences || next;
       },
 
       onChange(handler) {
