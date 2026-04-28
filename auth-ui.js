@@ -309,9 +309,15 @@
 
   function showDesktop(visible) {
     // Always hide the legacy "demo / password" screen when cloud is configured.
+    // We use an inline style so nothing — not the legacy logout(), not a stray
+    // classList toggle — can accidentally re-reveal it.
     const legacy = document.getElementById('loginScreen');
     const desktop = document.getElementById('desktop');
-    if (legacy)  legacy.classList.add('hidden');
+    if (legacy) {
+      legacy.classList.add('hidden');
+      legacy.style.display = 'none';
+      legacy.setAttribute('aria-hidden', 'true');
+    }
     if (desktop) desktop.classList[visible ? 'add' : 'remove']('visible');
   }
 
@@ -325,6 +331,14 @@
     }
 
     // Cloud configured — desktop is gated by Supabase session, not demo password.
+    // Permanently retire the legacy demo gate.
+    const legacy = document.getElementById('loginScreen');
+    if (legacy) {
+      legacy.classList.add('hidden');
+      legacy.style.display = 'none';
+      legacy.setAttribute('aria-hidden', 'true');
+    }
+
     async function reconcile() {
       const session = await window.HG_AUTH.getSession();
       if (session) {
@@ -377,13 +391,11 @@
   }
 
   // Sign out helper bound to a global so the profile screen can call it.
+  // No confirm() — modal dialogs can be blocked by browsers / cause hangs,
+  // and signing out is reversible (just sign back in).
   window.hgSignOut = async function () {
     if (!window.HG_AUTH) return;
-    if (!window.HG_AUTH.configured) {
-      alert('You\'re running in local mode — there\'s nothing to sign out from. Configure Supabase to enable accounts.');
-      return;
-    }
-    if (!confirm('Sign out of Hadron Group?')) return;
+    if (!window.HG_AUTH.configured) return;
     await window.HG_AUTH.signOut();
   };
 
