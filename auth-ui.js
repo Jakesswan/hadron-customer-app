@@ -385,6 +385,14 @@
     document.body.setAttribute('data-role', profile.role || '');
     document.body.setAttribute('data-org-type', profile.organisations?.type || '');
 
+    // Top-right user chip on the desktop
+    const displayName = profile.full_name || (profile.email ? profile.email.split('@')[0] : 'User');
+    const initial = (profile.full_name || profile.email || 'U').trim().charAt(0).toUpperCase();
+    const userNameEl   = document.getElementById('userName');
+    const userAvatarEl = document.getElementById('userAvatar');
+    if (userNameEl)   userNameEl.textContent = displayName;
+    if (userAvatarEl) userAvatarEl.textContent = initial;
+
     // Phase 3 seed — role-based home tile visibility.
     // Tiles tagged with `data-roles="admin"` show only for that role; tiles
     // without the attribute show for everyone.
