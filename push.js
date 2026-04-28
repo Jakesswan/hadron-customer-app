@@ -15,11 +15,9 @@
 (function () {
   'use strict';
 
-  // VAPID public key — generate yours with:
-  //   npx web-push generate-vapid-keys
-  // Then paste the **public** key here. The private key stays on the
-  // Edge Function as an environment variable.
-  const VAPID_PUBLIC_KEY = 'YOUR-VAPID-PUBLIC-KEY';
+  // VAPID public key — Hadron Group production keypair (Apr 2026).
+  // The matching private key lives only as a Supabase Edge Function secret.
+  const VAPID_PUBLIC_KEY = 'BF7HRqIbJ_MbQSIx6Huph2pWcYWPYLneNjCLMhHXC5FySxfcZCpMJ9WtWuJ89EdqAWNB_0AY7Qjs8aewkmvc2lo';
 
   function isSupported() {
     return 'serviceWorker' in navigator
