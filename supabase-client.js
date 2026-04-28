@@ -110,7 +110,7 @@
         if (!session) return null;
         const { data, error } = await client
           .from('profiles')
-          .select('id, email, full_name, phone, organisation_id, role, language, organisations(name,slug,type)')
+          .select('id, email, full_name, phone, organisation_id, role, language, created_at, organisations(name,slug,type)')
           .eq('id', session.user.id)
           .maybeSingle();
         if (error) { console.warn('[HG_AUTH] getProfile error', error); return null; }

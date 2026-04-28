@@ -246,8 +246,7 @@
     state.orgId = profile.organisation_id;
     state.ready = true;
 
-    // Wait for LIMS DB to be ready. lims.js opens it on app launch; if the
-    // user hasn't opened LIMS yet we keep retrying every 2s for 30s.
+    // Wait for the LIMS DB facade to be exposed by lims.js (defer-script timing).
     let waited = 0;
     while (!window.HG_LIMS_DB && waited < 30000) {
       await new Promise(r => setTimeout(r, 500));
@@ -255,13 +254,22 @@
     }
     if (!window.HG_LIMS_DB) {
       console.info('[HG_LIMS_SYNC] LIMS DB not ready; will sync when LIMS opens.');
-      // Set a one-shot watcher.
       const watcher = setInterval(() => {
         if (window.HG_LIMS_DB) {
           clearInterval(watcher);
           activate();
         }
       }, 2000);
+      return;
+    }
+
+    // Eagerly open the IndexedDB connection. LIMS opens it lazily on first
+    // limsOpen() — but cloud sync needs to read/write to it before LIMS
+    // opens for the first time. open() is idempotent.
+    try {
+      await window.HG_LIMS_DB.open();
+    } catch (e) {
+      console.warn('[HG_LIMS_SYNC] failed to open LIMS IndexedDB', e);
       return;
     }
 
