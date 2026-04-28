@@ -3661,6 +3661,20 @@
         }
 
         function logout() {
+            // Cloud-aware: when Supabase auth is wired up, route through it so
+            // the session is properly ended and the new sign-in/sign-up overlay
+            // appears (instead of the legacy demo form which would reject real
+            // credentials).
+            if (window.HG_AUTH && window.HG_AUTH.configured) {
+                closeAllWindows();
+                if (typeof window.hgSignOut === 'function') {
+                    window.hgSignOut();
+                } else {
+                    window.HG_AUTH.signOut();
+                }
+                return;
+            }
+            // Legacy local-only fallback (demo / password gate)
             document.getElementById('loginScreen').classList.remove('hidden');
             document.getElementById('desktop').classList.remove('visible');
             document.getElementById('username').value = '';
