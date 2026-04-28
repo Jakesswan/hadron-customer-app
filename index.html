@@ -39,6 +39,12 @@
     <!-- Translation bundle -->
     <script src="i18n.js"></script>
 
+    <!-- Cross-platform emoji rendering (Twemoji) -->
+    <script src="emoji.js" defer></script>
+
+    <!-- Customizable home grid (drag-to-reorder) -->
+    <script src="customize.js" defer></script>
+
     <!-- QR encoder (MIT, Kazuhiko Arase) -->
     <script src="qr.js"></script>
 
@@ -60,6 +66,31 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Gothic+A1:wght@300;400;500;600;700;800;900&display=swap">
 
+    <style>
+        /* Twemoji output — keep emoji at the size of the surrounding text
+           by default, scaled up inside app-icon tiles, hg-hero icons, and
+           Academy/Pool tile gradients. */
+        img.emoji {
+            height: 1em;
+            width: 1em;
+            margin: 0 .05em 0 .1em;
+            vertical-align: -0.1em;
+            display: inline-block;
+        }
+        .app-icon .icon img.emoji {
+            height: 60%;
+            width: 60%;
+            margin: 0;
+            vertical-align: middle;
+        }
+        .hg-hero-icon img.emoji,
+        .lims-hub-clock img.emoji,
+        .academy-track-icon img.emoji {
+            height: 1em;
+            width: 1em;
+            margin: 0;
+        }
+    </style>
     <style>
         * {
             margin: 0;
@@ -2362,6 +2393,24 @@
             </div>
 
             <div class="hg-card">
+                <div class="hg-section-title">Home screen</div>
+                <div class="settings-row">
+                    <div>
+                        <div class="settings-label">Customize home</div>
+                        <div class="settings-sub">Drag tiles to reorder (or long-press any tile on the home screen)</div>
+                    </div>
+                    <button class="hg-btn primary" onclick="closeWindow('settings'); setTimeout(() => window.hgCustomizeHome && window.hgCustomizeHome(), 200);">✏️ Customize</button>
+                </div>
+                <div class="settings-row">
+                    <div>
+                        <div class="settings-label">Reset layout</div>
+                        <div class="settings-sub">Restore the default home-screen icon order</div>
+                    </div>
+                    <button class="hg-btn ghost" onclick="if(confirm('Reset home screen to default layout?')) window.hgResetHomeLayout && window.hgResetHomeLayout();">↺ Reset</button>
+                </div>
+            </div>
+
+            <div class="hg-card">
                 <div class="hg-section-title">Help & privacy</div>
                 <div class="settings-row">
                     <div>
@@ -2383,7 +2432,7 @@
                 <div class="hg-section-title">About</div>
                 <div class="hg-kvgrid">
                     <div class="hg-kv"><div class="k">App</div><div class="v">Hadron Group</div></div>
-                    <div class="hg-kv"><div class="k">Version</div><div class="v">v24</div></div>
+                    <div class="hg-kv"><div class="k">Version</div><div class="v">v37</div></div>
                     <div class="hg-kv"><div class="k">Platform</div><div class="v">PWA</div></div>
                 </div>
             </div>
