@@ -12,7 +12,7 @@
  * Bump CACHE_VERSION whenever you ship a change so phones pick it up on next launch.
  */
 
-const CACHE_VERSION = 'hadron-v38';
+const CACHE_VERSION = 'hadron-v39';
 const APP_SHELL = [
   './',
   './index.html',
@@ -124,7 +124,15 @@ self.addEventListener('push', (event) => {
 
 self.addEventListener('notificationclick', (event) => {
   event.notification.close();
-  const link = (event.notification.data && event.notification.data.link) || './';
+  let link = (event.notification.data && event.notification.data.link) || './';
+
+  // Normalise hash-only links so they target the app root (index.html), not
+  // the SW file URL. Without this, '#lims/sample/X' resolves to 'sw.js#...'
+  // and the user lands on the service-worker source instead of the app.
+  if (typeof link === 'string' && link.startsWith('#')) {
+    link = './' + link;
+  }
+
   event.waitUntil((async () => {
     const allClients = await self.clients.matchAll({ type: 'window', includeUncontrolled: true });
     for (const c of allClients) {
