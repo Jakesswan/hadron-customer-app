@@ -253,6 +253,7 @@
       lims_instruments:     tableApi('lims_instruments'),
       lims_inventory:       tableApi('lims_inventory'),
       lims_documents:       tableApi('lims_documents'),
+      lims_competencies:    tableApi('lims_competencies'),
       _queueLen: queueLen,
       _flush: flushQueue
     };

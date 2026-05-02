@@ -250,6 +250,15 @@ create table if not exists public.lims_documents (
   updated_at      timestamptz default now()
 );
 
+create table if not exists public.lims_competencies (
+  id              text primary key,
+  organisation_id uuid not null references public.organisations (id) on delete cascade,
+  payload         jsonb not null,
+  created_at      timestamptz default now(),
+  updated_at      timestamptz default now()
+);
+create index if not exists lims_comp_org_idx on public.lims_competencies (organisation_id);
+
 create table if not exists public.audit_log (
   id              bigserial primary key,
   organisation_id uuid references public.organisations (id) on delete cascade,
@@ -352,6 +361,7 @@ alter table public.lims_worksheets     enable row level security;
 alter table public.lims_instruments    enable row level security;
 alter table public.lims_inventory      enable row level security;
 alter table public.lims_documents      enable row level security;
+alter table public.lims_competencies   enable row level security;
 
 -- Helper macro: a "scoped" policy = visible to Hadron admins or to
 -- members of the same organisation. We write it out explicitly below
@@ -396,7 +406,7 @@ declare t text;
 begin
   for t in select unnest(array[
     'customers','sites','equipment','samples','sample_results','jobs','audit_log',
-    'lims_tests','lims_test_profiles','lims_worksheets','lims_instruments','lims_inventory','lims_documents'
+    'lims_tests','lims_test_profiles','lims_worksheets','lims_instruments','lims_inventory','lims_documents','lims_competencies'
   ]) loop
     execute format('drop policy if exists "%I_select" on public.%I', t||'_select', t);
     execute format($f$
@@ -463,7 +473,8 @@ alter publication supabase_realtime add table
   public.lims_worksheets,
   public.lims_instruments,
   public.lims_inventory,
-  public.lims_documents;
+  public.lims_documents,
+  public.lims_competencies;
 
 -- ============================================================
 -- 8. SEED — run AFTER your first user signs up via the app.

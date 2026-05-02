@@ -43,7 +43,8 @@
     worksheets:  'lims_worksheets',
     instruments: 'lims_instruments',
     inventory:   'lims_inventory',
-    documents:   'lims_documents'
+    documents:    'lims_documents',
+    competencies: 'lims_competencies'
   };
 
   // ── Mappers: local row → cloud row ──────────────────────

@@ -457,6 +457,7 @@
     { key:'dashboard',  label:'Dashboard',    icon:'📊', g:'linear-gradient(135deg, #00b1ca 0%, #0078a3 100%)', sub:'KPIs & overview' },
     { key:'samples',    label:'Samples',      icon:'🧪', g:'linear-gradient(135deg, #4CAF50 0%, #2e7d32 100%)', sub:'Login & chain of custody' },
     { key:'tests',      label:'Tests',        icon:'🔬', g:'linear-gradient(135deg, #7a59d4 0%, #4527a0 100%)', sub:'Catalogue & methods' },
+    { key:'profiles',   label:'Test Profiles',icon:'🧬', g:'linear-gradient(135deg, #b39ddb 0%, #6a1b9a 100%)', sub:'Named test bundles' },
     { key:'worksheets', label:'Worksheets',   icon:'📋', g:'linear-gradient(135deg, #ff8f00 0%, #e65100 100%)', sub:'Batches & QC inserts' },
     { key:'results',    label:'Results',      icon:'✅', g:'linear-gradient(135deg, #26a69a 0%, #00695c 100%)', sub:'Entry, review, authorise' },
     { key:'instruments',label:'Instruments',  icon:'⚙️', g:'linear-gradient(135deg, #5c6bc0 0%, #283593 100%)', sub:'Register & calibration' },
@@ -485,24 +486,30 @@
         case 'samples':     return await renderSamples(root);
         case 'sample':      return await renderSampleDetail(root);
         case 'sample-new':  return await renderSampleForm(root);
-        case 'tests':       return await renderTests(root);
-        case 'test':        return await renderTestDetail(root);
-        case 'worksheets':  return await renderWorksheets(root);
-        case 'worksheet':   return await renderWorksheetDetail(root);
-        case 'results':     return await renderResults(root);
-        case 'instruments': return await renderInstruments(root);
-        case 'instrument':  return await renderInstrumentDetail(root);
-        case 'inventory':   return await renderInventory(root);
-        case 'qc':          return await renderQC(root);
-        case 'qc-chart':    return await renderQCChart(root);
-        case 'personnel':   return await renderPersonnel(root);
-        case 'person':      return await renderPersonDetail(root);
-        case 'documents':   return await renderDocuments(root);
-        case 'reports':     return await renderReports(root);
-        case 'clients':     return await renderClients(root);
-        case 'client':      return await renderClientDetail(root);
-        case 'client-form': return await renderClientForm(root);
-        case 'person-form': return await renderPersonForm(root);
+        case 'tests':           return await renderTests(root);
+        case 'test':            return await renderTestDetail(root);
+        case 'test-form':       return await renderTestForm(root);
+        case 'profiles':        return await renderTestProfiles(root);
+        case 'profile':         return await renderTestProfileDetail(root);
+        case 'profile-form':    return await renderTestProfileForm(root);
+        case 'worksheets':      return await renderWorksheets(root);
+        case 'worksheet':       return await renderWorksheetDetail(root);
+        case 'results':         return await renderResults(root);
+        case 'instruments':     return await renderInstruments(root);
+        case 'instrument':      return await renderInstrumentDetail(root);
+        case 'instrument-form': return await renderInstrumentForm(root);
+        case 'inventory':       return await renderInventory(root);
+        case 'qc':              return await renderQC(root);
+        case 'qc-chart':        return await renderQCChart(root);
+        case 'personnel':       return await renderPersonnel(root);
+        case 'person':          return await renderPersonDetail(root);
+        case 'documents':       return await renderDocuments(root);
+        case 'document-form':   return await renderDocumentForm(root);
+        case 'reports':         return await renderReports(root);
+        case 'clients':         return await renderClients(root);
+        case 'client':          return await renderClientDetail(root);
+        case 'client-form':     return await renderClientForm(root);
+        case 'person-form':     return await renderPersonForm(root);
         case 'admin':       return await renderAdmin(root);
         default: S.view = 'hub'; return render();
       }
@@ -996,33 +1003,40 @@
   /* ---------- TESTS ---------- */
   async function renderTests(root) {
     const tests = await DB.all('tests');
-    const cats = [...new Set(tests.map(t=>t.category))];
+    const cats = [...new Set(tests.map(t=>t.category))].sort();
     root.innerHTML = `
       ${breadcrumb([{label:'LIMS',view:'hub'},{label:'Tests',view:'tests'}])}
-      <div class="lims-toolbar"><h2 class="lims-title">Test Catalogue <span class="lims-count">${tests.length}</span></h2></div>
-      ${cats.map(cat => `
+      <div class="lims-toolbar">
+        <h2 class="lims-title">Test Catalogue <span class="lims-count">${tests.length}</span></h2>
+        <button class="lims-btn primary" onclick="limsGo('test-form',{})">➕ Add test</button>
+      </div>
+      ${cats.length ? cats.map(cat => `
         <div class="lims-card">
-          <div class="lims-section-title">${esc(cat)}</div>
+          <div class="lims-section-title">${esc(cat || 'Uncategorised')}</div>
           <table class="lims-table compact">
-            <thead><tr><th>Code</th><th>Name</th><th>Method</th><th>Ver</th><th>Unit</th><th>LOD / LOQ</th><th>SANS 241 limit</th><th>Risk class</th><th>TAT</th><th>Accred.</th></tr></thead>
+            <thead><tr><th>Code</th><th>Name</th><th>Method</th><th>Ver</th><th>Unit</th><th>LOD / LOQ</th><th>SANS 241 limit</th><th>Risk class</th><th>TAT</th><th>Accred.</th><th></th></tr></thead>
             <tbody>
               ${tests.filter(t=>t.category===cat).map(t => `
-                <tr onclick="limsGo('test',{id:'${t.id}'})">
-                  <td><strong>${esc(t.code)}</strong></td>
-                  <td>${esc(t.name)}</td>
-                  <td>${esc(t.method)}</td>
-                  <td>${esc(t.methodVer)}</td>
-                  <td>${esc(t.unit)}</td>
-                  <td>${esc(t.lod)} / ${esc(t.loq)}</td>
-                  <td>${t.specMin!=null?esc(t.specMin+'–'+t.specMax):'—'}</td>
-                  <td>${esc(t.sans241||'—')}</td>
-                  <td>${t.tat}d</td>
-                  <td>${t.accredited?chip('SANAS','ok'):chip('Non-accred','warn')}</td>
+                <tr>
+                  <td onclick="limsGo('test',{id:'${t.id}'})"><strong>${esc(t.code)}</strong></td>
+                  <td onclick="limsGo('test',{id:'${t.id}'})">${esc(t.name)}</td>
+                  <td onclick="limsGo('test',{id:'${t.id}'})">${esc(t.method)}</td>
+                  <td onclick="limsGo('test',{id:'${t.id}'})">${esc(t.methodVer)}</td>
+                  <td onclick="limsGo('test',{id:'${t.id}'})">${esc(t.unit)}</td>
+                  <td onclick="limsGo('test',{id:'${t.id}'})">${esc(t.lod)} / ${esc(t.loq)}</td>
+                  <td onclick="limsGo('test',{id:'${t.id}'})">${t.specMin!=null?esc(t.specMin+'–'+t.specMax):'—'}</td>
+                  <td onclick="limsGo('test',{id:'${t.id}'})">${esc(t.sans241||'—')}</td>
+                  <td onclick="limsGo('test',{id:'${t.id}'})">${t.tat||'—'}d</td>
+                  <td onclick="limsGo('test',{id:'${t.id}'})">${t.accredited?chip('SANAS','ok'):chip('Non-accred','warn')}</td>
+                  <td style="white-space:nowrap;">
+                    <button class="lims-btn ghost" onclick="event.stopPropagation();limsGo('test-form',{id:'${t.id}'})">✏️</button>
+                    <button class="lims-btn ghost" onclick="event.stopPropagation();limsDeleteTest('${t.id}')">🗑️</button>
+                  </td>
                 </tr>`).join('')}
             </tbody>
           </table>
         </div>
-      `).join('')}
+      `).join('') : '<div class="lims-card"><div class="lims-empty">No tests yet — click ➕ Add test to create one.</div></div>'}
     `;
   }
 
@@ -1320,26 +1334,33 @@
   async function renderInstruments(root) {
     const list = await DB.all('instruments');
     const now = new Date();
-    const sorted = list.slice().sort((a,b)=>new Date(a.nextCal)-new Date(b.nextCal));
+    const sorted = list.slice().sort((a,b)=>new Date(a.nextCal||0)-new Date(b.nextCal||0));
     root.innerHTML = `
       ${breadcrumb([{label:'LIMS',view:'hub'},{label:'Instruments',view:'instruments'}])}
-      <div class="lims-toolbar"><h2 class="lims-title">Instruments <span class="lims-count">${list.length}</span></h2></div>
+      <div class="lims-toolbar">
+        <h2 class="lims-title">Instruments <span class="lims-count">${list.length}</span></h2>
+        <button class="lims-btn primary" onclick="limsGo('instrument-form',{})">➕ Add instrument</button>
+      </div>
       <table class="lims-table">
-        <thead><tr><th>Instrument</th><th>Model</th><th>Serial</th><th>Location</th><th>Cal interval</th><th>Last cal</th><th>Next cal</th><th>Status</th></tr></thead>
-        <tbody>${sorted.map(i => {
-          const d = daysBetween(now, i.nextCal);
-          const calChip = d < 0 ? chip(Math.abs(d)+'d overdue','fail') : (d <= 14 ? chip(d+'d left','warn') : chip(d+'d left','ok'));
-          return `<tr onclick="limsGo('instrument',{id:'${i.id}'})">
-            <td><strong>${esc(i.name)}</strong></td>
-            <td>${esc(i.model)}</td>
-            <td>${esc(i.serial)}</td>
-            <td>${esc(i.location)}</td>
-            <td>${i.calIntDays}d</td>
-            <td>${fmtDate(i.lastCal)}</td>
-            <td>${fmtDate(i.nextCal)} ${calChip}</td>
-            <td>${chip(i.status, i.status==='active'?'ok':'warn')}</td>
+        <thead><tr><th>Instrument</th><th>Model</th><th>Serial</th><th>Location</th><th>Cal interval</th><th>Last cal</th><th>Next cal</th><th>Status</th><th></th></tr></thead>
+        <tbody>${sorted.length ? sorted.map(i => {
+          const d = i.nextCal ? daysBetween(now, i.nextCal) : null;
+          const calChip = d == null ? chip('No date','warn') : (d < 0 ? chip(Math.abs(d)+'d overdue','fail') : (d <= 14 ? chip(d+'d left','warn') : chip(d+'d left','ok')));
+          return `<tr>
+            <td onclick="limsGo('instrument',{id:'${i.id}'})"><strong>${esc(i.name)}</strong></td>
+            <td onclick="limsGo('instrument',{id:'${i.id}'})">${esc(i.model)}</td>
+            <td onclick="limsGo('instrument',{id:'${i.id}'})">${esc(i.serial)}</td>
+            <td onclick="limsGo('instrument',{id:'${i.id}'})">${esc(i.location)}</td>
+            <td onclick="limsGo('instrument',{id:'${i.id}'})">${i.calIntDays||'—'}d</td>
+            <td onclick="limsGo('instrument',{id:'${i.id}'})">${fmtDate(i.lastCal)}</td>
+            <td onclick="limsGo('instrument',{id:'${i.id}'})">${fmtDate(i.nextCal)} ${calChip}</td>
+            <td onclick="limsGo('instrument',{id:'${i.id}'})">${chip(i.status, i.status==='active'?'ok':'warn')}</td>
+            <td style="white-space:nowrap;">
+              <button class="lims-btn ghost" onclick="event.stopPropagation();limsGo('instrument-form',{id:'${i.id}'})">✏️</button>
+              <button class="lims-btn ghost" onclick="event.stopPropagation();limsDeleteInstrument('${i.id}')">🗑️</button>
+            </td>
           </tr>`;
-        }).join('')}</tbody>
+        }).join('') : '<tr><td colspan="9" class="lims-empty">No instruments yet — click ➕ Add instrument to register one.</td></tr>'}</tbody>
       </table>
     `;
   }
@@ -1613,6 +1634,60 @@
       { v:'sampler',    label:'Sampler (collects samples)' },
       { v:'viewer',     label:'Viewer (read-only)' }
     ];
+    // Build the competency editor only for existing operators (need an id).
+    // For new operators we save first then they can come back to set competencies.
+    const tests = await DB.all('tests');
+    const cats = [...new Set(tests.map(t=>t.category).filter(Boolean))].sort();
+    const allCompetencies = await DB.all('competencies');
+    const userCompetencies = isNew ? [] : allCompetencies.filter(c => c.userId === id);
+    const compByTest = Object.fromEntries(userCompetencies.map(c => [c.testId, c]));
+    const todayISO = new Date().toISOString().slice(0,10);
+
+    const competencyEditor = isNew ? `
+      <div class="lims-card">
+        <div class="lims-section-title">Competencies</div>
+        <p style="color:#6b7684;font-size:13px;margin:0;">Save the operator first, then come back to set their authorised tests, training status, and review dates.</p>
+      </div>
+    ` : `
+      <div class="lims-card">
+        <div class="lims-section-title">Competency matrix</div>
+        <p style="color:#6b7684;font-size:13px;margin:0 0 8px;">Set what each operator is authorised to perform. <strong>Authorised</strong> = signed off; <strong>In training</strong> = working towards competency under supervision; <strong>Witnessed</strong> = recently observed performing the test.</p>
+        <div style="display:flex;gap:8px;margin-bottom:8px;flex-wrap:wrap;">
+          <button class="lims-btn ghost" type="button" onclick="document.querySelectorAll('.cf_status').forEach(s=>s.value='authorised');">Mark all authorised</button>
+          <button class="lims-btn ghost" type="button" onclick="document.querySelectorAll('.cf_status').forEach(s=>s.value='training');">Mark all in training</button>
+          <button class="lims-btn ghost" type="button" onclick="document.querySelectorAll('.cf_status').forEach(s=>s.value='none');">Clear all</button>
+        </div>
+        <div style="max-height:480px;overflow-y:auto;border:1px solid var(--border,rgba(0,0,0,0.08));padding:10px;border-radius:8px;">
+          ${cats.length ? cats.map(cat=>`
+            <div style="margin-bottom:14px;">
+              <div style="font-weight:700;font-size:12px;text-transform:uppercase;letter-spacing:0.04em;opacity:0.7;margin-bottom:6px;">${esc(cat)}</div>
+              <table class="lims-table compact" style="margin:0;">
+                <thead><tr><th style="width:32%;">Test</th><th>Status</th><th>Assessed</th><th>Next review</th></tr></thead>
+                <tbody>
+                  ${tests.filter(t=>t.category===cat).map(t=>{
+                    const c = compByTest[t.id] || { status:'none', assessed:'', nextReview:'' };
+                    return `<tr>
+                      <td><strong>${esc(t.code)}</strong> · ${esc(t.name)}</td>
+                      <td>
+                        <select class="lims-search cf_status" data-test-id="${t.id}" data-existing-id="${c.id||''}" style="padding:6px 8px;font-size:13px;">
+                          <option value="none"       ${c.status==='none'      ?'selected':''}>Not authorised</option>
+                          <option value="training"   ${c.status==='training'  ?'selected':''}>In training</option>
+                          <option value="witnessed"  ${c.status==='witnessed' ?'selected':''}>Witnessed</option>
+                          <option value="authorised" ${c.status==='authorised'?'selected':''}>Authorised</option>
+                        </select>
+                      </td>
+                      <td><input type="date" class="lims-search cf_assessed" data-test-id="${t.id}" value="${(c.assessed||'').slice(0,10)}" style="padding:6px 8px;font-size:13px;"></td>
+                      <td><input type="date" class="lims-search cf_review" data-test-id="${t.id}" value="${(c.nextReview||'').slice(0,10)}" style="padding:6px 8px;font-size:13px;"></td>
+                    </tr>`;
+                  }).join('')}
+                </tbody>
+              </table>
+            </div>
+          `).join('') : '<div style="opacity:0.6;font-size:13px;">No tests in catalogue yet — add some under Tests first.</div>'}
+        </div>
+      </div>
+    `;
+
     root.innerHTML = `
       ${breadcrumb([{label:'LIMS',view:'hub'},{label:'Personnel',view:'personnel'},{label:isNew?'Add operator':'Edit '+u.name,view:'person-form'}])}
       <div class="lims-toolbar"><h2 class="lims-title">${isNew?'Add new operator':'Edit '+esc(u.name)}</h2></div>
@@ -1634,11 +1709,14 @@
             </select>
           </div>
         </div>
-        <div style="margin-top:14px;display:flex;gap:8px;flex-wrap:wrap;">
-          <button class="lims-btn primary" onclick="limsSaveUser(${isNew?'null':"'"+id+"'"})">💾 Save operator</button>
+        <p style="font-size:12px;color:#6b7684;margin-top:10px;">Roles control what this operator can do. <strong>Authoriser</strong> can sign off reports, <strong>Reviewer</strong> can approve results, <strong>Analyst</strong> enters data. Separation of duties is enforced for 21 CFR Part 11-style audit trails.</p>
+      </div>
+      ${competencyEditor}
+      <div class="lims-card">
+        <div style="display:flex;gap:8px;flex-wrap:wrap;">
+          <button class="lims-btn primary" onclick="limsSaveUser(${isNew?'null':"'"+id+"'"})">💾 Save operator${isNew?'':' &amp; competencies'}</button>
           <button class="lims-btn ghost" onclick="limsBack()">Cancel</button>
         </div>
-        <p style="font-size:12px;color:#6b7684;margin-top:10px;">Roles control what this operator can do. <strong>Authoriser</strong> can sign off reports, <strong>Reviewer</strong> can approve results, <strong>Analyst</strong> enters data. Separation of duties is enforced for 21 CFR Part 11-style audit trails.</p>
       </div>
     `;
   }
@@ -1661,7 +1739,46 @@
     };
     await DB.put('users', u);
     await DB.audit(existingId?'UPDATE':'CREATE', 'user', u.id, null, u);
-    toast(existingId ? 'Operator updated' : 'Operator added', 'ok');
+
+    // Persist competency matrix if the editor is in the form (i.e. editing
+    // an existing operator). For new operators the editor isn't rendered.
+    if (existingId) {
+      const assessor = S.currentUser ? S.currentUser.id : null;
+      const todayISO = new Date().toISOString().slice(0,10);
+      const statusSelects = Array.from(document.querySelectorAll('.cf_status'));
+      let upserts = 0, removals = 0;
+      for (const sel of statusSelects) {
+        const testId   = sel.getAttribute('data-test-id');
+        const existing = sel.getAttribute('data-existing-id') || '';
+        const status   = sel.value;
+        const assessed = (document.querySelector(`.cf_assessed[data-test-id="${testId}"]`) || {}).value || '';
+        const review   = (document.querySelector(`.cf_review[data-test-id="${testId}"]`)   || {}).value || '';
+        if (status === 'none') {
+          // Remove any existing competency record.
+          if (existing) {
+            await DB.del('competencies', existing);
+            removals++;
+          }
+        } else {
+          const c = {
+            id: existing || uid('cm'),
+            userId: u.id,
+            testId,
+            status,
+            assessed: assessed || todayISO,
+            nextReview: review || null,
+            assessor
+          };
+          await DB.put('competencies', c);
+          upserts++;
+        }
+      }
+      if (upserts || removals) {
+        await DB.audit('COMPETENCY_UPDATE', 'user', u.id, null, { upserts, removals });
+      }
+    }
+
+    toast(existingId ? 'Operator updated' : 'Operator added — open them again to set competencies', 'ok');
     limsGo('personnel');
   };
 
@@ -1721,12 +1838,15 @@
     const userMap = Object.fromEntries(users.map(u=>[u.id,u.name]));
     root.innerHTML = `
       ${breadcrumb([{label:'LIMS',view:'hub'},{label:'Documents',view:'documents'}])}
-      <div class="lims-toolbar"><h2 class="lims-title">Controlled Documents <span class="lims-count">${docs.length}</span></h2></div>
+      <div class="lims-toolbar">
+        <h2 class="lims-title">Controlled Documents <span class="lims-count">${docs.length}</span></h2>
+        <button class="lims-btn primary" onclick="limsGo('document-form',{})">➕ Add document</button>
+      </div>
       <table class="lims-table">
-        <thead><tr><th>Title</th><th>Type</th><th>Version</th><th>Effective</th><th>Review by</th><th>Owner</th><th>Status</th></tr></thead>
-        <tbody>${docs.map(d => {
-          const rd = daysBetween(new Date(), d.review);
-          const revChip = rd < 0 ? chip('Overdue','fail') : (rd < 90 ? chip('Due '+rd+'d','warn') : chip('OK','ok'));
+        <thead><tr><th>Title</th><th>Type</th><th>Version</th><th>Effective</th><th>Review by</th><th>Owner</th><th>Status</th><th></th></tr></thead>
+        <tbody>${docs.length ? docs.map(d => {
+          const rd = d.review ? daysBetween(new Date(), d.review) : null;
+          const revChip = rd == null ? chip('No date','warn') : (rd < 0 ? chip('Overdue','fail') : (rd < 90 ? chip('Due '+rd+'d','warn') : chip('OK','ok')));
           return `<tr>
             <td><strong>${esc(d.title)}</strong></td>
             <td>${esc(d.type)}</td>
@@ -1735,8 +1855,12 @@
             <td>${fmtDate(d.review)} ${revChip}</td>
             <td>${esc(userMap[d.owner]||'—')}</td>
             <td>${chip(d.status, d.status==='approved'?'ok':'warn')}</td>
+            <td style="white-space:nowrap;">
+              <button class="lims-btn ghost" onclick="limsGo('document-form',{id:'${d.id}'})">✏️</button>
+              <button class="lims-btn ghost" onclick="limsDeleteDocument('${d.id}')">🗑️</button>
+            </td>
           </tr>`;
-        }).join('')}</tbody>
+        }).join('') : '<tr><td colspan="8" class="lims-empty">No documents yet — click ➕ Add document to register one.</td></tr>'}</tbody>
       </table>
     `;
   }
@@ -2078,6 +2202,396 @@
     await SEED.run();
     toast('LIMS reset and re-seeded', 'info');
     S.view = 'hub'; S.stack = []; render();
+  };
+
+  /* ============================================================
+     CRUD: Tests / Instruments / Documents / Test Profiles
+     Mirrors the client/user pattern — list ➜ form ➜ save / delete,
+     with audit logging. Cloud sync flows automatically via lims-sync.js.
+     ============================================================ */
+
+  // ── TEST FORM ───────────────────────────────────────────
+  async function renderTestForm(root) {
+    const id = S.params.id || null;
+    const isNew = !id;
+    const t = id ? (await DB.get('tests', id)) : {
+      id:'', code:'', name:'', category:'Physical', method:'', methodVer:'', unit:'', lod:'', loq:'',
+      range:'', specMin:null, specMax:null, sans241:'', tat:1, accredited:false
+    };
+    if (id && !t) { root.innerHTML = `<div class="lims-empty">Test not found</div>`; return; }
+    const tests = await DB.all('tests');
+    const existingCats = [...new Set(tests.map(x=>x.category).filter(Boolean))];
+    const cats = [...new Set([...existingCats, 'Physical','Chemical','Microbiological','Heavy metals','Organics','Radiological','Other'])];
+    const sansClasses = ['', 'Acute health', 'Chronic health', 'Aesthetic', 'Operational'];
+    root.innerHTML = `
+      ${breadcrumb([{label:'LIMS',view:'hub'},{label:'Tests',view:'tests'},{label:isNew?'Add test':'Edit '+t.code,view:'test-form'}])}
+      <div class="lims-toolbar"><h2 class="lims-title">${isNew?'Add new test':'Edit '+esc(t.code)+' — '+esc(t.name)}</h2></div>
+      <div class="lims-card">
+        <div class="lims-section-title">Test details</div>
+        <div class="lims-fieldgrid">
+          <div class="lims-field"><label>Code *</label><input id="tf_code" class="lims-search" value="${esc(t.code)}" placeholder="e.g. PH"></div>
+          <div class="lims-field lims-field-wide"><label>Name *</label><input id="tf_name" class="lims-search" value="${esc(t.name)}" placeholder="e.g. pH at 25 °C"></div>
+          <div class="lims-field"><label>Category</label>
+            <select id="tf_category" class="lims-search">
+              ${cats.map(c=>`<option value="${esc(c)}" ${t.category===c?'selected':''}>${esc(c)}</option>`).join('')}
+            </select>
+          </div>
+          <div class="lims-field"><label>Unit</label><input id="tf_unit" class="lims-search" value="${esc(t.unit)}" placeholder="e.g. pH, mg/L, NTU"></div>
+          <div class="lims-field"><label>Method</label><input id="tf_method" class="lims-search" value="${esc(t.method)}" placeholder="e.g. SANS 1828:2017"></div>
+          <div class="lims-field"><label>Method version</label><input id="tf_methodVer" class="lims-search" value="${esc(t.methodVer)}" placeholder="e.g. 2017"></div>
+          <div class="lims-field"><label>LOD</label><input id="tf_lod" class="lims-search" value="${esc(t.lod)}" placeholder="Limit of detection"></div>
+          <div class="lims-field"><label>LOQ</label><input id="tf_loq" class="lims-search" value="${esc(t.loq)}" placeholder="Limit of quantitation"></div>
+          <div class="lims-field"><label>Working range</label><input id="tf_range" class="lims-search" value="${esc(t.range)}" placeholder="e.g. 0.1 – 10 mg/L"></div>
+          <div class="lims-field"><label>Spec min (SANS 241)</label><input id="tf_specMin" type="number" step="any" class="lims-search" value="${t.specMin!=null?t.specMin:''}" placeholder="optional"></div>
+          <div class="lims-field"><label>Spec max (SANS 241)</label><input id="tf_specMax" type="number" step="any" class="lims-search" value="${t.specMax!=null?t.specMax:''}" placeholder="optional"></div>
+          <div class="lims-field"><label>SANS 241 risk class</label>
+            <select id="tf_sans241" class="lims-search">
+              ${sansClasses.map(c=>`<option value="${esc(c)}" ${(t.sans241||'')===c?'selected':''}>${esc(c||'— none —')}</option>`).join('')}
+            </select>
+          </div>
+          <div class="lims-field"><label>Turnaround (days)</label><input id="tf_tat" type="number" min="0" class="lims-search" value="${t.tat!=null?t.tat:1}"></div>
+          <div class="lims-field"><label>Accredited (SANAS)</label>
+            <select id="tf_accredited" class="lims-search">
+              <option value="false" ${!t.accredited?'selected':''}>No</option>
+              <option value="true"  ${ t.accredited?'selected':''}>Yes</option>
+            </select>
+          </div>
+        </div>
+        <div style="margin-top:14px;display:flex;gap:8px;flex-wrap:wrap;">
+          <button class="lims-btn primary" onclick="limsSaveTest(${isNew?'null':"'"+id+"'"})">💾 Save test</button>
+          <button class="lims-btn ghost" onclick="limsBack()">Cancel</button>
+        </div>
+      </div>
+    `;
+  }
+
+  window.limsSaveTest = async function(existingId) {
+    const code = document.getElementById('tf_code').value.trim();
+    const name = document.getElementById('tf_name').value.trim();
+    if (!code || !name) { toast('Code and name are required', 'warn'); return; }
+    const specMin = document.getElementById('tf_specMin').value;
+    const specMax = document.getElementById('tf_specMax').value;
+    const t = {
+      id: existingId || uid('t'),
+      code, name,
+      category: document.getElementById('tf_category').value,
+      unit: document.getElementById('tf_unit').value.trim(),
+      method: document.getElementById('tf_method').value.trim(),
+      methodVer: document.getElementById('tf_methodVer').value.trim(),
+      lod: document.getElementById('tf_lod').value.trim(),
+      loq: document.getElementById('tf_loq').value.trim(),
+      range: document.getElementById('tf_range').value.trim(),
+      specMin: specMin === '' ? null : parseFloat(specMin),
+      specMax: specMax === '' ? null : parseFloat(specMax),
+      sans241: document.getElementById('tf_sans241').value || null,
+      tat: parseInt(document.getElementById('tf_tat').value, 10) || 0,
+      accredited: document.getElementById('tf_accredited').value === 'true'
+    };
+    await DB.put('tests', t);
+    await DB.audit(existingId?'UPDATE':'CREATE', 'test', t.id, null, t);
+    toast(existingId ? 'Test updated' : 'Test added', 'ok');
+    limsGo('tests');
+  };
+
+  window.limsDeleteTest = async function(id) {
+    if (!confirm('Delete this test? Existing results referring to it will keep the test_id but the catalogue entry will disappear.')) return;
+    await DB.del('tests', id);
+    await DB.audit('DELETE', 'test', id, null, null);
+    toast('Test deleted', 'ok');
+    render();
+  };
+
+  // ── INSTRUMENT FORM ─────────────────────────────────────
+  async function renderInstrumentForm(root) {
+    const id = S.params.id || null;
+    const isNew = !id;
+    const i = id ? (await DB.get('instruments', id)) : {
+      id:'', name:'', model:'', serial:'', location:'', tests:[], calIntDays:90,
+      lastCal: nowISO().slice(0,10), nextCal:'', status:'active'
+    };
+    if (id && !i) { root.innerHTML = `<div class="lims-empty">Instrument not found</div>`; return; }
+    const allTests = await DB.all('tests');
+    const linkedTests = new Set(i.tests || []);
+    root.innerHTML = `
+      ${breadcrumb([{label:'LIMS',view:'hub'},{label:'Instruments',view:'instruments'},{label:isNew?'Add instrument':'Edit '+i.name,view:'instrument-form'}])}
+      <div class="lims-toolbar"><h2 class="lims-title">${isNew?'Add new instrument':'Edit '+esc(i.name)}</h2></div>
+      <div class="lims-card">
+        <div class="lims-section-title">Instrument details</div>
+        <div class="lims-fieldgrid">
+          <div class="lims-field lims-field-wide"><label>Name *</label><input id="if_name" class="lims-search" value="${esc(i.name)}" placeholder="e.g. pH Meter — Bench"></div>
+          <div class="lims-field"><label>Model</label><input id="if_model" class="lims-search" value="${esc(i.model)}" placeholder="e.g. Hanna HI-5522"></div>
+          <div class="lims-field"><label>Serial number</label><input id="if_serial" class="lims-search" value="${esc(i.serial)}" placeholder="e.g. HI25501"></div>
+          <div class="lims-field"><label>Location</label><input id="if_location" class="lims-search" value="${esc(i.location)}" placeholder="e.g. Lab A — Bench 1"></div>
+          <div class="lims-field"><label>Calibration interval (days)</label><input id="if_calIntDays" type="number" min="1" class="lims-search" value="${i.calIntDays||90}"></div>
+          <div class="lims-field"><label>Last calibration</label><input id="if_lastCal" type="date" class="lims-search" value="${(i.lastCal||'').slice(0,10)}"></div>
+          <div class="lims-field"><label>Next calibration</label><input id="if_nextCal" type="date" class="lims-search" value="${(i.nextCal||'').slice(0,10)}" placeholder="auto from interval"></div>
+          <div class="lims-field"><label>Status</label>
+            <select id="if_status" class="lims-search">
+              <option value="active"  ${i.status==='active' ?'selected':''}>Active</option>
+              <option value="paused"  ${i.status==='paused' ?'selected':''}>Paused (out of service)</option>
+              <option value="retired" ${i.status==='retired'?'selected':''}>Retired</option>
+            </select>
+          </div>
+        </div>
+        <div class="lims-section-title" style="margin-top:18px;">Linked tests</div>
+        <p style="color:#6b7684;font-size:13px;margin:0 0 8px;">Tick which catalogue tests this instrument is used for.</p>
+        <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:6px;max-height:280px;overflow-y:auto;border:1px solid var(--border,rgba(0,0,0,0.08));padding:10px;border-radius:8px;">
+          ${allTests.length ? allTests.map(t => `
+            <label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer;">
+              <input type="checkbox" class="if_test" value="${t.id}" ${linkedTests.has(t.id)?'checked':''}>
+              <span><strong>${esc(t.code)}</strong> · ${esc(t.name)}</span>
+            </label>`).join('') : '<div style="opacity:0.6;font-size:12px;">No tests in catalogue yet — add some under Tests first.</div>'}
+        </div>
+        <div style="margin-top:14px;display:flex;gap:8px;flex-wrap:wrap;">
+          <button class="lims-btn primary" onclick="limsSaveInstrument(${isNew?'null':"'"+id+"'"})">💾 Save instrument</button>
+          <button class="lims-btn ghost" onclick="limsBack()">Cancel</button>
+        </div>
+      </div>
+    `;
+  }
+
+  window.limsSaveInstrument = async function(existingId) {
+    const name = document.getElementById('if_name').value.trim();
+    if (!name) { toast('Name is required', 'warn'); return; }
+    const calIntDays = parseInt(document.getElementById('if_calIntDays').value, 10) || 90;
+    const lastCal = document.getElementById('if_lastCal').value;
+    let nextCal = document.getElementById('if_nextCal').value;
+    // Auto-derive next cal if not provided.
+    if (!nextCal && lastCal) {
+      const d = new Date(lastCal);
+      d.setDate(d.getDate() + calIntDays);
+      nextCal = d.toISOString().slice(0,10);
+    }
+    const linkedTests = Array.from(document.querySelectorAll('.if_test:checked')).map(cb => cb.value);
+    const inst = {
+      id: existingId || uid('i'),
+      name,
+      model: document.getElementById('if_model').value.trim(),
+      serial: document.getElementById('if_serial').value.trim(),
+      location: document.getElementById('if_location').value.trim(),
+      calIntDays,
+      lastCal,
+      nextCal,
+      status: document.getElementById('if_status').value,
+      tests: linkedTests
+    };
+    await DB.put('instruments', inst);
+    await DB.audit(existingId?'UPDATE':'CREATE', 'instrument', inst.id, null, inst);
+    toast(existingId ? 'Instrument updated' : 'Instrument added', 'ok');
+    limsGo('instruments');
+  };
+
+  window.limsDeleteInstrument = async function(id) {
+    if (!confirm('Delete this instrument? Calibration history linked to it will keep the reference but the instrument record will be removed.')) return;
+    await DB.del('instruments', id);
+    await DB.audit('DELETE', 'instrument', id, null, null);
+    toast('Instrument deleted', 'ok');
+    render();
+  };
+
+  // ── DOCUMENT FORM ───────────────────────────────────────
+  async function renderDocumentForm(root) {
+    const id = S.params.id || null;
+    const isNew = !id;
+    const d = id ? (await DB.get('documents', id)) : {
+      id:'', code:'', title:'', type:'SOP', ver:'1.0', effective: nowISO().slice(0,10), review:'',
+      owner: (S.currentUser ? S.currentUser.id : ''), status:'draft'
+    };
+    if (id && !d) { root.innerHTML = `<div class="lims-empty">Document not found</div>`; return; }
+    const users = await DB.all('users');
+    const types = ['SOP','QM','Form','Policy','Work Instruction','Method','Quality Manual','Other'];
+    const statuses = ['draft','approved','retired'];
+    root.innerHTML = `
+      ${breadcrumb([{label:'LIMS',view:'hub'},{label:'Documents',view:'documents'},{label:isNew?'Add document':'Edit '+(d.code||d.title),view:'document-form'}])}
+      <div class="lims-toolbar"><h2 class="lims-title">${isNew?'Add controlled document':'Edit '+esc(d.code||d.title)}</h2></div>
+      <div class="lims-card">
+        <div class="lims-section-title">Document details</div>
+        <div class="lims-fieldgrid">
+          <div class="lims-field"><label>Code</label><input id="df_code" class="lims-search" value="${esc(d.code)}" placeholder="e.g. SOP-001"></div>
+          <div class="lims-field lims-field-wide"><label>Title *</label><input id="df_title" class="lims-search" value="${esc(d.title)}" placeholder="e.g. Sample receipt and chain of custody"></div>
+          <div class="lims-field"><label>Type</label>
+            <select id="df_type" class="lims-search">
+              ${types.map(t=>`<option value="${t}" ${d.type===t?'selected':''}>${t}</option>`).join('')}
+            </select>
+          </div>
+          <div class="lims-field"><label>Version</label><input id="df_ver" class="lims-search" value="${esc(d.ver)}" placeholder="e.g. 1.0"></div>
+          <div class="lims-field"><label>Effective date</label><input id="df_effective" type="date" class="lims-search" value="${(d.effective||'').slice(0,10)}"></div>
+          <div class="lims-field"><label>Review by</label><input id="df_review" type="date" class="lims-search" value="${(d.review||'').slice(0,10)}"></div>
+          <div class="lims-field"><label>Owner</label>
+            <select id="df_owner" class="lims-search">
+              <option value="">— unassigned —</option>
+              ${users.map(u=>`<option value="${u.id}" ${d.owner===u.id?'selected':''}>${esc(u.name)}</option>`).join('')}
+            </select>
+          </div>
+          <div class="lims-field"><label>Status</label>
+            <select id="df_status" class="lims-search">
+              ${statuses.map(s=>`<option value="${s}" ${d.status===s?'selected':''}>${s}</option>`).join('')}
+            </select>
+          </div>
+        </div>
+        <div style="margin-top:14px;display:flex;gap:8px;flex-wrap:wrap;">
+          <button class="lims-btn primary" onclick="limsSaveDocument(${isNew?'null':"'"+id+"'"})">💾 Save document</button>
+          <button class="lims-btn ghost" onclick="limsBack()">Cancel</button>
+        </div>
+      </div>
+    `;
+  }
+
+  window.limsSaveDocument = async function(existingId) {
+    const title = document.getElementById('df_title').value.trim();
+    if (!title) { toast('Title is required', 'warn'); return; }
+    const doc = {
+      id: existingId || uid('doc'),
+      code: document.getElementById('df_code').value.trim(),
+      title,
+      type: document.getElementById('df_type').value,
+      ver:  document.getElementById('df_ver').value.trim(),
+      effective: document.getElementById('df_effective').value,
+      review: document.getElementById('df_review').value,
+      owner: document.getElementById('df_owner').value || null,
+      status: document.getElementById('df_status').value
+    };
+    await DB.put('documents', doc);
+    await DB.audit(existingId?'UPDATE':'CREATE', 'document', doc.id, null, doc);
+    toast(existingId ? 'Document updated' : 'Document added', 'ok');
+    limsGo('documents');
+  };
+
+  window.limsDeleteDocument = async function(id) {
+    if (!confirm('Delete this controlled document?')) return;
+    await DB.del('documents', id);
+    await DB.audit('DELETE', 'document', id, null, null);
+    toast('Document deleted', 'ok');
+    render();
+  };
+
+  // ── TEST PROFILES (named bundles of tests) ──────────────
+  async function renderTestProfiles(root) {
+    const profiles = await DB.all('profiles');
+    const tests = await DB.all('tests');
+    const testMap = Object.fromEntries(tests.map(t=>[t.id,t]));
+    root.innerHTML = `
+      ${breadcrumb([{label:'LIMS',view:'hub'},{label:'Test Profiles',view:'profiles'}])}
+      <div class="lims-toolbar">
+        <h2 class="lims-title">Test Profiles <span class="lims-count">${profiles.length}</span></h2>
+        <button class="lims-btn primary" onclick="limsGo('profile-form',{})">➕ Add profile</button>
+      </div>
+      <table class="lims-table">
+        <thead><tr><th>Name</th><th>Description</th><th>Tests</th><th></th></tr></thead>
+        <tbody>${profiles.length ? profiles.map(p=>`
+          <tr>
+            <td onclick="limsGo('profile',{id:'${p.id}'})"><strong>${esc(p.name)}</strong></td>
+            <td onclick="limsGo('profile',{id:'${p.id}'})">${esc(p.description||'')}</td>
+            <td onclick="limsGo('profile',{id:'${p.id}'})">${(p.testIds||[]).length} tests</td>
+            <td style="white-space:nowrap;">
+              <button class="lims-btn ghost" onclick="event.stopPropagation();limsGo('profile-form',{id:'${p.id}'})">✏️</button>
+              <button class="lims-btn ghost" onclick="event.stopPropagation();limsDeleteTestProfile('${p.id}')">🗑️</button>
+            </td>
+          </tr>`).join('') : '<tr><td colspan="4" class="lims-empty">No profiles yet — click ➕ Add profile to bundle some tests together.</td></tr>'}</tbody>
+      </table>
+    `;
+  }
+
+  async function renderTestProfileDetail(root) {
+    const p = await DB.get('profiles', S.params.id);
+    if (!p) { root.innerHTML = `<div class="lims-empty">Profile not found</div>`; return; }
+    const tests = await DB.all('tests');
+    const testMap = Object.fromEntries(tests.map(t=>[t.id,t]));
+    const linked = (p.testIds||[]).map(id=>testMap[id]).filter(Boolean);
+    root.innerHTML = `
+      ${breadcrumb([{label:'LIMS',view:'hub'},{label:'Test Profiles',view:'profiles'},{label:p.name,view:'profile',params:{id:p.id}}])}
+      <div class="lims-toolbar">
+        <h2 class="lims-title">${esc(p.name)}</h2>
+        <button class="lims-btn primary" onclick="limsGo('profile-form',{id:'${p.id}'})">✏️ Edit</button>
+      </div>
+      <div class="lims-card">
+        <div class="lims-section-title">Description</div>
+        <div>${esc(p.description||'—')}</div>
+      </div>
+      <div class="lims-card">
+        <div class="lims-section-title">Tests in this profile (${linked.length})</div>
+        <table class="lims-table compact">
+          <thead><tr><th>Code</th><th>Name</th><th>Method</th><th>Unit</th><th>Risk class</th></tr></thead>
+          <tbody>${linked.length ? linked.map(t=>`
+            <tr onclick="limsGo('test',{id:'${t.id}'})">
+              <td><strong>${esc(t.code)}</strong></td>
+              <td>${esc(t.name)}</td>
+              <td>${esc(t.method)}</td>
+              <td>${esc(t.unit)}</td>
+              <td>${esc(t.sans241||'—')}</td>
+            </tr>`).join('') : '<tr><td colspan="5" class="lims-empty">No tests in this profile yet.</td></tr>'}</tbody>
+        </table>
+      </div>
+    `;
+  }
+
+  async function renderTestProfileForm(root) {
+    const id = S.params.id || null;
+    const isNew = !id;
+    const p = id ? (await DB.get('profiles', id)) : { id:'', name:'', description:'', testIds:[] };
+    if (id && !p) { root.innerHTML = `<div class="lims-empty">Profile not found</div>`; return; }
+    const tests = await DB.all('tests');
+    const cats = [...new Set(tests.map(t=>t.category).filter(Boolean))].sort();
+    const linked = new Set(p.testIds || []);
+    root.innerHTML = `
+      ${breadcrumb([{label:'LIMS',view:'hub'},{label:'Test Profiles',view:'profiles'},{label:isNew?'Add profile':'Edit '+p.name,view:'profile-form'}])}
+      <div class="lims-toolbar"><h2 class="lims-title">${isNew?'Add test profile':'Edit '+esc(p.name)}</h2></div>
+      <div class="lims-card">
+        <div class="lims-section-title">Profile details</div>
+        <div class="lims-fieldgrid">
+          <div class="lims-field lims-field-wide"><label>Name *</label><input id="pf_name" class="lims-search" value="${esc(p.name)}" placeholder="e.g. Potable water — full SANS 241"></div>
+          <div class="lims-field lims-field-wide"><label>Description</label><input id="pf_description" class="lims-search" value="${esc(p.description)}" placeholder="When to use this profile"></div>
+        </div>
+        <div class="lims-section-title" style="margin-top:18px;">Tests in this profile</div>
+        <p style="color:#6b7684;font-size:13px;margin:0 0 8px;">Tick all the tests that should run when this profile is selected on a sample.</p>
+        <div style="display:flex;gap:8px;margin-bottom:8px;flex-wrap:wrap;">
+          <button class="lims-btn ghost" type="button" onclick="document.querySelectorAll('.pf_test').forEach(c=>c.checked=true);">Select all</button>
+          <button class="lims-btn ghost" type="button" onclick="document.querySelectorAll('.pf_test').forEach(c=>c.checked=false);">Clear all</button>
+        </div>
+        <div style="max-height:380px;overflow-y:auto;border:1px solid var(--border,rgba(0,0,0,0.08));padding:10px;border-radius:8px;">
+          ${cats.map(cat=>`
+            <div style="margin-bottom:14px;">
+              <div style="font-weight:700;font-size:12px;text-transform:uppercase;letter-spacing:0.04em;opacity:0.7;margin-bottom:6px;">${esc(cat)}</div>
+              <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:6px;">
+                ${tests.filter(t=>t.category===cat).map(t=>`
+                  <label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer;">
+                    <input type="checkbox" class="pf_test" value="${t.id}" ${linked.has(t.id)?'checked':''}>
+                    <span><strong>${esc(t.code)}</strong> · ${esc(t.name)}</span>
+                  </label>`).join('')}
+              </div>
+            </div>
+          `).join('') || '<div style="opacity:0.6;">No tests in catalogue yet — add some under Tests first.</div>'}
+        </div>
+        <div style="margin-top:14px;display:flex;gap:8px;flex-wrap:wrap;">
+          <button class="lims-btn primary" onclick="limsSaveTestProfile(${isNew?'null':"'"+id+"'"})">💾 Save profile</button>
+          <button class="lims-btn ghost" onclick="limsBack()">Cancel</button>
+        </div>
+      </div>
+    `;
+  }
+
+  window.limsSaveTestProfile = async function(existingId) {
+    const name = document.getElementById('pf_name').value.trim();
+    if (!name) { toast('Name is required', 'warn'); return; }
+    const testIds = Array.from(document.querySelectorAll('.pf_test:checked')).map(cb => cb.value);
+    const p = {
+      id: existingId || uid('p'),
+      name,
+      description: document.getElementById('pf_description').value.trim(),
+      testIds
+    };
+    await DB.put('profiles', p);
+    await DB.audit(existingId?'UPDATE':'CREATE', 'profile', p.id, null, p);
+    toast(existingId ? 'Profile updated' : 'Profile added', 'ok');
+    limsGo('profiles');
+  };
+
+  window.limsDeleteTestProfile = async function(id) {
+    if (!confirm('Delete this test profile?')) return;
+    await DB.del('profiles', id);
+    await DB.audit('DELETE', 'profile', id, null, null);
+    toast('Profile deleted', 'ok');
+    render();
   };
 
   /* ---------- Public: open ---------- */
