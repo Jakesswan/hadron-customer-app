@@ -2518,7 +2518,7 @@
                 <div class="hg-section-title">About</div>
                 <div class="hg-kvgrid">
                     <div class="hg-kv"><div class="k">App</div><div class="v">Hadron Group</div></div>
-                    <div class="hg-kv"><div class="k">Version</div><div class="v">v45</div></div>
+                    <div class="hg-kv"><div class="k">Version</div><div class="v">v46</div></div>
                     <div class="hg-kv"><div class="k">Platform</div><div class="v">PWA</div></div>
                 </div>
             </div>
@@ -5437,9 +5437,23 @@
             }).filter(Boolean);
         }
 
+        // Pull the LIMS clients (customers) for the customer dropdown on the
+        // site modal. Falls back to an empty list if LIMS hasn't been opened yet.
+        async function hgLoadCustomers() {
+            try {
+                if (window.HG_LIMS_DB && typeof window.HG_LIMS_DB.open === 'function') {
+                    await window.HG_LIMS_DB.open();
+                    const list = await window.HG_LIMS_DB.all('clients');
+                    return list.slice().sort((a,b)=>String(a.name||'').localeCompare(String(b.name||'')));
+                }
+            } catch (_) {}
+            return [];
+        }
+
         // ── New-site modal: add a site + (optionally) several assets at once ──
-        function newSite() {
+        async function newSite() {
             __hgAssetIdx = 0;
+            const customers = await hgLoadCustomers();
             const html = `
                 <div class="hg-modal-card" onclick="event.stopPropagation();">
                     <div class="hg-modal-head">
@@ -5448,7 +5462,13 @@
                     </div>
                     <div class="hg-modal-body">
                         <div class="hg-modal-grid">
-                            <div class="full"><label>Site name *</label><input id="hgs_name" placeholder="e.g. ACME Mining — Plant 2"></div>
+                            <div class="full"><label>Customer ${customers.length ? '' : '<span style="opacity:0.6;font-weight:400;">(open LIMS once to load customers)</span>'}</label>
+                                <select id="hgs_customerId">
+                                    <option value="">— unassigned —</option>
+                                    ${customers.map(c => `<option value="${esc(c.id)}">${esc(c.name)}</option>`).join('')}
+                                </select>
+                            </div>
+                            <div class="full"><label>Site name *</label><input id="hgs_name" placeholder="e.g. Plant 2 — Western Operations"></div>
                             <div class="full"><label>Address</label><input id="hgs_address" placeholder="Street, city, province"></div>
                             <div><label>System type</label>
                                 <select id="hgs_systemType">
@@ -5506,6 +5526,7 @@
             if (!name) { showToast('Site name is required'); return; }
             const site = {
                 id: uid(),
+                customerId: document.getElementById('hgs_customerId').value || null,
                 name,
                 address: document.getElementById('hgs_address').value.trim(),
                 systemType: document.getElementById('hgs_systemType').value,
@@ -5525,13 +5546,27 @@
             renderSites();
             showToast('Site added' + (site.equipment.length ? ' with ' + site.equipment.length + ' asset' + (site.equipment.length===1?'':'s') : ''));
         }
-        function renderSites() {
+        async function renderSites() {
             const list = LS.get('hadron_sites', []);
+            // Refresh the customer-id → name cache from LIMS so the site cards
+            // can show which company each site belongs to. Falls back to a
+            // stale cached copy if LIMS DB isn't open yet.
+            try {
+                if (window.HG_LIMS_DB && typeof window.HG_LIMS_DB.open === 'function') {
+                    await window.HG_LIMS_DB.open();
+                    const clients = await window.HG_LIMS_DB.all('clients');
+                    window.__hgCustomerCache = Object.fromEntries(clients.map(c => [c.id, c.name]));
+                }
+            } catch (_) { /* keep prior cache */ }
+            const customerCache = window.__hgCustomerCache || {};
             document.getElementById('sites_list').innerHTML = list.length === 0 ? '<p style="color:#888;margin-top:12px;">No sites yet — click "+ Add site" to create one.</p>' :
-                list.map(s => `<div id="site-${s.id}" class="hg-card" style="margin-bottom:10px;">
+                list.map(s => {
+                    const cName = s.customerId ? (customerCache[s.customerId] || '— customer not found —') : null;
+                    return `<div id="site-${s.id}" class="hg-card" style="margin-bottom:10px;">
                     <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
                         <strong style="font-size:15px;">${esc(s.name)}</strong>
-                        <span class="hg-chip neutral">${s.equipment.length} asset${s.equipment.length===1?'':'s'}</span>
+                        ${cName ? `<span class="hg-chip" style="background:#e8f4ff;color:#1a3d9e;">🏢 ${esc(cName)}</span>` : ''}
+                        <span class="hg-chip neutral">${(s.equipment||[]).length} asset${(s.equipment||[]).length===1?'':'s'}</span>
                     </div>
                     <div style="margin-top:10px;display:flex;gap:6px;flex-wrap:wrap;">
                         <button class="hg-btn" onclick="addAsset('${s.id}')">+ Add asset</button>

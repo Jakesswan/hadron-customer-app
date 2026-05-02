@@ -79,8 +79,11 @@
       label: 'Sites',
       icon: '📍',
       sub: 'Site register + attached assets',
+      // Note: 'Customer' is a synthetic column. On export we look up the
+      // name from the linked LIMS client; on import we resolve name → id.
       columns: [
         ['ID',           'id'],
+        ['Customer',     '__customer'],
         ['Name',         'name'],
         ['Address',      'address'],
         ['System type',  'systemType'],
@@ -97,6 +100,43 @@
       async list() {
         try { return JSON.parse(localStorage.getItem('hadron_sites') || '[]'); }
         catch { return []; }
+      },
+      async exportTransform(items) {
+        // Build a customer-id → name map from the LIMS clients store.
+        let customerMap = {};
+        if (window.HG_LIMS_DB) {
+          try { await window.HG_LIMS_DB.open(); } catch (_) {}
+          try {
+            const clients = await window.HG_LIMS_DB.all('clients');
+            customerMap = Object.fromEntries(clients.map(c => [c.id, c.name]));
+          } catch (_) {}
+        }
+        return items.map(it => Object.assign({}, it, {
+          __customer: it.customerId ? (customerMap[it.customerId] || '') : ''
+        }));
+      },
+      async importTransform(rows) {
+        // Resolve incoming "Customer" name → customerId. Case-insensitive.
+        let nameToId = {};
+        if (window.HG_LIMS_DB) {
+          try { await window.HG_LIMS_DB.open(); } catch (_) {}
+          try {
+            const clients = await window.HG_LIMS_DB.all('clients');
+            nameToId = Object.fromEntries(clients.map(c => [String(c.name||'').toLowerCase().trim(), c.id]));
+          } catch (_) {}
+        }
+        return rows.map(r => {
+          const out = Object.assign({}, r);
+          const customerLabel = (r.__customer || '').toString().trim();
+          if (customerLabel) {
+            const lower = customerLabel.toLowerCase();
+            out.customerId = nameToId[lower] || null;
+            // Stash the original label so a UI hint can flag unresolved ones.
+            if (!out.customerId) out.__unresolvedCustomer = customerLabel;
+          }
+          delete out.__customer;
+          return out;
+        });
       },
       async upsert(row) {
         const list = (await this.list());
@@ -258,7 +298,10 @@
     if (!a) return;
     try { await loadSheetJs(); }
     catch (e) { alert('Could not load Excel library — check your internet.'); return; }
-    const items = await a.list();
+    let items = await a.list();
+    if (typeof a.exportTransform === 'function') {
+      items = await a.exportTransform(items);
+    }
     const data  = buildRows(a, items);
     const ws = window.XLSX.utils.json_to_sheet(data, { header: a.columns.map(c => c[0]) });
     const wb = window.XLSX.utils.book_new();
@@ -277,7 +320,11 @@
     const wb = window.XLSX.read(buf, { type: 'array' });
     const sheet = wb.Sheets[wb.SheetNames[0]];
     const rawRows = window.XLSX.utils.sheet_to_json(sheet, { defval: '' });
-    return rowsToObjects(a, rawRows);
+    let rows = rowsToObjects(a, rawRows);
+    if (typeof a.importTransform === 'function') {
+      rows = await a.importTransform(rows);
+    }
+    return rows;
   }
 
   function validateRows(adapter, rows) {
@@ -288,6 +335,9 @@
           issues.push(`Row ${i + 2}: ${f} is required`);
         }
       });
+      if (r.__unresolvedCustomer) {
+        issues.push(`Row ${i + 2}: customer "${r.__unresolvedCustomer}" not found — site will be saved without a customer link. Add the customer first or correct the spelling.`);
+      }
     });
     return issues;
   }
@@ -300,17 +350,20 @@
     const byId  = Object.fromEntries(existing.map(x => [x.id, x]));
     let added = 0, updated = 0;
     for (const row of rows) {
+      // Strip transient validation flags before persisting.
+      const clean = Object.assign({}, row);
+      delete clean.__unresolvedCustomer;
       let target = null;
-      if (row.id && byId[row.id]) target = byId[row.id];
-      else if (row[a.matchKey]) {
-        const k = String(row[a.matchKey]).toLowerCase();
+      if (clean.id && byId[clean.id]) target = byId[clean.id];
+      else if (clean[a.matchKey]) {
+        const k = String(clean[a.matchKey]).toLowerCase();
         if (byKey[k]) target = byKey[k];
       }
       if (target) {
-        await a.upsert(Object.assign({}, target, row, { id: target.id }));
+        await a.upsert(Object.assign({}, target, clean, { id: target.id }));
         updated++;
       } else {
-        const newRow = Object.assign({}, row, { id: row.id || uid(a.uidPrefix) });
+        const newRow = Object.assign({}, clean, { id: clean.id || uid(a.uidPrefix) });
         await a.upsert(newRow);
         added++;
       }
