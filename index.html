@@ -2518,7 +2518,7 @@
                 <div class="hg-section-title">About</div>
                 <div class="hg-kvgrid">
                     <div class="hg-kv"><div class="k">App</div><div class="v">Hadron Group</div></div>
-                    <div class="hg-kv"><div class="k">Version</div><div class="v">v47</div></div>
+                    <div class="hg-kv"><div class="k">Version</div><div class="v">v48</div></div>
                     <div class="hg-kv"><div class="k">Platform</div><div class="v">PWA</div></div>
                 </div>
             </div>
@@ -3387,8 +3387,24 @@
             </div>
             <div id="sr_form" style="display:none;">
                 <div class="calc-form">
-                    <div class="form-group"><label>Site</label><input type="text" id="sr_site"></div>
-                    <div class="form-group"><label>Client contact</label><input type="text" id="sr_contact"></div>
+                    <div class="form-group">
+                        <label>Customer</label>
+                        <select id="sr_customerId" onchange="srOnCustomerChange()">
+                            <option value="">— select customer —</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Site</label>
+                        <select id="sr_siteId" onchange="srOnSiteChange()">
+                            <option value="">— select site —</option>
+                            <option value="__manual__">↳ Enter site manually (not in register)</option>
+                        </select>
+                    </div>
+                    <div class="form-group" id="sr_siteManualWrap" style="display:none;">
+                        <label>Site name (manual)</label>
+                        <input type="text" id="sr_site" placeholder="Type site name">
+                    </div>
+                    <div class="form-group"><label>Client contact</label><input type="text" id="sr_contact" placeholder="Auto-fills when a site is picked"></div>
                     <div class="form-group"><label>Technician</label><input type="text" id="sr_tech"></div>
                     <div class="form-group"><label>Date / time</label><input type="datetime-local" id="sr_dt"></div>
                     <div class="form-group"><label>GPS</label><input type="text" id="sr_gps" readonly placeholder="Tap 'Capture' →"> <button type="button" class="calc-btn" style="margin-top:6px;" onclick="captureGps()">📍 Capture GPS</button></div>
@@ -5224,13 +5240,103 @@
         let sr_photos = [];
         let sr_sigCtx = null, sr_drawing = false;
 
-        function newServiceReport() {
+        // Cache for customer/site dropdowns on the Service Report form.
+        let __srCustomers = [];
+        let __srSites = [];
+
+        async function srPopulateCustomerDropdown() {
+            // Pull customers from LIMS clients (best-effort).
+            __srCustomers = [];
+            try {
+                if (window.HG_LIMS_DB && typeof window.HG_LIMS_DB.open === 'function') {
+                    await window.HG_LIMS_DB.open();
+                    __srCustomers = (await window.HG_LIMS_DB.all('clients')).slice().sort((a,b)=>String(a.name||'').localeCompare(String(b.name||'')));
+                }
+            } catch (_) {}
+            const sel = document.getElementById('sr_customerId');
+            if (!sel) return;
+            const hint = __srCustomers.length ? '' : ' (open LIMS once to populate)';
+            sel.innerHTML = `<option value="">— select customer${hint} —</option>` +
+                __srCustomers.map(c => `<option value="${esc(c.id)}">${esc(c.name)}</option>`).join('') +
+                `<option value="__manual__">↳ No customer (one-off / not in register)</option>`;
+        }
+
+        function srLoadSites() {
+            try { __srSites = JSON.parse(localStorage.getItem('hadron_sites') || '[]'); }
+            catch { __srSites = []; }
+        }
+
+        function srRefreshSiteDropdown() {
+            srLoadSites();
+            const customerId = document.getElementById('sr_customerId').value;
+            const sel = document.getElementById('sr_siteId');
+            if (!sel) return;
+            // Filter sites to the picked customer; if no customer chosen, show none.
+            // If "__manual__" customer is picked, allow only the manual-site option.
+            let filtered = [];
+            if (customerId && customerId !== '__manual__') {
+                filtered = __srSites.filter(s => s.customerId === customerId);
+            } else if (!customerId) {
+                filtered = []; // force user to pick a customer first
+            }
+            sel.innerHTML = `<option value="">${customerId ? '— select site —' : '— pick customer first —'}</option>` +
+                filtered.map(s => `<option value="${esc(s.id)}">${esc(s.name)}</option>`).join('') +
+                `<option value="__manual__">↳ Enter site manually (not in register)</option>`;
+            // Reset manual-site visibility + contact field
+            document.getElementById('sr_siteManualWrap').style.display = 'none';
+            document.getElementById('sr_site').value = '';
+            document.getElementById('sr_contact').value = '';
+        }
+
+        function srOnCustomerChange() {
+            srRefreshSiteDropdown();
+        }
+
+        function srOnSiteChange() {
+            const sel = document.getElementById('sr_siteId').value;
+            const wrap = document.getElementById('sr_siteManualWrap');
+            const manualInput = document.getElementById('sr_site');
+            const contact = document.getElementById('sr_contact');
+            if (sel === '__manual__') {
+                wrap.style.display = '';
+                manualInput.value = '';
+                contact.value = '';
+                manualInput.focus();
+            } else if (sel) {
+                wrap.style.display = 'none';
+                const site = __srSites.find(s => s.id === sel);
+                manualInput.value = site ? site.name : '';
+                // Auto-fill contact line: prefer site contact, fall back to customer contact
+                const bits = [];
+                if (site && site.contactName) bits.push(site.contactName);
+                if (site && site.contactPhone) bits.push(site.contactPhone);
+                if (site && site.contactEmail) bits.push(site.contactEmail);
+                if (!bits.length) {
+                    const cust = __srCustomers.find(c => c.id === document.getElementById('sr_customerId').value);
+                    if (cust) {
+                        if (cust.contact) bits.push(cust.contact);
+                        if (cust.phone)   bits.push(cust.phone);
+                        if (cust.email)   bits.push(cust.email);
+                    }
+                }
+                contact.value = bits.join(' · ');
+            } else {
+                wrap.style.display = 'none';
+                manualInput.value = '';
+                contact.value = '';
+            }
+        }
+
+        async function newServiceReport() {
             document.getElementById('sr_form').style.display = 'block';
             document.getElementById('sr_list').style.display = 'none';
             // Defaults
             document.getElementById('sr_dt').value = new Date().toISOString().slice(0, 16);
             sr_photos = []; document.getElementById('sr_photos').innerHTML = '';
             initSignaturePad();
+            // Populate customer dropdown + reset site dropdown on every open.
+            await srPopulateCustomerDropdown();
+            srRefreshSiteDropdown();
         }
         function listServiceReports() {
             document.getElementById('sr_form').style.display = 'none';
@@ -5289,9 +5395,21 @@
 
         function gatherSR() {
             const id = id_ => document.getElementById(id_).value;
+            const customerSel = id('sr_customerId');
+            const siteSel = id('sr_siteId');
+            const customer = __srCustomers.find(c => c.id === customerSel);
+            const site = __srSites.find(s => s.id === siteSel);
+            // Resolve a human-readable site label: site name from register, else
+            // whatever is in the manual input. Persisted as `site` for backward
+            // compatibility with existing PDF / list rendering.
+            const siteLabel = (site && site.name) || id('sr_site') || '';
             return {
                 id: uid(),
-                site: id('sr_site'), contact: id('sr_contact'), tech: id('sr_tech'),
+                customerId: (customerSel && customerSel !== '__manual__') ? customerSel : null,
+                customerName: (customer && customer.name) || '',
+                siteId: (siteSel && siteSel !== '__manual__') ? siteSel : null,
+                site: siteLabel,
+                contact: id('sr_contact'), tech: id('sr_tech'),
                 date: id('sr_dt'), gps: id('sr_gps'),
                 ph: id('sr_ph'), cond: id('sr_cond'), orp: id('sr_orp'),
                 fcl: id('sr_fcl'), tcl: id('sr_tcl'), tds: id('sr_tds'),
