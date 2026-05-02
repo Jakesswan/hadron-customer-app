@@ -499,11 +499,13 @@
         case 'instrument':      return await renderInstrumentDetail(root);
         case 'instrument-form': return await renderInstrumentForm(root);
         case 'inventory':       return await renderInventory(root);
+        case 'inventory-form':  return await renderInventoryForm(root);
         case 'qc':              return await renderQC(root);
         case 'qc-chart':        return await renderQCChart(root);
         case 'personnel':       return await renderPersonnel(root);
         case 'person':          return await renderPersonDetail(root);
         case 'documents':       return await renderDocuments(root);
+        case 'document':        return await renderDocumentDetail(root);
         case 'document-form':   return await renderDocumentForm(root);
         case 'reports':         return await renderReports(root);
         case 'clients':         return await renderClients(root);
@@ -1443,17 +1445,21 @@
   async function renderInventory(root) {
     const list = await DB.all('inventory');
     const now = new Date();
+    const sorted = list.slice().sort((a,b)=>new Date(a.expiry||0)-new Date(b.expiry||0));
     root.innerHTML = `
       ${breadcrumb([{label:'LIMS',view:'hub'},{label:'Inventory',view:'inventory'}])}
-      <div class="lims-toolbar"><h2 class="lims-title">Inventory <span class="lims-count">${list.length}</span></h2></div>
+      <div class="lims-toolbar">
+        <h2 class="lims-title">Inventory <span class="lims-count">${list.length}</span></h2>
+        <button class="lims-btn primary" onclick="limsGo('inventory-form',{})">➕ Add reagent</button>
+      </div>
       <table class="lims-table">
-        <thead><tr><th>Item</th><th>Lot</th><th>Supplier</th><th>Received</th><th>Expiry</th><th>Qty</th><th>Storage</th><th>Status</th><th>QR</th></tr></thead>
-        <tbody>${list.map(it => {
-          const exp = daysBetween(now, it.expiry);
-          const statusC = exp < 0 ? chip('Expired','fail') : (exp <= 30 ? chip('Expires '+exp+'d','warn') : chip('OK','ok'));
-          const lowC = it.qty < it.min ? chip('Low stock','warn') : '';
+        <thead><tr><th>Item</th><th>Lot</th><th>Supplier</th><th>Received</th><th>Expiry</th><th>Qty</th><th>Storage</th><th>Status</th><th></th></tr></thead>
+        <tbody>${sorted.length ? sorted.map(it => {
+          const exp = it.expiry ? daysBetween(now, it.expiry) : null;
+          const statusC = exp == null ? chip('No date','warn') : (exp < 0 ? chip('Expired','fail') : (exp <= 30 ? chip('Expires '+exp+'d','warn') : chip('OK','ok')));
+          const lowC = (it.qty != null && it.min != null && it.qty < it.min) ? chip('Low stock','warn') : '';
           const safeName = esc(it.name).replace(/'/g,'');
-          const safeLot = esc(it.lot).replace(/'/g,'');
+          const safeLot = esc(it.lot||'').replace(/'/g,'');
           return `<tr>
             <td><strong>${esc(it.name)}</strong></td>
             <td>${esc(it.lot)}</td>
@@ -1464,11 +1470,13 @@
             <td>${esc(it.storage)}</td>
             <td>${statusC}</td>
             <td style="white-space:nowrap;">
-              <button class="lims-btn" title="Print sticker" onclick="limsQrPrint('inventory','${it.id}','${safeName}','Lot ${safeLot} · Exp ${fmtDate(it.expiry)}')">🖨</button>
-              <button class="lims-btn ghost" title="QR Builder" onclick="limsQrBuilder('inventory','${it.id}')">⬛</button>
+              <button class="lims-btn" title="Print sticker" onclick="event.stopPropagation();limsQrPrint('inventory','${it.id}','${safeName}','Lot ${safeLot} · Exp ${fmtDate(it.expiry)}')">🖨</button>
+              <button class="lims-btn ghost" title="QR Builder" onclick="event.stopPropagation();limsQrBuilder('inventory','${it.id}')">⬛</button>
+              <button class="lims-btn ghost" title="Edit" onclick="event.stopPropagation();limsGo('inventory-form',{id:'${it.id}'})">✏️</button>
+              <button class="lims-btn ghost" title="Delete" onclick="event.stopPropagation();limsDeleteInventory('${it.id}')">🗑️</button>
             </td>
           </tr>`;
-        }).join('')}</tbody>
+        }).join('') : '<tr><td colspan="9" class="lims-empty">No reagents in inventory yet — click ➕ Add reagent to register one.</td></tr>'}</tbody>
       </table>
     `;
   }
@@ -1847,17 +1855,19 @@
         <tbody>${docs.length ? docs.map(d => {
           const rd = d.review ? daysBetween(new Date(), d.review) : null;
           const revChip = rd == null ? chip('No date','warn') : (rd < 0 ? chip('Overdue','fail') : (rd < 90 ? chip('Due '+rd+'d','warn') : chip('OK','ok')));
+          const hasContent = d.content && d.content.trim().length > 0;
           return `<tr>
-            <td><strong>${esc(d.title)}</strong></td>
-            <td>${esc(d.type)}</td>
-            <td>${esc(d.ver)}</td>
-            <td>${fmtDate(d.effective)}</td>
-            <td>${fmtDate(d.review)} ${revChip}</td>
-            <td>${esc(userMap[d.owner]||'—')}</td>
-            <td>${chip(d.status, d.status==='approved'?'ok':'warn')}</td>
+            <td onclick="limsGo('document',{id:'${d.id}'})"><strong>${esc(d.title)}</strong>${hasContent?' <span style="font-size:11px;opacity:0.6;">📄</span>':''}</td>
+            <td onclick="limsGo('document',{id:'${d.id}'})">${esc(d.type)}</td>
+            <td onclick="limsGo('document',{id:'${d.id}'})">${esc(d.ver)}</td>
+            <td onclick="limsGo('document',{id:'${d.id}'})">${fmtDate(d.effective)}</td>
+            <td onclick="limsGo('document',{id:'${d.id}'})">${fmtDate(d.review)} ${revChip}</td>
+            <td onclick="limsGo('document',{id:'${d.id}'})">${esc(userMap[d.owner]||'—')}</td>
+            <td onclick="limsGo('document',{id:'${d.id}'})">${chip(d.status, d.status==='approved'?'ok':'warn')}</td>
             <td style="white-space:nowrap;">
-              <button class="lims-btn ghost" onclick="limsGo('document-form',{id:'${d.id}'})">✏️</button>
-              <button class="lims-btn ghost" onclick="limsDeleteDocument('${d.id}')">🗑️</button>
+              ${hasContent?`<button class="lims-btn ghost" onclick="event.stopPropagation();limsDocumentPdf('${d.id}')">🖨️</button>`:''}
+              <button class="lims-btn ghost" onclick="event.stopPropagation();limsGo('document-form',{id:'${d.id}'})">✏️</button>
+              <button class="lims-btn ghost" onclick="event.stopPropagation();limsDeleteDocument('${d.id}')">🗑️</button>
             </td>
           </tr>`;
         }).join('') : '<tr><td colspan="8" class="lims-empty">No documents yet — click ➕ Add document to register one.</td></tr>'}</tbody>
@@ -2395,7 +2405,7 @@
     const isNew = !id;
     const d = id ? (await DB.get('documents', id)) : {
       id:'', code:'', title:'', type:'SOP', ver:'1.0', effective: nowISO().slice(0,10), review:'',
-      owner: (S.currentUser ? S.currentUser.id : ''), status:'draft'
+      owner: (S.currentUser ? S.currentUser.id : ''), status:'draft', content:''
     };
     if (id && !d) { root.innerHTML = `<div class="lims-empty">Document not found</div>`; return; }
     const users = await DB.all('users');
@@ -2429,8 +2439,24 @@
             </select>
           </div>
         </div>
-        <div style="margin-top:14px;display:flex;gap:8px;flex-wrap:wrap;">
+      </div>
+      <div class="lims-card">
+        <div class="lims-section-title">Document content</div>
+        <p style="color:#6b7684;font-size:13px;margin:0 0 8px;">
+          Type or paste the SOP body here. Save it once, then anyone with access can view it on screen and print or download a branded PDF — no more chasing Word files around.
+        </p>
+        <p style="color:#6b7684;font-size:12px;margin:0 0 6px;">
+          <strong>Light formatting:</strong>
+          <code>## Heading</code> · <code>### Sub-heading</code> · <code>**bold**</code> · <code>*italic*</code> · <code>- bullet</code> · <code>1. numbered</code> · blank line = new paragraph
+        </p>
+        <textarea id="df_content" class="lims-search"
+          style="width:100%;min-height:340px;font-family:inherit;line-height:1.5;padding:12px;font-size:14px;resize:vertical;"
+          placeholder="## Purpose&#10;Describe what this SOP covers.&#10;&#10;## Scope&#10;Who and what it applies to.&#10;&#10;## Procedure&#10;1. First step&#10;2. Second step&#10;3. Third step&#10;&#10;## References&#10;- SANS 241:2015&#10;- ISO/IEC 17025">${esc(d.content||'')}</textarea>
+      </div>
+      <div class="lims-card">
+        <div style="display:flex;gap:8px;flex-wrap:wrap;">
           <button class="lims-btn primary" onclick="limsSaveDocument(${isNew?'null':"'"+id+"'"})">💾 Save document</button>
+          ${isNew?'':`<button class="lims-btn ghost" onclick="limsDocumentPdf('${id}')">🖨️ Print PDF</button>`}
           <button class="lims-btn ghost" onclick="limsBack()">Cancel</button>
         </div>
       </div>
@@ -2449,7 +2475,8 @@
       effective: document.getElementById('df_effective').value,
       review: document.getElementById('df_review').value,
       owner: document.getElementById('df_owner').value || null,
-      status: document.getElementById('df_status').value
+      status: document.getElementById('df_status').value,
+      content: (document.getElementById('df_content').value || '').trim()
     };
     await DB.put('documents', doc);
     await DB.audit(existingId?'UPDATE':'CREATE', 'document', doc.id, null, doc);
@@ -2462,6 +2489,290 @@
     await DB.del('documents', id);
     await DB.audit('DELETE', 'document', id, null, null);
     toast('Document deleted', 'ok');
+    render();
+  };
+
+  // ── DOCUMENT DETAIL (read-only view with print/download) ──
+  async function renderDocumentDetail(root) {
+    const d = await DB.get('documents', S.params.id);
+    if (!d) { root.innerHTML = `<div class="lims-empty">Document not found</div>`; return; }
+    const users = await DB.all('users');
+    const userMap = Object.fromEntries(users.map(u=>[u.id,u.name]));
+    const rendered = renderDocMarkdownLight(d.content || '');
+    const rd = d.review ? daysBetween(new Date(), d.review) : null;
+    const revChip = rd == null ? chip('No date','warn') : (rd < 0 ? chip('Overdue','fail') : (rd < 90 ? chip('Due '+rd+'d','warn') : chip('OK','ok')));
+    root.innerHTML = `
+      ${breadcrumb([{label:'LIMS',view:'hub'},{label:'Documents',view:'documents'},{label:d.code||d.title,view:'document',params:{id:d.id}}])}
+      <div class="lims-toolbar">
+        <h2 class="lims-title">${esc(d.code?d.code+' · ':'')}${esc(d.title)}</h2>
+        ${chip(d.status, d.status==='approved'?'ok':'warn')}
+        <div style="flex:1"></div>
+        ${d.content?`<button class="lims-btn primary" onclick="limsDocumentPdf('${d.id}')">🖨️ Print PDF</button>`:''}
+        <button class="lims-btn ghost" onclick="limsGo('document-form',{id:'${d.id}'})">✏️ Edit</button>
+      </div>
+      <div class="lims-card">
+        <div class="lims-fieldgrid">
+          <div class="lims-field"><label>Type</label><div>${esc(d.type)}</div></div>
+          <div class="lims-field"><label>Version</label><div>${esc(d.ver)}</div></div>
+          <div class="lims-field"><label>Effective</label><div>${fmtDate(d.effective)}</div></div>
+          <div class="lims-field"><label>Review by</label><div>${fmtDate(d.review)} ${revChip}</div></div>
+          <div class="lims-field"><label>Owner</label><div>${esc(userMap[d.owner]||'—')}</div></div>
+          <div class="lims-field"><label>Status</label><div>${esc(d.status)}</div></div>
+        </div>
+      </div>
+      <div class="lims-card">
+        <div class="lims-section-title">Document body</div>
+        ${d.content
+          ? `<div class="hg-doc-body" style="line-height:1.6;font-size:14.5px;">${rendered}</div>`
+          : '<div class="lims-empty">No content has been written yet — click ✏️ Edit to add the SOP text.</div>'}
+      </div>
+    `;
+  }
+
+  // Markdown-light renderer — same flavour as the Academy module.
+  // Supports: ## h3, ### h4, **bold**, *italic*, `code`, - / 1. lists, paragraphs.
+  function renderDocMarkdownLight(src) {
+    if (!src) return '';
+    const lines = src.split(/\r?\n/);
+    let out = [];
+    let inUl = false, inOl = false;
+    const closeLists = () => {
+      if (inUl) { out.push('</ul>'); inUl = false; }
+      if (inOl) { out.push('</ol>'); inOl = false; }
+    };
+    const inline = (s) => esc(s)
+      .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+      .replace(/\*(.+?)\*/g,     '<em>$1</em>')
+      .replace(/`([^`]+)`/g,     '<code>$1</code>');
+    let paraBuf = [];
+    const flushPara = () => {
+      if (paraBuf.length) {
+        out.push('<p>' + inline(paraBuf.join(' ')) + '</p>');
+        paraBuf = [];
+      }
+    };
+    for (const raw of lines) {
+      const line = raw.trim();
+      if (!line) { flushPara(); closeLists(); continue; }
+      if (/^### /.test(line))  { flushPara(); closeLists(); out.push('<h4 style="color:#1a3d9e;margin:14px 0 6px;">' + inline(line.slice(4)) + '</h4>'); continue; }
+      if (/^## /.test(line))   { flushPara(); closeLists(); out.push('<h3 style="color:#1a3d9e;margin:18px 0 8px;border-bottom:1px solid #ddd;padding-bottom:4px;">' + inline(line.slice(3)) + '</h3>'); continue; }
+      if (/^# /.test(line))    { flushPara(); closeLists(); out.push('<h2 style="margin:22px 0 10px;">' + inline(line.slice(2)) + '</h2>'); continue; }
+      if (/^[-*] /.test(line)) { flushPara(); if (inOl) { out.push('</ol>'); inOl=false; } if (!inUl) { out.push('<ul style="margin:8px 0 8px 24px;">'); inUl = true; } out.push('<li>' + inline(line.slice(2)) + '</li>'); continue; }
+      if (/^\d+\.\s/.test(line)){flushPara(); if (inUl) { out.push('</ul>'); inUl=false; } if (!inOl) { out.push('<ol style="margin:8px 0 8px 24px;">'); inOl = true; } out.push('<li>' + inline(line.replace(/^\d+\.\s/, '')) + '</li>'); continue; }
+      // accumulate paragraph
+      closeLists();
+      paraBuf.push(line);
+    }
+    flushPara(); closeLists();
+    return out.join('\n');
+  }
+
+  // ── DOCUMENT PDF GENERATOR ──────────────────────────────
+  // Branded PDF with header, footer, page numbers. Markdown-light body.
+  window.limsDocumentPdf = async function(id) {
+    const d = await DB.get('documents', id);
+    if (!d) return;
+    if (!window.jspdf || !window.jspdf.jsPDF) {
+      toast('PDF library still loading — try again in a second', 'warn');
+      return;
+    }
+    const users = await DB.all('users');
+    const userMap = Object.fromEntries(users.map(u=>[u.id,u.name]));
+    const { jsPDF } = window.jspdf;
+    const pdf = new jsPDF({ unit: 'pt', format: 'a4' });
+
+    const PAGE_W = pdf.internal.pageSize.getWidth();
+    const PAGE_H = pdf.internal.pageSize.getHeight();
+    const MARGIN = 48;
+    const CYAN  = [0, 177, 202];
+    const NAVY  = [26, 61, 158];
+    const GREY  = [60, 60, 60];
+    const SOFT  = [120, 120, 120];
+
+    let pageNum = 1;
+    const drawHeader = () => {
+      pdf.setFillColor.apply(pdf, NAVY);
+      pdf.rect(0, 0, PAGE_W, 80, 'F');
+      pdf.setFillColor.apply(pdf, CYAN);
+      pdf.rect(0, 80, PAGE_W, 4, 'F');
+      pdf.setTextColor(255, 255, 255);
+      pdf.setFont('helvetica', 'bold');
+      pdf.setFontSize(20);
+      pdf.text('HADRON GROUP', MARGIN, 38);
+      pdf.setFont('helvetica', 'normal');
+      pdf.setFontSize(10);
+      pdf.text(d.type + ' · ' + (d.code || 'Untitled'), MARGIN, 56);
+      pdf.setFontSize(9);
+      pdf.text('hadrongrp.com', MARGIN, 70);
+      // Status pill on the right
+      pdf.setFontSize(9);
+      pdf.text('Version ' + (d.ver||'—') + '   ·   Status: ' + (d.status||'—'), PAGE_W - MARGIN, 70, { align: 'right' });
+    };
+    const drawFooter = () => {
+      pdf.setTextColor.apply(pdf, SOFT);
+      pdf.setFont('helvetica', 'normal');
+      pdf.setFontSize(8);
+      const printedAt = new Date().toLocaleString();
+      pdf.text('Controlled when viewed in LIMS. Printed copy is uncontrolled. Printed: ' + printedAt, MARGIN, PAGE_H - 30);
+      pdf.text('Page ' + pageNum, PAGE_W - MARGIN, PAGE_H - 30, { align: 'right' });
+    };
+    const newPage = () => {
+      drawFooter();
+      pdf.addPage();
+      pageNum++;
+      drawHeader();
+    };
+
+    drawHeader();
+    let y = 110;
+
+    // Title block
+    pdf.setTextColor.apply(pdf, GREY);
+    pdf.setFont('helvetica', 'bold');
+    pdf.setFontSize(18);
+    const titleLines = pdf.splitTextToSize(d.title || 'Untitled', PAGE_W - MARGIN * 2);
+    titleLines.forEach(line => { pdf.text(line, MARGIN, y); y += 22; });
+
+    pdf.setFont('helvetica', 'normal');
+    pdf.setFontSize(10);
+    pdf.setTextColor.apply(pdf, SOFT);
+    const meta = [];
+    if (d.effective) meta.push('Effective: ' + fmtDate(d.effective));
+    if (d.review)    meta.push('Review by: ' + fmtDate(d.review));
+    if (d.owner && userMap[d.owner]) meta.push('Owner: ' + userMap[d.owner]);
+    if (meta.length) { pdf.text(meta.join('   ·   '), MARGIN, y); y += 18; }
+    y += 8;
+
+    // Body — render markdown-light into the PDF flow
+    const writeLine = (text, opts) => {
+      opts = opts || {};
+      pdf.setFont('helvetica', opts.bold ? 'bold' : 'normal');
+      pdf.setFontSize(opts.size || 11);
+      pdf.setTextColor.apply(pdf, opts.color || GREY);
+      const wrapped = pdf.splitTextToSize(text, PAGE_W - MARGIN * 2 - (opts.indent||0));
+      const lineHeight = (opts.size || 11) * 1.32;
+      for (const line of wrapped) {
+        if (y > PAGE_H - 50) newPage(), y = 110;
+        pdf.text(line, MARGIN + (opts.indent||0), y);
+        y += lineHeight;
+      }
+    };
+
+    const stripMd = (s) => s
+      .replace(/\*\*(.+?)\*\*/g, '$1')
+      .replace(/\*(.+?)\*/g, '$1')
+      .replace(/`([^`]+)`/g, '$1');
+
+    const lines = (d.content || '').split(/\r?\n/);
+    let inList = false;
+    let listIdx = 0;
+    let paraBuf = [];
+    const flushPara = () => {
+      if (paraBuf.length) {
+        writeLine(stripMd(paraBuf.join(' ')), { size: 11 });
+        y += 4;
+        paraBuf = [];
+      }
+    };
+    for (const raw of lines) {
+      const line = raw.trim();
+      if (!line) { flushPara(); inList = false; listIdx = 0; y += 4; continue; }
+      if (/^### /.test(line)) { flushPara(); y += 6; writeLine(stripMd(line.slice(4)), { bold: true, size: 12, color: NAVY }); y += 2; continue; }
+      if (/^## /.test(line))  { flushPara(); y += 10; writeLine(stripMd(line.slice(3)), { bold: true, size: 14, color: NAVY }); y += 4; continue; }
+      if (/^# /.test(line))   { flushPara(); y += 12; writeLine(stripMd(line.slice(2)), { bold: true, size: 16, color: GREY }); y += 6; continue; }
+      if (/^[-*] /.test(line)){ flushPara(); writeLine('•  ' + stripMd(line.slice(2)), { size: 11, indent: 14 }); inList = true; continue; }
+      if (/^\d+\.\s/.test(line)){ flushPara(); listIdx++; writeLine(listIdx + '.  ' + stripMd(line.replace(/^\d+\.\s/,'')), { size: 11, indent: 14 }); inList = true; continue; }
+      paraBuf.push(line);
+    }
+    flushPara();
+
+    drawFooter();
+    const filename = ((d.code || d.title || 'document').replace(/[^A-Za-z0-9_-]+/g,'_')) + '_v' + (d.ver||'1') + '.pdf';
+    pdf.save(filename);
+  };
+
+  // ── INVENTORY (reagents / consumables) FORM ─────────────
+  async function renderInventoryForm(root) {
+    const id = S.params.id || null;
+    const isNew = !id;
+    const it = id ? (await DB.get('inventory', id)) : {
+      id:'', name:'', lot:'', supplier:'', received: nowISO().slice(0,10), expiry:'',
+      qty: 0, unit:'mL', min: 0, storage:'Room Temp', coa:false, notes:''
+    };
+    if (id && !it) { root.innerHTML = `<div class="lims-empty">Reagent not found</div>`; return; }
+    const list = await DB.all('inventory');
+    const existingUnits    = [...new Set(list.map(x=>x.unit).filter(Boolean))];
+    const existingStorages = [...new Set(list.map(x=>x.storage).filter(Boolean))];
+    const units    = [...new Set([...existingUnits,    'mL','L','g','kg','sachets','set','tablets','units','vials'])];
+    const storages = [...new Set([...existingStorages, 'Room Temp','+4 °C','-20 °C','-80 °C','Dry','Dark, cool','Flammable cabinet','Acid cabinet','Reagent shelf'])];
+    root.innerHTML = `
+      ${breadcrumb([{label:'LIMS',view:'hub'},{label:'Inventory',view:'inventory'},{label:isNew?'Add reagent':'Edit '+it.name,view:'inventory-form'}])}
+      <div class="lims-toolbar"><h2 class="lims-title">${isNew?'Add new reagent / consumable':'Edit '+esc(it.name)}</h2></div>
+      <div class="lims-card">
+        <div class="lims-section-title">Reagent details</div>
+        <div class="lims-fieldgrid">
+          <div class="lims-field lims-field-wide"><label>Name *</label><input id="rf_name" class="lims-search" value="${esc(it.name)}" placeholder="e.g. pH Buffer 7.00"></div>
+          <div class="lims-field"><label>Lot / batch</label><input id="rf_lot" class="lims-search" value="${esc(it.lot)}" placeholder="e.g. PH7-2025-118"></div>
+          <div class="lims-field"><label>Supplier</label><input id="rf_supplier" class="lims-search" value="${esc(it.supplier)}" placeholder="e.g. Hanna, Hach, Merck"></div>
+          <div class="lims-field"><label>Received</label><input id="rf_received" type="date" class="lims-search" value="${(it.received||'').slice(0,10)}"></div>
+          <div class="lims-field"><label>Expiry</label><input id="rf_expiry" type="date" class="lims-search" value="${(it.expiry||'').slice(0,10)}"></div>
+          <div class="lims-field"><label>Quantity</label><input id="rf_qty" type="number" step="any" min="0" class="lims-search" value="${it.qty!=null?it.qty:0}"></div>
+          <div class="lims-field"><label>Unit</label>
+            <select id="rf_unit" class="lims-search">
+              ${units.map(u=>`<option value="${esc(u)}" ${it.unit===u?'selected':''}>${esc(u)}</option>`).join('')}
+            </select>
+          </div>
+          <div class="lims-field"><label>Min stock (re-order trigger)</label><input id="rf_min" type="number" step="any" min="0" class="lims-search" value="${it.min!=null?it.min:0}"></div>
+          <div class="lims-field"><label>Storage</label>
+            <select id="rf_storage" class="lims-search">
+              ${storages.map(s=>`<option value="${esc(s)}" ${it.storage===s?'selected':''}>${esc(s)}</option>`).join('')}
+            </select>
+          </div>
+          <div class="lims-field"><label>Certificate of Analysis on file</label>
+            <select id="rf_coa" class="lims-search">
+              <option value="false" ${!it.coa?'selected':''}>No</option>
+              <option value="true"  ${ it.coa?'selected':''}>Yes</option>
+            </select>
+          </div>
+          <div class="lims-field lims-field-wide"><label>Notes</label><input id="rf_notes" class="lims-search" value="${esc(it.notes||'')}" placeholder="Anything operators should know"></div>
+        </div>
+        <div style="margin-top:14px;display:flex;gap:8px;flex-wrap:wrap;">
+          <button class="lims-btn primary" onclick="limsSaveInventory(${isNew?'null':"'"+id+"'"})">💾 Save reagent</button>
+          <button class="lims-btn ghost" onclick="limsBack()">Cancel</button>
+        </div>
+        <p style="font-size:12px;color:#6b7684;margin-top:10px;">When stock drops below the min, it'll show a "Low stock" chip on the Inventory list and trigger an alert on the LIMS Dashboard. When expiry is within 30 days, the same happens with a yellow "Expires Xd" chip.</p>
+      </div>
+    `;
+  }
+
+  window.limsSaveInventory = async function(existingId) {
+    const name = document.getElementById('rf_name').value.trim();
+    if (!name) { toast('Reagent name is required', 'warn'); return; }
+    const it = {
+      id: existingId || uid('inv'),
+      name,
+      lot: document.getElementById('rf_lot').value.trim(),
+      supplier: document.getElementById('rf_supplier').value.trim(),
+      received: document.getElementById('rf_received').value,
+      expiry:   document.getElementById('rf_expiry').value,
+      qty: parseFloat(document.getElementById('rf_qty').value) || 0,
+      unit: document.getElementById('rf_unit').value,
+      min: parseFloat(document.getElementById('rf_min').value) || 0,
+      storage: document.getElementById('rf_storage').value,
+      coa: document.getElementById('rf_coa').value === 'true',
+      notes: document.getElementById('rf_notes').value.trim()
+    };
+    await DB.put('inventory', it);
+    await DB.audit(existingId?'UPDATE':'CREATE', 'inventory', it.id, null, it);
+    toast(existingId ? 'Reagent updated' : 'Reagent added', 'ok');
+    limsGo('inventory');
+  };
+
+  window.limsDeleteInventory = async function(id) {
+    if (!confirm('Delete this reagent from inventory? Historical worksheet references will keep the lot number.')) return;
+    await DB.del('inventory', id);
+    await DB.audit('DELETE', 'inventory', id, null, null);
+    toast('Reagent deleted', 'ok');
     render();
   };
 

@@ -1753,6 +1753,85 @@
 
         .hg-card { background: #fff; border-radius: 12px; padding: 16px 18px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); margin-bottom: 14px; }
         body.dark .hg-card { background: #22272b; box-shadow: 0 2px 10px rgba(0,0,0,0.4); color: #e8ecef; }
+
+        /* Modal overlay (used by Site/Asset add forms) */
+        .hg-modal-overlay {
+            position: fixed; inset: 0; z-index: 9100;
+            background: rgba(8, 14, 36, 0.55);
+            backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px);
+            display: flex; align-items: flex-start; justify-content: center;
+            padding: 24px 16px; overflow-y: auto;
+        }
+        .hg-modal-card {
+            width: 100%; max-width: 640px;
+            background: #fff; color: #0e1530;
+            border-radius: 16px;
+            box-shadow: 0 24px 60px rgba(8, 12, 40, 0.35);
+            overflow: hidden;
+            display: flex; flex-direction: column;
+        }
+        body.dark .hg-modal-card { background: #1c2228; color: #e8ecef; }
+        .hg-modal-head {
+            padding: 16px 20px; border-bottom: 1px solid #eef3f7;
+            display: flex; align-items: center; gap: 12px;
+            background: linear-gradient(135deg, #00b1ca 0%, #1a3d9e 100%);
+            color: #fff;
+        }
+        body.dark .hg-modal-head { border-bottom-color: rgba(255,255,255,0.08); }
+        .hg-modal-head h3 { margin: 0; font-size: 17px; font-weight: 700; flex: 1; color:#fff; }
+        .hg-modal-close {
+            background: rgba(255,255,255,0.18); border: none; color: #fff;
+            width: 32px; height: 32px; border-radius: 8px; cursor: pointer;
+            font-size: 18px; line-height: 1;
+        }
+        .hg-modal-close:hover { background: rgba(255,255,255,0.32); }
+        .hg-modal-body { padding: 18px 20px; overflow-y: auto; max-height: 70vh; }
+        .hg-modal-foot {
+            padding: 14px 20px; border-top: 1px solid #eef3f7;
+            display: flex; gap: 8px; justify-content: flex-end; flex-wrap: wrap;
+            background: #f7fbfd;
+        }
+        body.dark .hg-modal-foot { background: #181d22; border-top-color: rgba(255,255,255,0.08); }
+
+        .hg-modal-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; }
+        .hg-modal-grid .full { grid-column: 1 / -1; }
+        .hg-modal-grid label {
+            display: block; font-size: 12px; font-weight: 600; opacity: 0.75;
+            text-transform: uppercase; letter-spacing: 0.04em; margin-bottom: 4px;
+        }
+        .hg-modal-grid input, .hg-modal-grid select, .hg-modal-grid textarea {
+            width: 100%; padding: 10px 12px; border-radius: 8px;
+            border: 1px solid rgba(0,0,0,0.12); background: #fff; color: inherit;
+            font-size: 14px; font-family: inherit;
+        }
+        body.dark .hg-modal-grid input,
+        body.dark .hg-modal-grid select,
+        body.dark .hg-modal-grid textarea {
+            background: #11171c; border-color: rgba(255,255,255,0.12);
+        }
+        .hg-modal-grid input:focus, .hg-modal-grid select:focus, .hg-modal-grid textarea:focus {
+            outline: 2px solid #00b1ca; outline-offset: 1px;
+        }
+        .hg-modal-section-title {
+            font-size: 12px; font-weight: 800; color: #00b1ca;
+            text-transform: uppercase; letter-spacing: 0.06em;
+            margin: 16px 0 10px; padding-bottom: 4px; border-bottom: 1px solid #eef3f7;
+        }
+        body.dark .hg-modal-section-title { border-bottom-color: rgba(255,255,255,0.08); }
+        .hg-modal-asset-row {
+            background: #f7fbfd; border-left: 3px solid #00b1ca;
+            border-radius: 8px; padding: 12px; margin-bottom: 10px;
+            position: relative;
+        }
+        body.dark .hg-modal-asset-row { background: #11171c; }
+        .hg-modal-asset-row .hg-modal-grid { gap: 8px; }
+        .hg-modal-asset-row label { font-size: 11px; }
+        .hg-modal-asset-row input, .hg-modal-asset-row select { padding: 8px 10px; font-size: 13px; }
+        .hg-modal-asset-rm {
+            position: absolute; top: 8px; right: 8px;
+            background: rgba(220,53,69,0.12); color: #d32f2f; border: none;
+            width: 24px; height: 24px; border-radius: 6px; cursor: pointer; font-size: 13px;
+        }
         .hg-card.pad-sm { padding: 12px 14px; }
         .hg-card.pad-lg { padding: 22px 24px; }
 
@@ -2432,7 +2511,7 @@
                 <div class="hg-section-title">About</div>
                 <div class="hg-kvgrid">
                     <div class="hg-kv"><div class="k">App</div><div class="v">Hadron Group</div></div>
-                    <div class="hg-kv"><div class="k">Version</div><div class="v">v41</div></div>
+                    <div class="hg-kv"><div class="k">Version</div><div class="v">v44</div></div>
                     <div class="hg-kv"><div class="k">Platform</div><div class="v">PWA</div></div>
                 </div>
             </div>
@@ -5288,11 +5367,156 @@
         /* =========================================================
            Site / Asset register
            ========================================================= */
+        // ── Modal helpers (shared by Site / Asset add flows) ──
+        function hgModalOpen(html) {
+            // Tear down any existing modal first.
+            hgModalClose();
+            const ov = document.createElement('div');
+            ov.className = 'hg-modal-overlay';
+            ov.id = 'hgModalOverlay';
+            ov.innerHTML = html;
+            ov.addEventListener('click', (e) => { if (e.target === ov) hgModalClose(); });
+            document.body.appendChild(ov);
+            return ov;
+        }
+        function hgModalClose() {
+            const ov = document.getElementById('hgModalOverlay');
+            if (ov) ov.remove();
+        }
+        // Single asset row block — used inside both the new-site modal and the
+        // add-assets-to-existing-site modal.
+        function hgAssetRowHtml(idx, defaults) {
+            const d = defaults || {};
+            const types = ['Dosing pump','Chlorinator','RO unit','Softener','Filter','UV unit','Storage tank','Pressure pump','Booster pump','Mixer','Sand filter','Carbon filter','Resin tank','Membrane housing','Skid','Sensor','Controller','Other'];
+            return `<div class="hg-modal-asset-row" data-asset-idx="${idx}">
+                <button type="button" class="hg-modal-asset-rm" onclick="hgRemoveAssetRow(${idx})" title="Remove">✕</button>
+                <div class="hg-modal-grid">
+                    <div class="full"><label>Asset type</label>
+                        <select class="hg-asset-type" data-idx="${idx}">
+                            ${types.map(t=>`<option value="${esc(t)}" ${d.type===t?'selected':''}>${esc(t)}</option>`).join('')}
+                        </select>
+                    </div>
+                    <div><label>Manufacturer</label><input class="hg-asset-mfr" data-idx="${idx}" value="${esc(d.manufacturer||'')}" placeholder="e.g. Grundfos"></div>
+                    <div><label>Model</label><input class="hg-asset-model" data-idx="${idx}" value="${esc(d.model||'')}" placeholder="e.g. DDA 7.5-16"></div>
+                    <div><label>Serial number</label><input class="hg-asset-serial" data-idx="${idx}" value="${esc(d.serial||'')}" placeholder="optional"></div>
+                    <div><label>Install date</label><input type="date" class="hg-asset-installed" data-idx="${idx}" value="${esc(d.installed||'')}"></div>
+                </div>
+            </div>`;
+        }
+        let __hgAssetIdx = 0;
+        function hgAddAssetRow() {
+            __hgAssetIdx++;
+            const list = document.getElementById('hgAssetRows');
+            if (!list) return;
+            const tmp = document.createElement('div');
+            tmp.innerHTML = hgAssetRowHtml(__hgAssetIdx);
+            list.appendChild(tmp.firstElementChild);
+        }
+        function hgRemoveAssetRow(idx) {
+            const row = document.querySelector(`.hg-modal-asset-row[data-asset-idx="${idx}"]`);
+            if (row) row.remove();
+        }
+        function hgCollectAssetRows() {
+            return Array.from(document.querySelectorAll('.hg-modal-asset-row')).map(row => {
+                const idx = row.getAttribute('data-asset-idx');
+                const t = row.querySelector('.hg-asset-type').value;
+                const m = row.querySelector('.hg-asset-mfr').value.trim();
+                const md = row.querySelector('.hg-asset-model').value.trim();
+                const s = row.querySelector('.hg-asset-serial').value.trim();
+                const inst = row.querySelector('.hg-asset-installed').value;
+                // Skip empty rows entirely (no type selected meaningfully + nothing else)
+                if (!t && !m && !md && !s && !inst) return null;
+                return { id: uid(), type: t, manufacturer: m, model: md, serial: s, installed: inst };
+            }).filter(Boolean);
+        }
+
+        // ── New-site modal: add a site + (optionally) several assets at once ──
         function newSite() {
-            const name = prompt('Site name:'); if (!name) return;
+            __hgAssetIdx = 0;
+            const html = `
+                <div class="hg-modal-card" onclick="event.stopPropagation();">
+                    <div class="hg-modal-head">
+                        <h3>🏢 Add new site</h3>
+                        <button class="hg-modal-close" onclick="hgModalClose()" title="Close">✕</button>
+                    </div>
+                    <div class="hg-modal-body">
+                        <div class="hg-modal-grid">
+                            <div class="full"><label>Site name *</label><input id="hgs_name" placeholder="e.g. ACME Mining — Plant 2"></div>
+                            <div class="full"><label>Address</label><input id="hgs_address" placeholder="Street, city, province"></div>
+                            <div><label>System type</label>
+                                <select id="hgs_systemType">
+                                    <option value="">— select —</option>
+                                    <option value="potable">Potable</option>
+                                    <option value="sewage">Sewage</option>
+                                    <option value="effluent">Effluent</option>
+                                    <option value="cooling">Cooling</option>
+                                    <option value="boiler">Boiler / Steam</option>
+                                    <option value="pool">Pool</option>
+                                    <option value="process">Process</option>
+                                    <option value="mixed">Mixed / multi-system</option>
+                                </select>
+                            </div>
+                            <div><label>Source type</label>
+                                <select id="hgs_sourceType">
+                                    <option value="">— select —</option>
+                                    <option value="municipal">Municipal</option>
+                                    <option value="borehole">Borehole</option>
+                                    <option value="river">River / surface</option>
+                                    <option value="recycled">Recycled / reuse</option>
+                                    <option value="other">Other</option>
+                                </select>
+                            </div>
+                            <div><label>Contact name</label><input id="hgs_contactName" placeholder="On-site lead"></div>
+                            <div><label>Contact email</label><input id="hgs_contactEmail" type="email" placeholder="lead@site.com"></div>
+                            <div><label>Contact phone</label><input id="hgs_contactPhone" placeholder="012-345-6789"></div>
+                            <div><label>Status</label>
+                                <select id="hgs_status">
+                                    <option value="active">Active</option>
+                                    <option value="setup">Setup / commissioning</option>
+                                    <option value="paused">Paused</option>
+                                </select>
+                            </div>
+                            <div class="full"><label>Notes</label><textarea id="hgs_notes" rows="2" placeholder="Anything specific about this site"></textarea></div>
+                        </div>
+
+                        <div class="hg-modal-section-title">Equipment at this site (optional)</div>
+                        <p style="color:#6b7684;font-size:13px;margin:0 0 8px;">Add as many assets as you'd like up front — you can always add more later.</p>
+                        <div id="hgAssetRows"></div>
+                        <button type="button" class="hg-btn ghost" onclick="hgAddAssetRow()" style="margin-top:4px;">➕ Add another asset</button>
+                    </div>
+                    <div class="hg-modal-foot">
+                        <button class="hg-btn ghost" onclick="hgModalClose()">Cancel</button>
+                        <button class="hg-btn primary" onclick="hgSaveSite()">💾 Save site</button>
+                    </div>
+                </div>`;
+            hgModalOpen(html);
+            hgAddAssetRow();
+            setTimeout(() => { const e = document.getElementById('hgs_name'); if (e) e.focus(); }, 50);
+        }
+
+        function hgSaveSite() {
+            const name = document.getElementById('hgs_name').value.trim();
+            if (!name) { showToast('Site name is required'); return; }
+            const site = {
+                id: uid(),
+                name,
+                address: document.getElementById('hgs_address').value.trim(),
+                systemType: document.getElementById('hgs_systemType').value,
+                sourceType: document.getElementById('hgs_sourceType').value,
+                contactName: document.getElementById('hgs_contactName').value.trim(),
+                contactEmail: document.getElementById('hgs_contactEmail').value.trim(),
+                contactPhone: document.getElementById('hgs_contactPhone').value.trim(),
+                status: document.getElementById('hgs_status').value,
+                notes: document.getElementById('hgs_notes').value.trim(),
+                equipment: hgCollectAssetRows(),
+                createdAt: new Date().toISOString()
+            };
             const list = LS.get('hadron_sites', []);
-            list.push({ id: uid(), name: name, equipment: [], createdAt: new Date().toISOString() });
-            LS.set('hadron_sites', list); renderSites();
+            list.push(site);
+            LS.set('hadron_sites', list);
+            hgModalClose();
+            renderSites();
+            showToast('Site added' + (site.equipment.length ? ' with ' + site.equipment.length + ' asset' + (site.equipment.length===1?'':'s') : ''));
         }
         function renderSites() {
             const list = LS.get('hadron_sites', []);
@@ -5308,15 +5532,19 @@
                         <button class="hg-btn ghost" onclick="renameSite('${s.id}')">✏️ Rename</button>
                         <button class="hg-btn warn" onclick="deleteSite('${s.id}')">🗑 Delete site</button>
                     </div>
-                    ${s.equipment.length ? '<div style="margin-top:10px;display:grid;gap:6px;">' + s.equipment.map(a => `
+                    ${s.equipment.length ? '<div style="margin-top:10px;display:grid;gap:6px;">' + s.equipment.map(a => {
+                        const meta = [a.manufacturer, a.model].filter(Boolean).join(' ');
+                        const sub = [meta || (a.serial?('Serial '+a.serial):'no serial'), a.installed?('installed '+a.installed):''].filter(Boolean).join(' · ');
+                        return `
                         <div id="site-equip-${s.id}-${a.id}" style="padding:10px 12px;background:#f7fbfd;border-left:3px solid #00b1ca;border-radius:6px;font-size:13px;display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
                             <div style="flex:1;min-width:160px;">
                                 <strong>${esc(a.type)}</strong>
-                                <div style="font-size:12px;color:#6b7684;">${esc(a.serial||'no serial')} · installed ${esc(a.installed || '—')}</div>
+                                <div style="font-size:12px;color:#6b7684;">${esc(sub)}</div>
                             </div>
                             <button class="hg-btn ghost" style="padding:4px 10px;font-size:12px;" onclick="qrEquip('${s.id}','${a.id}')">⬛ Asset QR</button>
                             <button class="hg-btn warn" style="padding:4px 10px;font-size:12px;" onclick="deleteAsset('${s.id}','${a.id}')">🗑</button>
-                        </div>`).join('') + '</div>' : ''}
+                        </div>`;
+                    }).join('') + '</div>' : ''}
                 </div>`).join('');
         }
         // Expose for the deep-link handler in qr-app.js
@@ -5349,13 +5577,41 @@
             setTimeout(() => { if (window.qrOpen) window.qrOpen('hg-asset'); }, 200);
         }
         function addAsset(siteId) {
-            const type = prompt('Asset type (e.g. Dosing pump, RO unit, Chlorinator):'); if (!type) return;
-            const serial = prompt('Serial number:') || '';
-            const installed = prompt('Install date (YYYY-MM-DD):') || '';
             const list = LS.get('hadron_sites', []);
-            const s = list.find(x => x.id === siteId); if (!s) return;
-            s.equipment.push({ id: uid(), type, serial, installed });
-            LS.set('hadron_sites', list); renderSites();
+            const site = list.find(x => x.id === siteId);
+            if (!site) return;
+            __hgAssetIdx = 0;
+            const html = `
+                <div class="hg-modal-card" onclick="event.stopPropagation();">
+                    <div class="hg-modal-head">
+                        <h3>⚙️ Add equipment to ${esc(site.name)}</h3>
+                        <button class="hg-modal-close" onclick="hgModalClose()" title="Close">✕</button>
+                    </div>
+                    <div class="hg-modal-body">
+                        <p style="color:#6b7684;font-size:13px;margin:0 0 12px;">Add one asset or several at once — they all attach to this site.</p>
+                        <div id="hgAssetRows"></div>
+                        <button type="button" class="hg-btn ghost" onclick="hgAddAssetRow()" style="margin-top:4px;">➕ Add another asset</button>
+                    </div>
+                    <div class="hg-modal-foot">
+                        <button class="hg-btn ghost" onclick="hgModalClose()">Cancel</button>
+                        <button class="hg-btn primary" onclick="hgSaveAssetsToSite('${siteId}')">💾 Save assets</button>
+                    </div>
+                </div>`;
+            hgModalOpen(html);
+            hgAddAssetRow();
+        }
+
+        function hgSaveAssetsToSite(siteId) {
+            const list = LS.get('hadron_sites', []);
+            const site = list.find(x => x.id === siteId);
+            if (!site) { hgModalClose(); return; }
+            const newAssets = hgCollectAssetRows();
+            if (!newAssets.length) { showToast('No assets to add'); return; }
+            site.equipment = (site.equipment || []).concat(newAssets);
+            LS.set('hadron_sites', list);
+            hgModalClose();
+            renderSites();
+            showToast('Added ' + newAssets.length + ' asset' + (newAssets.length===1?'':'s'));
         }
         function deleteSite(id) {
             if (!confirm('Delete this site and its assets?')) return;
