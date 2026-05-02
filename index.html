@@ -45,6 +45,9 @@
     <!-- Customizable home grid (drag-to-reorder) -->
     <script src="customize.js" defer></script>
 
+    <!-- Data Manager (Excel import/export) -->
+    <script src="data-manager.js" defer></script>
+
     <!-- QR encoder (MIT, Kazuhiko Arase) -->
     <script src="qr.js"></script>
 
@@ -2360,6 +2363,10 @@
                     <div class="icon">🎓</div>
                     <div class="app-name" data-i18n="app.academy">Hadron Academy</div>
                 </div>
+                <div class="app-icon" data-app="data" data-roles="admin" onclick="openDataManager && openDataManager()">
+                    <div class="icon" style="background: linear-gradient(135deg, #1a3d9e 0%, #00b1ca 100%);">📊</div>
+                    <div class="app-name">Data Manager</div>
+                </div>
             </div>
         </div>
 
@@ -2511,7 +2518,7 @@
                 <div class="hg-section-title">About</div>
                 <div class="hg-kvgrid">
                     <div class="hg-kv"><div class="k">App</div><div class="v">Hadron Group</div></div>
-                    <div class="hg-kv"><div class="k">Version</div><div class="v">v44</div></div>
+                    <div class="hg-kv"><div class="k">Version</div><div class="v">v45</div></div>
                     <div class="hg-kv"><div class="k">Platform</div><div class="v">PWA</div></div>
                 </div>
             </div>
