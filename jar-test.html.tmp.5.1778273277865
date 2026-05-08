@@ -1,0 +1,1487 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mnisi Jar-Test DSS — Decision Support System</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:ital,wght@0,400;0,700;1,400&family=Syne:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+:root {
+  --bg: #07090f;
+  --surface: #0d1220;
+  --surface2: #131929;
+  --surface3: #1a2235;
+  --border: #1e2d45;
+  --border2: #253349;
+  --teal: #00e5c0;
+  --teal2: #00b89c;
+  --blue: #3d8bff;
+  --amber: #ffb740;
+  --red: #ff4d5e;
+  --dark-red: #c0392b;
+  --green: #00e5a0;
+  --lt-green: #6bffcc;
+  --text: #e8f0fe;
+  --text2: #8fa3c0;
+  --text3: #4a6080;
+  --mono: 'Space Mono', monospace;
+  --sans: 'Syne', sans-serif;
+  --r: 6px;
+}
+
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--sans);
+  font-size: 14px;
+  min-height: 100vh;
+  background-image:
+    radial-gradient(ellipse 80% 50% at 50% -10%, rgba(0,229,192,0.06) 0%, transparent 60%),
+    linear-gradient(180deg, #07090f 0%, #080c18 100%);
+}
+
+/* HEADER */
+.hdr {
+  background: rgba(13,18,32,0.95);
+  border-bottom: 1px solid var(--border);
+  backdrop-filter: blur(12px);
+  position: sticky; top:0; z-index:200;
+  padding: 0 32px;
+  height: 62px;
+  display:flex; align-items:center; justify-content:space-between;
+}
+.hdr-brand { display:flex; align-items:center; gap:14px; }
+.hdr-icon {
+  width:36px; height:36px; border-radius:8px;
+  background: linear-gradient(135deg, var(--teal), #009999);
+  display:flex; align-items:center; justify-content:center;
+  font-family:var(--mono); font-size:12px; font-weight:700; color:#000;
+  letter-spacing:-0.5px;
+}
+.hdr-title { font-size:15px; font-weight:700; letter-spacing:0.02em; }
+.hdr-sub { font-family:var(--mono); font-size:10px; color:var(--text3); letter-spacing:0.06em; }
+.hdr-actions { display:flex; gap:10px; align-items:center; }
+
+/* BUTTONS */
+.btn {
+  font-family:var(--mono); font-size:11px; font-weight:700;
+  border:none; border-radius:var(--r);
+  padding:9px 18px; cursor:pointer;
+  letter-spacing:0.04em; transition:all .15s;
+  display:inline-flex; align-items:center; gap:6px; white-space:nowrap;
+}
+.btn-primary { background:var(--teal); color:#000; }
+.btn-primary:hover { background:var(--teal2); transform:translateY(-1px); box-shadow:0 4px 16px rgba(0,229,192,0.25); }
+.btn-secondary { background:var(--surface2); border:1px solid var(--border2); color:var(--text2); }
+.btn-secondary:hover { border-color:var(--teal); color:var(--teal); }
+.btn-ghost { background:transparent; border:1px solid var(--border2); color:var(--text3); padding:6px 10px; font-size:10px; }
+.btn-ghost:hover { border-color:var(--red); color:var(--red); }
+.btn-blue { background:var(--blue); color:#fff; }
+.btn-blue:hover { background:#2d7af0; }
+.btn-run { background:var(--teal); color:#000; font-size:13px; padding:10px 24px; }
+.btn-run:hover { background:var(--teal2); box-shadow:0 4px 20px rgba(0,229,192,0.3); }
+.btn-sm { padding:5px 10px; font-size:10px; }
+.btn-add { background:rgba(0,229,192,0.08); border:1px dashed rgba(0,229,192,0.3); color:var(--teal); }
+.btn-add:hover { background:rgba(0,229,192,0.15); }
+
+/* LAYOUT */
+.wrap { max-width:1300px; margin:0 auto; padding:28px 32px 100px; }
+.page-lbl {
+  font-family:var(--mono); font-size:10px; color:var(--text3);
+  letter-spacing:0.12em; text-transform:uppercase;
+  margin-bottom:24px; padding-bottom:12px;
+  border-bottom: 1px solid var(--border);
+}
+
+.grid-2 { display:grid; grid-template-columns:1fr 1fr; gap:14px; margin-bottom:14px; }
+.grid-3 { display:grid; grid-template-columns:1fr 1fr 1fr; gap:14px; margin-bottom:14px; }
+.mb { margin-bottom:14px; }
+
+/* CARDS */
+.card {
+  background:var(--surface); border:1px solid var(--border);
+  border-radius:10px; overflow:hidden;
+}
+.card-hdr {
+  padding:11px 16px;
+  border-bottom:1px solid var(--border);
+  background:var(--surface2);
+  display:flex; align-items:center; justify-content:space-between;
+}
+.card-title {
+  font-family:var(--mono); font-size:10px; font-weight:700;
+  color:var(--text2); letter-spacing:0.1em; text-transform:uppercase;
+  display:flex; align-items:center; gap:8px;
+}
+.dot { width:6px; height:6px; border-radius:50%; background:var(--teal); display:inline-block; flex-shrink:0; }
+.dot-warn { background:var(--amber); }
+.dot-blue { background:var(--blue); }
+.dot-red  { background:var(--red); }
+.card-body { padding:16px; }
+
+/* FORM */
+.fg { display:flex; flex-direction:column; gap:5px; margin-bottom:12px; }
+.fg:last-child { margin-bottom:0; }
+label { font-family:var(--mono); font-size:10px; color:var(--text3); letter-spacing:0.06em; text-transform:uppercase; }
+.hint { font-family:var(--mono); font-size:10px; color:var(--text3); margin-top:3px; }
+input[type=number], input[type=text] {
+  background:var(--bg); border:1px solid var(--border2);
+  border-radius:var(--r); color:var(--text);
+  font-family:var(--mono); font-size:12px;
+  padding:8px 10px; width:100%;
+  transition:border-color .15s;
+  -moz-appearance:textfield;
+}
+input::-webkit-outer-spin-button, input::-webkit-inner-spin-button { -webkit-appearance:none; }
+input:focus { outline:none; border-color:var(--teal); box-shadow:0 0 0 2px rgba(0,229,192,0.1); }
+input::placeholder { color:var(--text3); }
+
+/* TABLE */
+.tbl-wrap { overflow-x:auto; }
+table { width:100%; border-collapse:collapse; font-family:var(--mono); font-size:11px; }
+thead th {
+  background:var(--surface2); border-bottom:1px solid var(--border);
+  padding:9px 10px; text-align:left;
+  font-size:9px; color:var(--text3); letter-spacing:0.09em;
+  text-transform:uppercase; font-weight:700; white-space:nowrap;
+}
+tbody tr { border-bottom:1px solid var(--border); transition:background .1s; }
+tbody tr:hover { background:rgba(255,255,255,0.02); }
+tbody tr:last-child { border-bottom:none; }
+tbody td { padding:5px 6px; vertical-align:middle; }
+tbody td input {
+  border:1px solid transparent; background:transparent;
+  padding:6px 8px; border-radius:4px; min-width:90px;
+}
+tbody td input:focus { background:var(--bg); border-color:var(--teal); }
+.row-n { color:var(--text3); font-size:10px; text-align:center; min-width:24px; }
+
+/* RESULTS */
+#results { display:none; }
+
+.best-banner {
+  border-radius:10px; padding:22px 26px; margin-bottom:14px;
+  border:1px solid; display:flex; align-items:flex-start; gap:24px;
+  position:relative; overflow:hidden;
+}
+.best-banner::before {
+  content:'';position:absolute;top:0;right:0;bottom:0;left:0;
+  background:linear-gradient(135deg,currentColor 0%,transparent 60%);
+  opacity:0.04; pointer-events:none;
+}
+.best-banner.optimal   { border-color:rgba(0,229,160,.4); background:rgba(0,229,160,.06); }
+.best-banner.best-avail { border-color:rgba(255,183,64,.4); background:rgba(255,183,64,.06); }
+
+.status-pill {
+  font-family:var(--mono); font-size:10px; font-weight:700;
+  padding:4px 10px; border-radius:4px; letter-spacing:0.08em;
+  flex-shrink:0; margin-top:3px;
+}
+.pill-optimal   { background:rgba(0,229,160,.2); color:var(--green); }
+.pill-acceptable{ background:rgba(107,255,204,.15); color:var(--lt-green); }
+.pill-marginal  { background:rgba(255,183,64,.2); color:var(--amber); }
+.pill-rejected  { background:rgba(255,77,94,.2); color:var(--red); }
+.pill-infeasible{ background:rgba(192,57,43,.25); color:#ff8080; }
+.pill-best-avail{ background:rgba(255,183,64,.2); color:var(--amber); }
+
+.best-name { font-size:22px; font-weight:800; color:var(--text); margin-bottom:4px; }
+.best-sub  { font-family:var(--mono); font-size:11px; color:var(--text3); }
+.metrics   { display:flex; gap:22px; flex-wrap:wrap; margin-top:14px; }
+.metric    { display:flex; flex-direction:column; gap:3px; }
+.metric-lbl { font-family:var(--mono); font-size:9px; color:var(--text3); letter-spacing:0.08em; text-transform:uppercase; }
+.metric-val { font-family:var(--mono); font-size:16px; font-weight:700; }
+.c-green { color:var(--green); }
+.c-lt-green { color:var(--lt-green); }
+.c-amber { color:var(--amber); }
+.c-red   { color:var(--red); }
+.c-teal  { color:var(--teal); }
+.c-blue  { color:var(--blue); }
+
+/* RESULTS TABLE */
+.sc-col { font-weight:700; }
+.best-row { background:rgba(0,229,192,0.05) !important; }
+.status-lbl { font-family:var(--mono); font-size:10px; font-weight:700; letter-spacing:0.04em; }
+.st-optimal   { color:var(--green); }
+.st-acceptable{ color:var(--lt-green); }
+.st-marginal  { color:var(--amber); }
+.st-rejected  { color:var(--red); }
+.st-infeasible{ color:#ff8080; }
+
+/* WHAT-IF */
+.whatif-row { display:none; }
+.whatif-row.open { display:table-row; }
+.whatif-cell {
+  background:rgba(61,139,255,0.06);
+  border-left:2px solid var(--blue);
+  padding:10px 14px !important;
+  font-family:var(--mono); font-size:11px; color:var(--blue);
+}
+
+/* DIAGNOSTICS */
+.diag-list { list-style:none; display:flex; flex-direction:column; gap:8px; }
+.diag-item {
+  background:var(--surface2); border:1px solid var(--border);
+  border-left:3px solid var(--amber);
+  border-radius:var(--r); padding:10px 14px;
+  font-family:var(--mono); font-size:11px; color:var(--text2);
+  line-height:1.6;
+}
+.diag-item .diag-code {
+  font-size:9px; color:var(--amber); letter-spacing:0.08em;
+  text-transform:uppercase; margin-bottom:4px;
+}
+
+/* CHARTS */
+.chart-row { display:grid; grid-template-columns:1fr 1fr; gap:14px; margin-bottom:14px; }
+.chart-box {
+  background:var(--surface); border:1px solid var(--border);
+  border-radius:10px; padding:18px 20px;
+}
+.chart-box canvas { width:100% !important; height:260px !important; }
+.chart-lbl {
+  font-family:var(--mono); font-size:10px; font-weight:700;
+  color:var(--text2); text-transform:uppercase; letter-spacing:0.1em;
+  margin-bottom:12px; padding-bottom:8px; border-bottom:1px solid var(--border);
+}
+
+/* ASSESSMENT */
+.assess-section { margin-bottom:16px; }
+.assess-title {
+  font-family:var(--mono); font-size:10px; color:var(--teal);
+  text-transform:uppercase; letter-spacing:0.1em;
+  margin-bottom:8px; padding-bottom:6px; border-bottom:1px solid var(--border);
+}
+.assess-body {
+  font-family:var(--mono); font-size:12px; color:var(--text2);
+  line-height:1.8; white-space:pre-line;
+}
+.directive-box {
+  background:linear-gradient(135deg, rgba(0,229,192,0.08), rgba(61,139,255,0.08));
+  border:1px solid rgba(0,229,192,0.3); border-radius:8px; padding:16px 20px;
+  font-family:var(--mono); font-size:12px; color:var(--text); line-height:1.8;
+  margin-top:10px;
+}
+.directive-box.warn-directive {
+  background:linear-gradient(135deg,rgba(255,183,64,0.08),rgba(255,77,94,0.06));
+  border-color:rgba(255,183,64,0.35); color:var(--amber);
+}
+.directive-label {
+  font-size:9px; letter-spacing:0.1em; text-transform:uppercase;
+  margin-bottom:6px; opacity:0.7;
+}
+
+/* COST PANEL */
+.cost-badge {
+  font-family:var(--mono); font-size:10px; color:var(--text3);
+  background:rgba(61,139,255,0.1); border:1px solid rgba(61,139,255,0.2);
+  border-radius:4px; padding:2px 8px;
+}
+.toggle-row { display:flex; align-items:center; gap:12px; margin-bottom:14px; }
+.toggle-lbl { font-family:var(--mono); font-size:11px; color:var(--text2); }
+.toggle {
+  position:relative; width:40px; height:22px;
+  display:inline-block;
+}
+.toggle input { opacity:0; width:0; height:0; }
+.toggle-slider {
+  position:absolute; cursor:pointer; top:0;left:0;right:0;bottom:0;
+  background:var(--surface3); border-radius:11px; border:1px solid var(--border2);
+  transition:.2s;
+}
+.toggle-slider:before {
+  content:''; position:absolute; height:16px; width:16px;
+  left:2px; bottom:2px; background:var(--text3);
+  border-radius:50%; transition:.2s;
+}
+.toggle input:checked + .toggle-slider { background:rgba(0,229,192,0.2); border-color:var(--teal); }
+.toggle input:checked + .toggle-slider:before { transform:translateX(18px); background:var(--teal); }
+
+/* WARN BOX */
+.warn-strip {
+  background:rgba(255,183,64,0.08); border:1px solid rgba(255,183,64,0.3);
+  border-radius:var(--r); padding:10px 14px;
+  font-family:var(--mono); font-size:11px; color:var(--amber);
+  margin-bottom:14px; display:none;
+}
+.warn-strip::before { content:"⚠  "; }
+
+/* ACTION BAR */
+.action-bar {
+  display:flex; align-items:center; gap:10px; padding:12px 16px;
+  border-top:1px solid var(--border); background:var(--surface2);
+}
+
+/* FOOTER */
+.ftr {
+  position:fixed; bottom:0; left:0; right:0;
+  background:rgba(13,18,32,0.97); border-top:1px solid var(--border);
+  backdrop-filter:blur(10px); padding:10px 32px;
+  display:flex; align-items:center; justify-content:space-between;
+  font-family:var(--mono); font-size:10px; color:var(--text3); z-index:100;
+}
+.ftr-brand { color:var(--teal); }
+
+/* PRINT */
+@media print {
+  .hdr,.ftr,.btn,#entry-section,.hdr-actions{display:none!important}
+  body{background:#fff;color:#000; font-size:11px;}
+  .card{border:1px solid #ccc;background:#fff; page-break-inside:avoid;}
+  .assess-body,.diag-item{color:#222}
+  .print-report-header { display:block !important; }
+  .print-report-footer { display:block !important; }
+  /* Table fix: shrink to fit page, prevent status column cutoff */
+  .tbl-wrap { overflow:visible !important; }
+  table { width:100% !important; table-layout:fixed; font-size:9px !important; }
+  thead th { font-size:8px !important; padding:5px 4px !important; white-space:normal !important; }
+  tbody td { font-size:9px !important; padding:4px !important; word-break:break-word; }
+  tbody td input { display:none; }
+  /* Ensure status and what-if columns are not clipped */
+  .status-lbl { font-size:8px !important; }
+  .score-bar { display:none; }
+  /* Hide what-if toggle buttons on print */
+  .whatif-row { display:none !important; }
+  /* Tab panels: show all on print */
+  .tab-bar { display:none !important; }
+  .tab-panel { display:block !important; padding:12px 16px; border-top:1px solid #eee; }
+  .chart-row { display:none !important; }
+  .best-banner { background:#f9f9f9 !important; border:1px solid #ccc !important; color:#000 !important; }
+  .best-name,.metric-val,.metric-lbl { color:#000 !important; }
+  .directive-box { background:#f9f9f9 !important; border:1px solid #ccc !important; color:#000 !important; }
+  .directive-label { color:#444 !important; }
+  .diag-item { background:#fff !important; border-left-color:#999 !important; }
+  .diag-code { color:#555 !important; }
+  .wrap { padding:0 !important; max-width:100% !important; }
+}
+.print-report-header {
+  display:none;
+  text-align:center;
+  border-bottom:2px solid #000;
+  padding-bottom:14px;
+  margin-bottom:20px;
+}
+.print-report-header .prh-title {
+  font-family:'Space Mono',monospace;
+  font-size:20px; font-weight:700; letter-spacing:0.04em; color:#000;
+}
+.print-report-header .prh-sub {
+  font-family:'Space Mono',monospace;
+  font-size:11px; color:#555; margin-top:4px; letter-spacing:0.06em;
+}
+.print-report-header .prh-meta {
+  font-family:'Space Mono',monospace;
+  font-size:10px; color:#777; margin-top:8px;
+}
+.print-report-footer {
+  display:none;
+  text-align:center;
+  border-top:1px solid #ccc;
+  padding-top:12px;
+  margin-top:24px;
+  font-family:'Space Mono',monospace;
+  font-size:10px; color:#888;
+}
+
+/* RESPONSIVE */
+@media(max-width:900px){
+  .grid-2,.grid-3,.chart-row{grid-template-columns:1fr}
+  .hdr{padding:0 16px}
+  .wrap{padding:16px 16px 90px}
+}
+
+/* SCORE BAR */
+.score-bar { height:4px; background:var(--border2); border-radius:2px; margin-top:4px; overflow:hidden; }
+.score-bar-fill { height:100%; border-radius:2px; transition:width .5s ease; }
+
+/* SECTION BADGE */
+.sec-badge {
+  display:inline-flex; align-items:center; gap:6px;
+  font-family:var(--mono); font-size:9px; color:var(--text3);
+  background:var(--surface3); border:1px solid var(--border);
+  border-radius:4px; padding:3px 8px; margin-bottom:10px;
+  letter-spacing:0.06em; text-transform:uppercase;
+}
+
+/* TABS */
+.tab-bar {
+  display:flex; gap:0; border-bottom:1px solid var(--border); margin-bottom:0;
+}
+.tab {
+  font-family:var(--mono); font-size:11px; padding:10px 20px; cursor:pointer;
+  color:var(--text3); border-bottom:2px solid transparent; transition:all .15s;
+  background:transparent; border:none; letter-spacing:0.04em;
+}
+.tab.active { color:var(--teal); border-bottom-color:var(--teal); }
+.tab-panel { display:none; padding:16px; }
+.tab-panel.active { display:block; }
+
+.no-results { font-family:var(--mono); font-size:12px; color:var(--text3); text-align:center; padding:20px; }
+</style>
+</head>
+<body>
+
+<!-- Embed-mode hook: hide the tool's own header/footer when displayed in
+     an iframe inside the Hadron Group app, so the parent window provides
+     the chrome. Triggered via ?embed=1 in the URL. -->
+<script>
+  if (location.search.indexOf('embed=1') !== -1) {
+    document.documentElement.classList.add('hg-embedded');
+  }
+</script>
+<style>
+  .hg-embedded .hdr,
+  .hg-embedded .ftr { display: none !important; }
+  .hg-embedded body { padding-top: 0; }
+  .hg-embedded .wrap { padding-top: 16px; padding-bottom: 32px; }
+</style>
+
+<header class="hdr">
+  <div class="hdr-brand">
+    <div class="hdr-icon">MJ</div>
+    <div>
+      <div class="hdr-title">Mnisi Jar-Test DSS</div>
+      <div class="hdr-sub">Powered by Mnisi Technologies</div>
+    </div>
+  </div>
+  <div class="hdr-actions">
+    <button class="btn btn-secondary" onclick="resetAll()">↺ Reset</button>
+    <button class="btn btn-run" onclick="runAnalysis()">▶ Run Analysis</button>
+    <button class="btn btn-blue" id="pdf-btn" style="display:none" onclick="window.print()">⎙ Print Report</button>
+  </div>
+</header>
+
+<div class="wrap">
+  <div id="entry-section">
+    <!-- ROW 1 -->
+    <div class="grid-2">
+      <!-- Raw Water -->
+      <div class="card">
+        <div class="card-hdr">
+          <span class="card-title"><span class="dot"></span>Raw Water Conditions</span>
+        </div>
+        <div class="card-body">
+          <div class="fg">
+            <label>Organisation / Site Name <span style="color:var(--text3);font-size:9px;text-transform:none">(optional)</span></label>
+            <input type="text" id="org-name" placeholder="e.g. Hartbeespoort WTW">
+          </div>
+          <div class="fg">
+            <label>Turbidity (NTU)</label>
+            <input type="number" id="raw-turb" placeholder="e.g. 45.0" min="0" step="0.1">
+          </div>
+          <div class="fg">
+            <label>pH</label>
+            <input type="number" id="raw-ph" placeholder="e.g. 7.4" min="0" max="14" step="0.01">
+          </div>
+          <div class="fg">
+            <label>Temperature (°C)</label>
+            <input type="number" id="raw-temp" placeholder="e.g. 22.5" min="0" step="0.1">
+          </div>
+        </div>
+      </div>
+
+      <!-- Constraints -->
+      <div class="card">
+        <div class="card-hdr">
+          <span class="card-title"><span class="dot dot-warn"></span>Treatment Constraints</span>
+        </div>
+        <div class="card-body">
+          <div class="fg">
+            <label>Target Turbidity ≤ (NTU)</label>
+            <input type="number" id="tgt-turb" value="1.0" min="0" step="0.1">
+            <span class="hint">Final turbidity must be ≤ this value to comply</span>
+          </div>
+          <div class="fg">
+            <label>pH Lower Bound</label>
+            <input type="number" id="ph-min" value="6.5" min="0" max="14" step="0.01">
+          </div>
+          <div class="fg">
+            <label>pH Upper Bound</label>
+            <input type="number" id="ph-max" value="8.5" min="0" max="14" step="0.01">
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Cost Panel -->
+    <div class="card mb">
+      <div class="card-hdr">
+        <span class="card-title"><span class="dot dot-blue"></span>Cost-Adjusted Scoring <span style="font-size:9px;color:var(--text3);margin-left:6px;letter-spacing:0;text-transform:none;font-weight:400">(optional)</span></span>
+        <label class="toggle"><input type="checkbox" id="cost-toggle" onchange="toggleCost()"><span class="toggle-slider"></span></label>
+      </div>
+      <div id="cost-panel" style="display:none">
+        <div class="card-body">
+          <div class="grid-2" style="margin-bottom:0">
+            <div class="fg" style="margin-bottom:0">
+              <label>Coagulant Cost (ZAR/kg)</label>
+              <input type="number" id="coag-cost" placeholder="e.g. 8.50" min="0" step="0.01">
+            </div>
+            <div class="fg" style="margin-bottom:0">
+              <label>Flocculant Cost (ZAR/kg)</label>
+              <input type="number" id="floc-cost" placeholder="e.g. 42.00" min="0" step="0.01">
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Jar Table -->
+    <div class="card mb">
+      <div class="card-hdr">
+        <span class="card-title"><span class="dot dot-blue"></span>Jar Test Results — Data Entry</span>
+        <span style="font-family:var(--mono);font-size:10px;color:var(--text3)">Min 2 · Max 6 jars</span>
+      </div>
+      <div class="tbl-wrap">
+        <table id="jar-table">
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>Jar Name / ID</th>
+              <th>Coagulant Dose (mg/L)</th>
+              <th>Flocculant Dose (mg/L)</th>
+              <th>Final Turbidity (NTU)</th>
+              <th>Final pH</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody id="jar-body"></tbody>
+        </table>
+      </div>
+      <div class="action-bar">
+        <button class="btn btn-add btn-sm" onclick="addRow()">+ Add Jar</button>
+        <span style="font-family:var(--mono);font-size:10px;color:var(--text3)" id="row-count-lbl">3 jars</span>
+      </div>
+    </div>
+  </div><!-- /entry-section -->
+
+  <!-- WARN -->
+  <div class="warn-strip" id="warn-strip"></div>
+
+  <!-- RESULTS -->
+  <div id="results">
+
+  <!-- PRINT HEADER (visible only on print) -->
+  <div class="print-report-header" id="print-hdr">
+    <div class="prh-title">MNISI JAR-TEST DSS</div>
+    <div class="prh-sub">Coagulation &amp; Flocculation Decision Support System</div>
+    <div class="prh-meta" id="print-meta"></div>
+  </div>
+
+  <!-- BEST JAR BANNER -->
+    <div id="best-banner" class="best-banner mb"></div>
+
+    <!-- RESULTS TABLE -->
+    <div class="card mb">
+      <div class="card-hdr">
+        <span class="card-title"><span class="dot"></span>Jar-by-Jar Scoring Summary</span>
+      </div>
+      <div class="tbl-wrap">
+        <table>
+          <colgroup>
+            <col style="width:14%">
+            <col style="width:9%">
+            <col style="width:9%">
+            <col style="width:11%">
+            <col style="width:8%">
+            <col style="width:9%">
+            <col style="width:8%">
+            <col style="width:10%">
+            <col id="cost-col-w" style="width:10%;display:none">
+            <col id="chem-col-w" style="width:10%;display:none">
+            <col style="width:9%">
+            <col style="width:4%">
+          </colgroup>
+          <thead>
+            <tr>
+              <th>Jar</th>
+              <th>Coag. (mg/L)</th>
+              <th>Floc. (mg/L)</th>
+              <th>Final Turb. (NTU)</th>
+              <th>Final pH</th>
+              <th>Turb. Score</th>
+              <th>pH Score</th>
+              <th>Composite</th>
+              <th id="cost-col-hdr" style="display:none">Cost-Adj. Score</th>
+              <th id="chem-cost-col-hdr" style="display:none">Chem Cost / ML</th>
+              <th>Status</th>
+              <th>What-if</th>
+            </tr>
+          </thead>
+          <tbody id="res-body"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- CHARTS -->
+    <div class="chart-row">
+      <div class="chart-box">
+        <div class="chart-lbl">Composite Score by Jar</div>
+        <canvas id="chart-score"></canvas>
+      </div>
+      <div class="chart-box">
+        <div class="chart-lbl">Turbidity vs Coagulant Dose</div>
+        <canvas id="chart-turb"></canvas>
+      </div>
+    </div>
+    <div class="chart-row">
+      <div class="chart-box">
+        <div class="chart-lbl">pH vs Coagulant Dose</div>
+        <canvas id="chart-ph"></canvas>
+      </div>
+      <div class="chart-box">
+        <div class="chart-lbl">Score Breakdown (Turbidity vs pH Component)</div>
+        <canvas id="chart-breakdown"></canvas>
+      </div>
+    </div>
+
+    <!-- DIAGNOSTICS -->
+    <div class="card mb" id="diag-card">
+      <div class="card-hdr">
+        <span class="card-title"><span class="dot dot-warn"></span>Root Cause Diagnostics</span>
+      </div>
+      <div class="card-body">
+        <ul class="diag-list" id="diag-list"></ul>
+      </div>
+    </div>
+
+    <!-- ENGINEERING ASSESSMENT TABS -->
+    <div class="card mb" id="assess-card">
+      <div class="card-hdr">
+        <span class="card-title"><span class="dot dot-red"></span>Engineering Assessment &amp; Operational Report</span>
+        <button class="btn btn-blue btn-sm" onclick="window.print()">⎙ Print / Export</button>
+      </div>
+      <div class="tab-bar">
+        <button class="tab active" onclick="showTab('tab-summary',this)">Summary</button>
+        <button class="tab" onclick="showTab('tab-turb',this)">Turbidity</button>
+        <button class="tab" onclick="showTab('tab-ph',this)">pH</button>
+        <button class="tab" onclick="showTab('tab-sens',this)">Dose Sensitivity</button>
+        <button class="tab" id="tab-cost-btn" style="display:none" onclick="showTab('tab-cost',this)">Cost Analysis</button>
+        <button class="tab" onclick="showTab('tab-directive',this)">Directive</button>
+      </div>
+      <div id="tab-summary" class="tab-panel active"><div class="assess-body" id="txt-summary"></div></div>
+      <div id="tab-turb"    class="tab-panel"><div class="assess-body" id="txt-turb"></div></div>
+      <div id="tab-ph"      class="tab-panel"><div class="assess-body" id="txt-ph"></div></div>
+      <div id="tab-sens"    class="tab-panel"><div class="assess-body" id="txt-sens"></div></div>
+      <div id="tab-cost"    class="tab-panel" style="display:none"><div class="assess-body" id="txt-cost"></div></div>
+      <div id="tab-directive" class="tab-panel">
+        <div id="directive-box" class="directive-box">
+          <div class="directive-label">▶ Operational Directive</div>
+          <div id="txt-directive"></div>
+        </div>
+      </div>
+    </div>
+
+  <!-- PRINT FOOTER (visible only on print) -->
+  <div class="print-report-footer" id="print-ftr">
+    Generated by Mnisi Jar-Test DSS &nbsp;|&nbsp; Powered by Mnisi Technologies &nbsp;|&nbsp; <span id="print-ftr-date"></span>
+  </div>
+
+  </div><!-- /results -->
+</div><!-- /wrap -->
+
+<footer class="ftr">
+  <span class="ftr-brand">Mnisi Jar-Test DSS</span>
+  <span>Graduated Scoring · Multi-Tier Classification · Root Cause Diagnostics · Cost Analysis</span>
+  <span style="display:flex;align-items:center;gap:10px"><span id="ftr-org"></span><span style="color:var(--teal)">Powered by Mnisi Technologies</span></span>
+</footer>
+
+<script>
+// ─── STATE ────────────────────────────────────────────────────────────────────
+let rowCount = 0;
+let charts = {};
+
+// ─── INIT ─────────────────────────────────────────────────────────────────────
+window.addEventListener('DOMContentLoaded', () => {
+  addRow(); addRow(); addRow();
+});
+
+// ─── ROW MANAGEMENT ──────────────────────────────────────────────────────────
+function addRow() {
+  const tbody = document.getElementById('jar-body');
+  if (tbody.children.length >= 6) return;
+  rowCount++;
+  const n = tbody.children.length + 1;
+  const tr = document.createElement('tr');
+  tr.id = `row-${rowCount}`;
+  tr.dataset.rid = rowCount;
+  tr.innerHTML = `
+    <td class="row-n">${n}</td>
+    <td><input type="text" placeholder="Jar ${n}" class="jar-name"></td>
+    <td><input type="number" min="0" step="0.1" class="coag-dose" placeholder="—"></td>
+    <td><input type="number" min="0" step="0.1" class="floc-dose" placeholder="—"></td>
+    <td><input type="number" min="0" step="0.01" class="fin-turb" placeholder="—"></td>
+    <td><input type="number" min="0" max="14" step="0.01" class="fin-ph" placeholder="—"></td>
+    <td><button class="btn btn-ghost btn-sm" onclick="removeRow(${rowCount})">✕</button></td>
+  `;
+  tbody.appendChild(tr);
+  updateRowCount();
+}
+
+function removeRow(rid) {
+  const tbody = document.getElementById('jar-body');
+  if (tbody.children.length <= 2) return;
+  const tr = document.getElementById(`row-${rid}`);
+  if (tr) tr.remove();
+  // renumber
+  Array.from(tbody.children).forEach((r,i) => {
+    r.querySelector('.row-n').textContent = i+1;
+  });
+  updateRowCount();
+}
+
+function updateRowCount() {
+  const n = document.getElementById('jar-body').children.length;
+  document.getElementById('row-count-lbl').textContent = `${n} jar${n!==1?'s':''}`;
+}
+
+function toggleCost() {
+  const on = document.getElementById('cost-toggle').checked;
+  document.getElementById('cost-panel').style.display = on ? 'block' : 'none';
+}
+
+// ─── SCORING ──────────────────────────────────────────────────────────────────
+function turbScore(finalTurb, target) {
+  if (finalTurb <= target) return finalTurb;
+  const excess = finalTurb - target;
+  const pct = excess / target;
+  let sf;
+  if (pct <= 0.5) sf = 1.0;
+  else if (pct <= 2.0) sf = 1.5;
+  else sf = 2.0;
+  return target + excess * sf;
+}
+
+function phScore(finalPh, phMin, phMax) {
+  const critLow  = phMin - 2.0;
+  const critHigh = phMax + 2.0;
+  let score = 0;
+  if (finalPh < phMin) {
+    score = (phMin - finalPh) * 2.0;
+    if (finalPh < critLow) score += 5.0;
+  } else if (finalPh > phMax) {
+    score = (finalPh - phMax) * 2.0;
+    if (finalPh > critHigh) score += 5.0;
+  }
+  return score;
+}
+
+function getStatus(j, tgtTurb, phMin, phMax, isOptimal) {
+  const turbOk = j.turb <= tgtTurb;
+  const phOk   = j.ph >= phMin && j.ph <= phMax;
+  const critLow  = phMin - 2.0;
+  const critHigh = phMax + 2.0;
+  const critPh = j.ph < critLow || j.ph > critHigh;
+  const infeasibleTurb = j.turb > tgtTurb * 5;
+
+  if (critPh || infeasibleTurb) return 'INFEASIBLE';
+
+  const turbMarginal = !turbOk && j.turb <= tgtTurb * 1.10;
+  const phMarginal   = !phOk && (
+    (j.ph < phMin && (phMin - j.ph) <= 0.15) ||
+    (j.ph > phMax && (j.ph - phMax) <= 0.15)
+  );
+
+  if (!turbOk && !turbMarginal && !phMarginal) return 'REJECTED';
+  if (!phOk && !phMarginal && !turbMarginal) return 'REJECTED';
+  if (turbMarginal || phMarginal) return 'MARGINAL';
+  if (turbOk && phOk) return isOptimal ? 'OPTIMAL' : 'ACCEPTABLE';
+  return 'REJECTED';
+}
+
+// ─── COST ─────────────────────────────────────────────────────────────────────
+function chemCostPerML(coagDose, flocDose, coagCostKg, flocCostKg) {
+  // dose in mg/L = g/m³ = g/kL → ÷1000 = kg/kL → ×1000 = kg/ML
+  const coagKgML = coagDose; // mg/L * 1e6 L/ML / 1e6 mg/kg = kg/ML
+  const flocKgML = flocDose;
+  return coagKgML * coagCostKg + flocKgML * flocCostKg;
+}
+
+// ─── DIAGNOSTICS ──────────────────────────────────────────────────────────────
+function runDiagnostics(jars, tgtTurb, phMin, phMax) {
+  const msgs = [];
+  if (jars.length < 2) return msgs;
+
+  const coagDoses = jars.map(j=>j.coag);
+  const sorted = [...jars].sort((a,b)=>a.coag-b.coag);
+
+  // D1: pH drops as coag rises, turb still high
+  const phDrops = sorted.every((j,i)=> i===0 || j.ph <= sorted[i-1].ph);
+  const turbHigh = jars.some(j=>j.turb > tgtTurb);
+  if (phDrops && turbHigh && jars.length >= 3) {
+    msgs.push({
+      code:'D-01',
+      text:'pH decreases consistently with increasing coagulant dose while turbidity remains above target. This pattern indicates alkalinity consumption exceeds the buffering capacity of the source water. Recommendation: Apply lime or soda ash pre-treatment to restore alkalinity and maintain pH during coagulation.'
+    });
+  }
+
+  // D2: pH above upper bound across most jars, turb good
+  const mostPhHigh = jars.filter(j=>j.ph > phMax).length >= jars.length * 0.6;
+  const mostTurbOk = jars.filter(j=>j.turb <= tgtTurb).length >= jars.length * 0.5;
+  if (mostPhHigh && mostTurbOk) {
+    msgs.push({
+      code:'D-02',
+      text:'Final pH exceeds the upper bound in the majority of jars despite acceptable turbidity removal. This indicates elevated source water alkalinity suppressing the pH depression normally associated with coagulation. Recommendation: Consider CO₂ dosing or mineral acid pre-treatment to bring pH into the target operating range.'
+    });
+  }
+
+  // D3: Turbidity decreases then increases (charge reversal)
+  const turbSeq = sorted.map(j=>j.turb);
+  let foundReversal = false;
+  for (let i=1;i<turbSeq.length-1;i++) {
+    if (turbSeq[i] < turbSeq[i-1] && turbSeq[i] < turbSeq[i+1]) { foundReversal=true; break; }
+  }
+  if (foundReversal) {
+    msgs.push({
+      code:'D-03',
+      text:'Turbidity follows a U-shaped trend across the dose range: decreasing then increasing at higher doses. This is characteristic of coagulant overdosing and potential charge reversal — restabilisation of colloidal particles due to excessive positive charge imbalance. Recommendation: The optimal dose is near the turbidity minimum. Reduce the maximum tested dose and consider extending flocculation time at the optimum.'
+    });
+  }
+
+  // D4: All jars fail turbidity, pH within range
+  const allTurbFail = jars.every(j=>j.turb > tgtTurb);
+  const phGenOk = jars.filter(j=>j.ph>=phMin && j.ph<=phMax).length >= jars.length*0.7;
+  if (allTurbFail && phGenOk) {
+    msgs.push({
+      code:'D-04',
+      text:'All tested jars exceed the turbidity target despite pH remaining within acceptable bounds. This suggests the coagulant dose range tested is insufficient, or rapid mix energy input is inadequate. Recommendation: Extend the dose range upward by 30–50% and re-test. Verify G-value at the rapid mix stage; target ≥300 s⁻¹ for 30–60 seconds.'
+    });
+  }
+
+  // D5: Turbidity compliant but pH borderline high (MARGINAL range)
+  const turbOkPhBorderHigh = jars.filter(j=>j.turb<=tgtTurb && j.ph>phMax && (j.ph-phMax)<=0.15).length > 0;
+  if (turbOkPhBorderHigh) {
+    msgs.push({
+      code:'D-05',
+      text:'One or more jars achieve turbidity compliance with final pH marginally above the upper bound. This indicates effective coagulation chemistry but an alkalinity surplus. Recommendation: A small reduction in coagulant dose or a low-volume acid trim may be sufficient to bring pH into the acceptable range without sacrificing turbidity removal.'
+    });
+  }
+
+  // D6: Low turbidity variation across dose range
+  const turbVals = jars.map(j=>j.turb);
+  const turbRange = Math.max(...turbVals) - Math.min(...turbVals);
+  const turbMean  = turbVals.reduce((a,b)=>a+b,0)/turbVals.length;
+  const coagRange = Math.max(...coagDoses) - Math.min(...coagDoses);
+  if (turbRange/turbMean < 0.20 && coagRange/Math.min(...coagDoses) > 0.5) {
+    msgs.push({
+      code:'D-06',
+      text:'Turbidity variation across the full dose range is less than 20% of the mean — dose appears to have minimal effect on treatment performance. This may indicate a coagulant-insensitive water type (very low colloid content, high ionic strength, or colloidal stabilisation). Recommendation: Consider evaluating alternative coagulant chemistries (e.g. switching between alum, ferric, or PACl) and assess whether the raw water genuinely requires coagulation treatment.'
+    });
+  }
+
+  return msgs;
+}
+
+// ─── WHAT-IF ──────────────────────────────────────────────────────────────────
+function whatIfMessage(jar, scored, tgtTurb, phMin, phMax, allJars) {
+  if (scored.status !== 'MARGINAL') return null;
+  const turbOk = jar.turb <= tgtTurb;
+  const phOk   = jar.ph >= phMin && jar.ph <= phMax;
+
+  if (!phOk && turbOk) {
+    // pH failure only — what if pH adjusted
+    const projComposite = scored.turbS; // pH score becomes 0
+    return `If pH were adjusted to within [${phMin}–${phMax}], this jar would be ACCEPTABLE with a projected composite score of <strong>${projComposite.toFixed(3)}</strong>. Consider acid or base trim dosing of approximately ${Math.abs(jar.ph - (jar.ph > phMax ? phMax : phMin)).toFixed(2)} pH units.`;
+  }
+
+  if (turbOk === false && phOk) {
+    // turbidity failure — interpolate required dose
+    const sortedByCoag = [...allJars].sort((a,b)=>a.coag-b.coag);
+    const above = sortedByCoag.filter(j=>j.turb<=tgtTurb && j.coag > jar.coag);
+    const below = sortedByCoag.filter(j=>j.turb>tgtTurb && j.coag < jar.coag);
+    if (above.length && below.length) {
+      const j1 = below[below.length-1], j2 = above[0];
+      // linear interp: dose = j1.coag + (tgt - j1.turb)/(j2.turb-j1.turb)*(j2.coag-j1.coag)
+      const projDose = j1.coag + (tgtTurb - j1.turb)/(j2.turb - j1.turb)*(j2.coag - j1.coag);
+      return `Based on linear interpolation between adjacent jars, a coagulant dose of approximately <strong>${projDose.toFixed(1)} mg/L</strong> is projected to achieve the turbidity target of ${tgtTurb} NTU under current pH conditions.`;
+    }
+    if (above.length) {
+      return `Increasing coagulant dose toward ${above[0].coag.toFixed(1)} mg/L may achieve turbidity compliance based on the trend observed in higher-dose jars.`;
+    }
+    return `Insufficient data for interpolation. Extending the dose range upward is recommended.`;
+  }
+
+  return null;
+}
+
+// ─── MAIN ANALYSIS ───────────────────────────────────────────────────────────
+function runAnalysis() {
+  // collect jars
+  const rows = document.querySelectorAll('#jar-body tr');
+  const tgtTurb = parseFloat(document.getElementById('tgt-turb').value) || 1.0;
+  const phMin   = parseFloat(document.getElementById('ph-min').value)   || 6.5;
+  const phMax   = parseFloat(document.getElementById('ph-max').value)   || 8.5;
+  const rawTurb = parseFloat(document.getElementById('raw-turb').value);
+  const rawPh   = parseFloat(document.getElementById('raw-ph').value);
+  const rawTemp = parseFloat(document.getElementById('raw-temp').value);
+  const org     = document.getElementById('org-name').value.trim() || 'Unnamed Site';
+  const costOn  = document.getElementById('cost-toggle').checked;
+  const coagCostKg = parseFloat(document.getElementById('coag-cost').value) || 0;
+  const flocCostKg = parseFloat(document.getElementById('floc-cost').value) || 0;
+  const costActive = costOn && coagCostKg > 0 && flocCostKg > 0;
+
+  const jars = [];
+  rows.forEach(r => {
+    const name  = r.querySelector('.jar-name').value.trim() || `Jar ${jars.length+1}`;
+    const coag  = parseFloat(r.querySelector('.coag-dose').value);
+    const floc  = parseFloat(r.querySelector('.floc-dose').value);
+    const turb  = parseFloat(r.querySelector('.fin-turb').value);
+    const ph    = parseFloat(r.querySelector('.fin-ph').value);
+    if (!isNaN(coag) && !isNaN(turb) && !isNaN(ph)) {
+      jars.push({ name, coag, floc: isNaN(floc)?0:floc, turb, ph });
+    }
+  });
+
+  if (jars.length < 2) {
+    alert('Please enter at least 2 complete jar test results.');
+    return;
+  }
+
+  // Score each jar
+  const minCoag = Math.min(...jars.map(j=>j.coag));
+  const minFloc = Math.min(...jars.map(j=>j.floc)) || 0.001;
+
+  const scored = jars.map(j => {
+    const turbS = turbScore(j.turb, tgtTurb);
+    const phS   = phScore(j.ph, phMin, phMax);
+    const comp  = turbS + phS;
+    let costAdj = comp;
+    let chemCostML = null;
+    if (costActive) {
+      chemCostML = chemCostPerML(j.coag, j.floc, coagCostKg, flocCostKg);
+      costAdj = comp + (chemCostML / 1000);
+    }
+    return { jar:j, turbS, phS, comp, costAdj, chemCostML, status:null };
+  });
+
+  // Find optimal (must meet all constraints, lowest comp or costAdj)
+  const compliant = scored.filter(s => s.jar.turb <= tgtTurb && s.jar.ph >= phMin && s.jar.ph <= phMax);
+  let bestIdx = -1;
+  if (compliant.length > 0) {
+    const key = costActive ? 'costAdj' : 'comp';
+    const best = compliant.reduce((a,b) => a[key] < b[key] ? a : b);
+    bestIdx = scored.indexOf(best);
+  } else {
+    const key = costActive ? 'costAdj' : 'comp';
+    const best = scored.reduce((a,b) => a[key] < b[key] ? a : b);
+    bestIdx = scored.indexOf(best);
+  }
+
+  // Assign statuses
+  scored.forEach((s,i) => {
+    s.status = getStatus(s.jar, tgtTurb, phMin, phMax, i === bestIdx && compliant.length>0);
+  });
+
+  const hasOptimal = compliant.length > 0;
+
+  // Run diagnostics
+  const diagnostics = runDiagnostics(jars, tgtTurb, phMin, phMax);
+
+  // ─── RENDER ───────────────────────────────────────────────────────────────
+
+  // Best banner
+  const bestS = scored[bestIdx];
+  const bestJ = bestS.jar;
+  const bannerEl = document.getElementById('best-banner');
+  bannerEl.className = `best-banner mb ${hasOptimal ? 'optimal' : 'best-avail'}`;
+  bannerEl.innerHTML = `
+    <div>
+      <span class="status-pill ${hasOptimal ? 'pill-optimal' : 'pill-best-avail'}">${hasOptimal ? '✓ OPTIMAL' : '⚠ BEST AVAILABLE'}</span>
+      <div class="best-name" style="margin-top:10px">${bestJ.name}</div>
+      <div class="best-sub">Selected as ${hasOptimal ? 'optimal operating condition' : 'best available — no jar met all constraints'}</div>
+      <div class="metrics">
+        <div class="metric"><span class="metric-lbl">Coagulant</span><span class="metric-val c-teal">${bestJ.coag.toFixed(1)} mg/L</span></div>
+        <div class="metric"><span class="metric-lbl">Flocculant</span><span class="metric-val c-teal">${bestJ.floc.toFixed(1)} mg/L</span></div>
+        <div class="metric"><span class="metric-lbl">Final Turbidity</span><span class="metric-val ${bestJ.turb<=tgtTurb?'c-green':'c-amber'}">${bestJ.turb.toFixed(2)} NTU</span></div>
+        <div class="metric"><span class="metric-lbl">Final pH</span><span class="metric-val ${(bestJ.ph>=phMin&&bestJ.ph<=phMax)?'c-green':'c-amber'}">${bestJ.ph.toFixed(2)}</span></div>
+        <div class="metric"><span class="metric-lbl">Composite Score</span><span class="metric-val ${hasOptimal?'c-green':'c-amber'}">${bestS.comp.toFixed(3)}</span></div>
+        ${costActive&&bestS.chemCostML!=null?`<div class="metric"><span class="metric-lbl">Chem Cost / ML</span><span class="metric-val c-blue">R ${bestS.chemCostML.toFixed(2)}</span></div>`:''}
+      </div>
+    </div>
+  `;
+
+  // Results table
+  const resBody = document.getElementById('res-body');
+  resBody.innerHTML = '';
+
+  const costColHdr = document.getElementById('cost-col-hdr');
+  const chemCostColHdr = document.getElementById('chem-cost-col-hdr');
+  costColHdr.style.display = costActive ? '' : 'none';
+  chemCostColHdr.style.display = costActive ? '' : 'none';
+
+  const maxComp = Math.max(...scored.map(s=>s.comp));
+
+  scored.forEach((s,i) => {
+    const j = s.jar;
+    const isBest = i === bestIdx;
+    const statusClass = {
+      'OPTIMAL':'st-optimal','ACCEPTABLE':'st-acceptable',
+      'MARGINAL':'st-marginal','REJECTED':'st-rejected','INFEASIBLE':'st-infeasible'
+    }[s.status] || '';
+
+    const wi = whatIfMessage(j, s, tgtTurb, phMin, phMax, jars);
+    const wiId = `wi-${i}`;
+
+    const tr = document.createElement('tr');
+    tr.className = isBest ? 'best-row' : '';
+    tr.innerHTML = `
+      <td style="font-family:var(--mono);font-weight:700;color:${isBest?'var(--teal)':'var(--text)'}">
+        ${isBest?'★ ':''}${j.name}
+      </td>
+      <td>${j.coag.toFixed(1)}</td>
+      <td>${j.floc.toFixed(1)}</td>
+      <td style="color:${j.turb<=tgtTurb?'var(--green)':'var(--red)'}">${j.turb.toFixed(2)}</td>
+      <td style="color:${j.ph>=phMin&&j.ph<=phMax?'var(--green)':'var(--red)'}">${j.ph.toFixed(2)}</td>
+      <td style="font-family:var(--mono)">${s.turbS.toFixed(3)}</td>
+      <td style="font-family:var(--mono)">${s.phS.toFixed(3)}</td>
+      <td style="font-family:var(--mono);font-weight:700">
+        ${s.comp.toFixed(3)}
+        <div class="score-bar"><div class="score-bar-fill" style="width:${Math.min(100,s.comp/maxComp*100).toFixed(0)}%;background:${isBest?'var(--teal)':'var(--text3)'}"></div></div>
+      </td>
+      ${costActive?`<td style="font-family:var(--mono)">${s.costAdj.toFixed(3)}</td>`:''}
+      ${costActive?`<td style="font-family:var(--mono)">R ${s.chemCostML!=null?s.chemCostML.toFixed(2):'—'}</td>`:''}
+      <td><span class="status-lbl ${statusClass}">${s.status}</span></td>
+      <td>${wi?`<button class="btn btn-ghost btn-sm" onclick="toggleWI('${wiId}')">▼</button>`:''}</td>
+    `;
+    resBody.appendChild(tr);
+
+    if (wi) {
+      const wiTr = document.createElement('tr');
+      wiTr.id = wiId;
+      wiTr.className = 'whatif-row';
+      const cols = 10 + (costOn?1:0) + (costOn&&coagCostKg>0?1:0);
+      wiTr.innerHTML = `<td colspan="${cols}" class="whatif-cell">💡 <strong>What-if Projection:</strong> ${wi}</td>`;
+      resBody.appendChild(wiTr);
+    }
+  });
+
+  // Charts
+  renderCharts(scored, tgtTurb, phMin, phMax, jars);
+
+  // Diagnostics
+  const diagList = document.getElementById('diag-list');
+  diagList.innerHTML = '';
+  if (diagnostics.length === 0) {
+    diagList.innerHTML = '<li class="diag-item" style="border-left-color:var(--green)"><div class="diag-code">D-00</div>No significant diagnostic conditions detected. The test appears to be within normal operating parameters.</li>';
+  } else {
+    diagnostics.forEach(d => {
+      const li = document.createElement('li');
+      li.className = 'diag-item';
+      li.innerHTML = `<div class="diag-code">${d.code}</div>${d.text}`;
+      diagList.appendChild(li);
+    });
+  }
+
+  // Engineering Assessment text
+  buildAssessment(jars, scored, bestIdx, hasOptimal, tgtTurb, phMin, phMax, diagnostics, org, rawTurb, rawPh, rawTemp, costActive, coagCostKg, flocCostKg);
+
+  // Show results
+  document.getElementById('results').style.display = 'block';
+  document.getElementById('pdf-btn').style.display = '';
+  document.getElementById('ftr-org').textContent = org;
+
+  // Warn
+  const warnEl = document.getElementById('warn-strip');
+  if (!hasOptimal) {
+    warnEl.style.display = 'block';
+    warnEl.textContent = 'No jar met all treatment constraints. Best available selection applied. Review directive for recommended actions.';
+  } else {
+    warnEl.style.display = 'none';
+  }
+
+  // Scroll to results
+  setTimeout(() => document.getElementById('results').scrollIntoView({behavior:'smooth', block:'start'}), 100);
+}
+
+// ─── CHARTS ──────────────────────────────────────────────────────────────────
+function renderCharts(scored, tgtTurb, phMin, phMax, jars) {
+  const names = scored.map(s=>s.jar.name);
+  const statusColors = scored.map(s => ({
+    'OPTIMAL':'rgba(0,229,160,0.85)',
+    'ACCEPTABLE':'rgba(107,255,204,0.75)',
+    'MARGINAL':'rgba(255,183,64,0.8)',
+    'REJECTED':'rgba(255,77,94,0.75)',
+    'INFEASIBLE':'rgba(192,57,43,0.8)'
+  }[s.status]||'rgba(100,120,150,0.7)'));
+
+  const gridColor = 'rgba(30,45,69,0.8)';
+  const textColor = '#8fa3c0';
+  const baseFont = { family:'Space Mono', size:10 };
+
+  function commonOpts(yLabel) {
+    return {
+      responsive:true, maintainAspectRatio:false,
+      plugins:{legend:{display:false},tooltip:{backgroundColor:'rgba(13,18,32,0.95)',bodyFont:baseFont,titleFont:{...baseFont,weight:'bold'},borderColor:'rgba(30,45,69,0.8)',borderWidth:1}},
+      scales:{
+        x:{grid:{color:gridColor},ticks:{color:textColor,font:baseFont}},
+        y:{grid:{color:gridColor},ticks:{color:textColor,font:baseFont},title:{display:!!yLabel,text:yLabel||'',color:textColor,font:baseFont}}
+      }
+    };
+  }
+
+  ['chart-score','chart-turb','chart-ph','chart-breakdown'].forEach(id => {
+    if (charts[id]) { charts[id].destroy(); delete charts[id]; }
+  });
+
+  // Score chart
+  charts['chart-score'] = new Chart(document.getElementById('chart-score').getContext('2d'), {
+    type:'bar',
+    data:{ labels:names, datasets:[{ data:scored.map(s=>+s.comp.toFixed(3)), backgroundColor:statusColors, borderRadius:4, borderSkipped:false }]},
+    options:{...commonOpts('Composite Score'), plugins:{...commonOpts().plugins, annotation:{annotations:[]}}}
+  });
+
+  // Turbidity vs dose
+  charts['chart-turb'] = new Chart(document.getElementById('chart-turb').getContext('2d'), {
+    type:'line',
+    data:{ labels:jars.map(j=>j.coag.toFixed(1)+' mg/L'), datasets:[
+      { label:'Final Turbidity', data:jars.map(j=>j.turb), borderColor:'var(--teal)', backgroundColor:'rgba(0,229,192,0.1)', pointBackgroundColor:'var(--teal)', fill:true, tension:0.3 },
+      { label:'Target', data:jars.map(()=>tgtTurb), borderColor:'rgba(255,77,94,0.6)', borderDash:[6,3], pointRadius:0 }
+    ]},
+    options:{...commonOpts('NTU'), plugins:{legend:{display:true,labels:{color:textColor,font:baseFont}}}}
+  });
+
+  // pH vs dose
+  charts['chart-ph'] = new Chart(document.getElementById('chart-ph').getContext('2d'), {
+    type:'line',
+    data:{ labels:jars.map(j=>j.coag.toFixed(1)+' mg/L'), datasets:[
+      { label:'Final pH', data:jars.map(j=>j.ph), borderColor:'var(--blue)', backgroundColor:'rgba(61,139,255,0.1)', pointBackgroundColor:'var(--blue)', fill:true, tension:0.3 },
+      { label:'pH Min', data:jars.map(()=>phMin), borderColor:'rgba(255,183,64,0.6)', borderDash:[4,3], pointRadius:0 },
+      { label:'pH Max', data:jars.map(()=>phMax), borderColor:'rgba(255,77,94,0.6)', borderDash:[4,3], pointRadius:0 }
+    ]},
+    options:{...commonOpts('pH'), plugins:{legend:{display:true,labels:{color:textColor,font:baseFont}}}}
+  });
+
+  // Breakdown stacked bar
+  charts['chart-breakdown'] = new Chart(document.getElementById('chart-breakdown').getContext('2d'), {
+    type:'bar',
+    data:{ labels:names, datasets:[
+      { label:'Turbidity Component', data:scored.map(s=>+s.turbS.toFixed(3)), backgroundColor:'rgba(0,229,192,0.7)', borderRadius:4, borderSkipped:false, stack:'s' },
+      { label:'pH Component', data:scored.map(s=>+s.phS.toFixed(3)), backgroundColor:'rgba(255,183,64,0.7)', borderRadius:4, borderSkipped:false, stack:'s' }
+    ]},
+    options:{...commonOpts('Score'), plugins:{legend:{display:true,labels:{color:textColor,font:baseFont}}}, scales:{...commonOpts().scales,x:{stacked:true,grid:{color:gridColor},ticks:{color:textColor,font:baseFont}},y:{stacked:true,grid:{color:gridColor},ticks:{color:textColor,font:baseFont}}}}
+  });
+}
+
+// ─── ASSESSMENT ───────────────────────────────────────────────────────────────
+function buildAssessment(jars, scored, bestIdx, hasOptimal, tgtTurb, phMin, phMax, diags, org, rawTurb, rawPh, rawTemp, costActive, coagCostKg, flocCostKg) {
+  const bestS = scored[bestIdx];
+  const bestJ = bestS.jar;
+  const date  = new Date().toLocaleDateString('en-ZA',{year:'numeric',month:'long',day:'numeric'});
+
+  // Populate print header/footer
+  document.getElementById('print-meta').textContent =
+    `Site: ${org}  ·  Report Date: ${date}  ·  Generated by Mnisi Jar-Test DSS`;
+  document.getElementById('print-ftr-date').textContent = `Report Date: ${date}`;
+
+  const passing   = scored.filter(s=>s.jar.turb<=tgtTurb && s.jar.ph>=phMin && s.jar.ph<=phMax).length;
+  const marginal  = scored.filter(s=>s.status==='MARGINAL').length;
+  const rejected  = scored.filter(s=>s.status==='REJECTED').length;
+  const infeasible= scored.filter(s=>s.status==='INFEASIBLE').length;
+
+  // ── Cost optimal jar (lowest costAdj among compliant, else overall)
+  let costOptIdx = bestIdx;
+  if (costActive) {
+    const compliant = scored.filter(s=>s.jar.turb<=tgtTurb && s.jar.ph>=phMin && s.jar.ph<=phMax);
+    if (compliant.length > 0) {
+      const co = compliant.reduce((a,b)=>a.costAdj<b.costAdj?a:b);
+      costOptIdx = scored.indexOf(co);
+    } else {
+      const co = scored.reduce((a,b)=>a.costAdj<b.costAdj?a:b);
+      costOptIdx = scored.indexOf(co);
+    }
+  }
+  const costOptS = scored[costOptIdx];
+  const costOptJ = costOptS.jar;
+  // turbidity-optimal = lowest comp among compliant
+  const compliant = scored.filter(s=>s.jar.turb<=tgtTurb && s.jar.ph>=phMin && s.jar.ph<=phMax);
+  let turbOptIdx = bestIdx;
+  if (compliant.length > 0) {
+    const to = compliant.reduce((a,b)=>a.comp<b.comp?a:b);
+    turbOptIdx = scored.indexOf(to);
+  }
+  const turbOptS = scored[turbOptIdx];
+  const ranksDiffer = costActive && (costOptIdx !== turbOptIdx);
+
+  // SUMMARY TAB
+  let summary = `MNISI JAR-TEST DSS — ENGINEERING ASSESSMENT REPORT
+Generated by Mnisi Jar-Test DSS | Powered by Mnisi Technologies
+
+SITE: ${org}
+DATE: ${date}
+RAW WATER: ${!isNaN(rawTurb)?rawTurb+' NTU':'—'} turbidity · pH ${!isNaN(rawPh)?rawPh:'—'} · ${!isNaN(rawTemp)?rawTemp+'°C':'—'}
+
+EVALUATION SUMMARY
+Jars tested:         ${jars.length}
+Met all constraints: ${passing}
+Marginal (near-miss):${marginal}
+Rejected:            ${rejected}
+Infeasible:          ${infeasible}
+Cost-adjusted mode:  ${costActive ? `Active — Coagulant: R ${coagCostKg.toFixed(2)}/kg · Flocculant: R ${flocCostKg.toFixed(2)}/kg` : 'Not used'}
+
+SELECTED CONDITION: ${bestJ.name}
+  Coagulant dose:  ${bestJ.coag.toFixed(1)} mg/L
+  Flocculant dose: ${bestJ.floc.toFixed(1)} mg/L
+  Final turbidity: ${bestJ.turb.toFixed(2)} NTU (target ≤${tgtTurb})
+  Final pH:        ${bestJ.ph.toFixed(2)} (range ${phMin}–${phMax})
+  Composite score: ${bestS.comp.toFixed(3)}
+  Classification:  ${bestS.status}${costActive&&bestS.chemCostML!=null?`\n  Chemical cost:   R ${bestS.chemCostML.toFixed(2)}/ML`:''}`;
+
+  // TURBIDITY TAB
+  const turbFail = scored.filter(s=>s.jar.turb>tgtTurb);
+  let turbTxt = `TURBIDITY COMPLIANCE ASSESSMENT
+
+Target: Final turbidity ≤ ${tgtTurb} NTU
+Compliant jars: ${scored.length - turbFail.length} of ${scored.length}
+
+${turbFail.length===0 ? 'All tested jars achieved turbidity compliance. The coagulant dose range is well-matched to current source water conditions.' : `${turbFail.length} jar(s) exceeded the turbidity target:\n${turbFail.map(s=>`  · ${s.jar.name}: ${s.jar.turb.toFixed(2)} NTU (excess: +${(s.jar.turb-tgtTurb).toFixed(2)} NTU · turbidity score: ${s.turbS.toFixed(3)})`).join('\n')}`}
+
+Turbidity scoring method: Graduated severity factor applied to exceedances.
+  Minor (<50% over target): ×1.0 factor
+  Moderate (50–200% over target): ×1.5 factor
+  Severe (>200% over target): ×2.0 factor`;
+
+  // PH TAB
+  const phFail = scored.filter(s=>s.jar.ph<phMin||s.jar.ph>phMax);
+  let phTxt = `pH COMPLIANCE ASSESSMENT
+
+Acceptable range: ${phMin} – ${phMax}
+Compliant jars: ${scored.length - phFail.length} of ${scored.length}
+
+${phFail.length===0 ? 'All tested jars maintained final pH within the acceptable operating range.' : `${phFail.length} jar(s) had pH outside the acceptable range:\n${phFail.map(s=>`  · ${s.jar.name}: pH ${s.jar.ph.toFixed(2)} (deviation: ${s.jar.ph<phMin?(phMin-s.jar.ph).toFixed(2)+' below lower bound':(s.jar.ph-phMax).toFixed(2)+' above upper bound'} · pH score: ${s.phS.toFixed(3)})`).join('\n')}`}
+
+pH scoring method: Linear penalty of 2.0 per unit deviation from the nearest bound.
+Critical violation penalty (+5.000) applies for pH deviations >2.0 units beyond either bound.`;
+
+  // DOSE SENSITIVITY TAB
+  const turbVals = jars.map(j=>j.turb);
+  const turbRange = (Math.max(...turbVals)-Math.min(...turbVals)).toFixed(2);
+  const turbMean  = (turbVals.reduce((a,b)=>a+b,0)/turbVals.length).toFixed(2);
+  const coagDoses = jars.map(j=>j.coag);
+  const coagRange = (Math.max(...coagDoses)-Math.min(...coagDoses)).toFixed(1);
+  let sensTxt = `DOSE SENSITIVITY ANALYSIS
+
+Coagulant dose range tested: ${Math.min(...coagDoses).toFixed(1)} – ${Math.max(...coagDoses).toFixed(1)} mg/L (span: ${coagRange} mg/L)
+Final turbidity range: ${Math.min(...turbVals).toFixed(2)} – ${Math.max(...turbVals).toFixed(2)} NTU (spread: ${turbRange} NTU)
+Mean turbidity: ${turbMean} NTU
+Turbidity spread / mean: ${((parseFloat(turbRange)/parseFloat(turbMean))*100).toFixed(0)}%
+
+${parseFloat(turbRange)/parseFloat(turbMean) < 0.2 ? 'LOW DOSE SENSITIVITY: Turbidity shows <20% variation across the tested range. The system is relatively insensitive to coagulant dose changes. See diagnostic D-06 for recommendations.' :
+  parseFloat(turbRange)/parseFloat(turbMean) > 0.5 ? 'HIGH DOSE SENSITIVITY: Turbidity shows strong response to dose changes. Careful dose control will be important at full scale. Minor upsets in raw water quality may require rapid dose adjustments.' :
+  'MODERATE DOSE SENSITIVITY: Turbidity responds meaningfully to dose changes. A stable operating dose can be maintained within the tested range.'}
+
+${diags.length>0?'Diagnostic conditions identified: '+diags.map(d=>d.code).join(', '):'No significant diagnostic conditions detected.'}`;
+
+  // COST ANALYSIS TAB (only when costActive)
+  const costTabBtn = document.getElementById('tab-cost-btn');
+  const costTabPanel = document.getElementById('tab-cost');
+  let costTxt = '';
+  if (costActive) {
+    costTabBtn.style.display = '';
+    costTabPanel.style.display = '';
+
+    const rawOptIdx = turbOptIdx; // lowest composite among compliant
+
+    // Per-jar summary rows
+    const rows = scored.map((s,i) => {
+      const tag = (i === costOptIdx && i !== rawOptIdx) ? ' ◀ COST-OPTIMAL (differs from raw-score rank)' :
+                  (i === rawOptIdx && i !== costOptIdx) ? ' ◀ RAW-SCORE OPTIMAL' :
+                  (i === costOptIdx && i === rawOptIdx) ? ' ◀ OPTIMAL (both rankings agree)' : '';
+      return `  ${s.jar.name.padEnd(12)} | Composite: ${s.comp.toFixed(3).padStart(7)} | Cost-Adj: ${s.costAdj.toFixed(4).padStart(8)} | Chem Cost: R ${s.chemCostML!=null?s.chemCostML.toFixed(2).padStart(8):'      —'}/ML${tag}`;
+    });
+
+    costTxt = `COST ANALYSIS
+Coagulant unit cost:  R ${coagCostKg.toFixed(2)}/kg
+Flocculant unit cost: R ${flocCostKg.toFixed(2)}/kg
+Chemical costs are expressed per megalitre (ML) of water treated.
+
+Scoring formula:  Cost-Adjusted Score = Composite Score + (Chemical Cost per ML ÷ 1000)
+This additive formula preserves the scale of the composite score while incorporating
+a proportional cost component. No configurable weighting parameter is applied.
+
+JAR-BY-JAR COST SUMMARY
+${'─'.repeat(85)}
+${rows.join('\n')}
+${'─'.repeat(85)}
+
+COST-OPTIMAL JAR: ${costOptJ.name}
+  Coagulant dose:      ${costOptJ.coag.toFixed(1)} mg/L
+  Flocculant dose:     ${costOptJ.floc.toFixed(1)} mg/L
+  Chemical cost:       R ${costOptS.chemCostML!=null?costOptS.chemCostML.toFixed(2):'—'}/ML
+  Composite score:     ${costOptS.comp.toFixed(3)}
+  Cost-adjusted score: ${costOptS.costAdj.toFixed(4)}
+  Status:              ${costOptS.status}`;
+
+    // ── Fix 1: Compliant Jar Trade-off subsection ──────────────────────────
+    const compliantScored = scored.filter(s =>
+      s.jar.turb <= tgtTurb && s.jar.ph >= phMin && s.jar.ph <= phMax
+    );
+
+    if (compliantScored.length >= 2) {
+      // OPTIMAL = lowest composite among compliant (turbOptS)
+      // Most cost-effective compliant = lowest chemCostML among compliant
+      const cheapestCompliant = compliantScored.reduce((a,b) =>
+        (a.chemCostML??Infinity) < (b.chemCostML??Infinity) ? a : b
+      );
+      const optimalCompliant = turbOptS; // lowest composite = OPTIMAL jar
+
+      const sep = '─'.repeat(85);
+      const hdr = `  ${'JAR'.padEnd(12)} | ${'COAG mg/L'.padEnd(10)} | ${'FLOC mg/L'.padEnd(10)} | ${'TURB NTU'.padEnd(9)} | ${'pH'.padEnd(6)} | ${'COMPOSITE'.padEnd(10)} | ${'CHEM COST/ML'.padEnd(13)} | SAVING/ML`;
+
+      const fmtRow = (s, label) =>
+        `  ${(s.jar.name+' ('+label+')').padEnd(12)} | ${s.jar.coag.toFixed(1).padEnd(10)} | ${s.jar.floc.toFixed(1).padEnd(10)} | ${s.jar.turb.toFixed(2).padEnd(9)} | ${s.jar.ph.toFixed(2).padEnd(6)} | ${s.comp.toFixed(3).padEnd(10)} | R ${s.chemCostML!=null?s.chemCostML.toFixed(2):'—'.padEnd(11)} |`;
+
+      costTxt += `\n\nCOMPLIANT JAR TRADE-OFF
+${sep}
+${hdr}
+${sep}`;
+
+      if (optimalCompliant === cheapestCompliant) {
+        // Same jar wins both rankings
+        const row = `  ${(optimalCompliant.jar.name+' (OPTIMAL)').padEnd(12)} | ${optimalCompliant.jar.coag.toFixed(1).padEnd(10)} | ${optimalCompliant.jar.floc.toFixed(1).padEnd(10)} | ${optimalCompliant.jar.turb.toFixed(2).padEnd(9)} | ${optimalCompliant.jar.ph.toFixed(2).padEnd(6)} | ${optimalCompliant.comp.toFixed(3).padEnd(10)} | R ${optimalCompliant.chemCostML!=null?optimalCompliant.chemCostML.toFixed(2):'—'}           | R 0.00`;
+        costTxt += `\n${row}\n${sep}\n\nThe optimal jar achieves the best composite score and the lowest chemical cost — no trade-off exists.`;
+      } else {
+        const saving = (optimalCompliant.chemCostML??0) - (cheapestCompliant.chemCostML??0);
+        const rowOpt   = `  ${(optimalCompliant.jar.name+' (OPTIMAL)').padEnd(12)} | ${optimalCompliant.jar.coag.toFixed(1).padEnd(10)} | ${optimalCompliant.jar.floc.toFixed(1).padEnd(10)} | ${optimalCompliant.jar.turb.toFixed(2).padEnd(9)} | ${optimalCompliant.jar.ph.toFixed(2).padEnd(6)} | ${optimalCompliant.comp.toFixed(3).padEnd(10)} | R ${(optimalCompliant.chemCostML??0).toFixed(2).padEnd(11)} | —`;
+        const rowCheap = `  ${(cheapestCompliant.jar.name+' (ALT)').padEnd(12)} | ${cheapestCompliant.jar.coag.toFixed(1).padEnd(10)} | ${cheapestCompliant.jar.floc.toFixed(1).padEnd(10)} | ${cheapestCompliant.jar.turb.toFixed(2).padEnd(9)} | ${cheapestCompliant.jar.ph.toFixed(2).padEnd(6)} | ${cheapestCompliant.comp.toFixed(3).padEnd(10)} | R ${(cheapestCompliant.chemCostML??0).toFixed(2).padEnd(11)} | R ${saving.toFixed(2)} cheaper`;
+        costTxt += `\n${rowOpt}\n${rowCheap}\n${sep}\n\n${cheapestCompliant.jar.name} delivers compliant turbidity at R ${saving.toFixed(2)}/ML less than the optimal jar. Consider ${cheapestCompliant.jar.name} for routine operation if regulatory targets are comfortably met.`;
+      }
+    } else if (compliantScored.length === 1) {
+      costTxt += `\n\nCOMPLIANT JAR TRADE-OFF\n${'─'.repeat(85)}\nOnly one compliant jar identified. No trade-off comparison is possible.`;
+    } else {
+      costTxt += `\n\nCOMPLIANT JAR TRADE-OFF\n${'─'.repeat(85)}\nNo jars met all treatment constraints. Trade-off analysis requires at least two compliant jars.`;
+    }
+    // ── End Fix 1 ──────────────────────────────────────────────────────────
+
+    if (ranksDiffer) {
+      const turbOptJ2 = turbOptS.jar;
+      const costDiff = (costOptS.chemCostML!=null && turbOptS.chemCostML!=null)
+        ? (turbOptS.chemCostML - costOptS.chemCostML).toFixed(2) : null;
+      const turbDiff = (turbOptJ2.turb - costOptJ.turb).toFixed(3);
+      costTxt += `
+
+OVERALL TRADE-OFF ANALYSIS — RANKINGS DIFFER
+${'─'.repeat(85)}
+  Raw-score optimal jar:  ${turbOptS.jar.name}
+    Composite score:  ${turbOptS.comp.toFixed(3)}
+    Chemical cost:    R ${turbOptS.chemCostML!=null?turbOptS.chemCostML.toFixed(2):'—'}/ML
+    Final turbidity:  ${turbOptS.jar.turb.toFixed(2)} NTU
+
+  Cost-optimal jar:       ${costOptJ.name}
+    Composite score:  ${costOptS.comp.toFixed(3)}
+    Chemical cost:    R ${costOptS.chemCostML!=null?costOptS.chemCostML.toFixed(2):'—'}/ML
+    Final turbidity:  ${costOptJ.turb.toFixed(2)} NTU
+
+  Turbidity difference:   ${Math.abs(parseFloat(turbDiff)).toFixed(3)} NTU ${parseFloat(turbDiff)>0?'(cost-optimal achieves better turbidity)':'(raw-score optimal achieves better turbidity)'}
+${costDiff!=null?`  Chemical cost saving:   R ${Math.abs(parseFloat(costDiff)).toFixed(2)}/ML by selecting cost-optimal jar\n`:''}
+  RECOMMENDATION: The cost-optimal jar (${costOptJ.name}) is recommended as the primary
+  operating point for routine conditions. The raw-score optimal jar (${turbOptS.jar.name})
+  should be used as a contingency option during challenging raw water events where
+  maximum turbidity removal takes precedence over chemical spend.`;
+    } else {
+      costTxt += `
+
+RANKING CONSISTENCY: Both raw composite scoring and cost-adjusted scoring identify
+${costOptJ.name} as the optimal jar. No trade-off exists at current chemical unit costs.`;
+    }
+  } else {
+    costTabBtn.style.display = 'none';
+    costTabPanel.style.display = 'none';
+  }
+
+  // DIRECTIVE TAB
+  const dirBox = document.getElementById('directive-box');
+  let directiveTxt = '';
+  if (hasOptimal) {
+    dirBox.className = 'directive-box';
+    directiveTxt = `The jar test results support full-scale implementation of the following condition:
+
+  Coagulant dose:  ${bestJ.coag.toFixed(1)} mg/L
+  Flocculant dose: ${bestJ.floc.toFixed(1)} mg/L
+  Final turbidity: ${bestJ.turb.toFixed(2)} NTU ✓
+  Final pH:        ${bestJ.ph.toFixed(2)} ✓
+${costActive&&bestS.chemCostML!=null?`  Chemical cost:   R ${bestS.chemCostML.toFixed(2)}/ML\n`:''}
+This dose meets all treatment constraints and may be applied at full scale with standard monitoring protocols. Verify rapid mix and flocculation G-values are replicated from bench to plant scale. Monitor settled water turbidity and pH continuously during the first 2 hours of operation at the new dose.`;
+
+    if (costActive && ranksDiffer) {
+      directiveTxt += `
+
+COST CONTEXT — TWO OPTIONS IDENTIFIED:
+
+  PRIMARY (Cost-Optimal):   ${costOptJ.name}
+    Dose: ${costOptJ.coag.toFixed(1)} mg/L coagulant · ${costOptJ.floc.toFixed(1)} mg/L flocculant
+    Chemical cost: R ${costOptS.chemCostML!=null?costOptS.chemCostML.toFixed(2):'—'}/ML
+    Recommended for routine operating conditions.
+
+  CONTINGENCY (Turbidity-Optimal): ${turbOptS.jar.name}
+    Dose: ${turbOptS.jar.coag.toFixed(1)} mg/L coagulant · ${turbOptS.jar.floc.toFixed(1)} mg/L flocculant
+    Chemical cost: R ${turbOptS.chemCostML!=null?turbOptS.chemCostML.toFixed(2):'—'}/ML
+    Reserved for high-turbidity or challenging raw water events where maximum
+    removal efficiency takes precedence over chemical spend.`;
+    }
+
+    if (marginal > 0) {
+      directiveTxt += `\n\nNote: ${marginal} jar(s) classified as MARGINAL. What-if projections are available in the results table. Minor chemical adjustments may convert these to compliant conditions in future trials.`;
+    }
+  } else {
+    dirBox.className = 'directive-box warn-directive';
+    directiveTxt = `⚠ CONSTRAINT VIOLATION — FULL-SCALE IMPLEMENTATION NOT RECOMMENDED
+
+No tested jar condition meets all treatment constraints. The selected condition (${bestJ.name}) represents the best available result but does not achieve compliance.
+
+Required actions before full-scale implementation:
+  1. Extend the coagulant dose range — test at doses ${(Math.max(...jars.map(j=>j.coag))*1.3).toFixed(0)} mg/L and above.
+  2. ${diags.some(d=>d.code==='D-01') ? 'Apply alkalinity correction (lime or soda ash) before re-testing.' : 'Evaluate alternative coagulant chemistries (PACl, ferric sulphate).'}
+  3. ${diags.some(d=>d.code==='D-02') ? 'Consider CO₂ or acid pre-dosing to control source water alkalinity.' : 'Verify rapid mix energy input (target G ≥ 300 s⁻¹).'}
+  4. Re-evaluate target thresholds if source water quality cannot support current standards without additional pre-treatment.
+  5. Consider engaging process engineering review if constraints cannot be met after two additional jar test series.`;
+
+    if (costActive) {
+      directiveTxt += `
+
+COST NOTE: Cost-adjusted scoring was active. Chemical cost estimates are provided in the
+Cost Analysis tab for informational purposes only. Do not apply these doses at full scale
+until treatment constraints are satisfied in a subsequent jar test series.`;
+    }
+  }
+
+  document.getElementById('txt-summary').textContent = summary;
+  document.getElementById('txt-turb').textContent = turbTxt;
+  document.getElementById('txt-ph').textContent = phTxt;
+  document.getElementById('txt-sens').textContent = sensTxt;
+  if (costActive) document.getElementById('txt-cost').textContent = costTxt;
+  document.getElementById('txt-directive').textContent = directiveTxt;
+}
+
+// ─── UTILS ────────────────────────────────────────────────────────────────────
+function showTab(id, btn) {
+  document.querySelectorAll('.tab-panel').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  btn.classList.add('active');
+}
+
+function toggleWI(id) {
+  const el = document.getElementById(id);
+  if (el) el.classList.toggle('open');
+}
+
+function resetAll() {
+  document.getElementById('results').style.display = 'none';
+  document.getElementById('pdf-btn').style.display = 'none';
+  document.getElementById('warn-strip').style.display = 'none';
+  document.getElementById('org-name').value = '';
+  document.getElementById('raw-turb').value = '';
+  document.getElementById('raw-ph').value = '';
+  document.getElementById('raw-temp').value = '';
+  document.getElementById('jar-body').innerHTML = '';
+  rowCount = 0;
+  addRow(); addRow(); addRow();
+  ['chart-score','chart-turb','chart-ph','chart-breakdown'].forEach(id => {
+    if (charts[id]) { charts[id].destroy(); delete charts[id]; }
+  });
+  window.scrollTo({top:0, behavior:'smooth'});
+}
+</script>
+</body>
+</html>

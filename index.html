@@ -2363,6 +2363,10 @@
                     <div class="icon">🎓</div>
                     <div class="app-name" data-i18n="app.academy">Hadron Academy</div>
                 </div>
+                <div class="app-icon" data-app="jartest-dss" onclick="openWindow('jartest-dss')">
+                    <div class="icon" style="background: linear-gradient(135deg, #00e5c0 0%, #009999 100%);">🧫</div>
+                    <div class="app-name">Jar Test DSS</div>
+                </div>
                 <div class="app-icon" data-app="data" data-roles="admin" onclick="openDataManager && openDataManager()">
                     <div class="icon" style="background: linear-gradient(135deg, #1a3d9e 0%, #00b1ca 100%);">📊</div>
                     <div class="app-name">Data Manager</div>
@@ -2518,7 +2522,7 @@
                 <div class="hg-section-title">About</div>
                 <div class="hg-kvgrid">
                     <div class="hg-kv"><div class="k">App</div><div class="v">Hadron Group</div></div>
-                    <div class="hg-kv"><div class="k">Version</div><div class="v">v48</div></div>
+                    <div class="hg-kv"><div class="k">Version</div><div class="v">v49</div></div>
                     <div class="hg-kv"><div class="k">Platform</div><div class="v">PWA</div></div>
                 </div>
             </div>
@@ -3769,6 +3773,18 @@
         </div>
     </div>
 
+    <!-- Mnisi Jar-Test DSS — embedded standalone tool -->
+    <div class="window" id="window-jartest-dss">
+        <div class="window-header">
+            <button class="back-button" onclick="closeWindow('jartest-dss')">←</button>
+            <span class="window-title">Jar-Test DSS · Mnisi Technologies</span>
+        </div>
+        <div class="window-content" style="padding:0;">
+            <iframe id="jartestFrame" src="about:blank" loading="lazy"
+                style="display:block;width:100%;height:calc(100vh - 100px);border:0;background:#07090f;"></iframe>
+        </div>
+    </div>
+
     <!-- Transient toast notifications -->
     <div id="toast" class="toast"></div>
 
@@ -3860,6 +3876,12 @@
             updateTaskbar();
             bringToFront(window);
             if (appName === 'history') renderHistoryList();
+            if (appName === 'jartest-dss') {
+                const fr = document.getElementById('jartestFrame');
+                if (fr && (!fr.src || fr.src === 'about:blank' || fr.src.endsWith('about:blank'))) {
+                    fr.src = 'jar-test.html?embed=1';
+                }
+            }
             if (appName === 'jartest') renderJarTests();
             if (appName === 'servicereport') { listServiceReports(); }
             if (appName === 'sites') renderSites();
