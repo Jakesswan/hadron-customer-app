@@ -682,8 +682,8 @@
         /* Taskbar */
         .taskbar {
             height: 65px;
-            background: rgba(0, 0, 0, 0.5);
-            backdrop-filter: blur(20px);
+            background: #f5f7fa;
+            border-top: 1px solid #e5eaf0;
             display: flex;
             align-items: center;
             justify-content: center;
@@ -694,6 +694,17 @@
             padding-right: calc(20px + env(safe-area-inset-right, 0));
             flex-shrink: 0;
             box-sizing: content-box;
+        }
+        body.dark .taskbar {
+            background: #1a1d21;
+            border-top-color: rgba(255,255,255,0.08);
+        }
+        /* Collapse the taskbar when no windows are open — no more dead grey
+           strip at the bottom of the home screen. */
+        .taskbar:empty {
+            height: 0;
+            padding: 0;
+            border-top: none;
         }
 
         @media (max-width: 768px) {
@@ -708,16 +719,18 @@
         }
 
         .taskbar-icon {
-            width: 50px;
-            height: 50px;
-            background: rgba(255, 255, 255, 0.2);
+            width: 46px;
+            height: 46px;
+            background: linear-gradient(135deg, #00b1ca 0%, #008fa3 100%);
             border-radius: 12px;
             display: flex;
             align-items: center;
             justify-content: center;
             cursor: pointer;
-            transition: background 0.2s, transform 0.2s;
-            font-size: 24px;
+            transition: background 0.2s, transform 0.2s, box-shadow 0.2s;
+            font-size: 22px;
+            color: #ffffff;
+            box-shadow: 0 2px 6px rgba(0,177,202,0.25);
             touch-action: manipulation;
         }
 
@@ -727,13 +740,16 @@
 
         @media (hover: hover) {
             .taskbar-icon:hover {
-                background: rgba(255, 255, 255, 0.3);
-                transform: translateY(-5px);
+                transform: translateY(-3px);
+                box-shadow: 0 6px 14px rgba(0,177,202,0.35);
             }
         }
 
         .taskbar-icon.active {
-            background: rgba(255, 255, 255, 0.4);
+            box-shadow: 0 0 0 2px #1a3d9e, 0 6px 14px rgba(0,177,202,0.4);
+        }
+        body.dark .taskbar-icon.active {
+            box-shadow: 0 0 0 2px #f9bb32, 0 6px 14px rgba(0,177,202,0.4);
         }
 
         /* Save / history / PDF buttons on calculator result screens */
@@ -2501,7 +2517,7 @@
                 <div class="hg-section-title">About</div>
                 <div class="hg-kvgrid">
                     <div class="hg-kv"><div class="k">App</div><div class="v">Hadron Group</div></div>
-                    <div class="hg-kv"><div class="k">Version</div><div class="v">v50</div></div>
+                    <div class="hg-kv"><div class="k">Version</div><div class="v">v51</div></div>
                     <div class="hg-kv"><div class="k">Platform</div><div class="v">PWA</div></div>
                 </div>
             </div>
