@@ -65,18 +65,15 @@ as $$
   select role from public.profiles where id = auth.uid();
 $$;
 
+-- RETIRED in migration 0001 (tenant isolation). Always returns false: every
+-- organisation is an isolated Tenant and no role grants cross-Tenant access.
+-- Kept as a no-op backstop so any historical reference also loses god-mode.
+-- A future per-incident, time-bounded, audited "support session" grant will
+-- replace it (Phase 3). Do NOT reintroduce blanket staff access here.
 create or replace function public.is_hadron_admin()
 returns boolean
-language sql stable security definer set search_path = public
-as $$
-  select exists (
-    select 1 from public.profiles p
-    join public.organisations o on o.id = p.organisation_id
-    where p.id = auth.uid()
-      and p.role = 'admin'
-      and o.type = 'hadron'
-  );
-$$;
+language sql immutable
+as $$ select false $$;
 
 -- ============================================================
 -- 3. Domain tables
@@ -363,28 +360,28 @@ alter table public.lims_inventory      enable row level security;
 alter table public.lims_documents      enable row level security;
 alter table public.lims_competencies   enable row level security;
 
--- Helper macro: a "scoped" policy = visible to Hadron admins or to
--- members of the same organisation. We write it out explicitly below
--- because Postgres has no policy templates.
+-- TENANT ISOLATION (migration 0001): every policy is purely organisation-scoped.
+-- A Tenant's data is visible ONLY to members of that same Tenant. There is no
+-- cross-Tenant access path — "Hadron Group" is just another Tenant. Future
+-- cross-Tenant support uses a per-incident, audited "support session" (Phase 3),
+-- NOT a role. service_role bypasses RLS for signup/admin tooling.
 
--- organisations: members of an org see their own org; Hadron admins see all
+-- organisations: members see ONLY their own org; an org admin may update it.
+-- Inserts/deletes are service_role-only.
 drop policy if exists "orgs_select" on public.organisations;
 create policy "orgs_select" on public.organisations for select
-  using (is_hadron_admin() or id = current_org());
+  using (id = current_org());
 
 drop policy if exists "orgs_admin_write" on public.organisations;
-create policy "orgs_admin_write" on public.organisations for all
-  using (is_hadron_admin())
-  with check (is_hadron_admin());
+drop policy if exists "orgs_update" on public.organisations;
+create policy "orgs_update" on public.organisations for update
+  using (id = current_org() and current_app_role() in ('admin','customer_admin'))
+  with check (id = current_org() and current_app_role() in ('admin','customer_admin'));
 
--- profiles: see self + same org; admins see all
+-- profiles: see self or same-Tenant members; org admins manage their members.
 drop policy if exists "profiles_select" on public.profiles;
 create policy "profiles_select" on public.profiles for select
-  using (
-    id = auth.uid()
-    or is_hadron_admin()
-    or organisation_id = current_org()
-  );
+  using (id = auth.uid() or organisation_id = current_org());
 
 drop policy if exists "profiles_self_update" on public.profiles;
 create policy "profiles_self_update" on public.profiles for update
@@ -393,12 +390,16 @@ create policy "profiles_self_update" on public.profiles for update
 
 drop policy if exists "profiles_admin_update" on public.profiles;
 create policy "profiles_admin_update" on public.profiles for update
-  using (is_hadron_admin() or (current_app_role() = 'customer_admin' and organisation_id = current_org()))
-  with check (is_hadron_admin() or (current_app_role() = 'customer_admin' and organisation_id = current_org()));
+  using (current_app_role() in ('admin','customer_admin') and organisation_id = current_org())
+  with check (current_app_role() in ('admin','customer_admin') and organisation_id = current_org());
 
 drop policy if exists "profiles_admin_insert" on public.profiles;
-create policy "profiles_admin_insert" on public.profiles for insert
-  with check (is_hadron_admin() or id = auth.uid());
+drop policy if exists "profiles_insert" on public.profiles;
+create policy "profiles_insert" on public.profiles for insert
+  with check (
+    id = auth.uid()
+    or (current_app_role() in ('admin','customer_admin') and organisation_id = current_org())
+  );
 
 -- generic "org-scoped" policies for the domain tables
 do $$
@@ -408,24 +409,19 @@ begin
     'customers','sites','equipment','samples','sample_results','jobs','audit_log',
     'lims_tests','lims_test_profiles','lims_worksheets','lims_instruments','lims_inventory','lims_documents','lims_competencies'
   ]) loop
-    execute format('drop policy if exists "%I_select" on public.%I', t||'_select', t);
-    execute format($f$
-      create policy "%I_select" on public.%I for select
-        using (is_hadron_admin() or organisation_id = current_org())
-    $f$, t||'_select', t);
+    execute format('drop policy if exists %I on public.%I', t||'_select', t);
+    execute format(
+      'create policy %I on public.%I for select using (organisation_id = current_org())',
+      t||'_select', t);
 
-    execute format('drop policy if exists "%I_write" on public.%I', t||'_write', t);
-    execute format($f$
-      create policy "%I_write" on public.%I for all
-        using (
-          is_hadron_admin()
-          or (current_app_role() in ('customer_admin','operator') and organisation_id = current_org())
-        )
-        with check (
-          is_hadron_admin()
-          or (current_app_role() in ('customer_admin','operator') and organisation_id = current_org())
-        )
-    $f$, t||'_write', t);
+    execute format('drop policy if exists %I on public.%I', t||'_write', t);
+    execute format(
+      'create policy %I on public.%I for all '
+      'using (current_app_role() in (''admin'',''customer_admin'',''operator'') '
+      '       and organisation_id = current_org()) '
+      'with check (current_app_role() in (''admin'',''customer_admin'',''operator'') '
+      '       and organisation_id = current_org())',
+      t||'_write', t);
   end loop;
 end $$;
 
@@ -433,22 +429,12 @@ end $$;
 -- instead of the generic organisation_id column.
 drop policy if exists "messages_select" on public.messages;
 create policy "messages_select" on public.messages for select
-  using (
-    is_hadron_admin()
-    or recipient_org = current_org()
-    or recipient_user = auth.uid()
-  );
+  using (recipient_org = current_org() or recipient_user = auth.uid());
 
 drop policy if exists "messages_write" on public.messages;
 create policy "messages_write" on public.messages for all
-  using (
-    is_hadron_admin()
-    or (current_app_role() in ('customer_admin','operator') and recipient_org = current_org())
-  )
-  with check (
-    is_hadron_admin()
-    or (current_app_role() in ('customer_admin','operator') and recipient_org = current_org())
-  );
+  using (current_app_role() in ('admin','customer_admin','operator') and recipient_org = current_org())
+  with check (current_app_role() in ('admin','customer_admin','operator') and recipient_org = current_org());
 
 -- push subscriptions: user manages their own
 drop policy if exists "push_self" on public.push_subscriptions;
