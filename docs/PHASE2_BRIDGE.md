@@ -62,20 +62,34 @@ Behavior: resolve org by `erp_tenant_id` (404 if not linked); for each customer
 `upsert` on `(organisation_id, external_id)` with `source='erp'`; `deleted:true`
 → soft handling; return `{ upserted, skipped, errors }`. Idempotent.
 
-## 4. Users / auth — **DECISION NEEDED (Phase 2b)**
+## 4. Users / auth — **DECISION: Shared SSO** (Jaco, 2026-06-23)
 
-Bridging Users means a linked Tenant's people get an App login tied to their ERP
-identity. Options:
+One identity logs into both the ERP and the App. Because the two run on
+**separate Supabase projects**, "shared SSO" means a single OIDC identity
+authority that both projects trust — Supabase cannot natively accept another
+Supabase project's JWTs.
 
-- **(A) Pre-provision + invite (recommended).** Ingest creates an App auth user
-  via the Admin API and sends a magic-link/invite; profile gets `source='erp'`,
-  `external_id`. One identity per person, they set their own password.
-- **(B) Contacts only.** Bridge users as non-login profile rows; they get a real
-  login only when they self-sign-up with a matching email. Lower effort, weaker link.
-- **(C) Shared SSO** between ERP and App. Cleanest long-term, biggest build.
+**Recommended mechanism — ERP is the identity authority:**
+- Put an OIDC issuer in front of identity. Realistic options: the ERP's own
+  Supabase as issuer exposed via an OIDC-compatible provider, or a dedicated IdP
+  (Microsoft Entra ID / Google Workspace if Hadron staff already use one;
+  otherwise Auth0 / WorkOS / Keycloak).
+- Configure the **App** Supabase project's *Third-Party Auth* to trust that
+  issuer. Linked-Tenant users authenticate once; the App accepts the token and
+  maps `sub` → `profiles.external_id`.
+- **Standalone App-only Tenants keep the App's own Supabase auth** (email /
+  Google). SSO applies only to linked Tenants.
 
-Recommendation: ship **2a (Customers) first** with no auth changes, then do **2b
-Users** with option (A).
+**Implications (why this is its own phase):**
+- Touches BOTH Supabase projects' dashboards + an IdP — most of it is config and
+  ERP-side work, done in the `Hadron-ERP` session, not buildable from the App
+  repo alone.
+- Needs one more decision: **which IdP / issuer** (driven by what Hadron staff
+  and Tenants already use for identity).
+
+**Sequencing:** SSO is decoupled from Customers. Ship **Phase 2a (Customer
+bridge)** first — it needs no auth changes — and run **Shared SSO as its own
+phase** alongside the ERP work, starting with the IdP decision above.
 
 ## 5. App-side UI wiring (Phase 2a, after ingest works)
 
@@ -93,8 +107,9 @@ Users** with option (A).
 | UI: disable create + read-only badges | let an admin set which ERP tenant ↔ which App org |
 | 2b: auth provisioning on ingest | 2b: include users in the push payload |
 
-## 7. Open decisions for Jaco
-1. **Transport** — confirm "ERP pushes to App ingest function" (vs. another shape).
-2. **Users/auth** — pick (A) pre-provision+invite, (B) contacts-only, or (C) SSO.
-3. **Linking UX** — who sets `erp_tenant_id` on an App org, and where (ERP admin
-   screen vs. a one-time Hadron-run step)?
+## 7. Decisions
+1. **Transport** — ERP pushes to the App `erp-ingest` function. *(default, confirm)*
+2. **Users/auth** — **Shared SSO** (see §4). Resolved; runs as its own phase.
+3. **IdP / issuer for SSO** — OPEN. Which identity authority both projects trust
+   (driven by what Hadron + Tenants already use).
+4. **Linking UX** — OPEN. Who sets `erp_tenant_id` on an App org, and where.
