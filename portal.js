@@ -61,7 +61,7 @@
     const orgName = profile.organisations?.name || 'Your organisation';
 
     host.innerHTML = `
-      <div class="hg-hero" style="background: linear-gradient(135deg, #00b1ca 0%, #1a3d9e 100%);">
+      <div class="hg-hero" style="background: linear-gradient(135deg, #3AAEDB 0%, #1a3d9e 100%);">
         <div>
           <h2 class="hg-hero-title">${esc(orgName)}</h2>
           <div class="hg-hero-sub">Welcome back, ${esc(profile.full_name || profile.email)}</div>
@@ -224,7 +224,7 @@
     tile.setAttribute('data-roles', 'customer_admin,viewer');
     tile.setAttribute('onclick', "openWindow('portal')");
     tile.innerHTML = `
-      <div class="icon" style="background: linear-gradient(135deg, #00b1ca 0%, #1a3d9e 100%);">🌊</div>
+      <div class="icon" style="background: linear-gradient(135deg, #3AAEDB 0%, #1a3d9e 100%);">🌊</div>
       <div class="app-name">Portal</div>
     `;
     // Insert at the very front so it's the first thing the customer sees.

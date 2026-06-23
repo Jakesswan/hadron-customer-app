@@ -343,7 +343,7 @@
     const tt = (k, en) => (typeof window.t === 'function') ? window.t(k) : en;
 
     shell.innerHTML = `
-      <div class="hg-hero" style="background:linear-gradient(135deg,#00b1ca 0%,#1a3d9e 100%);">
+      <div class="hg-hero" style="background:linear-gradient(135deg,#3AAEDB 0%,#1a3d9e 100%);">
         <div>
           <h2 class="hg-hero-title">${esc(tt('pool.heroTitle','Pool Water Chemistry'))}</h2>
           <div class="hg-hero-sub">${esc(tt('pool.heroSub','Analyse, dose & troubleshoot your pool'))}</div>
@@ -604,12 +604,12 @@
     const html = `<!doctype html><html><head><meta charset="utf-8"><title>Pool Water Report</title>
 <style>
   body { font-family: Arial, sans-serif; max-width: 720px; margin: 30px auto; padding: 20px; color:#2e3742; }
-  h1 { color:#00b1ca; border-bottom:2px solid #00b1ca; padding-bottom:8px; }
-  h2 { color:#00b1ca; margin-top:28px; font-size:16px; }
+  h1 { color:#3AAEDB; border-bottom:2px solid #3AAEDB; padding-bottom:8px; }
+  h2 { color:#3AAEDB; margin-top:28px; font-size:16px; }
   table { width:100%; border-collapse: collapse; margin-bottom:16px; }
   th,td { padding:8px 10px; border-bottom:1px solid #eee; text-align:left; font-size:13px; }
   th { background:#f5f8fa; color:#6b7684; text-transform:uppercase; font-size:11px; letter-spacing:0.5px; }
-  .rec { background:#f7fbfd; border-left:4px solid #00b1ca; padding:10px 12px; margin:8px 0; font-size:13px; line-height:1.5; border-radius:0 8px 8px 0; }
+  .rec { background:#f7fbfd; border-left:4px solid #3AAEDB; padding:10px 12px; margin:8px 0; font-size:13px; line-height:1.5; border-radius:0 8px 8px 0; }
   .flag { background:#fff4de; border-left:4px solid #b37600; padding:10px 12px; margin:8px 0; font-size:13px; border-radius:0 8px 8px 0; }
   .footer { margin-top:30px; color:#9aa3aa; font-size:11px; text-align:center; border-top:1px solid #eee; padding-top:12px; }
   @media print { body { margin:0; padding:16px; } }

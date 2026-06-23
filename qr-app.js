@@ -396,7 +396,7 @@
       body { font-family: Arial, sans-serif; margin: 0; padding: 4mm; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2mm; }
       .lbl { font-weight: 700; font-size: 11pt; font-family: 'Courier New', monospace; }
       .sub { font-size: 8pt; color: #333; text-align: center; max-width: 64mm; }
-      .brand { font-size: 7pt; color: #00b1ca; letter-spacing: 1px; margin-top: 1mm; }
+      .brand { font-size: 7pt; color: #3AAEDB; letter-spacing: 1px; margin-top: 1mm; }
       svg { width: 36mm; height: 36mm; }
     </style></head><body>
       ${STATE.label ? `<div class="lbl">${esc(STATE.label)}</div>` : ''}
@@ -453,7 +453,7 @@
       .st { border: 0.3mm dashed #ccc; border-radius: 3mm; padding: 3mm; display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 38mm; text-align: center; break-inside: avoid; }
       .lbl { font-family: 'Courier New', monospace; font-weight: 700; font-size: 9pt; margin-bottom: 1mm; }
       .sub { font-size: 7pt; color: #333; margin-top: 1mm; }
-      .brand { font-size: 6pt; color: #00b1ca; letter-spacing: 1px; margin-top: 1mm; }
+      .brand { font-size: 6pt; color: #3AAEDB; letter-spacing: 1px; margin-top: 1mm; }
       svg { width: 28mm; height: 28mm; }
       @media print { body { -webkit-print-color-adjust: exact; } }
     </style></head><body>
@@ -555,7 +555,7 @@
         if (el) {
           el.scrollIntoView({ behavior:'smooth', block:'center' });
           el.style.transition = 'box-shadow 0.4s, background 0.4s';
-          el.style.boxShadow = '0 0 0 3px #00b1ca';
+          el.style.boxShadow = '0 0 0 3px #3AAEDB';
           setTimeout(()=>{ el.style.boxShadow = 'none'; }, 1800);
         }
       }, 600);

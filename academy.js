@@ -51,13 +51,13 @@
 
   /* ---------- Tracks (top-level categories) ---------- */
   const TRACKS = [
-    { id: 'track-potable',      name: 'Potable Water',         icon: '🚰', g: 'linear-gradient(135deg, #00b1ca 0%, #1a3d9e 100%)', sub: 'Drinking water treatment from source to tap' },
-    { id: 'track-disinfection', name: 'Disinfection',          icon: '🛡️', g: 'linear-gradient(135deg, #2e3742 0%, #00b1ca 100%)', sub: 'Chlorine, ClO₂, UV, ozone & DBPs' },
+    { id: 'track-potable',      name: 'Potable Water',         icon: '🚰', g: 'linear-gradient(135deg, #3AAEDB 0%, #1a3d9e 100%)', sub: 'Drinking water treatment from source to tap' },
+    { id: 'track-disinfection', name: 'Disinfection',          icon: '🛡️', g: 'linear-gradient(135deg, #2e3742 0%, #3AAEDB 100%)', sub: 'Chlorine, ClO₂, UV, ozone & DBPs' },
     { id: 'track-sewage',       name: 'Sewage Treatment',      icon: '🚽', g: 'linear-gradient(135deg, #6c4a1f 0%, #b07a3f 100%)', sub: 'Wastewater treatment & sludge' },
     { id: 'track-effluent',     name: 'Industrial Effluent',   icon: '🏭', g: 'linear-gradient(135deg, #4ec5d4 0%, #2c5e8a 100%)', sub: 'Trade waste, paint detack, F&B, DAF' },
     { id: 'track-cooling',      name: 'Cooling Water',         icon: '❄️', g: 'linear-gradient(135deg, #5a73c2 0%, #1a3d9e 100%)', sub: 'Cooling towers & closed-loop systems' },
     { id: 'track-boiler',       name: 'Boiler Water',          icon: '🔥', g: 'linear-gradient(135deg, #d44a26 0%, #8a1f0a 100%)', sub: 'Steam systems & internal treatment' },
-    { id: 'track-ro',           name: 'Reverse Osmosis',       icon: '💧', g: 'linear-gradient(135deg, #00b1ca 0%, #007a8a 100%)', sub: 'RO, NF, UF, MF & antiscalants' },
+    { id: 'track-ro',           name: 'Reverse Osmosis',       icon: '💧', g: 'linear-gradient(135deg, #3AAEDB 0%, #007a8a 100%)', sub: 'RO, NF, UF, MF & antiscalants' },
     { id: 'track-equipment',    name: 'Treatment Equipment',   icon: '⚙️', g: 'linear-gradient(135deg, #4b5b6d 0%, #2e3742 100%)', sub: 'Pumps, filters, dosers, instruments' },
     { id: 'track-ops',          name: 'Operations & Safety',   icon: '🦺', g: 'linear-gradient(135deg, #ff9a3f 0%, #d44a26 100%)', sub: 'Plant ops, MSDS, sampling, response' },
     { id: 'track-chemistry',    name: 'Water Chemistry',       icon: '⚗️', g: 'linear-gradient(135deg, #7a59d4 0%, #4b3a8c 100%)', sub: 'pH, alkalinity, hardness, microbiology' }
@@ -1341,7 +1341,7 @@
     const startedCourses = Object.keys(allProgress).length;
 
     root.innerHTML = `
-      <div class="hg-hero" style="background: linear-gradient(135deg, #7a59d4 0%, #00b1ca 100%);">
+      <div class="hg-hero" style="background: linear-gradient(135deg, #7a59d4 0%, #3AAEDB 100%);">
         <div>
           <h2 class="hg-hero-title">${esc(tt('academy.heroTitle','Hadron Academy'))}</h2>
           <div class="hg-hero-sub">${esc(tt('academy.heroSub','Water-treatment courseware'))}</div>
@@ -1422,7 +1422,7 @@
                 </div>
                 <div style="text-align:right; min-width: 120px;">
                   <div style="font-size:12px; color:#6b7684; text-transform:uppercase; letter-spacing:0.4px;">Progress</div>
-                  <div style="font-size:22px; font-weight:700; color:${pct === 100 ? '#157b3a' : '#00b1ca'};">${pct}%</div>
+                  <div style="font-size:22px; font-weight:700; color:${pct === 100 ? '#157b3a' : '#3AAEDB'};">${pct}%</div>
                   <div class="academy-progress-bar"><div class="academy-progress-fill" style="width:${pct}%;"></div></div>
                 </div>
               </div>

@@ -42,7 +42,7 @@
     .hg-customize-pill {
       position: fixed; left: 50%; transform: translateX(-50%);
       bottom: 90px; z-index: 8500;
-      background: linear-gradient(135deg, #00b1ca, #1a3d9e);
+      background: linear-gradient(135deg, #3AAEDB, #1a3d9e);
       color: #fff; padding: 10px 22px; border-radius: 999px;
       font-weight: 700; font-size: 14px; cursor: pointer;
       box-shadow: 0 12px 30px rgba(8,12,40,0.35);

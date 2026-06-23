@@ -464,7 +464,7 @@
 
   /* ---------- Module config: tiles and meta ---------- */
   const MODULES = [
-    { key:'dashboard',  label:'Dashboard',    icon:'📊', g:'linear-gradient(135deg, #00b1ca 0%, #0078a3 100%)', sub:'KPIs & overview' },
+    { key:'dashboard',  label:'Dashboard',    icon:'📊', g:'linear-gradient(135deg, #3AAEDB 0%, #0078a3 100%)', sub:'KPIs & overview' },
     { key:'samples',    label:'Samples',      icon:'🧪', g:'linear-gradient(135deg, #4CAF50 0%, #2e7d32 100%)', sub:'Login & chain of custody' },
     { key:'tests',      label:'Tests',        icon:'🔬', g:'linear-gradient(135deg, #7a59d4 0%, #4527a0 100%)', sub:'Catalogue & methods' },
     { key:'profiles',   label:'Test Profiles',icon:'🧬', g:'linear-gradient(135deg, #b39ddb 0%, #6a1b9a 100%)', sub:'Named test bundles' },
@@ -1545,7 +1545,7 @@
     const specLines = [];
     if (specMin!=null) specLines.push(`<line x1="0" y1="${H-((specMin-min)/span)*H}" x2="${W}" y2="${H-((specMin-min)/span)*H}" stroke="#e53935" stroke-dasharray="3,3" stroke-width="1"/>`);
     if (specMax!=null) specLines.push(`<line x1="0" y1="${H-((specMax-min)/span)*H}" x2="${W}" y2="${H-((specMax-min)/span)*H}" stroke="#e53935" stroke-dasharray="3,3" stroke-width="1"/>`);
-    return `<svg viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg">${specLines.join('')}<polyline points="${pts}" fill="none" stroke="#00b1ca" stroke-width="2"/></svg>`;
+    return `<svg viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg">${specLines.join('')}<polyline points="${pts}" fill="none" stroke="#3AAEDB" stroke-width="2"/></svg>`;
   }
 
   async function renderQCChart(root) {
@@ -1565,7 +1565,7 @@
       {v:mean+3*sd, c:'#e53935', l:'+3σ (UCL)'},
       {v:mean+2*sd, c:'#c59d2b', l:'+2σ'},
       {v:mean+sd,   c:'#999',    l:'+1σ'},
-      {v:mean,      c:'#00b1ca', l:'Mean'},
+      {v:mean,      c:'#3AAEDB', l:'Mean'},
       {v:mean-sd,   c:'#999',    l:'−1σ'},
       {v:mean-2*sd, c:'#c59d2b', l:'−2σ'},
       {v:mean-3*sd, c:'#e53935', l:'−3σ (LCL)'}
@@ -1582,10 +1582,10 @@
         <div class="lims-chart-wrap">
           <svg viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:auto;">
             <rect x="0" y="0" width="${W}" height="${H}" fill="transparent"/>
-            ${zones.map(z=>`<line x1="${pad}" x2="${W-pad}" y1="${y(z.v)}" y2="${y(z.v)}" stroke="${z.c}" stroke-dasharray="${z.c==='#00b1ca'?'0':'4,4'}" stroke-width="${z.c==='#00b1ca'?2:1}"/>
+            ${zones.map(z=>`<line x1="${pad}" x2="${W-pad}" y1="${y(z.v)}" y2="${y(z.v)}" stroke="${z.c}" stroke-dasharray="${z.c==='#3AAEDB'?'0':'4,4'}" stroke-width="${z.c==='#3AAEDB'?2:1}"/>
               <text x="${W-pad+4}" y="${y(z.v)+4}" font-size="10" fill="${z.c}">${z.l}</text>`).join('')}
             <polyline points="${pts}" fill="none" stroke="#2e3742" stroke-width="1.5"/>
-            ${vals.map((v,i)=>`<circle cx="${xScale(i)}" cy="${y(v)}" r="3.5" fill="${Math.abs(v-mean)>2*sd?'#e53935':'#00b1ca'}" stroke="#fff" stroke-width="1"/>`).join('')}
+            ${vals.map((v,i)=>`<circle cx="${xScale(i)}" cy="${y(v)}" r="3.5" fill="${Math.abs(v-mean)>2*sd?'#e53935':'#3AAEDB'}" stroke="#fff" stroke-width="1"/>`).join('')}
           </svg>
         </div>
         <div class="lims-fieldgrid">

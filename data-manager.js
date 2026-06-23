@@ -395,7 +395,7 @@
       return { key, a, count: list.length };
     }));
     host.innerHTML = `
-      <div class="hg-hero" style="background: linear-gradient(135deg, #1a3d9e 0%, #00b1ca 100%);">
+      <div class="hg-hero" style="background: linear-gradient(135deg, #1a3d9e 0%, #3AAEDB 100%);">
         <div>
           <h2 class="hg-hero-title">Data Manager</h2>
           <div class="hg-hero-sub">Bulk-import or export to Excel — for spreadsheet jockeys and migration day</div>
