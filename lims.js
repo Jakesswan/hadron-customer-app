@@ -123,6 +123,16 @@
 
   function chip(text, cls) { return `<span class="lims-chip ${cls||'neutral'}">${esc(text)}</span>`; }
 
+  // ERP bridge: when this Tenant is linked to the ERP, Clients are mastered there
+  // and are read-only in the App. Returns false for standalone Tenants, so their
+  // experience is completely unchanged.
+  function erpLinked() {
+    try {
+      return !!(window.HG_PROFILE && window.HG_PROFILE.organisations
+                && window.HG_PROFILE.organisations.erp_tenant_id);
+    } catch (_) { return false; }
+  }
+
   function breadcrumb(path) {
     // path: array of {label, view, params}
     const items = path.map((p,i) => {
@@ -2014,13 +2024,20 @@
       ${breadcrumb([{label:'LIMS',view:'hub'},{label:'Clients',view:'clients'}])}
       <div class="lims-toolbar">
         <h2 class="lims-title">Clients <span class="lims-count">${clients.length}</span></h2>
-        <button class="lims-btn primary" onclick="limsGo('client-form',{})">➕ Add client</button>
+        ${erpLinked()
+          ? '<span class="lims-chip neutral" title="Clients are managed in the ERP and synced here">🔗 Managed in ERP</span>'
+          : '<button class="lims-btn primary" onclick="limsGo(\'client-form\',{})">➕ Add client</button>'}
       </div>
       <table class="lims-table">
         <thead><tr><th>Client</th><th>Industry</th><th>Contact</th><th>Email</th><th>Samples</th><th>Quotes</th><th></th></tr></thead>
         <tbody>${clients.length ? clients.map(c=>{
           const sc = samples.filter(s=>s.clientId===c.id).length;
           const qc = quotes.filter(q=>q.clientId===c.id).length;
+          // ERP-sourced clients are read-only: show a badge instead of edit/delete.
+          const actions = (c.source === 'erp')
+            ? '<span class="lims-chip neutral" title="Synced from the ERP — read-only">🔗 ERP</span>'
+            : `<button class="lims-btn ghost" onclick="event.stopPropagation();limsGo('client-form',{id:'${c.id}'})">✏️</button>
+               <button class="lims-btn ghost" onclick="event.stopPropagation();limsDeleteClient('${c.id}')">🗑️</button>`;
           return `<tr>
             <td onclick="limsGo('client',{id:'${c.id}'})"><strong>${esc(c.name)}</strong></td>
             <td onclick="limsGo('client',{id:'${c.id}'})">${chip(c.industry,'neutral')}</td>
@@ -2028,10 +2045,7 @@
             <td onclick="limsGo('client',{id:'${c.id}'})">${esc(c.email)}</td>
             <td onclick="limsGo('client',{id:'${c.id}'})">${sc}</td>
             <td onclick="limsGo('client',{id:'${c.id}'})">${qc}</td>
-            <td style="white-space:nowrap;">
-              <button class="lims-btn ghost" onclick="event.stopPropagation();limsGo('client-form',{id:'${c.id}'})">✏️</button>
-              <button class="lims-btn ghost" onclick="event.stopPropagation();limsDeleteClient('${c.id}')">🗑️</button>
-            </td>
+            <td style="white-space:nowrap;">${actions}</td>
           </tr>`;
         }).join('') : '<tr><td colspan="7" class="lims-empty">No clients yet — click ➕ Add client to create one</td></tr>'}</tbody>
       </table>
@@ -2042,6 +2056,11 @@
   async function renderClientForm(root) {
     const id = S.params.id || null;
     const c = id ? (await DB.get('clients', id)) : { id:'', name:'', industry:'Municipal', contact:'', email:'', phone:'', address:'' };
+    // Linked Tenants manage Clients in the ERP; ERP-sourced clients are read-only.
+    if (erpLinked() || (c && c.source === 'erp')) {
+      toast('Clients are managed in the ERP for linked accounts', 'warn');
+      return limsGo('clients');
+    }
     const isNew = !id;
     const industries = ['Municipal','Petrochemical','Mining','Agriculture','Industrial','Pharmaceutical','Food & Beverage','Hospitality','Healthcare','Other'];
     root.innerHTML = `
@@ -2070,6 +2089,11 @@
   }
 
   window.limsSaveClient = async function(existingId) {
+    if (erpLinked()) { toast('Clients are managed in the ERP', 'warn'); return; }
+    if (existingId) {
+      const ex = await DB.get('clients', existingId);
+      if (ex && ex.source === 'erp') { toast('This client is synced from the ERP (read-only)', 'warn'); return; }
+    }
     const name = document.getElementById('cf_name').value.trim();
     if (!name) { toast('Company name is required', 'warn'); return; }
     const c = {
@@ -2089,6 +2113,8 @@
   };
 
   window.limsDeleteClient = async function(id) {
+    const ex = await DB.get('clients', id);
+    if (erpLinked() || (ex && ex.source === 'erp')) { toast('Clients are managed in the ERP', 'warn'); return; }
     if (!confirm('Delete this client? Samples linked to it will keep the reference.')) return;
     await DB.del('clients', id);
     await DB.audit('DELETE', 'client', id, null, null);
@@ -2102,11 +2128,14 @@
     const quotes = (await DB.all('quotes')).filter(q=>q.clientId===c.id);
     const profiles = await DB.all('profiles');
     const profMap = Object.fromEntries(profiles.map(p=>[p.id,p]));
+    const editBtn = (erpLinked() || c.source === 'erp')
+      ? '<span class="lims-chip neutral" title="Synced from the ERP — read-only">🔗 Managed in ERP</span>'
+      : `<button class="lims-btn primary" onclick="limsGo('client-form',{id:'${c.id}'})">✏️ Edit</button>`;
     root.innerHTML = `
       ${breadcrumb([{label:'LIMS',view:'hub'},{label:'Clients',view:'clients'},{label:c.name,view:'client',params:{id:c.id}}])}
       <div class="lims-toolbar">
         <h2 class="lims-title">${esc(c.name)}</h2>
-        <button class="lims-btn primary" onclick="limsGo('client-form',{id:'${c.id}'})">✏️ Edit</button>
+        ${editBtn}
       </div>
       <div class="lims-card">
         <div class="lims-fieldgrid">

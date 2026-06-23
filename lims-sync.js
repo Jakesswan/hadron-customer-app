@@ -100,14 +100,22 @@
   // truth), and only fall back to typed columns when payload is absent.
   function mapIn(localStore, cloudRow) {
     if (cloudRow && cloudRow.payload && typeof cloudRow.payload === 'object') {
-      return Object.assign({ id: cloudRow.id }, cloudRow.payload);
+      const obj = Object.assign({ id: cloudRow.id }, cloudRow.payload);
+      // Always trust the typed provenance columns over whatever is in payload,
+      // so ERP-bridged clients stay flagged read-only locally.
+      if (localStore === 'clients') {
+        obj.source = cloudRow.source || obj.source || 'app';
+        if (cloudRow.external_id) obj.external_id = cloudRow.external_id;
+      }
+      return obj;
     }
     // Reconstruct minimally from typed cols.
     switch (localStore) {
       case 'clients':
         return { id: cloudRow.id, name: cloudRow.name, contactName: cloudRow.contact_name,
                  email: cloudRow.contact_email, phone: cloudRow.contact_phone,
-                 address: cloudRow.address, notes: cloudRow.notes };
+                 address: cloudRow.address, notes: cloudRow.notes,
+                 source: cloudRow.source || 'app', external_id: cloudRow.external_id || null };
       case 'samples':
         return { id: cloudRow.id, clientId: cloudRow.customer_id, siteId: cloudRow.site_id,
                  no: cloudRow.sample_no, matrix: cloudRow.matrix, point: cloudRow.sample_point,
@@ -147,6 +155,8 @@
     if (!window.HG_DB || !window.HG_DB[cloudTable]) return;
 
     if (op === 'put') {
+      // One-way bridge: never push an ERP-owned client back to the cloud.
+      if (store === 'clients' && payload && payload.source === 'erp') return;
       const cloudRow = mapOut(store, payload, state.orgId);
       // fire-and-forget — HG_DB queues offline writes itself
       window.HG_DB[cloudTable].upsert(cloudRow).catch(() => {});
@@ -194,6 +204,8 @@
       try {
         const rows = await window.HG_LIMS_DB.all(store);
         for (const r of rows) {
+          // One-way bridge: ERP-owned clients are read-only here, never pushed up.
+          if (store === 'clients' && r && r.source === 'erp') continue;
           const cloudRow = mapOut(store, r, state.orgId);
           window.HG_DB[cloudTable].upsert(cloudRow).catch(() => {});
           pushed++;
