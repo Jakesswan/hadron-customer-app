@@ -23,9 +23,18 @@ create table if not exists public.organisations (
   name          text not null,
   slug          text unique not null,
   type          text not null check (type in ('hadron','customer')),
+  -- ERP bridge (migration 0002): null = standalone Tenant; set = mirrors this
+  -- ERP tenant, Customers/Users arrive via the one-way ERP→App bridge.
+  erp_tenant_id uuid,
+  erp_linked_at timestamptz,
   created_at    timestamptz default now(),
   updated_at    timestamptz default now()
 );
+-- Keep the ERP-bridge columns present on databases created before migration 0002.
+alter table public.organisations add column if not exists erp_tenant_id uuid;
+alter table public.organisations add column if not exists erp_linked_at timestamptz;
+create unique index if not exists organisations_erp_tenant_uidx
+  on public.organisations (erp_tenant_id) where erp_tenant_id is not null;
 
 -- Profiles map 1:1 to auth.users.
 -- A user belongs to exactly one organisation and has one role.
@@ -94,10 +103,19 @@ create table if not exists public.customers (
   address         text,
   notes           text,
   payload         jsonb,        -- legacy fields that don't have a typed column yet
+  -- ERP bridge (migration 0002): 'app' = created here (editable); 'erp' = bridged
+  -- from the ERP (read-only). external_id = the ERP customer id / re-push key.
+  source          text not null default 'app' check (source in ('app','erp')),
+  external_id     text,
   created_at      timestamptz default now(),
   updated_at      timestamptz default now()
 );
 create index if not exists customers_org_idx on public.customers (organisation_id);
+-- Keep the ERP-bridge columns present on databases created before migration 0002.
+alter table public.customers add column if not exists source text not null default 'app';
+alter table public.customers add column if not exists external_id text;
+create unique index if not exists customers_org_external_uidx
+  on public.customers (organisation_id, external_id) where external_id is not null;
 
 create table if not exists public.sites (
   id              text primary key,
