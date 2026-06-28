@@ -1,61 +1,126 @@
 /*
- * Hadron Tristroke icon system — ported from the ERP (components/hadron-icons.tsx).
+ * Hadron Tristroke icon system — generated from the ERP's authoritative icon
+ * sheet (Hadron Tristroke Icons). 102 icons. DO NOT hand-edit the map;
+ * regenerate from the source HTML if the set changes.
  *
- * Every icon is three stroked layers: primary outline → secondary teal accent →
- * yellow pop. Strokes reference CSS variables (--icon-primary/secondary/accent),
- * so icons re-tint automatically when the theme flips.
+ * Each icon is three stroked layers (primary outline -> teal -> yellow). Strokes
+ * reference CSS variables (--icon-primary/secondary/accent) so icons re-tint
+ * automatically when the theme flips.
  *
  * Exposes (window.*):
- *   HADRON_ICONS        — name → SVG inner-markup map (30 here; 113 total in ERP)
- *   renderHadronIcon(name, opts)  — returns an SVGSVGElement (per the ERP helper)
- *   hadronIcon(name, opts)        — returns an SVG *string* (for innerHTML templates)
- *   hadronThemeIcon(theme)        — sun/moon string for the theme toggle
- *
+ *   HADRON_ICONS                 name -> SVG inner-markup
+ *   hadronIcon(name, opts)       SVG *string* (for innerHTML templates)
+ *   renderHadronIcon(name, opts) SVGSVGElement (DOM)
+ *   hadronThemeIcon(theme)       sun/moon string for the theme toggle
  * opts: { size=24, strokeWidth=1, title }
  */
 (function () {
   'use strict';
 
   const HADRON_ICONS = {
-    dashboard:    '<g stroke="var(--icon-primary)"><rect x="3.5" y="3.5" width="7.5" height="7.5" rx="1.3"/><rect x="13" y="13" width="7.5" height="7.5" rx="1.3"/></g><g stroke="var(--icon-secondary)"><rect x="13" y="3.5" width="7.5" height="7.5" rx="1.3"/><rect x="3.5" y="13" width="7.5" height="7.5" rx="1.3"/></g><g stroke="var(--icon-accent)"><line x1="5" y1="6" x2="9.5" y2="6"/><line x1="14.5" y1="16" x2="19" y2="16"/></g>',
-    invoice:      '<g stroke="var(--icon-primary)"><path d="M6 3.5h9l4 4v13H6z"/></g><g stroke="var(--icon-secondary)"><path d="M15 3.5v4h4"/></g><g stroke="var(--icon-accent)"><path d="M10 10h3a1.4 1.4 0 0 1 0 2.8h-3M10 10v6.5M10 12.8l3.5 2.5"/></g>',
-    statement:    '<g stroke="var(--icon-primary)"><path d="M6 3.5h12v17H6z"/></g><g stroke="var(--icon-secondary)"><path d="M9 8h8M9 11h8M9 14h5"/></g><g stroke="var(--icon-accent)"><circle cx="14.5" cy="17" r="1.2"/></g>',
-    quote:        '<g stroke="var(--icon-primary)"><path d="M6 3.5h9l4 4v13H6z"/></g><g stroke="var(--icon-secondary)"><path d="M15 3.5v4h4"/></g><g stroke="var(--icon-accent)"><path d="M9 11h6M9 14h6M9 17h3"/></g>',
-    salesOrder:   '<g stroke="var(--icon-primary)"><path d="M6 3.5h9l4 4v13H6z"/></g><g stroke="var(--icon-secondary)"><path d="M15 3.5v4h4"/><line x1="9" y1="17" x2="13" y2="17"/></g><g stroke="var(--icon-accent)"><polyline points="9,13.5 11,15.5 15,11"/></g>',
-    creditNote:   '<g stroke="var(--icon-primary)"><path d="M6 3.5h9l4 4v13H6z"/></g><g stroke="var(--icon-secondary)"><path d="M15 3.5v4h4"/></g><g stroke="var(--icon-accent)"><line x1="9" y1="14" x2="16" y2="14"/><polyline points="11,12 9,14 11,16"/></g>',
-    payment:      '<g stroke="var(--icon-primary)"><rect x="3" y="6" width="18" height="12" rx="1.6"/></g><g stroke="var(--icon-secondary)"><line x1="3" y1="10" x2="21" y2="10"/></g><g stroke="var(--icon-accent)"><circle cx="12" cy="14.5" r="2"/><path d="M11 13.5h2"/></g>',
-    deliveryNote: '<g stroke="var(--icon-primary)"><path d="M6 3.5h9l4 4v13H6z"/></g><g stroke="var(--icon-secondary)"><path d="M15 3.5v4h4"/><rect x="9" y="10" width="6" height="4"/></g><g stroke="var(--icon-accent)"><circle cx="11" cy="16" r="0.8"/><circle cx="14" cy="16" r="0.8"/></g>',
-    document:     '<g stroke="var(--icon-primary)"><path d="M6 3.5h9l4 4v13H6z"/></g><g stroke="var(--icon-secondary)"><path d="M15 3.5v4h4"/></g><g stroke="var(--icon-accent)"><line x1="9" y1="12" x2="16" y2="12"/><line x1="9" y1="15" x2="16" y2="15"/><line x1="9" y1="18" x2="13" y2="18"/></g>',
-    folder:       '<g stroke="var(--icon-primary)"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></g><g stroke="var(--icon-secondary)"><path d="M3 10h18"/></g>',
-    profile:      '<g stroke="var(--icon-primary)"><path d="M5 20.5c0-3.6 3.1-6.5 7-6.5s7 2.9 7 6.5"/></g><g stroke="var(--icon-secondary)"><circle cx="12" cy="8.5" r="3.5"/></g>',
-    settings:     '<g stroke="var(--icon-primary)"><path d="M18.87 10.64L21.81 10.05L21.81 13.95L18.87 13.37L17.82 15.89L20.32 17.56L17.56 20.32L15.89 17.82L13.37 18.87L13.95 21.81L10.05 21.81L10.64 18.87L8.11 17.82L6.44 20.32L3.68 17.56L6.18 15.89L5.13 13.37L2.19 13.95L2.19 10.05L5.13 10.64L6.18 8.11L3.68 6.44L6.44 3.68L8.11 6.18L10.64 5.13L10.05 2.19L13.95 2.19L13.37 5.13L15.89 6.18L17.56 3.68L20.32 6.44L17.82 8.11Z"/></g><g stroke="var(--icon-secondary)"><circle cx="12" cy="12" r="3.8"/></g><g stroke="var(--icon-accent)"><circle cx="12" cy="12" r="1.4"/></g>',
-    notifications:'<g stroke="var(--icon-primary)"><path d="M6 16.5V11a6 6 0 0 1 12 0v5.5l1.5 1.5h-15z"/></g><g stroke="var(--icon-secondary)"><path d="M10 20.5a2 2 0 0 0 4 0"/></g><g stroke="var(--icon-accent)"><circle cx="17.5" cy="6.5" r="2.2"/></g>',
-    search:       '<g stroke="var(--icon-primary)"><circle cx="10.5" cy="10.5" r="6"/></g><g stroke="var(--icon-secondary)"><line x1="20" y1="20" x2="15" y2="15"/></g><g stroke="var(--icon-accent)"><line x1="8" y1="10.5" x2="13" y2="10.5"/></g>',
-    calendar:     '<g stroke="var(--icon-primary)"><rect x="3.5" y="5" width="17" height="15.5" rx="1.6"/></g><g stroke="var(--icon-secondary)"><line x1="3.5" y1="10" x2="20.5" y2="10"/><line x1="8" y1="3" x2="8" y2="7"/><line x1="16" y1="3" x2="16" y2="7"/></g><g stroke="var(--icon-accent)"><rect x="10" y="13" width="4" height="4" rx="0.6"/></g>',
-    help:         '<g stroke="var(--icon-primary)"><circle cx="12" cy="12" r="8.5"/></g><g stroke="var(--icon-secondary)"><path d="M9.5 9.5a2.5 2.5 0 0 1 5 0c0 1.5-2.5 2-2.5 4"/></g><g stroke="var(--icon-accent)"><circle cx="12" cy="17" r="0.7"/></g>',
-    menu:         '<g stroke="var(--icon-primary)"><line x1="4" y1="7" x2="20" y2="7"/><line x1="4" y1="17" x2="20" y2="17"/></g><g stroke="var(--icon-secondary)"><line x1="4" y1="12" x2="20" y2="12"/></g>',
-    close:        '<g stroke="var(--icon-primary)"><line x1="6" y1="6" x2="18" y2="18"/></g><g stroke="var(--icon-secondary)"><line x1="18" y1="6" x2="6" y2="18"/></g>',
-    logout:       '<g stroke="var(--icon-primary)"><path d="M10 4h-5a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h5"/></g><g stroke="var(--icon-secondary)"><line x1="9" y1="12" x2="16" y2="12"/></g><g stroke="var(--icon-accent)"><path d="M14 8l4 4-4 4"/></g>',
-    backArrow:    '<g stroke="var(--icon-primary)"><line x1="19" y1="12" x2="5" y2="12"/></g><g stroke="var(--icon-accent)"><polyline points="10,7 5,12 10,17"/></g>',
-    forwardArrow: '<g stroke="var(--icon-primary)"><line x1="5" y1="12" x2="19" y2="12"/></g><g stroke="var(--icon-accent)"><polyline points="14,7 19,12 14,17"/></g>',
-    add:          '<g stroke="var(--icon-primary)"><circle cx="12" cy="12" r="8.5"/></g><g stroke="var(--icon-accent)"><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></g>',
-    edit:         '<g stroke="var(--icon-primary)"><path d="M4 20l1-4 11-11 3 3-11 11z"/></g><g stroke="var(--icon-secondary)"><line x1="14" y1="7" x2="17" y2="10"/></g><g stroke="var(--icon-accent)"><line x1="4" y1="20" x2="7" y2="19"/></g>',
-    view:         '<g stroke="var(--icon-primary)"><path d="M2 12c2.5-4.5 6-7 10-7s7.5 2.5 10 7c-2.5 4.5-6 7-10 7s-7.5-2.5-10-7z"/></g><g stroke="var(--icon-secondary)"><circle cx="12" cy="12" r="2.8"/></g><g stroke="var(--icon-accent)"><circle cx="12" cy="12" r="1"/></g>',
-    download:     '<g stroke="var(--icon-primary)"><path d="M4 16v3.5h16V16"/></g><g stroke="var(--icon-secondary)"><line x1="12" y1="4" x2="12" y2="15"/></g><g stroke="var(--icon-accent)"><polyline points="7,11 12,16 17,11"/></g>',
-    print:        '<g stroke="var(--icon-primary)"><path d="M5 9h14v8h-3v3H8v-3H5z"/></g><g stroke="var(--icon-secondary)"><path d="M7 9V4h10v5"/></g><g stroke="var(--icon-accent)"><line x1="9" y1="14" x2="15" y2="14"/><line x1="9" y1="17" x2="15" y2="17"/></g>',
-    email:        '<g stroke="var(--icon-primary)"><rect x="3" y="5.5" width="18" height="13" rx="1.6"/></g><g stroke="var(--icon-secondary)"><polyline points="4,7 12,13 20,7"/></g>',
-    phone:        '<g stroke="var(--icon-primary)"><path d="M5 4h4l2 5-2.5 1.5a11 11 0 0 0 5 5L15 13l5 2v4a2 2 0 0 1-2 2C10 21 3 14 3 6a2 2 0 0 1 2-2z"/></g>',
-    location:     '<g stroke="var(--icon-primary)"><path d="M12 21c-4-5-7-9-7-12.5a7 7 0 0 1 14 0c0 3.5-3 7.5-7 12.5z"/></g><g stroke="var(--icon-accent)"><circle cx="12" cy="8.5" r="2.5"/></g>',
-    bank:         '<g stroke="var(--icon-primary)"><path d="M3 20h18M3 10L12 4l9 6"/></g><g stroke="var(--icon-secondary)"><path d="M4 10h16"/></g><g stroke="var(--icon-accent)"><line x1="7" y1="13" x2="7" y2="18"/><line x1="11" y1="13" x2="11" y2="18"/><line x1="13" y1="13" x2="13" y2="18"/><line x1="17" y1="13" x2="17" y2="18"/></g>',
-    currency:     '<g stroke="var(--icon-primary)"><circle cx="12" cy="12" r="8.5"/></g><g stroke="var(--icon-accent)"><path d="M10 8h4a1.5 1.5 0 0 1 0 3h-4M10 8v9M10 11l5 3.5"/></g>',
-    approve:      '<g stroke="var(--icon-primary)"><circle cx="12" cy="12" r="8.5"/></g><g stroke="var(--icon-accent)"><polyline points="8,12 11,15 16,9.5"/></g>',
-    reject:       '<g stroke="var(--icon-primary)"><circle cx="12" cy="12" r="8.5"/></g><g stroke="var(--icon-secondary)"><line x1="9" y1="9" x2="15" y2="15"/></g><g stroke="var(--icon-accent)"><line x1="15" y1="9" x2="9" y2="15"/></g>',
-    statusPending:'<g stroke="var(--icon-primary)"><circle cx="12" cy="12" r="8.5"/></g><g stroke="var(--icon-accent)"><path d="M12 7v5.5l3 2"/></g>',
-    statusPaid:   '<g stroke="var(--icon-primary)"><rect x="3" y="6" width="18" height="12" rx="1.6"/></g><g stroke="var(--icon-secondary)"><circle cx="17.5" cy="12" r="1.3"/></g><g stroke="var(--icon-accent)"><polyline points="7,12 10,14.5 14,10"/></g>',
-    statusOverdue:'<g stroke="var(--icon-primary)"><circle cx="12" cy="12" r="8.5"/></g><g stroke="var(--icon-accent)"><path d="M12 8v4.5l-2.5 2.5"/><circle cx="12" cy="12" r="0.5"/></g>',
-    trendUp:      '<g stroke="var(--icon-primary)"><polyline points="3,17 9,11 13,15 21,7"/></g><g stroke="var(--icon-accent)"><polyline points="15,7 21,7 21,13"/></g>',
-    trendDown:    '<g stroke="var(--icon-primary)"><polyline points="3,7 9,13 13,9 21,17"/></g><g stroke="var(--icon-accent)"><polyline points="15,17 21,17 21,11"/></g>',
-  };
+  "sales": "<g stroke=\"var(--icon-primary)\"><line x1=\"3.5\" y1=\"21\" x2=\"20.5\" y2=\"21\"/><rect x=\"5\" y=\"14\" width=\"3.5\" height=\"7\"/></g><g stroke=\"var(--icon-secondary)\"><rect x=\"10.5\" y=\"9\" width=\"3.5\" height=\"12\"/><rect x=\"16\" y=\"4\" width=\"3.5\" height=\"17\"/></g><g stroke=\"var(--icon-accent)\"><polyline points=\"5.5,15 10.5,11 14,13 19,7\"/><polyline points=\"15.5,7 19,7 19,10.5\"/></g>",
+  "purchasing": "<g stroke=\"var(--icon-primary)\"><path d=\"M2.5 4h3l2 12h11.5\"/><circle cx=\"9.5\" cy=\"20\" r=\"1.5\"/><circle cx=\"17\" cy=\"20\" r=\"1.5\"/></g><g stroke=\"var(--icon-secondary)\"><path d=\"M6.5 7h14l-2 7H8\"/></g><g stroke=\"var(--icon-accent)\"><rect x=\"9\" y=\"9\" width=\"2.5\" height=\"3\"/><rect x=\"13\" y=\"9\" width=\"2.5\" height=\"3\"/><rect x=\"17\" y=\"9\" width=\"2.5\" height=\"3\"/></g>",
+  "accounting": "<g stroke=\"var(--icon-primary)\"><rect x=\"4.5\" y=\"3\" width=\"15\" height=\"18\" rx=\"1.8\"/></g><g stroke=\"var(--icon-secondary)\"><rect x=\"6.5\" y=\"5\" width=\"11\" height=\"4\" rx=\"0.5\"/></g><g stroke=\"var(--icon-accent)\"><circle cx=\"8\" cy=\"12.5\" r=\"0.9\"/><circle cx=\"12\" cy=\"12.5\" r=\"0.9\"/><circle cx=\"16\" cy=\"12.5\" r=\"0.9\"/><circle cx=\"8\" cy=\"16\" r=\"0.9\"/><circle cx=\"12\" cy=\"16\" r=\"0.9\"/><circle cx=\"16\" cy=\"16\" r=\"0.9\"/><circle cx=\"8\" cy=\"19\" r=\"0.9\"/><circle cx=\"12\" cy=\"19\" r=\"0.9\"/><circle cx=\"16\" cy=\"19\" r=\"0.9\"/></g>",
+  "inventory": "<g stroke=\"var(--icon-primary)\"><path d=\"M3 8l9-4.5 9 4.5v8l-9 4.5L3 16z\"/></g><g stroke=\"var(--icon-secondary)\"><path d=\"M3 8l9 4.5 9-4.5M12 12.5v8\"/></g><g stroke=\"var(--icon-accent)\"><path d=\"M7.5 5.75l9 4.5\"/></g>",
+  "manufacturing": "<g stroke=\"var(--icon-primary)\"><path d=\"M3 20.5V11l4.5 2.5V11l4.5 2.5V11l4.5 2.5V20.5z\"/><path d=\"M3 20.5h17\"/><path d=\"M3.5 11v-7h2v7\"/><path d=\"M13 11v-5h2v5\"/></g><g stroke=\"var(--icon-secondary)\"><rect x=\"6\" y=\"16\" width=\"2.5\" height=\"3\"/><rect x=\"11\" y=\"16\" width=\"2.5\" height=\"3\"/></g><g stroke=\"var(--icon-accent)\"><circle cx=\"4.5\" cy=\"2.5\" r=\"1.2\"/><circle cx=\"14\" cy=\"4.5\" r=\"1\"/></g>",
+  "quality_control": "<g stroke=\"var(--icon-primary)\"><path d=\"M12 3l8 2.5v6c0 4.5-3.4 8.2-8 9.5-4.6-1.3-8-5-8-9.5v-6z\"/></g><g stroke=\"var(--icon-secondary)\"><circle cx=\"12\" cy=\"12\" r=\"4.5\"/></g><g stroke=\"var(--icon-accent)\"><polyline points=\"9.5,12 11.5,14 14.5,10\"/></g>",
+  "crm": "<g stroke=\"var(--icon-primary)\"><circle cx=\"12\" cy=\"12\" r=\"8.5\"/></g><g stroke=\"var(--icon-secondary)\"><circle cx=\"12\" cy=\"12\" r=\"5\"/><circle cx=\"12\" cy=\"12\" r=\"2\"/></g><g stroke=\"var(--icon-accent)\"><line x1=\"12\" y1=\"12\" x2=\"20\" y2=\"4\"/><polyline points=\"20,4 20,8 16,8\"/></g>",
+  "customers": "<g stroke=\"var(--icon-primary)\"><circle cx=\"12\" cy=\"9\" r=\"3\"/><path d=\"M5.5 20c0-3.6 2.9-6.5 6.5-6.5s6.5 2.9 6.5 6.5\"/></g><g stroke=\"var(--icon-secondary)\"><circle cx=\"5.5\" cy=\"11\" r=\"2.2\"/><circle cx=\"18.5\" cy=\"11\" r=\"2.2\"/></g><g stroke=\"var(--icon-accent)\"><path d=\"M2 19.5c0-2 1.4-3.5 3.5-3.5M22 19.5c0-2-1.4-3.5-3.5-3.5\"/></g>",
+  "suppliers": "<g stroke=\"var(--icon-primary)\"><path d=\"M1.5 7.5h11.5v9.5H1.5z\"/><path d=\"M13 11h4.5l3.5 3.5V17h-8z\"/></g><g stroke=\"var(--icon-secondary)\"><line x1=\"3\" y1=\"10.5\" x2=\"11.5\" y2=\"10.5\"/><line x1=\"3\" y1=\"13.5\" x2=\"11.5\" y2=\"13.5\"/><rect x=\"14\" y=\"12.5\" width=\"3.5\" height=\"3\"/></g><g stroke=\"var(--icon-accent)\"><circle cx=\"6\" cy=\"18.5\" r=\"1.6\"/><circle cx=\"17.5\" cy=\"18.5\" r=\"1.6\"/></g>",
+  "human_resources": "<g stroke=\"var(--icon-primary)\"><path d=\"M5 21c0-4 3-7 7-7s7 3 7 7\"/></g><g stroke=\"var(--icon-secondary)\"><circle cx=\"12\" cy=\"8\" r=\"3.5\"/></g><g stroke=\"var(--icon-accent)\"><rect x=\"13\" y=\"14\" width=\"5\" height=\"3.5\" rx=\"0.5\"/><line x1=\"14\" y1=\"15.4\" x2=\"17\" y2=\"15.4\"/><line x1=\"14\" y1=\"16.5\" x2=\"16\" y2=\"16.5\"/></g>",
+  "iso_qms": "<g stroke=\"var(--icon-primary)\"><path d=\"M8.5 14.5l-2 7 5.5-3 5.5 3-2-7\"/></g><g stroke=\"var(--icon-secondary)\"><circle cx=\"12\" cy=\"10\" r=\"6\"/></g><g stroke=\"var(--icon-accent)\"><polygon points=\"12,6 13.3,9 16.5,9 14,11 15,14 12,12 9,14 10,11 7.5,9 10.7,9\"/></g>",
+  "projects": "<g stroke=\"var(--icon-primary)\"><path d=\"M3 7a1.8 1.8 0 0 1 1.8-1.8h4.5l2 2H19.2A1.8 1.8 0 0 1 21 9v9.2A1.8 1.8 0 0 1 19.2 20H4.8A1.8 1.8 0 0 1 3 18.2z\"/></g><g stroke=\"var(--icon-secondary)\"><line x1=\"7\" y1=\"11\" x2=\"17\" y2=\"11\"/><rect x=\"6\" y=\"13\" width=\"11\" height=\"2.5\" rx=\"0.5\"/></g><g stroke=\"var(--icon-accent)\"><rect x=\"6\" y=\"13\" width=\"6\" height=\"2.5\" rx=\"0.5\"/></g>",
+  "shipping": "<g stroke=\"var(--icon-primary)\"><path d=\"M3.5 9h10.5v8.5H3.5z\"/><path d=\"M14 12h4l2.5 2.5V17.5H14z\"/></g><g stroke=\"var(--icon-secondary)\"><circle cx=\"7\" cy=\"18.5\" r=\"1.4\"/><circle cx=\"17\" cy=\"18.5\" r=\"1.4\"/></g><g stroke=\"var(--icon-accent)\"><line x1=\"1\" y1=\"11\" x2=\"2.5\" y2=\"11\"/><line x1=\"1\" y1=\"13.5\" x2=\"2.5\" y2=\"13.5\"/><line x1=\"1\" y1=\"16\" x2=\"2.5\" y2=\"16\"/></g>",
+  "compliance": "<g stroke=\"var(--icon-primary)\"><path d=\"M12 2.5l8.5 3v5.5c0 5-3.5 9-8.5 10.5-5-1.5-8.5-5.5-8.5-10.5V5.5z\"/></g><g stroke=\"var(--icon-secondary)\"><circle cx=\"12\" cy=\"12\" r=\"5.5\"/></g><g stroke=\"var(--icon-accent)\"><polyline points=\"9.5,12 11.5,14 14.5,10\"/></g>",
+  "reports": "<g stroke=\"var(--icon-primary)\"><path d=\"M4 4v17h17\"/></g><g stroke=\"var(--icon-secondary)\"><rect x=\"7\" y=\"13\" width=\"3\" height=\"6\"/><rect x=\"11.5\" y=\"9\" width=\"3\" height=\"10\"/></g><g stroke=\"var(--icon-accent)\"><rect x=\"16\" y=\"6\" width=\"3\" height=\"13\"/></g>",
+  "settings": "<g stroke=\"var(--icon-primary)\"><path d=\"M18.87 10.64L21.81 10.05L21.81 13.95L18.87 13.37L17.82 15.89L20.32 17.56L17.56 20.32L15.89 17.82L13.37 18.87L13.95 21.81L10.05 21.81L10.64 18.87L8.11 17.82L6.44 20.32L3.68 17.56L6.18 15.89L5.13 13.37L2.19 13.95L2.19 10.05L5.13 10.64L6.18 8.11L3.68 6.44L6.44 3.68L8.11 6.18L10.64 5.13L10.05 2.19L13.95 2.19L13.37 5.13L15.89 6.18L17.56 3.68L20.32 6.44L17.82 8.11Z\"/></g><g stroke=\"var(--icon-secondary)\"><circle cx=\"12\" cy=\"12\" r=\"3.8\"/></g><g stroke=\"var(--icon-accent)\"><circle cx=\"12\" cy=\"12\" r=\"1.4\"/></g>",
+  "dashboard": "<g stroke=\"var(--icon-primary)\"><rect x=\"3.5\" y=\"3.5\" width=\"7.5\" height=\"7.5\" rx=\"1.3\"/><rect x=\"13\" y=\"13\" width=\"7.5\" height=\"7.5\" rx=\"1.3\"/></g><g stroke=\"var(--icon-secondary)\"><rect x=\"13\" y=\"3.5\" width=\"7.5\" height=\"7.5\" rx=\"1.3\"/><rect x=\"3.5\" y=\"13\" width=\"7.5\" height=\"7.5\" rx=\"1.3\"/></g><g stroke=\"var(--icon-accent)\"><line x1=\"5\" y1=\"6\" x2=\"9.5\" y2=\"6\"/><line x1=\"14.5\" y1=\"16\" x2=\"19\" y2=\"16\"/></g>",
+  "notifications": "<g stroke=\"var(--icon-primary)\"><path d=\"M6 16.5V11a6 6 0 0 1 12 0v5.5l1.5 1.5h-15z\"/></g><g stroke=\"var(--icon-secondary)\"><path d=\"M10 20.5a2 2 0 0 0 4 0\"/></g><g stroke=\"var(--icon-accent)\"><circle cx=\"17.5\" cy=\"6.5\" r=\"2.2\"/></g>",
+  "search": "<g stroke=\"var(--icon-primary)\"><circle cx=\"10.5\" cy=\"10.5\" r=\"6\"/></g><g stroke=\"var(--icon-secondary)\"><line x1=\"20\" y1=\"20\" x2=\"15\" y2=\"15\"/></g><g stroke=\"var(--icon-accent)\"><line x1=\"8\" y1=\"10.5\" x2=\"13\" y2=\"10.5\"/></g>",
+  "calendar": "<g stroke=\"var(--icon-primary)\"><rect x=\"3.5\" y=\"5\" width=\"17\" height=\"15.5\" rx=\"1.6\"/></g><g stroke=\"var(--icon-secondary)\"><line x1=\"3.5\" y1=\"10\" x2=\"20.5\" y2=\"10\"/><line x1=\"8\" y1=\"3\" x2=\"8\" y2=\"7\"/><line x1=\"16\" y1=\"3\" x2=\"16\" y2=\"7\"/></g><g stroke=\"var(--icon-accent)\"><rect x=\"10\" y=\"13\" width=\"4\" height=\"4\" rx=\"0.6\"/></g>",
+  "tasks": "<g stroke=\"var(--icon-primary)\"><rect x=\"4\" y=\"4\" width=\"16\" height=\"16\" rx=\"2\"/></g><g stroke=\"var(--icon-secondary)\"><line x1=\"9\" y1=\"16.5\" x2=\"17\" y2=\"16.5\"/><line x1=\"15\" y1=\"11.5\" x2=\"17.5\" y2=\"11.5\"/></g><g stroke=\"var(--icon-accent)\"><polyline points=\"7.5,11 10,13.5 13.5,9.5\"/></g>",
+  "activity": "<g stroke=\"var(--icon-primary)\"><path d=\"M3 12h4l2-6 4 12 2-8 2 4h4\"/></g><g stroke=\"var(--icon-secondary)\"><circle cx=\"9\" cy=\"6\" r=\"0.8\"/><circle cx=\"13\" cy=\"18\" r=\"0.8\"/></g>",
+  "ai_assistant": "<g stroke=\"var(--icon-primary)\"><path d=\"M12 3l1.8 5.4 5.2 1.6-5.2 1.6L12 17l-1.8-5.4L5 10l5.2-1.6z\"/></g><g stroke=\"var(--icon-secondary)\"><path d=\"M18 16l.8 1.8L20.5 18.5l-1.7.7L18 21l-.8-1.8L15.5 18.5l1.7-.7z\"/></g><g stroke=\"var(--icon-accent)\"><circle cx=\"12\" cy=\"10\" r=\"0.9\"/></g>",
+  "help": "<g stroke=\"var(--icon-primary)\"><circle cx=\"12\" cy=\"12\" r=\"8.5\"/></g><g stroke=\"var(--icon-secondary)\"><path d=\"M9.5 9.5a2.5 2.5 0 0 1 5 0c0 1.5-2.5 2-2.5 4\"/></g><g stroke=\"var(--icon-accent)\"><circle cx=\"12\" cy=\"17\" r=\"0.7\"/></g>",
+  "profile": "<g stroke=\"var(--icon-primary)\"><path d=\"M5 20.5c0-3.6 3.1-6.5 7-6.5s7 2.9 7 6.5\"/></g><g stroke=\"var(--icon-secondary)\"><circle cx=\"12\" cy=\"8.5\" r=\"3.5\"/></g>",
+  "menu": "<g stroke=\"var(--icon-primary)\"><line x1=\"4\" y1=\"7\" x2=\"20\" y2=\"7\"/><line x1=\"4\" y1=\"17\" x2=\"20\" y2=\"17\"/></g><g stroke=\"var(--icon-secondary)\"><line x1=\"4\" y1=\"12\" x2=\"20\" y2=\"12\"/></g>",
+  "close": "<g stroke=\"var(--icon-primary)\"><line x1=\"6\" y1=\"6\" x2=\"18\" y2=\"18\"/></g><g stroke=\"var(--icon-secondary)\"><line x1=\"18\" y1=\"6\" x2=\"6\" y2=\"18\"/></g>",
+  "logout": "<g stroke=\"var(--icon-primary)\"><path d=\"M10 4h-5a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h5\"/></g><g stroke=\"var(--icon-secondary)\"><line x1=\"9\" y1=\"12\" x2=\"16\" y2=\"12\"/></g><g stroke=\"var(--icon-accent)\"><path d=\"M14 8l4 4-4 4\"/></g>",
+  "expand": "<g stroke=\"var(--icon-primary)\"><polyline points=\"6,9 12,15 18,9\"/></g>",
+  "collapse": "<g stroke=\"var(--icon-primary)\"><polyline points=\"6,15 12,9 18,15\"/></g>",
+  "back_arrow": "<g stroke=\"var(--icon-primary)\"><line x1=\"19\" y1=\"12\" x2=\"5\" y2=\"12\"/></g><g stroke=\"var(--icon-accent)\"><polyline points=\"10,7 5,12 10,17\"/></g>",
+  "forward_arrow": "<g stroke=\"var(--icon-primary)\"><line x1=\"5\" y1=\"12\" x2=\"19\" y2=\"12\"/></g><g stroke=\"var(--icon-accent)\"><polyline points=\"14,7 19,12 14,17\"/></g>",
+  "add": "<g stroke=\"var(--icon-primary)\"><circle cx=\"12\" cy=\"12\" r=\"8.5\"/></g><g stroke=\"var(--icon-accent)\"><line x1=\"12\" y1=\"8\" x2=\"12\" y2=\"16\"/><line x1=\"8\" y1=\"12\" x2=\"16\" y2=\"12\"/></g>",
+  "edit": "<g stroke=\"var(--icon-primary)\"><path d=\"M4 20l1-4 11-11 3 3-11 11z\"/></g><g stroke=\"var(--icon-secondary)\"><line x1=\"14\" y1=\"7\" x2=\"17\" y2=\"10\"/></g><g stroke=\"var(--icon-accent)\"><line x1=\"4\" y1=\"20\" x2=\"7\" y2=\"19\"/></g>",
+  "delete": "<g stroke=\"var(--icon-primary)\"><path d=\"M5 7h14\"/><path d=\"M7 7l1 13h8l1-13\"/></g><g stroke=\"var(--icon-secondary)\"><path d=\"M9 7V4.5h6V7\"/></g><g stroke=\"var(--icon-accent)\"><line x1=\"11\" y1=\"11\" x2=\"11\" y2=\"17\"/><line x1=\"13\" y1=\"11\" x2=\"13\" y2=\"17\"/></g>",
+  "save": "<g stroke=\"var(--icon-primary)\"><path d=\"M5 5h11l3 3v11H5z\"/></g><g stroke=\"var(--icon-secondary)\"><path d=\"M7 5v5h9V5\"/></g><g stroke=\"var(--icon-accent)\"><rect x=\"8\" y=\"13\" width=\"8\" height=\"6\"/></g>",
+  "approve": "<g stroke=\"var(--icon-primary)\"><circle cx=\"12\" cy=\"12\" r=\"8.5\"/></g><g stroke=\"var(--icon-accent)\"><polyline points=\"8,12 11,15 16,9.5\"/></g>",
+  "reject": "<g stroke=\"var(--icon-primary)\"><circle cx=\"12\" cy=\"12\" r=\"8.5\"/></g><g stroke=\"var(--icon-secondary)\"><line x1=\"9\" y1=\"9\" x2=\"15\" y2=\"15\"/></g><g stroke=\"var(--icon-accent)\"><line x1=\"15\" y1=\"9\" x2=\"9\" y2=\"15\"/></g>",
+  "print": "<g stroke=\"var(--icon-primary)\"><path d=\"M5 9h14v8h-3v3H8v-3H5z\"/></g><g stroke=\"var(--icon-secondary)\"><path d=\"M7 9V4h10v5\"/></g><g stroke=\"var(--icon-accent)\"><line x1=\"9\" y1=\"14\" x2=\"15\" y2=\"14\"/><line x1=\"9\" y1=\"17\" x2=\"15\" y2=\"17\"/></g>",
+  "email": "<g stroke=\"var(--icon-primary)\"><rect x=\"3\" y=\"5.5\" width=\"18\" height=\"13\" rx=\"1.6\"/></g><g stroke=\"var(--icon-secondary)\"><polyline points=\"4,7 12,13 20,7\"/></g>",
+  "download": "<g stroke=\"var(--icon-primary)\"><path d=\"M4 16v3.5h16V16\"/></g><g stroke=\"var(--icon-secondary)\"><line x1=\"12\" y1=\"4\" x2=\"12\" y2=\"15\"/></g><g stroke=\"var(--icon-accent)\"><polyline points=\"7,11 12,16 17,11\"/></g>",
+  "upload": "<g stroke=\"var(--icon-primary)\"><path d=\"M4 16v3.5h16V16\"/></g><g stroke=\"var(--icon-secondary)\"><line x1=\"12\" y1=\"15\" x2=\"12\" y2=\"4\"/></g><g stroke=\"var(--icon-accent)\"><polyline points=\"7,9 12,4 17,9\"/></g>",
+  "import": "<g stroke=\"var(--icon-primary)\"><path d=\"M3 14h7l1 2h2l1-2h7v6H3z\"/></g><g stroke=\"var(--icon-secondary)\"><path d=\"M4 14V5h16v9\"/></g><g stroke=\"var(--icon-accent)\"><polyline points=\"9,9 12,12 15,9\"/><line x1=\"12\" y1=\"4\" x2=\"12\" y2=\"12\"/></g>",
+  "export": "<g stroke=\"var(--icon-primary)\"><path d=\"M3 14h7l1 2h2l1-2h7v6H3z\"/></g><g stroke=\"var(--icon-secondary)\"><path d=\"M4 14V5h16v9\"/></g><g stroke=\"var(--icon-accent)\"><polyline points=\"9,8 12,5 15,8\"/><line x1=\"12\" y1=\"12\" x2=\"12\" y2=\"5\"/></g>",
+  "filter": "<g stroke=\"var(--icon-primary)\"><path d=\"M3 5h18l-7 8v6l-4-2v-4z\"/></g>",
+  "sort": "<g stroke=\"var(--icon-primary)\"><line x1=\"7\" y1=\"5\" x2=\"7\" y2=\"19\"/><polyline points=\"4,8 7,5 10,8\"/></g><g stroke=\"var(--icon-secondary)\"><line x1=\"17\" y1=\"19\" x2=\"17\" y2=\"5\"/><polyline points=\"14,16 17,19 20,16\"/></g>",
+  "refresh": "<g stroke=\"var(--icon-primary)\"><path d=\"M20 12a8 8 0 1 1-2.4-5.7\"/></g><g stroke=\"var(--icon-accent)\"><polyline points=\"20,3 20,7 16,7\"/></g>",
+  "copy": "<g stroke=\"var(--icon-primary)\"><rect x=\"8\" y=\"8\" width=\"12\" height=\"12\" rx=\"1.6\"/></g><g stroke=\"var(--icon-secondary)\"><path d=\"M16 8V5a1.5 1.5 0 0 0-1.5-1.5H5.5A1.5 1.5 0 0 0 4 5v9A1.5 1.5 0 0 0 5.5 15.5H8\"/></g>",
+  "link": "<g stroke=\"var(--icon-primary)\"><path d=\"M13 6l2-2a3.5 3.5 0 0 1 5 5l-2 2\"/></g><g stroke=\"var(--icon-secondary)\"><path d=\"M11 18l-2 2a3.5 3.5 0 0 1-5-5l2-2\"/></g><g stroke=\"var(--icon-accent)\"><path d=\"M10 14l4-4\"/></g>",
+  "share": "<g stroke=\"var(--icon-primary)\"><circle cx=\"6\" cy=\"12\" r=\"2.5\"/></g><g stroke=\"var(--icon-secondary)\"><circle cx=\"18\" cy=\"6\" r=\"2.5\"/><circle cx=\"18\" cy=\"18\" r=\"2.5\"/></g><g stroke=\"var(--icon-accent)\"><line x1=\"8.2\" y1=\"11\" x2=\"15.8\" y2=\"7.2\"/><line x1=\"8.2\" y1=\"13.2\" x2=\"15.8\" y2=\"17\"/></g>",
+  "lock": "<g stroke=\"var(--icon-primary)\"><rect x=\"5\" y=\"11\" width=\"14\" height=\"9.5\" rx=\"1.6\"/></g><g stroke=\"var(--icon-secondary)\"><path d=\"M8 11V8a4 4 0 0 1 8 0v3\"/></g><g stroke=\"var(--icon-accent)\"><circle cx=\"12\" cy=\"15.5\" r=\"1.3\"/><line x1=\"12\" y1=\"16.8\" x2=\"12\" y2=\"18\"/></g>",
+  "unlock": "<g stroke=\"var(--icon-primary)\"><rect x=\"5\" y=\"11\" width=\"14\" height=\"9.5\" rx=\"1.6\"/></g><g stroke=\"var(--icon-secondary)\"><path d=\"M8 11V8a4 4 0 0 1 7-2.5\"/></g><g stroke=\"var(--icon-accent)\"><circle cx=\"12\" cy=\"15.5\" r=\"1.3\"/></g>",
+  "view": "<g stroke=\"var(--icon-primary)\"><path d=\"M2 12c2.5-4.5 6-7 10-7s7.5 2.5 10 7c-2.5 4.5-6 7-10 7s-7.5-2.5-10-7z\"/></g><g stroke=\"var(--icon-secondary)\"><circle cx=\"12\" cy=\"12\" r=\"2.8\"/></g><g stroke=\"var(--icon-accent)\"><circle cx=\"12\" cy=\"12\" r=\"1\"/></g>",
+  "star": "<g stroke=\"var(--icon-primary)\"><path d=\"M12 3.5l2.7 5.5 6 .9-4.4 4.2 1 6L12 17.3 6.7 20.1l1-6L3.3 9.9l6-.9z\"/></g>",
+  "flag": "<g stroke=\"var(--icon-primary)\"><line x1=\"5\" y1=\"3\" x2=\"5\" y2=\"21\"/></g><g stroke=\"var(--icon-secondary)\"><path d=\"M5 4h14l-3 5 3 5H5\"/></g>",
+  "more_horizontal": "<g stroke=\"var(--icon-primary)\"><circle cx=\"6\" cy=\"12\" r=\"1.3\"/></g><g stroke=\"var(--icon-secondary)\"><circle cx=\"12\" cy=\"12\" r=\"1.3\"/></g><g stroke=\"var(--icon-accent)\"><circle cx=\"18\" cy=\"12\" r=\"1.3\"/></g>",
+  "quote": "<g stroke=\"var(--icon-primary)\"><path d=\"M6 3.5h9l4 4v13H6z\"/></g><g stroke=\"var(--icon-secondary)\"><path d=\"M15 3.5v4h4\"/></g><g stroke=\"var(--icon-accent)\"><path d=\"M9 11h6M9 14h6M9 17h3\"/></g>",
+  "sales_order": "<g stroke=\"var(--icon-primary)\"><path d=\"M6 3.5h9l4 4v13H6z\"/></g><g stroke=\"var(--icon-secondary)\"><path d=\"M15 3.5v4h4\"/><line x1=\"9\" y1=\"17\" x2=\"13\" y2=\"17\"/></g><g stroke=\"var(--icon-accent)\"><polyline points=\"9,13.5 11,15.5 15,11\"/></g>",
+  "invoice": "<g stroke=\"var(--icon-primary)\"><path d=\"M6 3.5h9l4 4v13H6z\"/></g><g stroke=\"var(--icon-secondary)\"><path d=\"M15 3.5v4h4\"/></g><g stroke=\"var(--icon-accent)\"><path d=\"M10 10h3a1.4 1.4 0 0 1 0 2.8h-3M10 10v6.5M10 12.8l3.5 2.5\"/></g>",
+  "credit_note": "<g stroke=\"var(--icon-primary)\"><path d=\"M6 3.5h9l4 4v13H6z\"/></g><g stroke=\"var(--icon-secondary)\"><path d=\"M15 3.5v4h4\"/></g><g stroke=\"var(--icon-accent)\"><line x1=\"9\" y1=\"14\" x2=\"16\" y2=\"14\"/><polyline points=\"11,12 9,14 11,16\"/></g>",
+  "payment": "<g stroke=\"var(--icon-primary)\"><rect x=\"3\" y=\"6\" width=\"18\" height=\"12\" rx=\"1.6\"/></g><g stroke=\"var(--icon-secondary)\"><line x1=\"3\" y1=\"10\" x2=\"21\" y2=\"10\"/></g><g stroke=\"var(--icon-accent)\"><circle cx=\"12\" cy=\"14.5\" r=\"2\"/><path d=\"M11 13.5h2\"/></g>",
+  "statement": "<g stroke=\"var(--icon-primary)\"><path d=\"M6 3.5h12v17H6z\"/></g><g stroke=\"var(--icon-secondary)\"><path d=\"M9 8h8M9 11h8M9 14h5\"/></g><g stroke=\"var(--icon-accent)\"><circle cx=\"14.5\" cy=\"17\" r=\"1.2\"/></g>",
+  "purchase_order": "<g stroke=\"var(--icon-primary)\"><path d=\"M6 3.5h9l4 4v13H6z\"/></g><g stroke=\"var(--icon-secondary)\"><path d=\"M15 3.5v4h4\"/><path d=\"M9 10h9l-1 4H10z\"/></g><g stroke=\"var(--icon-accent)\"><circle cx=\"11\" cy=\"14\" r=\"1\"/><circle cx=\"16\" cy=\"14\" r=\"1\"/></g>",
+  "grn": "<g stroke=\"var(--icon-primary)\"><path d=\"M6 3.5h9l4 4v13H6z\"/></g><g stroke=\"var(--icon-secondary)\"><path d=\"M15 3.5v4h4\"/></g><g stroke=\"var(--icon-accent)\"><path d=\"M9 14h4l1.5-3 1.5 6 1-3h2\"/></g>",
+  "vendor_bill": "<g stroke=\"var(--icon-primary)\"><path d=\"M6 3.5h12v17l-2-1.5-2 1.5-2-1.5-2 1.5-2-1.5-2 1.5z\"/></g><g stroke=\"var(--icon-accent)\"><path d=\"M10 8.5h3a1.4 1.4 0 0 1 0 2.8h-3M10 8.5v6.5\"/></g>",
+  "delivery_note": "<g stroke=\"var(--icon-primary)\"><path d=\"M6 3.5h9l4 4v13H6z\"/></g><g stroke=\"var(--icon-secondary)\"><path d=\"M15 3.5v4h4\"/><rect x=\"9\" y=\"10\" width=\"6\" height=\"4\"/></g><g stroke=\"var(--icon-accent)\"><circle cx=\"11\" cy=\"16\" r=\"0.8\"/><circle cx=\"14\" cy=\"16\" r=\"0.8\"/></g>",
+  "warehouse": "<g stroke=\"var(--icon-primary)\"><path d=\"M3 10l9-5 9 5v10H3z\"/></g><g stroke=\"var(--icon-secondary)\"><path d=\"M3 20h18\"/></g><g stroke=\"var(--icon-accent)\"><rect x=\"7\" y=\"13\" width=\"4\" height=\"4\"/><rect x=\"13\" y=\"13\" width=\"4\" height=\"4\"/></g>",
+  "product": "<g stroke=\"var(--icon-primary)\"><path d=\"M4 8.5l8-4 8 4v8l-8 4-8-4z\"/></g><g stroke=\"var(--icon-secondary)\"><path d=\"M4 8.5l8 4 8-4M12 12.5v8\"/></g>",
+  "bom": "<g stroke=\"var(--icon-primary)\"><rect x=\"8\" y=\"3\" width=\"8\" height=\"9\"/></g><g stroke=\"var(--icon-secondary)\"><rect x=\"3\" y=\"11\" width=\"8\" height=\"9\"/><rect x=\"13\" y=\"11\" width=\"8\" height=\"9\"/></g><g stroke=\"var(--icon-accent)\"><line x1=\"7\" y1=\"11\" x2=\"12\" y2=\"9\"/><line x1=\"17\" y1=\"11\" x2=\"12\" y2=\"9\"/></g>",
+  "barcode": "<g stroke=\"var(--icon-primary)\"><rect x=\"3\" y=\"5\" width=\"18\" height=\"14\" rx=\"1\"/></g><g stroke=\"var(--icon-secondary)\"><line x1=\"6\" y1=\"8\" x2=\"6\" y2=\"16\"/><line x1=\"9\" y1=\"8\" x2=\"9\" y2=\"16\"/><line x1=\"14\" y1=\"8\" x2=\"14\" y2=\"16\"/><line x1=\"18\" y1=\"8\" x2=\"18\" y2=\"16\"/></g><g stroke=\"var(--icon-accent)\"><line x1=\"11\" y1=\"8\" x2=\"11\" y2=\"16\" stroke-width=\"2.5\"/><line x1=\"16\" y1=\"8\" x2=\"16\" y2=\"16\" stroke-width=\"2.5\"/></g>",
+  "stock_transfer": "<g stroke=\"var(--icon-primary)\"><rect x=\"3\" y=\"6\" width=\"6\" height=\"6\"/></g><g stroke=\"var(--icon-secondary)\"><rect x=\"15\" y=\"12\" width=\"6\" height=\"6\"/></g><g stroke=\"var(--icon-accent)\"><path d=\"M9 9h4M13 7l2 2-2 2\"/><path d=\"M15 15h-4M11 17l-2-2 2-2\"/></g>",
+  "truck": "<g stroke=\"var(--icon-primary)\"><path d=\"M2 8h11v9H2z\"/><path d=\"M13 11h5l3 3v3h-8z\"/></g><g stroke=\"var(--icon-secondary)\"><circle cx=\"7\" cy=\"18.5\" r=\"1.7\"/><circle cx=\"17\" cy=\"18.5\" r=\"1.7\"/></g>",
+  "work_order": "<g stroke=\"var(--icon-primary)\"><rect x=\"5\" y=\"4\" width=\"14\" height=\"16\" rx=\"1.6\"/></g><g stroke=\"var(--icon-secondary)\"><circle cx=\"12\" cy=\"13\" r=\"2.5\"/><path d=\"M12 9v1.5M12 15.5v1.5M8.5 13H10M14 13h1.5M9.5 10.5l1 1M13.5 14.5l1 1\"/></g><g stroke=\"var(--icon-accent)\"><circle cx=\"12\" cy=\"13\" r=\"1\"/></g>",
+  "ncr": "<g stroke=\"var(--icon-primary)\"><path d=\"M6 3.5h9l4 4v13H6z\"/></g><g stroke=\"var(--icon-secondary)\"><path d=\"M15 3.5v4h4\"/></g><g stroke=\"var(--icon-accent)\"><line x1=\"9\" y1=\"11\" x2=\"15\" y2=\"17\"/><line x1=\"15\" y1=\"11\" x2=\"9\" y2=\"17\"/></g>",
+  "capa": "<g stroke=\"var(--icon-primary)\"><path d=\"M6 3.5h9l4 4v13H6z\"/></g><g stroke=\"var(--icon-secondary)\"><path d=\"M15 3.5v4h4\"/></g><g stroke=\"var(--icon-accent)\"><path d=\"M10 13l-1.5 1.5L10 16l1.5-1.5M12 12.5l4 4M9 17.5l3-3\"/></g>",
+  "coa": "<g stroke=\"var(--icon-primary)\"><path d=\"M8 8c-1.5 2-3 4-3 8a3 3 0 0 0 3 3h8a3 3 0 0 0 3-3c0-4-1.5-6-3-8\"/></g><g stroke=\"var(--icon-secondary)\"><path d=\"M8 4h2v4l-1 1-1-1z\"/></g><g stroke=\"var(--icon-accent)\"><polyline points=\"9,15 11,17 15,13\"/></g>",
+  "bank": "<g stroke=\"var(--icon-primary)\"><path d=\"M3 20h18M3 10L12 4l9 6\"/></g><g stroke=\"var(--icon-secondary)\"><path d=\"M4 10h16\"/></g><g stroke=\"var(--icon-accent)\"><line x1=\"7\" y1=\"13\" x2=\"7\" y2=\"18\"/><line x1=\"11\" y1=\"13\" x2=\"11\" y2=\"18\"/><line x1=\"13\" y1=\"13\" x2=\"13\" y2=\"18\"/><line x1=\"17\" y1=\"13\" x2=\"17\" y2=\"18\"/></g>",
+  "reconcile": "<g stroke=\"var(--icon-primary)\"><circle cx=\"6\" cy=\"8\" r=\"2.5\"/></g><g stroke=\"var(--icon-secondary)\"><circle cx=\"18\" cy=\"8\" r=\"2.5\"/><path d=\"M8 10l3 6h2l3-6\"/></g><g stroke=\"var(--icon-accent)\"><path d=\"M11 16h2v4h-2z\"/></g>",
+  "currency": "<g stroke=\"var(--icon-primary)\"><circle cx=\"12\" cy=\"12\" r=\"8.5\"/></g><g stroke=\"var(--icon-accent)\"><path d=\"M10 8h4a1.5 1.5 0 0 1 0 3h-4M10 8v9M10 11l5 3.5\"/></g>",
+  "status_draft": "<g stroke=\"var(--icon-primary)\"><rect x=\"4\" y=\"4\" width=\"16\" height=\"16\" rx=\"3\" stroke-dasharray=\"3 3\"/></g><g stroke=\"var(--icon-accent)\"><line x1=\"9\" y1=\"12\" x2=\"15\" y2=\"12\"/></g>",
+  "status_pending": "<g stroke=\"var(--icon-primary)\"><circle cx=\"12\" cy=\"12\" r=\"8.5\"/></g><g stroke=\"var(--icon-accent)\"><path d=\"M12 7v5.5l3 2\"/></g>",
+  "status_approved": "<g stroke=\"var(--icon-primary)\"><circle cx=\"12\" cy=\"12\" r=\"8.5\"/></g><g stroke=\"var(--icon-accent)\"><polyline points=\"8,12 11,15 16,9.5\"/></g>",
+  "status_rejected": "<g stroke=\"var(--icon-primary)\"><circle cx=\"12\" cy=\"12\" r=\"8.5\"/></g><g stroke=\"var(--icon-secondary)\"><line x1=\"9\" y1=\"9\" x2=\"15\" y2=\"15\"/></g><g stroke=\"var(--icon-accent)\"><line x1=\"15\" y1=\"9\" x2=\"9\" y2=\"15\"/></g>",
+  "status_paid": "<g stroke=\"var(--icon-primary)\"><rect x=\"3\" y=\"6\" width=\"18\" height=\"12\" rx=\"1.6\"/></g><g stroke=\"var(--icon-secondary)\"><circle cx=\"17.5\" cy=\"12\" r=\"1.3\"/></g><g stroke=\"var(--icon-accent)\"><polyline points=\"7,12 10,14.5 14,10\"/></g>",
+  "status_overdue": "<g stroke=\"var(--icon-primary)\"><circle cx=\"12\" cy=\"12\" r=\"8.5\"/></g><g stroke=\"var(--icon-accent)\"><path d=\"M12 8v4.5l-2.5 2.5\"/><circle cx=\"12\" cy=\"12\" r=\"0.5\"/></g>",
+  "status_posted": "<g stroke=\"var(--icon-primary)\"><rect x=\"4\" y=\"4\" width=\"16\" height=\"16\" rx=\"2\"/></g><g stroke=\"var(--icon-secondary)\"><line x1=\"8\" y1=\"17\" x2=\"16\" y2=\"17\"/></g><g stroke=\"var(--icon-accent)\"><polyline points=\"8,12 11,15 16,9.5\"/></g>",
+  "status_locked": "<g stroke=\"var(--icon-primary)\"><rect x=\"5\" y=\"11\" width=\"14\" height=\"9.5\" rx=\"1.6\"/></g><g stroke=\"var(--icon-secondary)\"><path d=\"M8 11V8a4 4 0 0 1 8 0v3\"/></g><g stroke=\"var(--icon-accent)\"><circle cx=\"12\" cy=\"15.5\" r=\"1.1\"/></g>",
+  "status_active": "<g stroke=\"var(--icon-primary)\"><circle cx=\"12\" cy=\"12\" r=\"8.5\"/></g><g stroke=\"var(--icon-accent)\"><circle cx=\"12\" cy=\"12\" r=\"3\"/></g>",
+  "status_archived": "<g stroke=\"var(--icon-primary)\"><rect x=\"5\" y=\"9\" width=\"14\" height=\"11\"/></g><g stroke=\"var(--icon-secondary)\"><rect x=\"3\" y=\"5\" width=\"18\" height=\"4\"/></g><g stroke=\"var(--icon-accent)\"><line x1=\"10\" y1=\"13\" x2=\"14\" y2=\"13\"/></g>",
+  "folder": "<g stroke=\"var(--icon-primary)\"><path d=\"M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z\"/></g><g stroke=\"var(--icon-secondary)\"><path d=\"M3 10h18\"/></g>",
+  "document": "<g stroke=\"var(--icon-primary)\"><path d=\"M6 3.5h9l4 4v13H6z\"/></g><g stroke=\"var(--icon-secondary)\"><path d=\"M15 3.5v4h4\"/></g><g stroke=\"var(--icon-accent)\"><line x1=\"9\" y1=\"12\" x2=\"16\" y2=\"12\"/><line x1=\"9\" y1=\"15\" x2=\"16\" y2=\"15\"/><line x1=\"9\" y1=\"18\" x2=\"13\" y2=\"18\"/></g>",
+  "attachment": "<g stroke=\"var(--icon-primary)\"><path d=\"M16 8.5L9 15.5a3 3 0 1 0 4.2 4.2l7.5-7.5a5 5 0 0 0-7-7L5.5 13\"/></g>",
+  "chat": "<g stroke=\"var(--icon-primary)\"><path d=\"M4 5.5h16v11h-9l-4 3v-3H4z\"/></g><g stroke=\"var(--icon-secondary)\"><circle cx=\"9\" cy=\"11\" r=\"0.9\"/><circle cx=\"15\" cy=\"11\" r=\"0.9\"/></g><g stroke=\"var(--icon-accent)\"><circle cx=\"12\" cy=\"11\" r=\"0.9\"/></g>",
+  "phone": "<g stroke=\"var(--icon-primary)\"><path d=\"M5 4h4l2 5-2.5 1.5a11 11 0 0 0 5 5L15 13l5 2v4a2 2 0 0 1-2 2C10 21 3 14 3 6a2 2 0 0 1 2-2z\"/></g>",
+  "location": "<g stroke=\"var(--icon-primary)\"><path d=\"M12 21c-4-5-7-9-7-12.5a7 7 0 0 1 14 0c0 3.5-3 7.5-7 12.5z\"/></g><g stroke=\"var(--icon-accent)\"><circle cx=\"12\" cy=\"8.5\" r=\"2.5\"/></g>",
+  "shield_check": "<g stroke=\"var(--icon-primary)\"><path d=\"M12 3l8 2.5v6c0 4.5-3.4 8.2-8 9.5-4.6-1.3-8-5-8-9.5v-6z\"/></g><g stroke=\"var(--icon-accent)\"><polyline points=\"8.5,12 11,14.5 15.5,9.5\"/></g>",
+  "hazard": "<g stroke=\"var(--icon-primary)\"><path d=\"M12 3l10 17H2z\"/></g><g stroke=\"var(--icon-accent)\"><line x1=\"12\" y1=\"10\" x2=\"12\" y2=\"14.5\"/><circle cx=\"12\" cy=\"17.5\" r=\"0.7\"/></g>",
+  "trend_up": "<g stroke=\"var(--icon-primary)\"><polyline points=\"3,17 9,11 13,15 21,7\"/></g><g stroke=\"var(--icon-accent)\"><polyline points=\"15,7 21,7 21,13\"/></g>",
+  "trend_down": "<g stroke=\"var(--icon-primary)\"><polyline points=\"3,7 9,13 13,9 21,17\"/></g><g stroke=\"var(--icon-accent)\"><polyline points=\"15,17 21,17 21,11\"/></g>",
+  "hourglass": "<g stroke=\"var(--icon-primary)\"><path d=\"M7 3h10M7 21h10M8 3v3.5c0 2.2 1.3 3.6 4 5.5 2.7 1.9 4 3.3 4 5.5V21\"/></g><g stroke=\"var(--icon-secondary)\"><path d=\"M8 21v-3.5c0-2.2 1.3-3.6 4-5.5 2.7-1.9 4-3.3 4-5.5V3\"/></g><g stroke=\"var(--icon-accent)\"><line x1=\"12\" y1=\"11\" x2=\"12\" y2=\"13.5\"/><path d=\"M9.5 18.5h5\"/></g>",
+  "camera": "<g stroke=\"var(--icon-primary)\"><path d=\"M3 7h3.5l1.5-2h8l1.5 2H21v12H3z\"/></g><g stroke=\"var(--icon-secondary)\"><circle cx=\"12\" cy=\"13\" r=\"3.8\"/></g><g stroke=\"var(--icon-accent)\"><circle cx=\"17.5\" cy=\"9\" r=\"0.8\"/></g>",
+  "clipboard": "<g stroke=\"var(--icon-primary)\"><path d=\"M6 5h12v16H6z\"/></g><g stroke=\"var(--icon-secondary)\"><rect x=\"9\" y=\"3\" width=\"6\" height=\"3.5\" rx=\"0.6\"/><line x1=\"9\" y1=\"11\" x2=\"15\" y2=\"11\"/><line x1=\"9\" y1=\"14\" x2=\"15\" y2=\"14\"/></g><g stroke=\"var(--icon-accent)\"><line x1=\"9\" y1=\"17\" x2=\"13\" y2=\"17\"/></g>"
+};
 
   function svgOpen(size, sw, title) {
     return '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" ' +
@@ -65,15 +130,13 @@
              : 'role="presentation">');
   }
 
-  // SVG string — for the app's innerHTML template literals.
   function hadronIcon(name, opts) {
     opts = opts || {};
-    const body = HADRON_ICONS[name];
-    if (!body) return '';
-    return svgOpen(opts.size || 24, opts.strokeWidth || 1, opts.title) + body + '</svg>';
+    const b = HADRON_ICONS[name];
+    if (!b) return '';
+    return svgOpen(opts.size || 24, opts.strokeWidth || 1, opts.title) + b + '</svg>';
   }
 
-  // SVGSVGElement — matches the ERP's renderHadronIcon signature.
   function renderHadronIcon(name, opts) {
     opts = opts || {};
     if (!HADRON_ICONS[name]) return null;
@@ -82,19 +145,24 @@
     return wrap.firstChild;
   }
 
-  // Theme-toggle sun/moon (outside the Tristroke set; uses currentColor).
-  // Pass the CURRENT theme; returns the icon of what you'll switch INTO.
+  // Theme-toggle sun/moon (uses currentColor; not part of the Tristroke set).
   function hadronThemeIcon(theme) {
     const sun = '<circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/>';
     const moon = '<path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>';
-    const inner = theme === 'dark' ? sun : moon; // dark now → show sun (switch to light)
+    const inner = theme === 'dark' ? sun : moon;
     return '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" ' +
       'stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle">' +
       inner + '</svg>';
   }
 
+  // camelCase aliases for the snake_case names, so call sites can use either.
+  Object.keys(HADRON_ICONS).forEach(function (k) {
+    const camel = k.replace(/_([a-z])/g, function (_, c) { return c.toUpperCase(); });
+    if (camel !== k && !HADRON_ICONS[camel]) HADRON_ICONS[camel] = HADRON_ICONS[k];
+  });
+
   window.HADRON_ICONS = HADRON_ICONS;
-  window.renderHadronIcon = renderHadronIcon;
   window.hadronIcon = hadronIcon;
+  window.renderHadronIcon = renderHadronIcon;
   window.hadronThemeIcon = hadronThemeIcon;
 })();
