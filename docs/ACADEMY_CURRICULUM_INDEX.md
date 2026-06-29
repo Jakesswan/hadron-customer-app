@@ -4,12 +4,12 @@
 > Project so it can (1) judge NEW vs DEEPENING + flag overlap, and (2) pick the next
 > free id/code in a track. Code convention: **1xx = Foundation, 2xx = Intermediate, 3xx = Advanced**.
 
-**42 courses across 10 tracks.**
+**43 courses across 10 tracks.**
 
 ## Potable Water  `track-potable`
 _Drinking water treatment from source to tap_
 
-Codes used (POT-): 101, 201, 202, 301
+Codes used (POT-): 101, 201, 202, 203, 301
 
 - **POT-101** `c-pot-101` - Introduction to Drinking Water Treatment _(Foundation, 4 hrs, 5 modules, has quiz)_
   - tools: waterindex, dosage, lims
@@ -22,6 +22,10 @@ Codes used (POT-): 101, 201, 202, 301
   - prereqs: c-pot-201
   - tools: dosage, lims
   - modules: m1 Filter types & media | m2 Underdrains & wash systems | m3 Run length, head loss & breakthrough | m4 Common faults & fixes | m5 Operator drill
+- **POT-203** `c-pot-203` - Coagulant Blends: Selection, Dosing & Plant Trials _(Intermediate, 3 hrs, 6 modules, has quiz)_
+  - prereqs: c-pot-201
+  - tools: dosage, effluent, converters
+  - modules: m1 Why blend coagulants exist | m2 The building blocks of a blend | m3 Blend ratios, dose and sludge | m4 Commissioning a blend: the trial | m5 Choosing and controlling a blend in service | m6 Knowledge check
 - **POT-301** `c-pot-301` - SANS 241 Compliance & Water Safety Plans _(Advanced, 6 hrs, 5 modules)_
   - prereqs: c-pot-101
   - tools: lims, servicereport
