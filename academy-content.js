@@ -625,6 +625,130 @@ Formulated blends are convenient but demand respect:
 
 _Source: Operation of Water Treatment Works (WRC), Corrective actions — coagulant dosing; Chemistry of Wastewater Treatment (WRC, 2009), §7.8–7.9._`,
 
+  /* ───── POT-204 — SANS 241 Determinands, Limits & Risk Categories ───── */
+
+  'c-pot-204/m1': `## The standard and its legal force
+**SANS 241-1:2015** is the South African National Standard that defines acceptable drinking water. Water that meets it is deemed to present an **acceptable health risk for lifetime consumption** — the benchmark used is an average of **2 litres a day for 70 years by a 60 kg person**.
+
+It is not advisory. SANS 241 is referenced in the **Water Services Act, 1997 (Act No. 108 of 1997)** and supporting legislation, so for a water services institution **compliance is a legal duty**, monitored by the Department of Water and Sanitation. The 2015 edition supersedes SANS 241:2011, and its numerical limits were derived using the **WHO Guidelines for Drinking-water Quality (4th edition)**.
+
+The standard comes in two parts: **Part 1** (this one) lists the determinands and their limits, while **Part 2** sets out how to apply them — the monitoring programme and risk assessment.
+
+## The four risk categories
+Every determinand in SANS 241 is tagged with one of **four risk types**, and the tag tells you how urgently to act:
+- **Acute health** — poses an **immediate** unacceptable health risk if its limit is exceeded (for example E. coli, nitrate, cyanide).
+- **Chronic health** — a risk only after **prolonged** exposure (most metals, fluoride, trihalomethanes).
+- **Aesthetic** — taints **taste, odour or colour** but is **not** a health risk at the exceedance (colour, chloride, sodium).
+- **Operational** — flags the **efficiency of treatment and risks to infrastructure** (turbidity, pH, aluminium).
+
+An acute-health failure is an emergency; an aesthetic exceedance is a customer-satisfaction issue. Same standard, very different responses.
+
+## How the limits are structured
+The limits are written as a **numerical ceiling** — a determinand passes if its result is **at or below** the listed figure. A few points to read them correctly:
+- some determinands carry **two limits** — a health limit and a lower **aesthetic** limit (iron, manganese, sulfate); the lower one usually bites first;
+- units matter — macro-determinands are in **mg/L**, metals usually in **µg/L** (1 mg/L = 1000 µg/L); and
+- a result below the laboratory’s **limit of quantification** is reported with a **“<”** sign (for example \`< 1,0 mg/L\`).
+
+Where a determinand is not listed, the **WHO guidelines** are used for comparison. The rest of this course walks the determinand groups in turn.
+
+_Source: SANS 241-1:2015, Drinking water — Part 1 (scope, definitions, §4.3–4.4); Introduction to Water Treatment (Rand Water) — SA water legislation and SANS 241._`,
+
+  'c-pot-204/m2': `## The faecal-indicator determinands
+The microbiological determinands are the most safety-critical in the standard, because microbial contamination causes **immediate** illness. They are all **acute health** or operational process indicators.
+
+The headline determinand is **E. coli** — or, as an alternative, **faecal coliforms** — with a limit of **Not detected per 100 mL**. E. coli is the **preferred indicator of faecal pollution**: its normal home is the gut, it does not multiply in water, so finding it means **recent faecal contamination**. Any detection is a compliance failure and a public-health trigger.
+
+## Protozoan parasites
+**Cryptosporidium** and **Giardia** species each carry a limit of **Not detected per 10 litres** and are classed as **acute health**. They confirm a risk of infection and faecal pollution and give information on **treatment efficiency** — they are resistant to chlorine, so their control depends on effective filtration and, where used, alternative disinfection. They are sampled in a large (10 L) volume because they may be present at very low numbers yet still pose a risk.
+
+## Process and operational indicators
+Three further microbiological determinands are **operational** — they do not signal direct disease so much as **how well the system is working**:
+- **Total coliforms** — limit **≤ 10 per 100 mL**; an indicator of treatment efficiency and after-growth in the network.
+- **Heterotrophic plate count (HPC)** — limit **≤ 1000 per mL**; a process indicator of treatment efficiency, after-growth and the **adequacy of the disinfectant residual**.
+- **Somatic coliphages** — limit **Not detected per 10 mL**; a process indicator of treatment efficiency and a useful surrogate for virus removal.
+
+Read together, these tell an operator whether disinfection and the barrier train are holding and whether bacteria are regrowing downstream — a rising HPC or coliform count is an early warning even before a health-based determinand fails.
+
+_Source: SANS 241-1:2015, Drinking water — Part 1, Table 1 (microbiological determinands)._`,
+
+  'c-pot-204/m3': `## Physical and aesthetic determinands
+This group governs how water **looks and behaves** and how efficiently the works runs.
+- **Colour** — aesthetic, **≤ 15 mg/L Pt-Co**.
+- **Conductivity** (at 25 °C) — aesthetic, **≤ 170 mS/m**.
+- **Total dissolved solids (TDS)** — aesthetic, **≤ 1200 mg/L**.
+- **Turbidity** — **operational ≤ 1 NTU** and **aesthetic ≤ 5 NTU**. Turbidity above the operational limit can **impair disinfection**, which is why it is watched so closely.
+- **pH** (at 25 °C) — operational, **≥ 5 to ≤ 9,7**. Low pH can cause **structural (corrosion) problems** in the distribution system.
+
+## Disinfection and nitrogen macro-determinands
+These are the chemical macro-determinands most tied to treatment.
+- **Free chlorine** (as Cl₂) — chronic health, **≤ 5 mg/L**.
+- **Monochloramine** — chronic health, **≤ 3 mg/L**.
+- **Nitrate (as N)** — **acute health, ≤ 11 mg/L** (equivalent to 50 mg/L as NO₃).
+- **Nitrite (as N)** — **acute health, ≤ 0,9 mg/L** (equivalent to 3 mg/L as NO₂).
+- **Combined nitrate plus nitrite** — acute health; assessed by the **sum-of-ratios** rule (covered later).
+
+The nitrogen limits protect **bottle-fed infants** from methaemoglobinaemia, and because nitrite–nitrate conversion shifts along the network, the standard applies **at the point of consumption**.
+
+## Other macro determinands
+The remaining macro-determinands are mostly aesthetic, with two carrying a health limit:
+- **Sulfate** (as SO₄) — **acute health ≤ 500 mg/L**, aesthetic **≤ 250 mg/L**.
+- **Fluoride** (as F) — **chronic health, ≤ 1,5 mg/L**.
+- **Ammonia** (as N) — aesthetic, **≤ 1,5 mg/L**.
+- **Chloride** — aesthetic, **≤ 300 mg/L**.
+- **Sodium** — aesthetic, **≤ 200 mg/L**.
+- **Zinc** — aesthetic, **≤ 5 mg/L**.
+
+_Source: SANS 241-1:2015, Drinking water — Part 1, Table 2 (physical, aesthetic and macro-chemical determinands)._`,
+
+  'c-pot-204/m4': `## The chronic-health metals
+The micro-determinands are metals and metalloids, almost all **chronic health**, measured in **µg/L**. The ones an operator should know, with their limits:
+- **Arsenic ≤ 10**, **lead ≤ 10**, **cadmium ≤ 3**, **mercury ≤ 6** — the most toxic, with the tightest limits.
+- **Total chromium ≤ 50**, **nickel ≤ 70**, **selenium ≤ 40**, **uranium ≤ 30**, **antimony ≤ 20**.
+- **Barium ≤ 700**, **boron ≤ 2400**, **copper ≤ 2000** — higher limits.
+
+In South Africa, **fluoride, arsenic and nitrate** are the chemicals most likely to cause widespread health problems, and **lead** is a concern chiefly from **domestic plumbing**. The one **acute-health** member of this group is **cyanide** (recoverable, as CN), at **≤ 200 µg/L** — the exception that needs an immediate response rather than a long-term one. A practical sampling point: for metals the sample is **acidified to pH < 2 and not filtered**, so the acid-soluble metal content is captured.
+
+## Dual-limit metals: iron, manganese, aluminium
+Three of this group carry **two limits**, and the lower one usually governs:
+- **Iron** — chronic health **≤ 2000 µg/L**, **aesthetic ≤ 300 µg/L**.
+- **Manganese** — chronic health **≤ 400 µg/L**, **aesthetic ≤ 100 µg/L**.
+- **Aluminium** — **operational ≤ 300 µg/L**.
+
+Iron and manganese **stain laundry and fixtures and taint taste** far below their health limits, so the **aesthetic limit is the one that triggers complaints first**. Aluminium’s operational limit also matters because it often reflects **coagulant carry-over** from the treatment process.
+
+## Organic determinands
+The organic group is dominated by disinfection by-products:
+- **Total organic carbon (TOC)** — chronic health, **≤ 10 mg/L**.
+- **Trihalomethanes** — chloroform **≤ 300**, bromoform **≤ 100**, dibromochloromethane **≤ 100**, bromodichloromethane **≤ 60** µg/L, with a **combined THM** sum-of-ratios limit of **≤ 1**.
+- **Total microcystin** — chronic health, **≤ 1 µg/L**, but only needs measuring where an **algal bloom (> 20 000 cyanobacteria cells/mL)** is present, or the water is visibly green or musty at the abstraction.
+- **Phenols** — aesthetic, **≤ 10 µg/L**.
+
+_Source: SANS 241-1:2015, Drinking water — Part 1, Table 2 (micro and organic determinands, §4.3.5)._`,
+
+  'c-pot-204/m5': `## The sum-of-ratios rule
+Two entries in SANS 241 are not single determinands but **combinations** — **combined nitrate plus nitrite** and **combined trihalomethane**. For these, no single result tells you whether you pass. Instead you use the **sum-of-ratios** rule: add up, for each member, the ratio of its measured concentration to its own limit, and the total must **not exceed 1**.
+
+The logic is that several related substances, each at a fraction of its limit, can still add up to an unacceptable combined exposure. A determinand can be **individually compliant yet fail the combined check**.
+
+## Worked example: a compliance check
+A sample returns **nitrate as N = 8 mg/L** (limit 11) and **nitrite as N = 0,5 mg/L** (limit 0,9). Each is below its own limit — so is the water compliant?
+
+Apply the sum-of-ratios rule (use **converters** if the lab reports as NO₃/NO₂, and record against limits in **lims**):
+- nitrate ratio: \`8 ÷ 11 = 0,73\`
+- nitrite ratio: \`0,5 ÷ 0,9 = 0,56\`
+- sum: \`0,73 + 0,56 = 1,29\`
+
+**1,29 is greater than 1, so the water is non-compliant** on combined nitrate-plus-nitrite — even though neither determinand individually exceeds its limit. **Sanity-check:** each ratio is below 1 on its own; it is only the **sum** that fails, which is exactly the case the combined limit exists to catch. The same method applies to the four trihalomethanes.
+
+## When a determinand isn’t listed, and other special cases
+A few situations sit outside the main tables:
+- **Unlisted determinands** — compare against the **WHO Guidelines for Drinking-water Quality**.
+- **Radioactivity** — if the risk assessment flags it, test **gross alpha and beta**; if these exceed the WHO limits, do a **full radionuclide analysis**.
+- **Treatment-chemical residues** — monomers such as **acrylamide** from polyelectrolytes must be checked against WHO limits if they could exceed them.
+- **Consumer acceptability** — appearance, taste and odour should satisfy most consumers, and a **consumer complaints register** must be kept.
+
+_Source: SANS 241-1:2015, Drinking water — Part 1 (§4.3.5–4.3.8, annex C reference to SANS 241-2)._`,
+
   /* ───── POT-301 — SANS 241 Compliance & Water Safety Plans ───── */
 
   'c-pot-301/m1': `## The structure of SANS 241
@@ -1788,6 +1912,144 @@ If chlorite or chlorate breaches its value, the response is governed by the disi
 4. **Record the non-conformance and corrective action** through the **lims** CAPA trail, and verify with repeat sampling.
 
 _Source: Chlorine Dioxide, Chlorate and Chlorite in Drinking-water (WHO, 2017), §4–5; EPA / ATSDR Toxicological Profile for Chlorine Dioxide and Chlorite, §6.3.2._`,
+
+  /* ───── POT-302 — SANS 241 Compliance: Monitoring, Sampling & Non-conformance ───── */
+
+  'c-pot-302/m1': `## What SANS 241-2 adds to SANS 241-1
+SANS 241-1 tells you the **limits**; SANS 241-2 tells you **how to apply them**. Part 2 is the operating manual for compliance, and it sets out five linked elements:
+- a **water quality risk assessment** — from raw water through the works to the point of delivery;
+- **water quality monitoring** — operational and compliance programmes, with sampling points, frequencies and determinands;
+- **response monitoring** — incident management when a limit is exceeded;
+- **verification** — calculating compliance against the SANS 241-1 limits; and
+- a **water safety plan** — the comprehensive, preventive risk-management system that ties the rest together.
+
+The thread running through all of it is a **risk-based management approach**: the goal is safe water at all times, not just a passing certificate.
+
+## Prescribed versus risk-defined monitoring
+A works runs **two monitoring programmes at once**:
+- the **prescribed water quality monitoring programme** — the **mandatory minimum** that every works must do, covering the prescribed process risk indicators at set frequencies; and
+- the **risk-defined water quality monitoring programme** — **system-specific**, covering the **extra determinands the risk assessment has flagged** as a potential problem, at frequencies set by the associated risk.
+
+The prescribed programme is the same backbone everywhere; the risk-defined programme is what makes monitoring fit *your* catchment and *your* works.
+
+## Sampling points across the supply chain
+Sampling points must let you **verify quality along the whole supply chain**. At minimum they include:
+- **raw water**;
+- **final water** (what leaves the treatment process);
+- **representative points of delivery**; and
+- enough points **within the distribution zone to give at least 80% coverage** of the distribution system area.
+
+Distribution points should target where quality is most likely to deteriorate — reservoirs, major delivery points, **network dead ends**, remote supply points, and high-occupancy or sensitive sites such as **hospitals and schools**. A subset of these, the **critical distribution sample points**, are where the greatest deterioration is expected and are used for risk-defined monitoring and the annual full SANS 241 analysis.
+
+_Source: SANS 241-2:2015, Drinking water — Part 2 (§1, 5.1–5.2, definitions)._`,
+
+  'c-pot-302/m2': `## What the risk assessment is, and when to do it
+The water quality risk assessment is the process of **identifying and documenting every hazard, and quantifying the risk**, across the supply chain from catchment to point of delivery. It is the foundation — the monitoring programme is built from its findings.
+
+It must be conducted **at least annually**, timed to cover the period of **poorest water quality or peak demand**, and also **whenever a trigger occurs**, namely:
+- a change in the **raw water** supply;
+- a **failure** of a treatment-process component;
+- a **new** treatment system, or a **refurbished** one recommissioned;
+- a **new or altered distribution** system or zone; or
+- a **different treatment chemical** being used.
+
+Each of these can change the risk picture, so full information on spatial and temporal risks has to be refreshed.
+
+## Quantifying and grouping hazards
+Risks are quantified by assessing **each determinand over the review period against its SANS 241-1 limit**. The assessment must cover **all the determinands in Tables 1 and 2 of SANS 241-1**, plus any **additional determinands anticipated** in the water but not listed — which means looking at **catchment land uses and activities** that could introduce hazards the standard does not name.
+
+Hazards are then grouped the same way SANS 241-1 classifies them: **acute** (bacteria, viruses, protozoa and some chemicals — immediate risk), **chronic health**, **other identified contaminants**, **aesthetic**, and **operational** (turbidity, conductivity, pH, disinfectant residual and the like).
+
+## Interpreting results to adapt monitoring
+The point of the assessment is to **adapt the monitoring programme**, and the logic turns on comparing raw and final water:
+- exceeds the limit in **both raw and final** → the treatment is **not removing it** → install or optimise treatment, and add it to the **risk-defined** programme;
+- exceeds in **raw only** but is removed to comply in **final** → infrastructure is adequate → keep it in the **risk-defined** programme to verify that performance is sustained;
+- **both raw and final comply** → risks are acceptable → keep the **prescribed** programme and analyse the remaining SANS 241-1 determinands **at least annually**.
+
+Treatment chemicals deserve special watch: **aluminium, iron, disinfectant residuals and ammonia** can themselves add risk, and by-products such as **trihalomethanes** can form out in the network — any of these that exceed a limit move into risk-defined monitoring.
+
+_Source: SANS 241-2:2015, Drinking water — Part 2 (§4.1–4.3)._`,
+
+  'c-pot-302/m3': `## The prescribed process risk indicators
+The prescribed programme is the mandatory minimum, built around a fixed set of **process risk indicators** monitored at raw water, final water and through the distribution system. The headline determinands and their minimum frequencies:
+- **Conductivity or TDS** — daily (raw and final).
+- **pH** — daily (raw), **once per shift** (final), fortnightly (distribution).
+- **Turbidity** — daily (raw), **once per shift** (final), fortnightly (distribution).
+- **Disinfectant residual** — **once per shift** (final), fortnightly (distribution).
+- **E. coli (or faecal coliforms)** — **weekly** (final), and in distribution per the population-based table below.
+- **Heterotrophic plate count** — weekly (final), fortnightly (distribution).
+- **Treatment chemicals** — monthly (final).
+
+A “shift” here means an **eight-hour work period**. If any indicator is non-compliant, the rule is **corrective action plus immediate follow-up sampling at an increased frequency**.
+
+## E. coli sample numbers by population
+The number of E. coli samples in the **distribution system** scales with the **population served** (minimum samples per month):
+- **under 5000** — **2** samples;
+- **5000 to 100 000** — **1 per 5000** head, **plus 1** additional;
+- **100 000 to 500 000** — **1 per 10 000** head, **plus 11** additional;
+- **500 000 and above** — **1 per 20 000** head, **plus 36** additional.
+
+So a city of 1.2 million needs \`1 200 000 ÷ 20 000 = 60\`, plus 36, = **96 samples a month**. During the **rainy season**, sampling should increase to catch the higher risk.
+
+## Risk-defined frequencies
+For determinands flagged by the risk assessment, the frequency scales with the **risk category** (raw / final / critical distribution point):
+- **acute-health chemical** — weekly / weekly / monthly;
+- **chronic-health** — monthly / monthly / monthly;
+- **aesthetic** — monthly / monthly / quarterly;
+- **operational** — weekly / weekly / monthly;
+- **protozoan parasites** — monthly on final water;
+- **acute-health bacteriological** — as for the prescribed indicators.
+
+Risk-defined monitoring **continues until** the works can show the determinand **no longer poses an unacceptable risk**. Desalination and reclamation plants follow the same logic, with reclamation needing **extra microbiological vigilance** because of its higher contamination risk.
+
+_Source: SANS 241-2:2015, Drinking water — Part 2 (§5.3, Tables 1–3)._`,
+
+  'c-pot-302/m4': `## Response monitoring: incident management
+When a result **exceeds a numerical limit** in SANS 241-1, the standard requires **further investigation and corrective action**. The **adverse risk rises as the result deviates further** from the limit, so the **nature and urgency** of the response are guided by the impact of the determinand that failed.
+
+- **Microbiological** — any **acute-health** determinand that exceeds its limit demands **remedial action and non-routine follow-up sampling**, with a resolution implemented in the **shortest possible time**; the increased sampling continues **until results comply**.
+- **Chemical** — any **acute- or chronic-health** chemical exceedance likewise triggers remedial action and non-routine follow-up sampling.
+- **Physical, operational and aesthetic** — an exceedance does **not necessarily** make the water unfit, but it flags a shortcoming that needs **resampling and corrective action** in treatment or distribution.
+
+The water safety plan must **include or refer to an incident-management protocol** for these failures.
+
+## Calculating compliance
+Verification means **calculating compliance against the SANS 241-1 limits**, and SANS 241-2 separates two views:
+- **risk-defined compliance** — the prescribed indicators plus every determinand flagged in the risk assessment; and
+- **drinking water quality compliance** — all determinands in Tables 1 and 2, calculated **at least annually**.
+
+For any determinand, compliance is simply: \`(number of compliant results ÷ total number of results) × 100%\`. The drinking-water view rolls up into **five figures** — **acute-health microbiological**, **acute-health chemical**, **chronic-health chemical**, **operational** and **aesthetic** compliance. Nitrite and the combined nitrate-plus-nitrite ratio count **only at the point of consumption**.
+
+## Worked example: a compliance calculation
+A large system (population over 100 000) collects, say, **1200 E. coli results** over the year — a figure driven by the population-based sampling rule. Suppose **1196 comply** (four detections).
+- Compliance: \`1196 ÷ 1200 × 100% = 99,67%\` (compute and record in **lims**).
+- For a population **over 100 000**, the **Excellent** threshold for acute-health microbiological is **≥ 99%**, so 99,67% rates **Excellent**.
+
+**Sanity-check — and the key lesson:** the annual percentage and the per-incident response are **two different things**. Each of those four detections still triggered **immediate incident management** at the time, regardless of how strong the yearly figure looks. A good annual percentage never excuses ignoring a single acute-health detection.
+
+_Source: SANS 241-2:2015, Drinking water — Part 2 (§6–7, Annexes A–C)._`,
+
+  'c-pot-302/m5': `## Categorising performance
+Once compliance is calculated, the distribution system is **categorised by performance** — **Excellent**, **Good** or **Unacceptable** — against two things: the **percentage of samples complying** and the **population served**, split at **100 000 people**. The thresholds tighten with the **risk category**: acute-health determinands demand a higher percentage to reach “Excellent” than operational or aesthetic ones, and the bar is higher for larger populations.
+
+The categories turn a pile of results into a single, comparable verdict on how a system is performing — and a slip from Excellent to Good, or Good to Unacceptable, is a clear signal to act.
+
+## The Water Safety Plan as the umbrella
+All of this monitoring and verification feeds the **Water Safety Plan (WSP)** — the standard’s central requirement. A WSP is an **integrated, preventive water-quality management system** covering the whole chain **from catchment to point of delivery**, built on **hazard analysis (HACCP)** and **multiple-barrier** principles. When properly established and maintained, it is what consistently keeps treated water within the SANS 241-1 limits.
+
+The standard is explicit about the mindset it wants: **move away from monitoring to confirm the water is safe, toward monitoring to detect contamination** — on the assumption that the potential for contamination is **always present**.
+
+## Putting it together: the compliance cycle
+The pieces form a loop:
+1. **Risk assessment** — identify and quantify hazards from catchment to tap.
+2. **Monitoring** — run the prescribed programme, plus the risk-defined programme for flagged determinands.
+3. **Response** — when a limit is exceeded, investigate and act, with follow-up sampling until compliant.
+4. **Verification** — calculate compliance and **categorise performance** at least annually.
+5. **Feed back** — results and incidents update the risk assessment and the WSP.
+
+Run continuously, this cycle is what “complying with SANS 241” actually means in practice — not a single annual test, but a standing system of assessment, monitoring and response.
+
+_Source: SANS 241-2:2015, Drinking water — Part 2 (§7.4, 8); Introduction to Water Treatment (Rand Water) — DWS regulation and Blue/Green Drop._`,
 
   /* ════════════════════════════════════════════════════════════════
      TRACK 3 — SEWAGE TREATMENT
