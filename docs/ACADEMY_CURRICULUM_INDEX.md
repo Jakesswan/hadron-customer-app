@@ -4,7 +4,7 @@
 > Project so it can (1) judge NEW vs DEEPENING + flag overlap, and (2) pick the next
 > free id/code in a track. Code convention: **1xx = Foundation, 2xx = Intermediate, 3xx = Advanced**.
 
-**40 courses across 10 tracks.**
+**41 courses across 10 tracks.**
 
 ## Potable Water  `track-potable`
 _Drinking water treatment from source to tap_
@@ -30,7 +30,7 @@ Codes used (POT-): 101, 201, 202, 301
 ## Disinfection  `track-disinfection`
 _Chlorine, ClO₂, UV, ozone & DBPs_
 
-Codes used (DIS-): 101, 201, 202, 203, 301
+Codes used (DIS-): 101, 201, 202, 203, 204, 301
 
 - **DIS-101** `c-dis-101` - Disinfection Fundamentals _(Foundation, 3 hrs, 5 modules)_
   - prereqs: c-pot-101
@@ -48,6 +48,10 @@ Codes used (DIS-): 101, 201, 202, 203, 301
   - prereqs: c-dis-101
   - tools: dosage, converters, servicereport
   - modules: m1 Know your hazard | m2 Storing chlorine safely | m3 Connecting & disconnecting containers | m4 Leak detection, withdrawal rate & process faults | m5 Emergency response & first aid | m6 Knowledge check
+- **DIS-204** `c-dis-204` - Solid Chlorine Donors: SDIC & TCCA in Practice _(Intermediate, 3 hrs, 6 modules, has quiz)_
+  - prereqs: c-dis-201
+  - tools: dosage, pool, converters
+  - modules: m1 What SDIC and TCCA are | m2 Choosing a solid chlorine source | m3 Dosing solid chlorine correctly | m4 Storage and the incompatibility hazard | m5 Spills, exposure and emergency response | m6 Knowledge check
 - **DIS-301** `c-dis-301` - Disinfection By-products & Compliance _(Advanced, 4 hrs, 4 modules)_
   - prereqs: c-dis-201, c-pot-301
   - tools: lims, dosage

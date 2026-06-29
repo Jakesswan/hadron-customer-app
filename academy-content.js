@@ -1315,6 +1315,122 @@ A **displayed emergency action plan** must name the key people to notify, give s
 _Source: Chlorine Handling Information Pack, Chlorine Tech Services (Pty) Ltd, §§3, 5–8; Hadron Group Chlorine Training Manual — Emergency Response Procedures._`,
 
 
+  /* ───── DIS-204 — Solid Chlorine Donors: SDIC & TCCA ───── */
+
+  'c-dis-204/m1': `## The two isocyanurates: dichlor and trichlor
+Solid chlorine donors give operators a dry, stable alternative to chlorine gas and hypochlorite. Two dominate.
+
+**Sodium dichloroisocyanurate (SDIC)**, or **“dichlor”**, is a granular (sometimes tablet) compound of chlorine bound to **cyanuric acid** with sodium. It carries about **56–60% available chlorine** and is **nearly pH-neutral** in water, so it shifts water balance very little. SDIC granules dissolve fast and completely.
+
+**Trichloroisocyanuric acid (TCCA)**, or **“trichlor”**, is the more concentrated of the two at about **90% available chlorine**. It comes as slow-dissolving tablets or pucks (often 3-inch) for feeders and floaters. Unlike SDIC, TCCA is **acidic** — its solution pH is around **2.5–3** — so continued use pulls pH and alkalinity down.
+
+Both are **organic** (cyanurate-based) and classed as **stabilised** chlorine. As dry solids they store extremely well: TCCA tablets keep roughly **98% of their potency after three years** in proper storage, where liquid bleach can lose half its strength in six months.
+
+## How they release chlorine
+Available chlorine is the figure that matters: it tells you how much active chlorine each kilogram delivers. When SDIC or TCCA dissolves, the chlorine in the molecule is released into the water as **hypochlorous acid** (\`HOCl\`) — the same free-chlorine species you get from gas or hypochlorite, and the agent that actually does the work.
+
+That free chlorine **oxidises and destroys** bacteria, viruses, fungi and algae by attacking their cell walls and proteins. Holding a proper free-chlorine residual is what keeps water disinfected and stops algae blooming. The practical difference between the products is not _what_ they release but _how fast_: SDIC dumps its chlorine quickly, TCCA trickles it out slowly.
+
+## Stabilised chlorine and cyanuric acid
+The “stabilised” label comes from the **cyanuric acid (CYA)** in the molecule. CYA behaves like a **sunscreen for chlorine**: it shields free chlorine from the sun’s UV, which otherwise destroys an unstabilised residual rapidly. In an outdoor pool or open tank, stabilised chlorine therefore lasts far longer between doses than cal-hypo or liquid bleach.
+
+There is a catch, covered later: CYA does not evaporate, so it accumulates every time you dose. A moderate level helps; too much works against you. For potable supply, remember that isocyanurates also add CYA to the water — a consideration that keeps gas chlorine and hypochlorite the usual choice on large municipal works, with SDIC and TCCA favoured for pools, small or package systems, and point-of-use disinfection.
+
+_Source: Hadron Group Chlorine Training Manual — SDIC and TCCA Technical Overview, §1.1–1.3._`,
+
+  'c-dis-204/m2': `## SDIC versus TCCA
+The choice between the two solid donors comes down to **speed of release and pH**.
+- **SDIC (dichlor):** ~56–60% available chlorine, fast and complete dissolving, **pH-neutral**. Good for quick adjustments and daily dosing without residue or water-balance upset.
+- **TCCA (trichlor):** ~90% available chlorine, slow-dissolving tablets, **acidic (~pH 2.8)**. Built for steady, hands-off feed through a floater or erosion chlorinator.
+
+Higher strength means less product for the same effect: roughly **100 kg of TCCA carries the chlorine of ~140 kg of 65% cal-hypo**.
+
+## Compared with calcium hypochlorite and liquid chlorine
+Operators also meet two **unstabilised** chlorines:
+- **Calcium hypochlorite (cal-hypo):** typically **65% (up to 70%) available chlorine**, **alkaline** (raises pH and alkalinity), and it **adds calcium hardness** — so it can scale surfaces and equipment. It is a strong oxidiser that is especially hazardous in storage if contaminated, and it is the usual choice for fast **shock** dosing.
+- **Liquid sodium hypochlorite (bleach):** cheap up front and easy to pump, but **unstabilised**, with a **short shelf life** (about half-strength in six months) and the spill and corrosion problems of a bulk liquid.
+
+The trade-off in side-products is the key idea: cal-hypo leaves **calcium** behind, SDIC/TCCA leave **cyanuric acid**. Both accumulate because neither evaporates — so the operator chooses which one they would rather manage.
+
+## Matching the product to the job
+A simple way to position the four:
+- **Shock / rapid lift:** cal-hypo (or SDIC granules for a smaller, gentler boost).
+- **Steady maintenance, outdoor, low supervision:** TCCA tablets in a feeder — the stabiliser and slow release shine here.
+- **Daily dosing with minimal pH impact:** SDIC granules.
+- **Large municipal potable works:** gas chlorine or hypochlorite, where CYA carryover is undesirable.
+
+There is no single “best” product; there is the right product for the duty, the water chemistry and how often someone can attend the plant.
+
+_Source: Hadron Group Chlorine Training Manual — Comparison with Other Chlorine Options, §2.1–2.2._`,
+
+  'c-dis-204/m3': `## Feeders, floaters and manual dosing
+Match the dosing method to the product.
+- **TCCA tablets** go into an **erosion chlorinator, tablet feeder or floater**, where water passing over the tablet dissolves it slowly for a constant feed — ideal where no one attends daily.
+- **SDIC granules** are dosed **manually** or through a powder-capable system, dissolving quickly for an immediate, residue-free boost.
+- **Cal-hypo** is reserved for **shock**, dosed separately.
+
+A hard rule: **dedicate a feeder to one product**. Never load a second chlorine type into a feeder that has held another — residues of incompatible chemicals are exactly what cause violent reactions.
+
+## Worked example: dosing to a target residual
+The available-chlorine figure lets you size a dose. Suppose you must lift free chlorine by **2 mg/L** in a **50 m³** tank.
+- Chlorine required: \`2 mg/L × 50,000 L = 100,000 mg = 100 g\` of available chlorine (use **converters** for the units).
+- With **SDIC at 56%**: \`100 g ÷ 0.56 ≈ 179 g\` of product.
+- With **TCCA at 90%**: \`100 g ÷ 0.90 ≈ 111 g\` of product.
+
+Run the same sum in the **dosage** tool to confirm. **Sanity-check:** TCCA needs noticeably less product than SDIC for the identical chlorine demand — exactly what its higher strength predicts. Remember this lift sits _on top of_ the water’s chlorine demand, so the real dose to hit a target residual is higher; always confirm with a measured residual after contact.
+
+## Managing cyanuric acid and the residual
+Every dose of SDIC or TCCA adds a little **CYA**, and it never leaves on its own. A moderate level (around **30–50 ppm**) protects the residual; let it climb to roughly **80–100 ppm** and you hit **over-stabilisation** — the chlorine is “locked” and loses kill power even though a test still shows chlorine present.
+
+Control it by **partial dilution** (drain and refill some water) or by switching to an **unstabilised** chlorine for a spell. Monitor the trio together: **free chlorine, pH and CYA**. A residual that will not hold despite steady dosing, alongside high CYA, is the classic over-stabilisation signature.
+
+_Source: Hadron Group Chlorine Training Manual — Technical Overview and Comparison, §1.2–2.1._`,
+
+  'c-dis-204/m4': `## Store it dry, cool and segregated
+Solid chlorine is forgiving in storage _if_ you keep it dry and apart.
+- Keep it **cool, dry and well-ventilated**, out of direct sun and away from any heat source.
+- Store in **original, labelled containers**, tightly closed — absorbed moisture makes the product clump or set into a “brick”.
+- Keep the area **clean and free of combustibles**, and store chlorine **away from flammables and organics** (fuels, oils, fertiliser, leaves).
+- **Lock** the store against unauthorised or curious access, and run it **first-in, first-out**.
+
+## The cardinal rules: never mix, add chemical to water
+A few rules prevent almost every serious solid-chlorine accident:
+1. **Never mix different chemicals.** Add chlorine, acid and algaecide **separately** to the water, never together in one bucket. Above all, **never mix or store SDIC/TCCA with calcium hypochlorite** — the combination can cause a **fire or explosion**.
+2. **Add chemical to water, never water to chemical.** If you pre-dissolve granules, fill the bucket with water first, then add the product while stirring. Dumping water onto chlorine can react violently and spatter.
+3. **Use clean, dry, dedicated scoops** — one per product, never interchanged. Moisture or another chemical’s residue on a scoop is enough to start trouble.
+4. **Wash hands after handling**, even if you wore gloves.
+
+## Why mixing is so dangerous
+All chlorine donors are **strong oxidisers**. Bring an oxidiser into contact with an incompatible chemical, an organic, or even moisture and it can react fast and exothermically — enough to ignite. **Cal-hypo** is the worst offender: a strong (Class 3) oxidiser that has caused pool-room fires after contact with a trace of oil, soda or another chlorine product, which is why it must never sit near trichlor.
+
+Heat and contamination are the triggers: organic chlorines can **decompose and release gas** if heated, and **no flames or smoking** belong anywhere near the store. Chlorine itself does not burn — but as an oxidiser it makes everything around it burn far more fiercely.
+
+_Source: Hadron Group Chlorine Training Manual — Safety, Storage and Handling Guidelines, §4.1–4.2; Operation of Water Treatment Works (WRC), Chapter B4 — Handling of chlorine compounds._`,
+
+  'c-dis-204/m5': `## Cleaning up a dry spill
+A scattered bucket of granules is a routine, manageable event if you work in order:
+1. **Clear people** from the area, especially anyone without protection.
+2. Put on **PPE** — at least gloves and goggles, plus a dust mask.
+3. **Sweep** the material gently into a **clean, sealable plastic container**, using a dedicated clean scoop or broom.
+4. **Do not add water** to the spill and **do not vacuum** — a vacuum motor can ignite chlorine dust unless it is explosion-proof.
+5. **Ventilate** to clear the chlorine odour. Clean, uncontaminated product may go back in its bucket; anything dirty is disposed of as chemical waste.
+
+## First aid by exposure type
+Protect yourself first, then treat. Give **nothing by mouth** to anyone unconscious or convulsing.
+- **Eyes:** flush immediately with water for at least **15 minutes**, holding the lids open, then seek medical attention.
+- **Skin:** remove contaminated clothing and flush with plenty of water; wash with soap and water. Granules left on skin can burn.
+- **Inhalation:** move the person to **fresh air**. A mild whiff usually clears with fresh air; if breathing is difficult, get medical help.
+- **Ingestion:** **do not induce vomiting**; rinse the mouth and seek medical attention or call a poison centre.
+
+Keep the **safety data sheet** and a poison-centre number accessible — medical staff will ask what was involved.
+
+## Fire and large spills
+For a **large spill** — say a drum tips in a wet area and starts fuming chlorine gas — **evacuate** and call the **fire department**; do **not** let anyone without proper gear walk into the cloud.
+
+In a **fire**, remember chlorine **does not burn** but, as an oxidiser, **intensifies** any fire. **Water** is the preferred medium because it cools and dilutes (it also releases some gas, so responders wear self-contained breathing apparatus). Do not put a dry-chemical extinguisher straight onto burning chlorine product. The order of priority is always **people first, chemicals second**: evacuate, then tell the fire service exactly what is stored and where.
+
+_Source: Hadron Group Chlorine Training Manual — Emergency Response Procedures, §4.3._`,
+
   /* ───── DIS-301 — Disinfection By-products & Compliance ───── */
 
   'c-dis-301/m1': `## The four families of DBPs
