@@ -1,7 +1,7 @@
 /*
  * Hadron Tristroke icon system — generated from the ERP's authoritative icon
- * sheet (Hadron Tristroke Icons). 102 icons. DO NOT hand-edit the map;
- * regenerate from the source HTML if the set changes.
+ * sheets. 117 icons (102 base + 15 water-treatment batch).
+ * DO NOT hand-edit the map; regenerate from the source HTML if the set changes.
  *
  * Each icon is three stroked layers (primary outline -> teal -> yellow). Strokes
  * reference CSS variables (--icon-primary/secondary/accent) so icons re-tint
@@ -119,7 +119,22 @@
   "trend_down": "<g stroke=\"var(--icon-primary)\"><polyline points=\"3,7 9,13 13,9 21,17\"/></g><g stroke=\"var(--icon-accent)\"><polyline points=\"15,17 21,17 21,11\"/></g>",
   "hourglass": "<g stroke=\"var(--icon-primary)\"><path d=\"M7 3h10M7 21h10M8 3v3.5c0 2.2 1.3 3.6 4 5.5 2.7 1.9 4 3.3 4 5.5V21\"/></g><g stroke=\"var(--icon-secondary)\"><path d=\"M8 21v-3.5c0-2.2 1.3-3.6 4-5.5 2.7-1.9 4-3.3 4-5.5V3\"/></g><g stroke=\"var(--icon-accent)\"><line x1=\"12\" y1=\"11\" x2=\"12\" y2=\"13.5\"/><path d=\"M9.5 18.5h5\"/></g>",
   "camera": "<g stroke=\"var(--icon-primary)\"><path d=\"M3 7h3.5l1.5-2h8l1.5 2H21v12H3z\"/></g><g stroke=\"var(--icon-secondary)\"><circle cx=\"12\" cy=\"13\" r=\"3.8\"/></g><g stroke=\"var(--icon-accent)\"><circle cx=\"17.5\" cy=\"9\" r=\"0.8\"/></g>",
-  "clipboard": "<g stroke=\"var(--icon-primary)\"><path d=\"M6 5h12v16H6z\"/></g><g stroke=\"var(--icon-secondary)\"><rect x=\"9\" y=\"3\" width=\"6\" height=\"3.5\" rx=\"0.6\"/><line x1=\"9\" y1=\"11\" x2=\"15\" y2=\"11\"/><line x1=\"9\" y1=\"14\" x2=\"15\" y2=\"14\"/></g><g stroke=\"var(--icon-accent)\"><line x1=\"9\" y1=\"17\" x2=\"13\" y2=\"17\"/></g>"
+  "clipboard": "<g stroke=\"var(--icon-primary)\"><path d=\"M6 5h12v16H6z\"/></g><g stroke=\"var(--icon-secondary)\"><rect x=\"9\" y=\"3\" width=\"6\" height=\"3.5\" rx=\"0.6\"/><line x1=\"9\" y1=\"11\" x2=\"15\" y2=\"11\"/><line x1=\"9\" y1=\"14\" x2=\"15\" y2=\"14\"/></g><g stroke=\"var(--icon-accent)\"><line x1=\"9\" y1=\"17\" x2=\"13\" y2=\"17\"/></g>",
+  "dosage": "<g stroke=\"var(--icon-primary)\"><path d=\"M8.5 3.5h7v2a2 2 0 0 1-1 1.7v2.6l-2 2.7h-1l-2-2.7V7.2a2 2 0 0 1-1-1.7z\"></path></g><g stroke=\"var(--icon-secondary)\"><path d=\"M3.5 20.5q2 1.5 4 0t4 0 4 0 4.5 0\"></path></g><g stroke=\"var(--icon-accent)\"><path d=\"M12 14.4l-1.15 1.8a1.45 1.45 0 1 0 2.3 0z\"></path></g>",
+  "water_index": "<g stroke=\"var(--icon-primary)\"><line x1=\"4\" y1=\"8.5\" x2=\"20\" y2=\"8.5\"></line><path d=\"M4 8.5a2 2 0 0 0 4 0z\"></path><path d=\"M16 8.5a2 2 0 0 0 4 0z\"></path><line x1=\"12\" y1=\"9.5\" x2=\"12\" y2=\"19\"></line><line x1=\"8.5\" y1=\"19\" x2=\"15.5\" y2=\"19\"></line></g><g stroke=\"var(--icon-secondary)\"><path d=\"M12 4.6c-1.5 1.9-2.5 3-2.5 4.2a2.5 2.5 0 0 0 5 0c0-1.2-1-2.3-2.5-4.2z\"></path></g><g stroke=\"var(--icon-accent)\"><polyline points=\"10.7,3.6 12,2.3 13.3,3.6\"></polyline></g>",
+  "cooling_tower": "<g stroke=\"var(--icon-primary)\"><path d=\"M8 5.5C8 8.5 6.5 9.5 6.5 12.5c0 3.5 0.4 5.3 1 8\"></path><path d=\"M16 5.5C16 8.5 17.5 9.5 17.5 12.5c0 3.5-0.4 5.3-1 8\"></path><path d=\"M8 5.5h8\"></path><path d=\"M6.5 20.5h11\"></path></g><g stroke=\"var(--icon-secondary)\"><path d=\"M7.4 16.6c1-1 2-1 3 0s2 1 3 0 1.9-1 2.8 0\"></path></g><g stroke=\"var(--icon-accent)\"><path d=\"M10.6 4.2c0-1.2 1-1.4 1-2.2\"></path><path d=\"M13.4 4.2c0-1.2-1-1.4-1-2.2\"></path></g>",
+  "ro_performance": "<g stroke=\"var(--icon-primary)\"><rect x=\"4\" y=\"7\" width=\"14\" height=\"10\" rx=\"2.5\"></rect><path d=\"M2.5 10v4\"></path></g><g stroke=\"var(--icon-secondary)\"><path d=\"M9 7.5v9\"></path><path d=\"M18 12h3\"></path></g><g stroke=\"var(--icon-accent)\"><polyline points=\"12.5,13.8 14.5,15.5 17.8,11.2\"></polyline></g>",
+  "converters": "<g stroke=\"var(--icon-primary)\"><rect x=\"4\" y=\"3.5\" width=\"15\" height=\"6.5\" rx=\"1.6\"></rect><rect x=\"4\" y=\"14\" width=\"15\" height=\"6.5\" rx=\"1.6\"></rect></g><g stroke=\"var(--icon-secondary)\"><line x1=\"7.5\" y1=\"11.3\" x2=\"15.5\" y2=\"11.3\"></line><line x1=\"7.5\" y1=\"13.2\" x2=\"15.5\" y2=\"13.2\"></line></g><g stroke=\"var(--icon-accent)\"><polyline points=\"17.5,10.5 19.5,12.25 17.5,14\"></polyline></g>",
+  "neutralise": "<g stroke=\"var(--icon-primary)\"><path d=\"M7.5 9l0.7 9a2 2 0 0 0 2 1.9h3.6a2 2 0 0 0 2-1.9l0.7-9\"></path><path d=\"M6.3 9h11.4\"></path><path d=\"M17.3 9l1.6-1.4\"></path></g><g stroke=\"var(--icon-secondary)\"><rect x=\"11\" y=\"2.7\" width=\"2\" height=\"3.6\" rx=\"0.6\"></rect><path d=\"M12 6.3v1.6\"></path></g><g stroke=\"var(--icon-accent)\"><path d=\"M9.2 14.6c0.85-0.9 1.7-0.9 2.55 0s1.7 0.9 2.55 0\"></path></g>",
+  "effluent": "<g stroke=\"var(--icon-primary)\"><path d=\"M3 7v9a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2V7\"></path><path d=\"M15 11h4a1.5 1.5 0 0 1 1.5 1.5V15\"></path></g><g stroke=\"var(--icon-secondary)\"><path d=\"M5 11q1.5 1.4 3 0t3 0\"></path><path d=\"M5 13.6q1.5 1.4 3 0t3 0\"></path></g><g stroke=\"var(--icon-accent)\"><path d=\"M20.5 16q-0.9 1.2 0 2.4t0 2.3\"></path></g>",
+  "calibration": "<g stroke=\"var(--icon-primary)\"><path d=\"M4 15a8 8 0 0 1 16 0\"></path><path d=\"M4 15h16\"></path><path d=\"M12 15l2.8-5.4\"></path><circle cx=\"12\" cy=\"15\" r=\"1.1\"></circle></g><g stroke=\"var(--icon-secondary)\"><path d=\"M5.1 11l1.2 0.7\"></path><path d=\"M8 8.1l0.7 1.2\"></path><path d=\"M12 7v1.4\"></path></g><g stroke=\"var(--icon-accent)\"><polyline points=\"15.6,9.4 17,10.6 19.3,7.5\"></polyline></g>",
+  "lims": "<g stroke=\"var(--icon-primary)\"><path d=\"M5.5 3.5h5\"></path><path d=\"M6.5 3.5v13a1.5 1.5 0 0 0 3 0v-13\"></path></g><g stroke=\"var(--icon-secondary)\"><path d=\"M6.5 11.5q1.5 1 3 0v5a1.5 1.5 0 0 1-3 0z\"></path><rect x=\"13\" y=\"6.5\" width=\"6.5\" height=\"12\" rx=\"1\"></rect><path d=\"M14.5 10h3.5M14.5 12.5h3.5\"></path></g><g stroke=\"var(--icon-accent)\"><polyline points=\"14.4,15.4 15.6,16.6 18,14\"></polyline></g>",
+  "pool": "<g stroke=\"var(--icon-primary)\"><path d=\"M3 8.5l1.8 9a1.5 1.5 0 0 0 1.48 1.2h11.44a1.5 1.5 0 0 0 1.48-1.2L21 8.5\"></path><path d=\"M17.5 8.5V5a1.3 1.3 0 0 1 2.6 0\"></path></g><g stroke=\"var(--icon-secondary)\"><path d=\"M5.2 12q2-1.6 3.95 0t3.95 0 3.95 0\"></path></g><g stroke=\"var(--icon-accent)\"><path d=\"M11 4.6c1.6 1.7 1.6 2.8 0 3.4-1.6-0.6-1.6-1.7 0-3.4z\"></path></g>",
+  "academy": "<g stroke=\"var(--icon-primary)\"><path d=\"M12 9.8C10 8.3 7 7.8 4 8.3v10.5c3-.5 6 0 8 1.5 2-1.5 5-2 8-1.5V8.3c-3-.5-6 0-8 1.5z\"></path><line x1=\"12\" y1=\"9.8\" x2=\"12\" y2=\"20.3\"></line></g><g stroke=\"var(--icon-secondary)\"><path d=\"M12 3c1.6 1.8 2.5 3.1 2.5 4.4a2.5 2.5 0 0 1-5 0C9.5 6.1 10.4 4.8 12 3z\"></path></g><g stroke=\"var(--icon-accent)\"><polyline points=\"14.5,13.8 16,15.3 18.5,12.3\"></polyline></g>",
+  "qr_builder": "<g stroke=\"var(--icon-primary)\"><rect x=\"3\" y=\"3\" width=\"6\" height=\"6\" rx=\"0.8\"></rect><rect x=\"15\" y=\"3\" width=\"6\" height=\"6\" rx=\"0.8\"></rect><rect x=\"3\" y=\"15\" width=\"6\" height=\"6\" rx=\"0.8\"></rect></g><g stroke=\"var(--icon-secondary)\"><rect x=\"5\" y=\"5\" width=\"2\" height=\"2\"></rect><path d=\"M15 21v-6h6\"></path></g><g stroke=\"var(--icon-accent)\"><polyline points=\"11.6,12 13.2,13.6 16.2,10.6\"></polyline></g>",
+  "jar_test": "<g stroke=\"var(--icon-primary)\"><path d=\"M3.5 9v9.5a1 1 0 0 0 1 1h3a1 1 0 0 0 1-1V9\"></path><path d=\"M9.5 9v9.5a1 1 0 0 0 1 1h3a1 1 0 0 0 1-1V9\"></path><path d=\"M15.5 9v9.5a1 1 0 0 0 1 1h3a1 1 0 0 0 1-1V9\"></path></g><g stroke=\"var(--icon-secondary)\"><line x1=\"3\" y1=\"6.5\" x2=\"21\" y2=\"6.5\"></line><line x1=\"12\" y1=\"6.5\" x2=\"12\" y2=\"13\"></line><line x1=\"10.5\" y1=\"13\" x2=\"13.5\" y2=\"13\"></line></g><g stroke=\"var(--icon-accent)\"><path d=\"M11 16.5h2\"></path></g>",
+  "sops": "<g stroke=\"var(--icon-primary)\"><path d=\"M7 3.5h11a1 1 0 0 1 1 1v15a1 1 0 0 1-1 1H7z\"></path><path d=\"M7 3.5a1.5 1.5 0 0 0-1.5 1.5v14a1.5 1.5 0 0 0 1.5 1.5\"></path></g><g stroke=\"var(--icon-secondary)\"><line x1=\"11\" y1=\"8\" x2=\"16\" y2=\"8\"></line><line x1=\"11\" y1=\"11.5\" x2=\"16\" y2=\"11.5\"></line><line x1=\"11\" y1=\"15\" x2=\"16\" y2=\"15\"></line></g><g stroke=\"var(--icon-accent)\"><polyline points=\"7.8,7.6 8.7,8.5 10,6.8\"></polyline></g>",
+  "data_manager": "<g stroke=\"var(--icon-primary)\"><path d=\"M8 8c0 1 2 1.7 4 1.7s4-0.7 4-1.7-2-1.7-4-1.7-4 0.7-4 1.7z\"></path><path d=\"M8 8v8c0 1 2 1.7 4 1.7s4-0.7 4-1.7V8\"></path><path d=\"M8 12c0 1 2 1.7 4 1.7s4-0.7 4-1.7\"></path></g><g stroke=\"var(--icon-secondary)\"><line x1=\"4\" y1=\"3.5\" x2=\"4\" y2=\"8.8\"></line><polyline points=\"2.2,7 4,8.8 5.8,7\"></polyline><line x1=\"20\" y1=\"20.5\" x2=\"20\" y2=\"15.2\"></line><polyline points=\"18.2,17 20,15.2 21.8,17\"></polyline></g><g stroke=\"var(--icon-accent)\"><circle cx=\"12\" cy=\"16.4\" r=\"1.2\"></circle></g>"
 };
 
   function svgOpen(size, sw, title) {
@@ -145,7 +160,6 @@
     return wrap.firstChild;
   }
 
-  // Theme-toggle sun/moon (uses currentColor; not part of the Tristroke set).
   function hadronThemeIcon(theme) {
     const sun = '<circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/>';
     const moon = '<path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>';
@@ -155,7 +169,6 @@
       inner + '</svg>';
   }
 
-  // camelCase aliases for the snake_case names, so call sites can use either.
   Object.keys(HADRON_ICONS).forEach(function (k) {
     const camel = k.replace(/_([a-z])/g, function (_, c) { return c.toUpperCase(); });
     if (camel !== k && !HADRON_ICONS[camel]) HADRON_ICONS[camel] = HADRON_ICONS[k];
