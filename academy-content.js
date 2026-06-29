@@ -501,6 +501,130 @@ After backwash, take a sample at the underdrain — a clean sample = clean bed. 
 
 _Source: WRC Handbook Ch B3.7; Operator drill cards (Rand Water training)._`,
 
+  /* ───── POT-203 — Coagulant Blends: Selection, Dosing & Plant Trials ───── */
+
+  'c-pot-203/m1': `## The single-coagulant trade-off
+Every primary coagulant comes with a catch, and the catch is what blends exist to fix.
+
+**Metal salts — alum and iron.** They coagulate strongly, but aluminium sulphate is **acidic**: it consumes alkalinity, drops the pH, and usually needs **lime** for correction. Metal salts also generate a relatively **large volume of sludge**, because their cation-to-anion ratio is low.
+
+**Polyaluminium chlorides (PAC) on their own.** Pre-hydrolysed aluminium fixes the pH and sludge problems, but — especially in sulphate-free grades — it tends to form **small flocs that settle slowly** and can **carry over** the clarifier into the filters. Clarity is excellent; settling is poor.
+
+So one family is hard on pH and sludge; the other is gentle on both but builds weak floc. Neither is ideal alone.
+
+## Best of both worlds
+The fix is to **blend** a pre-hydrolysed aluminium with a **cationic polyelectrolyte** — a polyamine or polyDADMAC. In the blend:
+- the **PAC** contributes a high degree of clarity and “sparkle”; and
+- the **polyelectrolyte** contributes **floc size and settling rate**.
+
+Because PACs are almost always limited by floc carry-over, they are **almost always used as a component of a formulated or blended product** rather than alone. The polymer covers exactly the weakness the PAC has.
+
+## What a blend buys you
+A well-chosen blend can deliver several wins at once:
+- **less sludge**, from the high cation-to-anion ratio of the PAC component;
+- **little or no lime**, because the blend is far less acidic than alum, which also **reduces post-precipitation** in reservoirs and the reticulation system;
+- a **lower dose** for the same clarified water; and
+- **larger, faster-settling floc** than the PAC alone could make.
+
+These are the reasons a works moves from a straight metal salt to a formulated blend — not novelty, but lower sludge, lower lime cost and steadier clarification.
+
+_Source: Chemistry of Wastewater Treatment (WRC, 2009), §5 (Polyaluminium chlorides) and §7 (Polyamines, polyDADMAC); Operation of Water Treatment Works (WRC), Coagulation and corrective actions._`,
+
+  'c-pot-203/m2': `## Pre-hydrolysed aluminium: PACl and ACH
+The inorganic backbone of most blends is a **pre-hydrolysed aluminium** — polyaluminium chloride (PACl) or, more concentrated, **aluminium chlorohydrate (ACH)**. Two properties make them valuable:
+- a **high cation-to-anion ratio**, so they produce **significantly less sludge** than aluminium sulphate or an iron salt; and
+- **low acidity**, so they have **little or no effect on pH**, sharply cutting the lime needed for correction and reducing post-precipitation downstream.
+
+Their weakness is floc strength: PACs, particularly sulphate-free grades, make **small, slow-settling flocs**, which is why they are paired with a polymer.
+
+## Cationic polyelectrolytes: polyamine and polyDADMAC
+The organic partner is a **cationic polyelectrolyte** that neutralises charge and bridges particles into larger floc.
+- **Polyamines** are clear aqueous solutions with a characteristic amine smell, usually sold at around **50% solids**.
+- **PolyDADMACs** are made by polymerising DADMAC monomer into a ring structure carrying a positively charged nitrogen. They have a **higher molecular weight**, so on equal solids they are **much more viscous** — a polyDADMAC above ~30% solids is hard to pump, so it is sold at around **25%**. They carry **no amine odour** and are **non-hazardous**; an experienced operator can tell the two apart by smell alone.
+
+Dose limits apply: accreditation bodies such as **NSF specify a maximum dose of about 20 mg/L for polyamines**.
+
+## Other components and natural coagulants
+Two further options round out the toolkit:
+- **Sodium aluminate** is the unusual **high-pH** aluminium coagulant — there is no iron-based equivalent — useful where an alkaline coagulant is wanted, though it readily absorbs carbon dioxide and must be handled with care.
+- **Natural coagulants** such as **chitin, sago and Moringa** can part-replace alum. Their appeal is that they **do not alter the pH**, removing the need for lime or bicarbonate, and they can cut the metal-salt dose — a low-cost, lower-sludge supplement to a conventional coagulant.
+
+_Source: Chemistry of Wastewater Treatment (WRC, 2009), §5.3–5.4, 7.8–7.9; Saritha, Karnena & Dwarapureddi (2020), Competence of Blended Coagulants for Surface Water Treatment._`,
+
+  'c-pot-203/m3': `## Finding the optimum ratio
+A blend is defined by its **ratio** of inorganic to organic (or alum to natural) component, and the ratio has a real optimum. Studies of blended coagulants report:
+- **better turbidity removal than either single coagulant**, reaching around **90–99%**;
+- **larger floc** in the blend than in the single coagulants; and
+- better performance **across the whole pH range**, rather than only at one optimum pH.
+
+In one study of alum blended with natural coagulants, the best results came at blend ratios of about **1:1 and 1:3** — a reminder that the ratio must be found for your water, not assumed.
+
+## Dose and the sludge advantage
+The headline operating benefit is dose. Blended coagulants commonly hit target turbidity at **roughly half the dose** of a single coagulant. Half the dose means:
+- **less chemical sludge** to handle and dispose of; and
+- with a PAC-based blend, **little lime** for pH correction, because the blend barely moves the pH.
+
+Sludge dewaterability — affected by pH, temperature and viscosity — also tends to improve when the coagulant load drops.
+
+## Worked example: part-replacing alum with a blend
+Suppose a works doses **alum at 40 mg/L** treating **10 ML/d**.
+- Alum consumption: \`40 mg/L × 10 ML/d = 400 kg/day\` (use **dosage** and **converters**; note 1 mg/L × 1 ML = 1 kg).
+
+A blend trial settles on a blend dose of about **20 mg/L** for the same clarified turbidity — roughly half, in line with blend studies.
+- New consumption: \`20 mg/L × 10 ML/d = 200 kg/day\`.
+
+That is **~200 kg/day less coagulant**, with roughly half the chemical sludge and, because the PAC-based blend hardly shifts pH, most of the lime previously dosed for correction eliminated. **Sanity-check:** the half-dose is a **starting hypothesis** from the dose curve, not a guarantee — confirm the reduced dose still meets the clarified **and** filtered turbidity targets in the jar test and on the plant before committing.
+
+_Source: Saritha, Karnena & Dwarapureddi (2020), Competence of Blended Coagulants for Surface Water Treatment; Chemistry of Wastewater Treatment (WRC, 2009), §5._`,
+
+  'c-pot-203/m4': `## Before the trial
+Commissioning a blend is a controlled experiment, not a swap-and-hope. Set it up properly:
+- hold a **pre-trial meeting** with plant staff and the supplier;
+- **agree the success criteria** up front — what “better” means and exactly how it will be measured;
+- capture the **baseline**: current coagulant, dose, raw-water turbidity and pH, clarified and filtered turbidity, lime use and sludge; and
+- agree that **dosing changes are made on the daylight shift only**, where staff can watch the response.
+
+## Running the dose curve
+Work the dose deliberately so each change is clear and reversible:
+- **start at the higher end of the dose curve** and **optimise downward** toward the minimum effective dose;
+- change **one variable at a time** — never several at once;
+- use a **jar test** to bracket the dose and ratio before changing the plant; and
+- **assess the floc** with a **floc comparator**, grading floc size against the reference set (from well under a millimetre up to several millimetres) to confirm the blend is building settleable floc.
+
+## Logging and review
+Data is what turns a trial into a decision. On an **hourly or two-hourly** basis, log:
+- raw-water **flow, turbidity (NTU)**, **coagulant dose** and **polymer dose**;
+- **clarified overflow turbidity**;
+- **filtered-water turbidity**; and
+- **pH**.
+
+**Review the trial daily** with the plant team, comparing against the agreed criteria, and put a value on the benefits — coagulant saved, lime saved, sludge reduced. If the results do not meet the criteria, stop and reconsider the blend or ratio rather than pushing on.
+
+_Source: Operation of Water Treatment Works (WRC), Coagulation, dosing and corrective actions; coagulant trial protocol (Chemistry of Coagulation)._`,
+
+  'c-pot-203/m5': `## Matching a blend to the water and the works
+A blend is not automatically better — it earns its place when its advantages address a real problem on your works:
+- **high sludge volumes or disposal cost** → the low-sludge PAC component helps;
+- **heavy lime demand** for pH correction → a less-acidic blend cuts it;
+- **post-precipitation** in reservoirs and reticulation → reduced when pH is barely shifted; and
+- **floc carry-over** from a PAC used alone → fixed by the polymer in the blend.
+
+Where the raw water is easy and a single coagulant already gives good clarified and filtered water at low cost, a blend may add little. The justification is always **cost and performance on this water**, proven by the trial.
+
+## Watching for trouble
+Blends introduce their own failure modes, mostly around the polymer:
+- **polyelectrolyte overdosing** shows as **foam at the flocculation chamber** and can carry polymer over into the filtered water. Confirm it by adding a little **bentonite** to filtered water and running a jar test — **floc formation indicates excess polyelectrolyte**.
+- **small-floc carry-over** suggests too little polymer or the wrong ratio — re-check the blend against the floc comparator.
+- **dose drift** as raw-water turbidity and temperature change — the optimum is not fixed, so keep trending dose against clarified and filtered turbidity.
+
+## Handling, storage and limits
+Formulated blends are convenient but demand respect:
+- polyDADMAC-based products are **viscous**, so size pumps and lines accordingly and watch dosing accuracy;
+- observe **dose limits** — for example NSF’s ~**20 mg/L** ceiling on polyamines; and
+- store products per the supplier’s data sheet and keep batches consistent, since a formulated blend’s performance depends on its make-up staying constant.
+
+_Source: Operation of Water Treatment Works (WRC), Corrective actions — coagulant dosing; Chemistry of Wastewater Treatment (WRC, 2009), §7.8–7.9._`,
+
   /* ───── POT-301 — SANS 241 Compliance & Water Safety Plans ───── */
 
   'c-pot-301/m1': `## The structure of SANS 241
