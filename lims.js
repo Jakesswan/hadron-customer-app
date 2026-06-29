@@ -269,171 +269,73 @@
   /* ---------- Seed Data ---------- */
   const SEED = {
     async run() {
-      const existing = await DB.get('settings','seeded');
-      if (existing) {
-        // Already seeded — only refresh the test catalogue + profiles if the
-        // catalogue version has bumped. User data (samples, clients, results,
-        // users, instruments, inventory, audit) is left untouched.
-        const cv = await DB.get('settings','catalogueVersion');
-        const haveVersion = cv ? cv.value : 1;
-        if (haveVersion < CATALOGUE_VERSION) {
-          await SEED.refreshCatalogue();
-          await DB.put('settings', { id:'catalogueVersion', value:CATALOGUE_VERSION, ts: nowISO() });
-          await DB.audit('CATALOGUE_REFRESH', 'system', 'tests+profiles', { from: haveVersion }, { to: CATALOGUE_VERSION });
-        }
-        return;
+      // PRODUCTION: a fresh tenant starts EMPTY — no demo data is ever seeded.
+      // (This previously seeded demo clients/samples/results/staff + the catalogue.)
+      // The standard SANS 241 catalogue is now OPT-IN via the "Load standard tests"
+      // button -> loadCatalogue(). For tenants that already loaded it, keep it current.
+      const cv = await DB.get('settings','catalogueVersion');
+      if (cv && (cv.value || 1) < CATALOGUE_VERSION) {
+        await SEED.refreshCatalogue();
+        await DB.put('settings', { id:'catalogueVersion', value:CATALOGUE_VERSION, ts: nowISO() });
+        await DB.audit('CATALOGUE_REFRESH', 'system', 'tests+profiles', { from: cv.value }, { to: CATALOGUE_VERSION });
       }
+      await SEED.purgeLegacyDemo();
+      await SEED.ensureCurrentUser();
+    },
 
-      // Users
-      const users = [
-        { id:'u-admin', name:'Dr. Nomsa Khumalo', role:'admin', email:'nomsa@hadrongrp.com', active:true, signature:'NK' },
-        { id:'u-mgr',   name:'Jaco Swanepoel',     role:'authoriser', email:'jaco@hadrongrp.com', active:true, signature:'JS' },
-        { id:'u-rev',   name:'Thandi Mokoena',     role:'reviewer', email:'thandi@hadrongrp.com', active:true, signature:'TM' },
-        { id:'u-an1',   name:'Sipho Dlamini',      role:'analyst', email:'sipho@hadrongrp.com', active:true, signature:'SD' },
-        { id:'u-an2',   name:'Marelize van Wyk',   role:'analyst', email:'marelize@hadrongrp.com', active:true, signature:'MvW' },
-        { id:'u-sam',   name:'Bongani Nkosi',      role:'sampler', email:'bongani@hadrongrp.com', active:true, signature:'BN' }
-      ];
-      for (const u of users) await DB.put('users', u);
-      S.currentUser = users[1]; // Jaco by default
-
-      // Clients
-      const clients = [
-        { id:'c-muni', name:'City of Tshwane — Water & Sanitation', contact:'Mr. P. Moloi', email:'p.moloi@tshwane.gov.za', phone:'012-358-1234', address:'Pretoria CBD', industry:'Municipal', created: nowISO() },
-        { id:'c-sasol',name:'Sasol Secunda Complex',                contact:'Ms. L. Botha',  email:'l.botha@sasol.com',     phone:'017-610-5000', address:'Secunda',     industry:'Petrochemical', created: nowISO() },
-        { id:'c-farm', name:'Greenfields Agri (Pty) Ltd',           contact:'Mr. J. du Toit',email:'j.dutoit@greenfields.co.za',phone:'013-752-0909',address:'Mpumalanga', industry:'Agriculture', created: nowISO() },
-        { id:'c-mine', name:'Sibanye-Stillwater Rustenburg Ops',    contact:'Eng. S. Kruger',email:'s.kruger@sibanyestillwater.com',phone:'014-571-7000',address:'Rustenburg',industry:'Mining', created: nowISO() }
-      ];
-      for (const c of clients) await DB.put('clients', c);
-
-      // Tests + profiles come from module-scope constants so refreshCatalogue()
-      // can reuse them without re-entering the seed flow.
-      for (const t of _SANS241_TESTS) await DB.put('tests', t);
-      for (const p of _SANS241_PROFILES) await DB.put('profiles', p);
-
-      // Instruments
-      const instruments = [
-        { id:'i-phm',   name:'pH Meter — Bench',         model:'Hanna HI-5522',  serial:'HI25501',     location:'Lab A Bench 1', tests:['t-ph'],          calIntDays:90,  lastCal:'2026-02-20', nextCal:'2026-05-21', status:'active'  },
-        { id:'i-ecm',   name:'Conductivity Meter',       model:'Thermo Orion 013005MD', serial:'O013005', location:'Lab A Bench 1', tests:['t-cond','t-tds'], calIntDays:180, lastCal:'2026-01-15', nextCal:'2026-07-14', status:'active'  },
-        { id:'i-turb',  name:'Turbidity Meter',          model:'Hach 2100Q',     serial:'2100Q-417',   location:'Lab A Bench 2', tests:['t-turb'],        calIntDays:30,  lastCal:'2026-04-10', nextCal:'2026-05-10', status:'active'  },
-        { id:'i-dpd',   name:'DPD Photometer',           model:'Hach DR1900',    serial:'DR1900-88',   location:'Lab A Bench 2', tests:['t-fcl','t-cl2'], calIntDays:365, lastCal:'2025-09-01', nextCal:'2026-09-01', status:'active'  },
-        { id:'i-icp',   name:'ICP-OES',                  model:'Agilent 5800',   serial:'AG5800-221',  location:'Metals Lab',    tests:['t-fe','t-mn'],   calIntDays:7,   lastCal:'2026-04-20', nextCal:'2026-04-27', status:'active'  },
-        { id:'i-inc35', name:'Incubator 35°C',           model:'Memmert IN55',   serial:'MM-55-04',    location:'Micro Lab',     tests:['t-colif','t-ec'],calIntDays:30,  lastCal:'2026-03-25', nextCal:'2026-04-24', status:'active'  },
-        { id:'i-inc22', name:'Incubator 22°C',           model:'Memmert IN55',   serial:'MM-55-09',    location:'Micro Lab',     tests:['t-hpc'],         calIntDays:30,  lastCal:'2026-03-28', nextCal:'2026-04-27', status:'active'  },
-        { id:'i-aut',   name:'Autoclave',                model:'Tuttnauer 3870', serial:'TU-3870-12',  location:'Micro Lab',     tests:[],                calIntDays:180, lastCal:'2025-12-05', nextCal:'2026-06-03', status:'active'  },
-        { id:'i-bal',   name:'Analytical Balance',       model:'Mettler XPR205', serial:'MET-XPR-331', location:'Prep Room',     tests:[],                calIntDays:365, lastCal:'2025-10-12', nextCal:'2026-10-12', status:'active'  }
-      ];
-      for (const i of instruments) await DB.put('instruments', i);
-
-      // Calibration records (recent)
-      const cals = [
-        { id:'cal-001', instrumentId:'i-phm',  date:'2026-02-20', type:'3-point', performedBy:'u-an1', result:'pass', notes:'Slope 98.2%, buffers pH 4.01, 7.00, 10.01', next:'2026-05-21' },
-        { id:'cal-002', instrumentId:'i-turb', date:'2026-04-10', type:'StablCal set', performedBy:'u-an2', result:'pass', notes:'<0.1, 20, 100, 800 NTU — all within ±5%', next:'2026-05-10' },
-        { id:'cal-003', instrumentId:'i-icp',  date:'2026-04-20', type:'Multi-element standard', performedBy:'u-an1', result:'pass', notes:'R²>0.9995 for Fe, Mn', next:'2026-04-27' }
-      ];
-      for (const c of cals) await DB.put('calibrations', c);
-
-      // Inventory
-      const inventory = [
-        { id:'inv-phbuf4',  name:'pH Buffer 4.01',          lot:'PH4-2025-118', supplier:'Hanna',       received:'2025-11-10', expiry:'2026-11-10', qty:500, unit:'mL', min:250, coa:true, storage:'Room Temp' },
-        { id:'inv-phbuf7',  name:'pH Buffer 7.00',          lot:'PH7-2025-118', supplier:'Hanna',       received:'2025-11-10', expiry:'2026-11-10', qty:500, unit:'mL', min:250, coa:true, storage:'Room Temp' },
-        { id:'inv-phbuf10', name:'pH Buffer 10.01',         lot:'PH10-2025-118',supplier:'Hanna',       received:'2025-11-10', expiry:'2026-11-10', qty:500, unit:'mL', min:250, coa:true, storage:'Room Temp' },
-        { id:'inv-ntuset',  name:'StablCal Turbidity Set',  lot:'SC-26-004',    supplier:'Hach',        received:'2026-01-12', expiry:'2026-07-12', qty:1,   unit:'set',min:1,   coa:true, storage:'Dark, cool' },
-        { id:'inv-dpd',     name:'DPD Free Chlorine Powder',lot:'DPD-26-A12',   supplier:'Hach',        received:'2026-02-01', expiry:'2027-02-01', qty:500, unit:'sachets', min:100, coa:true, storage:'Dry' },
-        { id:'inv-lac',     name:'Lactose Broth',           lot:'LB-25-2224',   supplier:'Merck',       received:'2025-12-02', expiry:'2026-05-02', qty:250, unit:'g',  min:100, coa:true, storage:'+4°C' },
-        { id:'inv-mfc',     name:'mFC Agar',                lot:'MFC-26-003',   supplier:'Merck',       received:'2026-03-18', expiry:'2026-09-18', qty:500, unit:'g',  min:100, coa:true, storage:'+4°C' },
-        { id:'inv-mnstd',   name:'Mn 1000 mg/L ICP Standard',lot:'MN-26-071',   supplier:'SMM Instruments', received:'2026-01-05', expiry:'2027-01-05', qty:100, unit:'mL', min:50,  coa:true, storage:'Room Temp' },
-        { id:'inv-festd',   name:'Fe 1000 mg/L ICP Standard',lot:'FE-26-071',   supplier:'SMM Instruments', received:'2026-01-05', expiry:'2027-01-05', qty:100, unit:'mL', min:50,  coa:true, storage:'Room Temp' }
-      ];
-      for (const it of inventory) await DB.put('inventory', it);
-
-      // Documents (SOP library)
-      const docs = [
-        { id:'doc-sop-001', title:'SOP — pH Determination',          ver:'3.0', effective:'2025-10-01', review:'2027-10-01', owner:'u-mgr', status:'approved', type:'SOP' },
-        { id:'doc-sop-002', title:'SOP — Turbidity Measurement',     ver:'1.4', effective:'2025-06-14', review:'2027-06-14', owner:'u-mgr', status:'approved', type:'SOP' },
-        { id:'doc-sop-003', title:'SOP — Total Coliforms (MF)',      ver:'2.0', effective:'2026-01-10', review:'2028-01-10', owner:'u-mgr', status:'approved', type:'SOP' },
-        { id:'doc-sop-004', title:'SOP — ICP-OES Metals (Fe, Mn)',   ver:'2.3', effective:'2025-12-15', review:'2027-12-15', owner:'u-mgr', status:'approved', type:'SOP' },
-        { id:'doc-qm-001',  title:'Quality Manual',                  ver:'5.2', effective:'2026-01-01', review:'2028-01-01', owner:'u-admin', status:'approved', type:'Manual' },
-        { id:'doc-pol-001', title:'Policy — Impartiality Commitment',ver:'1.1', effective:'2025-07-01', review:'2027-07-01', owner:'u-admin', status:'approved', type:'Policy' },
-        { id:'doc-wi-001',  title:'WI — Chain of Custody Handling',  ver:'2.0', effective:'2025-08-20', review:'2027-08-20', owner:'u-rev',  status:'approved', type:'Work Instruction' }
-      ];
-      for (const d of docs) await DB.put('documents', d);
-
-      // Competency matrix
-      const comp = [
-        { id:'cm-001', userId:'u-an1', testId:'t-ph',   status:'authorised', assessed:'2026-01-10', nextReview:'2027-01-10', assessor:'u-rev' },
-        { id:'cm-002', userId:'u-an1', testId:'t-cond', status:'authorised', assessed:'2026-01-10', nextReview:'2027-01-10', assessor:'u-rev' },
-        { id:'cm-003', userId:'u-an1', testId:'t-turb', status:'authorised', assessed:'2026-01-10', nextReview:'2027-01-10', assessor:'u-rev' },
-        { id:'cm-004', userId:'u-an1', testId:'t-fe',   status:'authorised', assessed:'2026-02-15', nextReview:'2027-02-15', assessor:'u-rev' },
-        { id:'cm-005', userId:'u-an2', testId:'t-colif',status:'authorised', assessed:'2025-11-22', nextReview:'2026-11-22', assessor:'u-rev' },
-        { id:'cm-006', userId:'u-an2', testId:'t-ec',   status:'authorised', assessed:'2025-11-22', nextReview:'2026-11-22', assessor:'u-rev' },
-        { id:'cm-007', userId:'u-an2', testId:'t-hpc',  status:'authorised', assessed:'2025-11-22', nextReview:'2026-11-22', assessor:'u-rev' },
-        { id:'cm-008', userId:'u-an2', testId:'t-fcl',  status:'training',   assessed:'2026-03-01', nextReview:'2026-06-01', assessor:'u-rev' }
-      ];
-      for (const c of comp) await DB.put('competencies', c);
-
-      // Samples (mix of states)
-      const today = new Date();
-      const dIso = (offset) => { const d = new Date(today); d.setDate(d.getDate()+offset); return d.toISOString(); };
-      const samples = [
-        { id:'s-001', barcode:'HAD-26-0421-001', clientId:'c-muni',  description:'Potable tap — Clinic Mamelodi', matrix:'Drinking Water', received:dIso(-3), sampledAt:dIso(-4), sampledBy:'u-sam', temp:6.2, notes:'Flushed 2 min. Free Cl₂ on-site 0.35 mg/L', status:'in-progress', priority:'normal', profileId:'p-sans241-basic', tests:['t-ph','t-cond','t-turb','t-fcl','t-ec'], storage:'+4°C Fridge B', custody:[{ts:dIso(-4),event:'Collected',by:'u-sam'},{ts:dIso(-3),event:'Received at lab',by:'u-rev'},{ts:dIso(-3),event:'Booked in',by:'u-rev'}] },
-        { id:'s-002', barcode:'HAD-26-0421-002', clientId:'c-muni',  description:'Reservoir outlet — Soshanguve #2', matrix:'Drinking Water', received:dIso(-3), sampledAt:dIso(-3), sampledBy:'u-sam', temp:5.8, notes:'', status:'under-review', priority:'normal', profileId:'p-sans241-basic', tests:['t-ph','t-cond','t-turb','t-fcl','t-ec'], storage:'+4°C Fridge B', custody:[{ts:dIso(-3),event:'Collected',by:'u-sam'},{ts:dIso(-3),event:'Received at lab',by:'u-rev'}] },
-        { id:'s-003', barcode:'HAD-26-0420-003', clientId:'c-farm',  description:'Borehole BH-07 @ Greenfields',     matrix:'Groundwater',    received:dIso(-5), sampledAt:dIso(-6), sampledBy:'u-sam', temp:7.1, notes:'Client reports metallic taste', status:'authorised', priority:'high', profileId:'p-bore', tests:['t-ph','t-cond','t-turb','t-tds','t-ec','t-no3','t-fe','t-mn','t-hard'], storage:'+4°C Fridge A', custody:[{ts:dIso(-6),event:'Collected',by:'u-sam'},{ts:dIso(-5),event:'Received',by:'u-rev'},{ts:dIso(-1),event:'Authorised',by:'u-mgr'}] },
-        { id:'s-004', barcode:'HAD-26-0422-004', clientId:'c-sasol', description:'Cooling tower CT-03 blowdown',     matrix:'Process Water',  received:dIso(-1), sampledAt:dIso(-2), sampledBy:'u-sam', temp:12.0, notes:'Non-accredited for CLO2', status:'received', priority:'urgent', profileId:null, tests:['t-ph','t-cond','t-cl2'], storage:'+4°C Fridge A', custody:[{ts:dIso(-2),event:'Collected',by:'u-sam'},{ts:dIso(-1),event:'Received',by:'u-rev'}] },
-        { id:'s-005', barcode:'HAD-26-0418-005', clientId:'c-mine',  description:'Tailings decant dam',               matrix:'Waste Water',    received:dIso(-6), sampledAt:dIso(-7), sampledBy:'u-sam', temp:9.4, notes:'', status:'released', priority:'normal', profileId:null, tests:['t-ph','t-cond','t-fe','t-mn','t-hard'], storage:'Archived', custody:[{ts:dIso(-7),event:'Collected',by:'u-sam'},{ts:dIso(-6),event:'Received',by:'u-rev'},{ts:dIso(-2),event:'COA Released',by:'u-mgr'}] }
-      ];
-      for (const s of samples) await DB.put('samples', s);
-
-      // Results (linked to samples)
-      const results = [
-        // s-003 (authorised)
-        { id:'r-001', sampleId:'s-003', testId:'t-ph',   value:7.4,    unit:'pH units',  analyst:'u-an1', reviewer:'u-rev', authoriser:'u-mgr', entered:dIso(-4), reviewed:dIso(-2), authorised:dIso(-1), status:'authorised', instrumentId:'i-phm',  methodVer:'v3.0', flag:'ok' },
-        { id:'r-002', sampleId:'s-003', testId:'t-cond', value:84,     unit:'mS/m',      analyst:'u-an1', reviewer:'u-rev', authoriser:'u-mgr', entered:dIso(-4), reviewed:dIso(-2), authorised:dIso(-1), status:'authorised', instrumentId:'i-ecm',  methodVer:'v2.1', flag:'ok' },
-        { id:'r-003', sampleId:'s-003', testId:'t-turb', value:0.6,    unit:'NTU',       analyst:'u-an1', reviewer:'u-rev', authoriser:'u-mgr', entered:dIso(-4), reviewed:dIso(-2), authorised:dIso(-1), status:'authorised', instrumentId:'i-turb', methodVer:'v1.4', flag:'ok' },
-        { id:'r-004', sampleId:'s-003', testId:'t-tds',  value:612,    unit:'mg/L',      analyst:'u-an1', reviewer:'u-rev', authoriser:'u-mgr', entered:dIso(-4), reviewed:dIso(-2), authorised:dIso(-1), status:'authorised', instrumentId:'i-ecm',  methodVer:'v1.2', flag:'ok' },
-        { id:'r-005', sampleId:'s-003', testId:'t-ec',   value:0,      unit:'cfu/100mL', analyst:'u-an2', reviewer:'u-rev', authoriser:'u-mgr', entered:dIso(-3), reviewed:dIso(-2), authorised:dIso(-1), status:'authorised', instrumentId:'i-inc35', methodVer:'v2.0', flag:'ok' },
-        { id:'r-006', sampleId:'s-003', testId:'t-no3',  value:8.1,    unit:'mg/L',      analyst:'u-an1', reviewer:'u-rev', authoriser:'u-mgr', entered:dIso(-3), reviewed:dIso(-2), authorised:dIso(-1), status:'authorised', instrumentId:null,     methodVer:'v1.0', flag:'ok' },
-        { id:'r-007', sampleId:'s-003', testId:'t-fe',   value:0.42,   unit:'mg/L',      analyst:'u-an1', reviewer:'u-rev', authoriser:'u-mgr', entered:dIso(-3), reviewed:dIso(-2), authorised:dIso(-1), status:'authorised', instrumentId:'i-icp',  methodVer:'v2.3', flag:'fail' },
-        { id:'r-008', sampleId:'s-003', testId:'t-mn',   value:0.18,   unit:'mg/L',      analyst:'u-an1', reviewer:'u-rev', authoriser:'u-mgr', entered:dIso(-3), reviewed:dIso(-2), authorised:dIso(-1), status:'authorised', instrumentId:'i-icp',  methodVer:'v2.3', flag:'ok' },
-        { id:'r-009', sampleId:'s-003', testId:'t-hard', value:148,    unit:'mg/L',      analyst:'u-an1', reviewer:'u-rev', authoriser:'u-mgr', entered:dIso(-3), reviewed:dIso(-2), authorised:dIso(-1), status:'authorised', instrumentId:null,     methodVer:'v1.0', flag:'ok' },
-        // s-002 (under review)
-        { id:'r-010', sampleId:'s-002', testId:'t-ph',   value:7.9,    unit:'pH units',  analyst:'u-an1', reviewer:null, authoriser:null, entered:dIso(-2), reviewed:null, authorised:null, status:'pending-review', instrumentId:'i-phm',  methodVer:'v3.0', flag:'ok' },
-        { id:'r-011', sampleId:'s-002', testId:'t-cond', value:55,     unit:'mS/m',      analyst:'u-an1', reviewer:null, authoriser:null, entered:dIso(-2), reviewed:null, authorised:null, status:'pending-review', instrumentId:'i-ecm',  methodVer:'v2.1', flag:'ok' },
-        { id:'r-012', sampleId:'s-002', testId:'t-turb', value:0.4,    unit:'NTU',       analyst:'u-an1', reviewer:null, authoriser:null, entered:dIso(-2), reviewed:null, authorised:null, status:'pending-review', instrumentId:'i-turb', methodVer:'v1.4', flag:'ok' },
-        { id:'r-013', sampleId:'s-002', testId:'t-fcl',  value:0.48,   unit:'mg/L',      analyst:'u-an1', reviewer:null, authoriser:null, entered:dIso(-2), reviewed:null, authorised:null, status:'pending-review', instrumentId:'i-dpd',  methodVer:'v1.1', flag:'ok' },
-        { id:'r-014', sampleId:'s-002', testId:'t-ec',   value:0,      unit:'cfu/100mL', analyst:'u-an2', reviewer:null, authoriser:null, entered:dIso(-1), reviewed:null, authorised:null, status:'pending-review', instrumentId:'i-inc35', methodVer:'v2.0', flag:'ok' },
-        // s-001 (in progress — only 2 done)
-        { id:'r-015', sampleId:'s-001', testId:'t-ph',   value:7.1,    unit:'pH units',  analyst:'u-an1', reviewer:null, authoriser:null, entered:dIso(-1), reviewed:null, authorised:null, status:'entered', instrumentId:'i-phm',  methodVer:'v3.0', flag:'ok' },
-        { id:'r-016', sampleId:'s-001', testId:'t-fcl',  value:0.32,   unit:'mg/L',      analyst:'u-an1', reviewer:null, authoriser:null, entered:dIso(-1), reviewed:null, authorised:null, status:'entered', instrumentId:'i-dpd',  methodVer:'v1.1', flag:'ok' }
-      ];
-      for (const r of results) await DB.put('results', r);
-
-      // Worksheets
-      const worksheets = [
-        { id:'ws-001', code:'WS-2026-0421-PH',  test:'t-ph',  analyst:'u-an1', opened:dIso(-1), closed:null, samples:['s-001','s-002','s-003'], qc:[{type:'blank',expected:'<0.1',actual:0.05,status:'pass'},{type:'duplicate', of:'s-002',rpd:1.2,status:'pass'}], status:'open' },
-        { id:'ws-002', code:'WS-2026-0420-MET', test:'t-fe',  analyst:'u-an1', opened:dIso(-3), closed:dIso(-2), samples:['s-003'], qc:[{type:'blank',expected:'<0.01',actual:0.008,status:'pass'},{type:'CRM',expected:0.50,actual:0.48,status:'pass'},{type:'spike',recovery:96,status:'pass'}], status:'closed' },
-        { id:'ws-003', code:'WS-2026-0421-MIC', test:'t-ec',  analyst:'u-an2', opened:dIso(-1), closed:null, samples:['s-001','s-002'], qc:[{type:'negative control',actual:0,status:'pass'},{type:'positive control',actual:45,status:'pass'}], status:'open' }
-      ];
-      for (const w of worksheets) await DB.put('worksheets', w);
-
-      // NCs / CAPAs
-      const ncs = [
-        { id:'nc-001', raised:dIso(-6), raisedBy:'u-an1', type:'Out-of-spec result', ref:'s-003 / t-fe', description:'Fe 0.42 mg/L exceeds SANS 241 (0.3). Informed client. Resample requested.', severity:'minor', status:'closed', correctiveAction:'Repeated analysis — confirmed. COA footnote added.', closed:dIso(-4), closedBy:'u-mgr' },
-        { id:'nc-002', raised:dIso(-2), raisedBy:'u-rev', type:'Inventory near expiry', ref:'inv-lac', description:'Lactose Broth expires in 8 days, <1 month stock.', severity:'minor', status:'open', correctiveAction:'Order placed with Merck.', closed:null, closedBy:null },
-        { id:'nc-003', raised:dIso(-10),raisedBy:'u-an2', type:'Calibration overdue', ref:'i-inc35', description:'Incubator temperature calibration delayed by 3 days.', severity:'moderate', status:'closed', correctiveAction:'External Cal performed. Review of cal schedule underway.', closed:dIso(-6), closedBy:'u-mgr' }
-      ];
-      for (const n of ncs) await DB.put('ncs', n);
-
-      // Quotes — sample requests / bookings (no commercial pricing)
-      const quotes = [
-        { id:'q-001', clientId:'c-muni',  date:dIso(-14), items:[{profileId:'p-sans241-operational', qty:120}], status:'accepted' },
-        { id:'q-002', clientId:'c-farm',  date:dIso(-7),  items:[{profileId:'p-bore', qty:4}],                 status:'sent' },
-        { id:'q-003', clientId:'c-sasol', date:dIso(-2),  items:[{profileId:null, testId:'t-cl2', qty:24},{testId:'t-ph', qty:24}], status:'draft' }
-      ];
-      for (const q of quotes) await DB.put('quotes', q);
-
-      await DB.put('settings', { id:'seeded', value:true, ts: nowISO() });
+    // Opt-in: load the standard SANS 241 test catalogue + profiles (button-triggered).
+    async loadCatalogue() {
+      await SEED.refreshCatalogue();
       await DB.put('settings', { id:'catalogueVersion', value:CATALOGUE_VERSION, ts: nowISO() });
-      await DB.audit('SEED', 'system', 'seeded', null, { count: 'initial seed' });
+      await DB.audit('CATALOGUE_LOAD', 'system', 'tests+profiles', null, { count: _SANS241_TESTS.length });
+    },
+
+    // The LIMS "current user" is the signed-in app profile — never a demo user.
+    // Registered as the sole local 'users' record so name/role lookups resolve.
+    async ensureCurrentUser() {
+      if (S.currentUser && S.currentUser.id) return;
+      const p = (typeof window !== 'undefined' && window.HG_PROFILE) ? window.HG_PROFILE : {};
+      const name = p.full_name || p.email || 'Me';
+      const user = {
+        id: p.id || 'self',
+        name: name,
+        role: 'admin',                 // signed-in tenant user has full LIMS rights
+        email: p.email || '',
+        active: true,
+        signature: (name.match(/\b\w/g) || []).join('').slice(0, 3).toUpperCase()
+      };
+      S.currentUser = user;
+      try { if (!(await DB.get('users', user.id))) await DB.put('users', user); } catch (_) {}
+    },
+
+    // One-time removal of the OLD demo dataset on devices seeded before go-live.
+    // Deletes ONLY the known fixed demo IDs (this cascades to the cloud via the
+    // sync delete hook); any real tenant data is left untouched. Runs once.
+    async purgeLegacyDemo() {
+      try {
+        if (await DB.get('settings','demoPurged')) return;
+        if (await DB.get('settings','seeded')) {
+          const demo = {
+            clients: ['c-muni','c-sasol','c-farm','c-mine'],
+            samples: ['s-001','s-002','s-003','s-004','s-005'],
+            results: ['r-001','r-002','r-003','r-004','r-005','r-006','r-007','r-008','r-009','r-010','r-011','r-012','r-013','r-014','r-015','r-016'],
+            instruments: ['i-phm','i-ecm','i-turb','i-dpd','i-icp','i-inc35','i-inc22','i-aut','i-bal'],
+            calibrations: ['cal-001','cal-002','cal-003'],
+            inventory: ['inv-phbuf4','inv-phbuf7','inv-phbuf10','inv-ntuset','inv-dpd','inv-lac','inv-mfc','inv-mnstd','inv-festd'],
+            documents: ['doc-sop-001','doc-sop-002','doc-sop-003','doc-sop-004','doc-qm-001','doc-pol-001','doc-wi-001'],
+            competencies: ['cm-001','cm-002','cm-003','cm-004','cm-005','cm-006','cm-007','cm-008'],
+            worksheets: ['ws-001','ws-002','ws-003'],
+            ncs: ['nc-001','nc-002','nc-003'],
+            quotes: ['q-001','q-002','q-003'],
+            users: ['u-admin','u-mgr','u-rev','u-an1','u-an2','u-sam']
+          };
+          for (const store in demo) {
+            for (const id of demo[store]) { try { await DB.del(store, id); } catch (_) {} }
+          }
+          if (S.currentUser && demo.users.indexOf(S.currentUser.id) > -1) S.currentUser = null;
+        }
+        await DB.put('settings', { id:'demoPurged', value:true, ts: nowISO() });
+      } catch (_) {}
     },
 
     // Replace just the tests + profiles tables with the latest reference set
@@ -931,7 +833,8 @@
     const clients = await DB.all('clients');
     const profiles = await DB.all('profiles');
     const tests = await DB.all('tests');
-    const users = (await DB.all('users')).filter(u => u.role === 'sampler' || u.role === 'analyst');
+    let users = (await DB.all('users')).filter(u => u.role === 'sampler' || u.role === 'analyst');
+    if (!users.length) users = await DB.all('users');   // single-user tenant: include the signed-in admin
     const defaultBarcode = 'HAD-' + new Date().toISOString().slice(2,10).replace(/-/g,'') + '-' + Math.floor(Math.random()*9000+1000);
 
     root.innerHTML = `
@@ -1020,6 +923,7 @@
       ${breadcrumb([{label:'LIMS',view:'hub'},{label:'Tests',view:'tests'}])}
       <div class="lims-toolbar">
         <h2 class="lims-title">Test Catalogue <span class="lims-count">${tests.length}</span></h2>
+        ${tests.length===0?`<button class="lims-btn" onclick="limsLoadCatalogue()">⬇ Load standard SANS 241 tests</button>`:''}
         <button class="lims-btn primary" onclick="limsGo('test-form',{})">➕ Add test</button>
       </div>
       ${cats.length ? cats.map(cat => `
@@ -1048,7 +952,7 @@
             </tbody>
           </table>
         </div>
-      `).join('') : '<div class="lims-card"><div class="lims-empty">No tests yet — click ➕ Add test to create one.</div></div>'}
+      `).join('') : '<div class="lims-card"><div class="lims-empty">No tests yet — click <strong>Load standard SANS 241 tests</strong> to start from the standard catalogue, or ➕ Add test to create your own.</div></div>'}
     `;
   }
 
@@ -2241,7 +2145,7 @@
     });
     await DB.open();
     await SEED.run();
-    toast('LIMS reset and re-seeded', 'info');
+    toast('LIMS reset — now empty', 'info');
     S.view = 'hub'; S.stack = []; render();
   };
 
@@ -2945,6 +2849,13 @@
       S.currentUser = users.find(u => u.role === 'authoriser') || users[0];
     }
     S.view = 'hub'; S.stack = []; S.params = {};
+    render();
+  };
+
+  // Opt-in: load the standard SANS 241 test catalogue (button in the Tests view).
+  window.limsLoadCatalogue = async function() {
+    await SEED.loadCatalogue();
+    toast('Loaded the standard SANS 241 test catalogue', 'ok');
     render();
   };
 

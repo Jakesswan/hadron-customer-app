@@ -182,7 +182,7 @@
           ${list.map(it => `<option value="${esc(it.id)}" ${s.payload===it.id?'selected':''}>${esc(it.__label)}</option>`).join('')}
         </select>
         <div class="qr-hint">Scanning opens the Hadron app directly to this asset (${esc(BASE_URL)}#lims/${s.type.replace('lims-','')}/…).</div>
-        ${list.length===0?'<div class="qr-hint" style="color:#c59d2b;">No LIMS entries loaded yet — open LIMS once to seed the demo data.</div>':''}`;
+        ${list.length===0?'<div class="qr-hint" style="color:#c59d2b;">No LIMS entries yet — create samples/instruments in LIMS first.</div>':''}`;
     } else if (s.type === 'hg-site' || s.type === 'hg-asset') {
       const sites = loadHGSites();
       if (s.type === 'hg-site') {
