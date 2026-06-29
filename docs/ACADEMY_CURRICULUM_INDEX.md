@@ -4,7 +4,7 @@
 > Project so it can (1) judge NEW vs DEEPENING + flag overlap, and (2) pick the next
 > free id/code in a track. Code convention: **1xx = Foundation, 2xx = Intermediate, 3xx = Advanced**.
 
-**41 courses across 10 tracks.**
+**42 courses across 10 tracks.**
 
 ## Potable Water  `track-potable`
 _Drinking water treatment from source to tap_
@@ -30,7 +30,7 @@ Codes used (POT-): 101, 201, 202, 301
 ## Disinfection  `track-disinfection`
 _Chlorine, ClO₂, UV, ozone & DBPs_
 
-Codes used (DIS-): 101, 201, 202, 203, 204, 301
+Codes used (DIS-): 101, 201, 202, 203, 204, 301, 302
 
 - **DIS-101** `c-dis-101` - Disinfection Fundamentals _(Foundation, 3 hrs, 5 modules)_
   - prereqs: c-pot-101
@@ -56,6 +56,10 @@ Codes used (DIS-): 101, 201, 202, 203, 204, 301
   - prereqs: c-dis-201, c-pot-301
   - tools: lims, dosage
   - modules: m1 DBP families | m2 Predicting THM formation | m3 Mitigation strategy | m4 Compliance sampling
+- **DIS-302** `c-dis-302` - Chlorite & Chlorate Control in ClO₂ and Hypochlorite Systems _(Advanced, 4 hrs, 6 modules, has quiz)_
+  - prereqs: c-dis-202, c-dis-301
+  - tools: dosage, lims, converters
+  - modules: m1 The ClO₂ by-product family | m2 How chlorite and chlorate form | m3 The limits and the health basis | m4 Controlling chlorite and chlorate | m5 Monitoring, worked example & non-conformance | m6 Knowledge check
 
 ## Sewage Treatment  `track-sewage`
 _Wastewater treatment & sludge_

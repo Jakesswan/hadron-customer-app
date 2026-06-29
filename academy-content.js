@@ -1558,6 +1558,113 @@ For an exceedance to stand up to challenge or appeal: chain-of-custody complete,
 
 _Source: SANS 241-2:2015 § 7; APHA 6232; USEPA Stage 2 D/DBP Rule._`,
 
+  /* ───── DIS-302 — Chlorite & Chlorate Control ───── */
+
+  'c-dis-302/m1': `## Why ClO₂ has a different by-product profile
+Chlorine dioxide earns its place largely because of a single advantage over free chlorine: it **does not form trihalomethanes (THMs)**. ClO₂ does not react with ammonia and reacts with organics by oxidation rather than chlorine substitution, so the organic-DBP burden that drives chlorine compliance is largely absent.
+
+The trade-off is a different family of by-products. ClO₂ produces **chlorite** (\`ClO2-\`) and **chlorate** (\`ClO3-\`), two inorganic oxyanions, plus small amounts of lower chlorinated organics. These are the by-products an Advanced operator on a ClO₂ plant must understand and control — they are governed by their own guideline values and cannot be removed as cheaply as you might hope.
+
+## Chlorite: the inevitable by-product
+Chlorite is unavoidable wherever ClO₂ is used. When ClO₂ reacts in water, **about 50–70% of it appears immediately as chlorite** (with chloride). In other words, the moment ClO₂ does its disinfecting work, most of it has already become chlorite. Chlorite is itself a **strong oxidiser**, and it is the dominant inorganic by-product of ClO₂ disinfection.
+
+Because the conversion is so high, chlorite cannot be designed away — only limited, by dose discipline, and removed, which a later module covers. It is also bounded by mass balance: chlorite can never exceed the ClO₂ actually applied, a useful sanity check on any result.
+
+## Chlorate and the hypochlorite link
+Chlorate sits in a chain: **hypochlorite → chlorite → chlorate → (ultimately) perchlorate**. It arises two ways on a treatment works:
+- from **chlorine dioxide**, through disproportionation and sunlight-driven photolysis; and
+- from **sodium hypochlorite**, which slowly decomposes — especially when warm — forming chlorite, chlorate and eventually perchlorate.
+
+This is the key idea for chlorate: it is **not unique to ClO₂ plants**. Any works dosing aged or warm liquid hypochlorite can carry chlorate into supply, even with no ClO₂ anywhere. Solid calcium hypochlorite decomposes far more slowly, so it is the lower-risk source.
+
+_Source: EPA / ATSDR Toxicological Profile for Chlorine Dioxide and Chlorite, §6.3.2; Chlorine Dioxide, Chlorate and Chlorite in Drinking-water (WHO, 2017), §1.4–1.5._`,
+
+  'c-dis-302/m2': `## ClO₂ disproportionation and photolysis
+Chlorine dioxide is stable in pure, dark water but breaks down in real water by two routes.
+
+**Disproportionation.** In the presence of hydroxide ions it splits into chlorite and chlorate:
+\`2ClO2 + 2OH- → ClO2- + ClO3- + H2O\`.
+The reaction speeds up with **alkalinity (basicity)** and is **catalysed by transition metals** such as iron and copper, and by hypobromite and hypochlorite ions. ClO₂ is also reduced to chlorite and chloride by reaction with **total organic carbon**.
+
+**Photolysis.** ClO₂ is **photoreactive**: sunlight drives it to chlorate, chlorite and chloride, particularly in alkaline solution, and chlorate formation tends to be **higher at low pH**. Open contact tanks and sunlit channels therefore quietly raise chlorate.
+
+## Generator performance and free-chlorine reactions
+How the ClO₂ is made matters as much as how it is used. **As much as 35% of the chlorate found in a distribution system can be attributed to the type and tuning of the ClO₂ generator** — a poorly optimised generator carries unreacted chlorate feedstock straight through.
+
+There is also a trap when ClO₂ and chlorine are used together: **if chlorite is present and not removed, it reacts with applied free chlorine to form chlorate** and chloride. Adding chlorine downstream of an uncontrolled chlorite residual simply converts one regulated by-product into another.
+
+## Chlorate from sodium hypochlorite
+On hypochlorite plants the chlorate problem is a **storage problem**. As a hypochlorite solution ages — faster when warm — it decomposes through chlorite to chlorate, and its **available chlorine falls**. That drop forces the operator to **dose more product to hold the residual**, and the extra product brings extra chlorate into the water. Purchased hypochlorite is typically 12–15% strength; topping an old batch with fresh solution **accelerates** chlorate formation rather than diluting it.
+
+_Source: EPA / ATSDR Toxicological Profile for Chlorine Dioxide and Chlorite, §6.3.2; Chlorine Dioxide, Chlorate and Chlorite in Drinking-water (WHO, 2017), §1.5, 2.2, 4._`,
+
+  'c-dis-302/m3': `## The guideline values
+The numbers an operator works to:
+- **Chlorite — 0.7 mg/L** (WHO provisional guideline value).
+- **Chlorate — 0.7 mg/L** (WHO provisional guideline value).
+- **Chlorine dioxide — no guideline value.** Any ClO₂ left at the tap is reduced to chlorite on ingestion, so the chlorite value covers it. The ClO₂ **taste-and-odour threshold is about 0.2–0.4 mg/L**.
+
+Both by-product values are **provisional**, set by JECFA from acceptable daily intakes (chlorite ADI 0–0.03 mg/kg bw; chlorate ADI 0–0.01 mg/kg bw). _SANS 241:2015 is the governing South African standard and should be consulted for the exact local limits; this course uses the WHO provisional values as the working reference._
+
+## Why they matter: health effects
+The limits exist because both anions are biologically active oxidisers.
+- **Chlorite** causes **oxidative stress in red blood cells** — methaemoglobinaemia and haemolytic anaemia at sufficient dose. People with **G6PD deficiency** are more vulnerable. The guideline derives from reduced organ weight and red-cell effects in toxicity studies.
+- **Chlorate** most sensitively affects the **thyroid**, by reducing iodide uptake — a particular concern for **iodine-deficient pregnant women** and a flagged **neurodevelopmental** uncertainty. Its mechanism is shared with perchlorate, nitrate and thiocyanate. At high acute doses chlorate, like chlorite, is a red-cell oxidant.
+
+## The disinfection-first principle
+There is a hard rule attached to these provisional values: **difficulties in meeting them must never be a reason to compromise adequate disinfection**. The values are provisional precisely because aged hypochlorite or ClO₂ can push chlorate or chlorite past them, and WHO is explicit that microbial safety comes first. The operator’s task is therefore to **control by-products by prevention and removal**, not by under-dosing the disinfectant.
+
+_Source: Chlorine Dioxide, Chlorate and Chlorite in Drinking-water (WHO, 2017), §5.1–5.3; EPA / ATSDR Toxicological Profile for Chlorine Dioxide and Chlorite, §3 (Health Effects)._`,
+
+  'c-dis-302/m4': `## Prevent at the generator
+The cheapest chlorate is the chlorate you never make. On a ClO₂ plant:
+- **Optimise and tune the generator.** With up to a third of distribution chlorate tied to generator performance, correct chemical ratios and good conversion efficiency are the first lever.
+- **Minimise unreacted feedstock** — excess chlorine or chlorate carried through the generator ends up in the water.
+- **Apply only the ClO₂ dose you need.** Since 50–70% becomes chlorite, every unnecessary milligram of ClO₂ is unnecessary chlorite.
+- **Limit sunlight exposure** on contact tanks and channels to curb photolytic chlorate.
+
+## Remove chlorite
+Chlorite, unlike chlorate, **can be removed**. Effective reductants are **ferrous iron** (Fe²⁺), **sulfur-based reducing agents** such as sulfite, and **activated carbon**, each reducing chlorite toward chloride. Removal matters most when **ClO₂ is used as a pre-oxidant** ahead of the main train.
+
+Sequence matters: **reduce the chlorite before adding any free chlorine**, or the leftover chlorite will convert to chlorate. Chemical reduction can take ClO₂ and chlorite effectively to **<0.1 mg/L**, though it is normal to leave a **few tenths of a mg/L of ClO₂ residual** for distribution protection.
+
+## Manage hypochlorite to limit chlorate
+Where hypochlorite is the disinfectant, chlorate is controlled in the **store**:
+- buy and **use stock fresh** (ideally within about a month);
+- keep it **cool and out of sunlight**;
+- **dilute** concentrated solution to slow the conversion to chlorate;
+- **never top up an old batch with new solution** — it accelerates decomposition;
+- run **first-in, first-out**, and prefer **solid calcium hypochlorite** where chlorate is critical.
+
+## Why chlorate is special
+Chlorate has **no low-cost removal once formed**. Granular activated carbon does **not** work — chlorate is only reversibly adsorbed and bleeds back off. Anion exchange and reverse osmosis can remove it but are **high-cost**. The practical conclusion is blunt: for chlorate, **prevention is the only affordable control** — prevent its addition from hypochlorite and its formation at the ClO₂ generator.
+
+_Source: Chlorine Dioxide, Chlorate and Chlorite in Drinking-water (WHO, 2017), §2.2, 4; EPA / ATSDR Toxicological Profile for Chlorine Dioxide and Chlorite, §6.3.2._`,
+
+  'c-dis-302/m5': `## What to monitor and how
+A ClO₂ by-product programme tracks three things together:
+- **ClO₂ residual**, measured **on-site**, to confirm disinfection and to see how much oxidant is left to decay into by-products.
+- **Chlorite and chlorate**, determined by **laboratory analysis** as the two oxyanions, and logged against their guideline values in the **lims** record.
+- **Generator performance**, since its tuning drives a large share of chlorate.
+
+Trend the applied **ClO₂ dose against the resulting chlorite and chlorate**: a rising dose, an ageing hypochlorite batch, or a drifting generator will all show as climbing by-products before a limit is breached.
+
+## Worked example: ClO₂ dose versus chlorite formed
+Estimate the chlorite a dose will create before you commit to it. Suppose a works applies **ClO₂ at 1.0 mg/L**, and field experience puts the conversion at about **60%**.
+- Expected chlorite: \`1.0 mg/L × 0.60 = 0.6 mg/L\` (use **dosage** and **converters**).
+- Compare with the guideline value: **0.6 mg/L against 0.7 mg/L** — already close.
+
+At the top of the 50–70% range the same dose gives \`1.0 × 0.70 = 0.7 mg/L\`, sitting **on the limit**. **Sanity-check:** chlorite can never exceed the applied ClO₂ (1.0 mg/L), so any computed value above that is an error. The lesson is that even a modest ClO₂ dose can take chlorite to its guideline value, so dose discipline and chlorite removal are not optional.
+
+## When you exceed a limit
+If chlorite or chlorate breaches its value, the response is governed by the disinfection-first principle:
+1. **Do not cut the disinfectant** to chase the number — microbial safety comes first.
+2. **Find the source:** generator tuning, an aged or warm hypochlorite batch, an over-high ClO₂ dose, or chlorite meeting free chlorine downstream.
+3. **Act on it:** retune the generator, refresh hypochlorite stock, trim the dose, or add chlorite removal ahead of chlorination.
+4. **Record the non-conformance and corrective action** through the **lims** CAPA trail, and verify with repeat sampling.
+
+_Source: Chlorine Dioxide, Chlorate and Chlorite in Drinking-water (WHO, 2017), §4–5; EPA / ATSDR Toxicological Profile for Chlorine Dioxide and Chlorite, §6.3.2._`,
+
   /* ════════════════════════════════════════════════════════════════
      TRACK 3 — SEWAGE TREATMENT
      ════════════════════════════════════════════════════════════════ */
