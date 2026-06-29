@@ -177,7 +177,8 @@
   async function pullAll() {
     if (!state.orgId || !window.HG_LIMS_DB || !window.HG_DB) return;
     const stores = Object.keys(TABLE_MAP);
-    let pulled = 0;
+    let pulled = 0, erpClients = 0;
+    const byStore = {};
     for (const store of stores) {
       const cloudTable = TABLE_MAP[store];
       try {
@@ -194,14 +195,22 @@
             const local = mapIn(store, r);
             await window.HG_LIMS_DB.putLocal(store, local);
             pulled++;
+            byStore[store] = (byStore[store] || 0) + 1;
+            if (store === 'clients' && local.source === 'erp') erpClients++;
           }
         });
       } catch (e) {
         console.warn('[HG_LIMS_SYNC] pull failed for', store, e);
       }
     }
+    // Visibility: what actually came down, and how many clients are ERP-bridged.
+    console.info('[HG_LIMS_SYNC] pull complete —', pulled, 'rows', byStore, '| ERP customers:', erpClients);
+    const erpLinked = !!(window.HG_PROFILE && window.HG_PROFILE.organisations
+                         && window.HG_PROFILE.organisations.erp_tenant_id);
+    if (erpLinked && erpClients === 0) {
+      console.warn('[HG_LIMS_SYNC] this Tenant is ERP-linked but 0 ERP customers were pulled — check the ERP→App push / erp-ingest.');
+    }
     if (pulled > 0) {
-      console.info('[HG_LIMS_SYNC] pulled', pulled, 'rows from cloud.');
       // Trigger LIMS re-render so newly-pulled data shows up.
       try { window.limsRerender && window.limsRerender(); } catch (_) {}
     }

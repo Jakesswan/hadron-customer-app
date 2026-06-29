@@ -940,7 +940,7 @@
       <form class="lims-form" id="limsSampleForm" onsubmit="event.preventDefault();limsSampleSave();">
         <div class="lims-fieldgrid">
           <div class="lims-field"><label>Barcode</label><input id="f_barcode" value="${defaultBarcode}" required></div>
-          <div class="lims-field"><label>Client</label><select id="f_client">${clients.map(c=>`<option value="${c.id}">${esc(c.name)}</option>`).join('')}</select></div>
+          <div class="lims-field"><label>Client</label><select id="f_client">${clients.map(c=>`<option value="${c.id}">${esc(c.name)}${c.source==='erp'?' (ERP)':''}</option>`).join('')}</select></div>
           <div class="lims-field lims-field-wide"><label>Description</label><input id="f_desc" placeholder="e.g. Reservoir outlet — Sample point 3" required></div>
           <div class="lims-field"><label>Matrix</label><select id="f_matrix"><option>Drinking Water</option><option>Groundwater</option><option>Surface Water</option><option>Waste Water</option><option>Process Water</option><option>Soil</option><option>Other</option></select></div>
           <div class="lims-field"><label>Priority</label><select id="f_pri"><option value="normal">Normal</option><option value="high">High</option><option value="urgent">Urgent</option></select></div>
@@ -1144,6 +1144,8 @@
     const testMap = Object.fromEntries(tests.map(t=>[t.id,t]));
     const sampleMap = Object.fromEntries(samples.map(s=>[s.id,s]));
     const userMap = Object.fromEntries(users.map(u=>[u.id,u.name]));
+    const clients = await DB.all('clients');
+    const clientMap = Object.fromEntries(clients.map(c=>[c.id,c.name]));
 
     root.innerHTML = `
       ${breadcrumb([{label:'LIMS',view:'hub'},{label:'Worksheets',view:'worksheets'},{label:w.code,view:'worksheet',params:{id:w.id}}])}
@@ -1174,7 +1176,7 @@
               <thead><tr><th>Position</th><th>Barcode</th><th>Description</th><th>Client</th></tr></thead>
               <tbody>${w.samples.map((sid,i) => {
                 const s = sampleMap[sid]; if(!s) return '';
-                return `<tr><td>${i+1}</td><td><strong>${esc(s.barcode)}</strong></td><td>${esc(s.description)}</td><td>${esc(s.clientId)}</td></tr>`;
+                return `<tr><td>${i+1}</td><td><strong>${esc(s.barcode)}</strong></td><td>${esc(s.description)}</td><td>${esc(clientMap[s.clientId]||s.clientId||'—')}</td></tr>`;
               }).join('')}</tbody>
             </table>
           </div>
