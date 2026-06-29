@@ -4,7 +4,7 @@
 > Project so it can (1) judge NEW vs DEEPENING + flag overlap, and (2) pick the next
 > free id/code in a track. Code convention: **1xx = Foundation, 2xx = Intermediate, 3xx = Advanced**.
 
-**39 courses across 10 tracks.**
+**40 courses across 10 tracks.**
 
 ## Potable Water  `track-potable`
 _Drinking water treatment from source to tap_
@@ -30,7 +30,7 @@ Codes used (POT-): 101, 201, 202, 301
 ## Disinfection  `track-disinfection`
 _Chlorine, ClO₂, UV, ozone & DBPs_
 
-Codes used (DIS-): 101, 201, 202, 301
+Codes used (DIS-): 101, 201, 202, 203, 301
 
 - **DIS-101** `c-dis-101` - Disinfection Fundamentals _(Foundation, 3 hrs, 5 modules)_
   - prereqs: c-pot-101
@@ -44,6 +44,10 @@ Codes used (DIS-): 101, 201, 202, 301
   - prereqs: c-dis-201
   - tools: dosage, converters
   - modules: m1 ClO₂ chemistry & generation | m2 Skid design & sizing | m3 UV disinfection | m4 Chloramination & long networks
+- **DIS-203** `c-dis-203` - Gas Chlorine: Handling, Storage & Emergency Response _(Intermediate, 4 hrs, 6 modules, has quiz)_
+  - prereqs: c-dis-101
+  - tools: dosage, converters, servicereport
+  - modules: m1 Know your hazard | m2 Storing chlorine safely | m3 Connecting & disconnecting containers | m4 Leak detection, withdrawal rate & process faults | m5 Emergency response & first aid | m6 Knowledge check
 - **DIS-301** `c-dis-301` - Disinfection By-products & Compliance _(Advanced, 4 hrs, 4 modules)_
   - prereqs: c-dis-201, c-pot-301
   - tools: lims, dosage
