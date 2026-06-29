@@ -575,14 +575,20 @@
             object-fit: contain;
         }
 
-        /* Unified Hadron teal tile background — overrides any inline-style
+        /* Unified Hadron tile — a deeper blue so the Tristroke icons stand out
+           instead of washing into the page (esp. light mode). Force the icon
+           strokes to the light-on-dark palette (white outline + teal + yellow)
+           so they pop on the blue tile in BOTH themes. Overrides any inline
            gradient on the .icon element so every tile reads as the same brand. */
         .app-icon .icon {
-            background: linear-gradient(135deg, #3AAEDB 0%, #008fa3 100%) !important;
-            box-shadow: 0 4px 14px rgba(0,177,202,0.22);
+            background: linear-gradient(135deg, #2B7DB3 0%, #123E63 100%) !important;
+            box-shadow: 0 4px 14px rgba(13,42,74,0.30);
+            --icon-primary: #FFFFFF;
+            --icon-secondary: #25B6D2;
+            --icon-accent: #FFC52B;
         }
         body.dark .app-icon .icon {
-            box-shadow: 0 4px 14px rgba(0,0,0,0.35);
+            box-shadow: 0 4px 14px rgba(0,0,0,0.40);
         }
 
         @media (max-width: 480px) {
@@ -2611,7 +2617,7 @@
                 <div class="hg-section-title">About</div>
                 <div class="hg-kvgrid">
                     <div class="hg-kv"><div class="k">App</div><div class="v">Hadron Group</div></div>
-                    <div class="hg-kv"><div class="k">Version</div><div class="v">v57</div></div>
+                    <div class="hg-kv"><div class="k">Version</div><div class="v">v58</div></div>
                     <div class="hg-kv"><div class="k">Platform</div><div class="v">PWA</div></div>
                 </div>
             </div>
