@@ -99,8 +99,34 @@
           summary:'A short, repeatable routine that catches 80 % of plant problems before the public ever sees them.',
           sections:['Pre-shift walk-down checklist','On-line vs grab sampling regime','Logbooks, hand-overs and audit trails','Escalation: when to phone the manager'] },
         { id:'m5', title:'Knowledge check', duration:'15 min',
-          summary:'10 multi-choice questions covering the train, SANS 241 classes and operator routine.',
-          sections:['10 MCQ spanning the four prior modules'] }
+          summary:'8 interactive multi-choice questions covering the train, SANS 241 classes and operator routine. 70% to pass.',
+          sections:['8 interactive MCQ spanning the four prior modules'],
+          quiz:[
+            { q:'The two categories of health risk that drive drinking-water standards are:',
+              options:['Acute (pathogens) and chronic (chemicals)','Bacterial and viral','Physical and biological','Primary and secondary'],
+              answer:0, explain:'Acute risk = pathogens that make people ill within hours to days; chronic risk = chemicals that harm over months to years. Aesthetic problems are a third, non-toxic concern.' },
+            { q:'How many risk classes does SANS 241:2015 split determinands into?',
+              options:['Two','Three','Four','Six'],
+              answer:2, explain:'Four: acute health, chronic health, aesthetic and operational — each with limits and a sampling frequency tied to the population served.' },
+            { q:'In the conventional train, which step comes immediately BEFORE filtration?',
+              options:['Disinfection','Sedimentation / DAF','Coagulation','Screening'],
+              answer:1, explain:'Clarification (sedimentation or DAF) removes the bulk of solids so the filter is not overwhelmed; filtration then polishes the remaining turbidity.' },
+            { q:'Direct filtration (no sedimentation stage) is best suited to:',
+              options:['High-turbidity, variable surface water','Low-turbidity, low-colour raw water','Algae-heavy water','Seawater desalination'],
+              answer:1, explain:'Without a settling stage it only suits low-turbidity (<10 NTU), low-colour water. Variable or high-turbidity water needs full conventional treatment.' },
+            { q:'Why can a chlorinator not develop a free residual at high turbidity?',
+              options:['Particles exert continuous chlorine demand that is never satisfied','Chlorine evaporates','Turbidity lowers the pH','Turbidity neutralises chlorine gas'],
+              answer:0, explain:'Suspended particles keep consuming chlorine and shield pathogens, so a stable free residual only forms once turbidity is about 1 NTU or less.' },
+            { q:'Manganese in groundwater fails SANS 241 and stains fixtures black above roughly:',
+              options:['0.01 mg/L','0.1 mg/L','1.0 mg/L','10 mg/L'],
+              answer:1, explain:'Manganese above ~0.1 mg/L stains black; iron above ~0.3 mg/L stains orange. Both are removed by aeration plus filtration.' },
+            { q:'What key disinfection parameter does a clear well (contact tank) provide?',
+              options:['G-value','Ct — concentration × contact time','Surface overflow rate','Zeta potential'],
+              answer:1, explain:'The clear well supplies contact time for Ct. A well-baffled tank reaches a t10/T ratio of 0.7+, so less chlorine is needed for the same kill.' },
+            { q:'Which routine catches roughly 80% of plant problems before the public is affected?',
+              options:['The annual external audit','The operator pre-shift walk-down','The monthly SANS 241 report','Turbidimeter calibration'],
+              answer:1, explain:'A short, repeatable pre-shift walk-down is the single highest-value operator habit for catching problems early.' }
+          ] }
       ]
     },
 
@@ -1314,7 +1340,13 @@
   };
 
   // Tiny translator helper — falls back to provided English if i18n absent.
-  function tt(key, en) { return (typeof window.t === 'function') ? window.t(key) : en; }
+  function tt(key, en) {
+    if (typeof window.t === 'function') {
+      const v = window.t(key);
+      if (v && v !== key) return v;   // fall back to the English default when the key is untranslated
+    }
+    return en;
+  }
 
   /* ---------- Render ---------- */
   function render() {
@@ -1529,6 +1561,8 @@
     const prev = c.modules[idx - 1];
     const p = progressFor(c.id);
     const isDone = p.completed.indexOf(m.id) !== -1;
+    const quiz = quizFor(m);
+    if (quiz) QUIZ = { courseId: c.id, moduleId: m.id, picks: {}, submitted: false };  // fresh attempt each visit
 
     root.innerHTML = `
       ${breadcrumb([
@@ -1554,10 +1588,16 @@
         </ul>
       </div>
 
+      ${quiz ? `
+      <div class="hg-card">
+        <div class="hg-section-title">${esc(tt('academy.quizTitle','Quiz'))} · ${quiz.length} ${esc(tt('academy.questions','questions'))}</div>
+        <div style="font-size:13px; color:#6b7684; margin:-4px 0 14px;">${esc(tt('academy.quizIntro','Pick one answer per question, then submit. Score 70% to complete this module.'))}</div>
+        <div id="academyQuiz">${quizInner(c, m)}</div>
+      </div>` : `
       <div class="hg-card academy-lesson">
         <div class="hg-section-title">${esc(tt('academy.lessonContent','Lesson content'))}</div>
         ${renderLessonBody(STATE.courseId, m.id, m.title)}
-      </div>
+      </div>`}
 
       ${c.linkedTools && c.linkedTools.length ? `
         <div class="hg-card">
@@ -1574,8 +1614,8 @@
         <div style="display:flex; gap:8px; flex-wrap:wrap; align-items:center; justify-content:space-between;">
           <div style="display:flex; gap:8px; flex-wrap:wrap;">
             ${prev ? `<button class="hg-btn" onclick="academyGo('module', { moduleId: '${prev.id}' })">← ${esc(prev.title)}</button>` : ''}
-            ${next ? `<button class="hg-btn primary" onclick="academyMarkAndNext('${m.id}', '${next.id}')">${isDone ? esc(tt('common.next','Next')) : esc(tt('academy.markComplete','Mark complete & next'))}: ${esc(next.title)} →</button>`
-                   : `<button class="hg-btn primary" onclick="academyMarkAndFinish('${m.id}')">${isDone ? esc(tt('academy.finishCourse','Finish course'))+' ✓' : esc(tt('academy.markComplete','Mark complete & next'))+' — '+esc(tt('academy.finishCourse','Finish course'))+' ✓'}</button>`}
+            ${(quiz && !isDone) ? '' : (next ? `<button class="hg-btn primary" onclick="academyMarkAndNext('${m.id}', '${next.id}')">${isDone ? esc(tt('common.next','Next')) : esc(tt('academy.markComplete','Mark complete & next'))}: ${esc(next.title)} →</button>`
+                   : `<button class="hg-btn primary" onclick="academyMarkAndFinish('${m.id}')">${isDone ? esc(tt('academy.finishCourse','Finish course'))+' ✓' : esc(tt('academy.markComplete','Mark complete & next'))+' — '+esc(tt('academy.finishCourse','Finish course'))+' ✓'}</button>`)}
           </div>
           ${isDone ? '<span class="hg-chip ok">✓ '+esc(tt('common.done','Completed'))+'</span>' : ''}
         </div>
@@ -1598,6 +1638,93 @@
     if (typeof window.openWindow === 'function') {
       window.openWindow(key);
     }
+  };
+
+  /* ---------- Interactive quiz ----------
+     A module may carry  quiz: [{ q, options:[...], answer:<0-based index>, explain }]
+     Rendered as single-choice MCQs; the learner must score >= QUIZ_PASS % to
+     complete the module. State is held in QUIZ and the block repaints in place. */
+  const QUIZ_PASS = 70;            // percent required to pass
+  let QUIZ = null;                 // { courseId, moduleId, picks:{qi:oi}, submitted }
+
+  function quizFor(m) { return (m && Array.isArray(m.quiz) && m.quiz.length) ? m.quiz : null; }
+  function quizScore(quiz) {
+    let correct = 0;
+    quiz.forEach(function (q, i) { if (QUIZ.picks[i] === q.answer) correct++; });
+    return { correct: correct, total: quiz.length, pct: Math.round(correct / quiz.length * 100) };
+  }
+  function repaintQuiz() {
+    const el = document.getElementById('academyQuiz');
+    if (!el || !QUIZ) return;
+    const c = COURSES.find(function (x) { return x.id === QUIZ.courseId; });
+    const m = c && c.modules.find(function (x) { return x.id === QUIZ.moduleId; });
+    if (c && m) el.innerHTML = quizInner(c, m);
+  }
+  function quizInner(c, m) {
+    const quiz = quizFor(m); if (!quiz) return '';
+    const submitted = QUIZ.submitted;
+    const answered = Object.keys(QUIZ.picks).length;
+    const idx = c.modules.findIndex(function (x) { return x.id === m.id; });
+    const next = c.modules[idx + 1];
+    let html = '';
+    quiz.forEach(function (q, qi) {
+      html += '<div class="academy-q"><div class="academy-q-title">' + (qi + 1) + '. ' + esc(q.q) + '</div>';
+      (q.options || []).forEach(function (opt, oi) {
+        const picked = QUIZ.picks[qi] === oi;
+        let cls = 'academy-opt', mark = '';
+        if (submitted) {
+          if (oi === q.answer) { cls += ' correct'; mark = '  ✓'; }
+          else if (picked) { cls += ' wrong'; mark = '  ✗'; }
+        } else if (picked) { cls += ' picked'; }
+        html += '<button type="button" class="' + cls + '"' + (submitted ? ' disabled' : '') +
+          ' onclick="academyQuizPick(' + qi + ',' + oi + ')">' + esc(opt) + mark + '</button>';
+      });
+      if (submitted && q.explain) html += '<div class="academy-explain">' + esc(q.explain) + '</div>';
+      html += '</div>';
+    });
+    if (!submitted) {
+      html += '<button class="hg-btn primary"' + (answered < quiz.length ? ' disabled' : '') +
+        ' onclick="academyQuizSubmit()">' + esc(tt('academy.submitQuiz', 'Submit answers')) +
+        ' (' + answered + '/' + quiz.length + ')</button>';
+    } else {
+      const s = quizScore(quiz);
+      const passed = s.pct >= QUIZ_PASS;
+      html += '<div class="academy-score ' + (passed ? 'pass' : 'fail') + '">' +
+        (passed ? '✓ ' : '✗ ') + esc(tt('academy.youScored', 'You scored')) + ' ' +
+        s.correct + ' / ' + s.total + ' (' + s.pct + '%) — ' +
+        (passed ? esc(tt('academy.quizPassed', 'passed, module complete'))
+                : esc(tt('academy.quizFail', 'you need 70% to pass'))) + '</div>';
+      html += '<div style="display:flex; gap:8px; flex-wrap:wrap; margin-top:10px;">';
+      html += '<button class="hg-btn" onclick="academyQuizRetry()">' + esc(tt('academy.retake', 'Retake quiz')) + '</button>';
+      if (passed) {
+        html += next
+          ? '<button class="hg-btn primary" onclick="academyGo(\'module\', { moduleId: \'' + next.id + '\' })">' + esc(tt('common.next', 'Next')) + ': ' + esc(next.title) + ' →</button>'
+          : '<button class="hg-btn primary" onclick="academyGo(\'course\', { courseId: \'' + c.id + '\' })">' + esc(tt('academy.finishCourse', 'Finish course')) + ' ✓</button>';
+      }
+      html += '</div>';
+    }
+    return html;
+  }
+
+  window.academyQuizPick = function (qi, oi) {
+    if (!QUIZ || QUIZ.submitted) return;
+    QUIZ.picks[qi] = oi;
+    repaintQuiz();
+  };
+  window.academyQuizSubmit = function () {
+    if (!QUIZ) return;
+    const c = COURSES.find(function (x) { return x.id === QUIZ.courseId; });
+    const m = c && c.modules.find(function (x) { return x.id === QUIZ.moduleId; });
+    const quiz = quizFor(m); if (!quiz) return;
+    if (Object.keys(QUIZ.picks).length < quiz.length) return;   // must answer all
+    QUIZ.submitted = true;
+    if (quizScore(quiz).pct >= QUIZ_PASS) markModuleComplete(c.id, m.id);
+    repaintQuiz();
+  };
+  window.academyQuizRetry = function () {
+    if (!QUIZ) return;
+    QUIZ.picks = {}; QUIZ.submitted = false;
+    repaintQuiz();
   };
 
   /* ---------- Lesson body lookup + tiny markdown renderer ----------

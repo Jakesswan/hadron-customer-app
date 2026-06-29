@@ -12,7 +12,7 @@
  * Bump CACHE_VERSION whenever you ship a change so phones pick it up on next launch.
  */
 
-const CACHE_VERSION = 'hadron-v68';
+const CACHE_VERSION = 'hadron-v69';
 const APP_SHELL = [
   './',
   './index.html',
