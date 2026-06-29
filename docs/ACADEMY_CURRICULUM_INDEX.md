@@ -30,10 +30,10 @@ Codes used (POT-): 101, 201, 202, 203, 204, 301, 302
   - prereqs: c-pot-101
   - tools: lims, converters
   - modules: m1 What SANS 241 is and why it binds | m2 Microbiological determinands | m3 Physical, aesthetic & macro-chemical determinands | m4 Metals and organic determinands | m5 Reading the standard like an operator | m6 Knowledge check
-- **POT-301** `c-pot-301` - SANS 241 Compliance & Water Safety Plans _(Advanced, 6 hrs, 5 modules)_
-  - prereqs: c-pot-101
+- **POT-301** `c-pot-301` - Water Safety Plans & Climate Resilience _(Advanced, 5 hrs, 6 modules, has quiz)_
+  - prereqs: c-pot-204, c-pot-302
   - tools: lims, servicereport
-  - modules: m1 SANS 241 in detail | m2 Designing the sampling matrix | m3 Water Safety Plans (WSP) | m4 Climate resilience | m5 Non-conformance & CAPA
+  - modules: m1 Why a Water Safety Plan | m2 System assessment: team, description, hazards | m3 Control measures, monitoring & verification | m4 Climate resilience in the WSP | m5 Running and reviewing the WSP | m6 Knowledge check
 - **POT-302** `c-pot-302` - SANS 241 Compliance: Monitoring, Sampling & Non-conformance _(Advanced, 4 hrs, 6 modules, has quiz)_
   - prereqs: c-pot-204
   - tools: lims, converters, servicereport

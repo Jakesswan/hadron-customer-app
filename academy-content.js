@@ -749,155 +749,113 @@ A few situations sit outside the main tables:
 
 _Source: SANS 241-1:2015, Drinking water — Part 1 (§4.3.5–4.3.8, annex C reference to SANS 241-2)._`,
 
-  /* ───── POT-301 — SANS 241 Compliance & Water Safety Plans ───── */
+  /* ───── POT-301 — Water Safety Plans & Climate Resilience ───── */
 
-  'c-pot-301/m1': `## The structure of SANS 241
+  'c-pot-301/m1': `## The paradigm shift
+For most of the twentieth century, drinking-water safety rested on **testing the final water** to confirm it was safe. The Water Safety Plan, introduced by the **WHO in 2004**, replaced that with something more robust: **managing risk across the whole supply chain, from catchment to consumer**. The reasoning is that end-product testing is infrequent and after-the-fact — by the time a failed result comes back, the water has been supplied.
 
-SANS 241:2015 has two parts: **241-1** sets the maximum allowable limits, **241-2** sets the sampling and analytical methods. Both must be read together — citing a value without the corresponding method is not compliance.
+The shift is threefold:
+- from a **defined system with fixed procedures** to **continuous assessment of a changing system**;
+- from monitoring to **verify** the water is safe to monitoring to **detect** contamination, because the **potential for contamination is always present**; and
+- from assuming the root cause of failure is **design** to recognising it is **varied** — design, operations, maintenance and management.
 
-## The four risk classes
+The WHO put it plainly: the most effective means of consistently ensuring a safe supply is a comprehensive **risk assessment and risk management approach covering every step from catchment to consumer**.
 
-Every determinand falls into one of four classes:
+## What a WSP is
+A Water Safety Plan is an **integrated, preventive water-quality management system** that runs from **catchment to point of delivery**. It is built on two ideas:
+- **HACCP** — hazard analysis and critical control points: systematically find the hazards and the points that control them; and
+- the **multiple-barrier principle** — several independent barriers so that no single failure reaches the consumer.
 
-- **Acute health** — _E. coli_, NO₃ (as N), NO₂, CN, microcystin. A single exceedance is a public-health emergency. SANS demands 100 % compliance.
-- **Chronic health** — most metals (As, Cd, Pb, Hg, Cr, Ni, Se, U), F, total THMs. Long-term exposure causes harm; SANS allows 95 % compliance with annual averages.
-- **Aesthetic** — colour, taste, odour, hardness, Cl⁻, SO₄, Na, Fe, Mn, Zn, NH₃. Non-toxic but customer-facing; 95 % compliance.
-- **Operational** — pH, EC, TDS, turbidity, free chlorine, Cl₂ residual, Total Coliforms, HPC. Indicators of treatment performance, not direct health; 95 % compliance.
+A WSP starts by setting **health-based targets** (for microbial, physical and chemical quality), then assesses whether the system can consistently meet them, monitors the controls that matter, and manages the whole thing through documented procedures and review.
 
-## Sampling frequency tied to population
+## The WSP, SANS 241 and Blue Drop
+The WSP is the **umbrella** over everything else in this curriculum. The determinands and limits from **POT-204** are the health-based targets; the monitoring, compliance and incident response in **POT-302** are the operational and verification monitoring inside the plan. The WSP is what ties them into a single risk-management system.
 
-SANS scales sampling intensity to population served — a small rural works (500 people) might need 4 micro samples per month, while a metro utility (1 million+) needs 200+ per month plus distribution-network sampling.
+In South Africa this is not optional: **SANS 241-2 requires a water safety plan**, and risk management is built into **Blue Drop** certification — a WSP with a water-quality assessment, a system risk assessment, an implementation plan and proof of implementation, a **risk-based monitoring programme**, and a **Water Quality Incident Protocol**.
 
-## Operational vs full panel
+_Source: Introduction to Water Treatment (Rand Water) — WSP paradigm and Blue Drop; SANS 241-2:2015 §8; Training Manual on Climate Resilient Water Safety Plans (DWSS/WHO)._`,
 
-Daily operational monitoring (pH, turbidity, free Cl on every shift) is _not_ SANS compliance — it's process control. SANS is the periodic _full panel_ run by an accredited lab. Both are needed; both go on the audit shelf.
+  'c-pot-301/m2': `## Assemble the team and describe the system
+A WSP is built by a **team, not an individual**. The first step is to **assemble a multidisciplinary WSP team** with the authority and range of skills to cover the whole supply chain, backed by **management commitment**. Good practice is to consider **equity** in forming the team — including the people, and the vulnerable groups, the system actually serves.
 
-## Reading the standard
+The second step is to **describe the system**. The team maps the supply chain end to end — **catchment and source → intake → treatment → reservoirs → distribution → point of delivery** — usually as a **flow diagram**. A complete, accurate description is essential: you cannot find hazards in a step you have not drawn. Team members should walk the system from **source to tap** to ground the diagram in reality.
 
-The actual SANS document is dense. The DWS _Drinking Water Management_ guide (2024) is the operator-friendly companion that explains how the standard is enforced via the Blue Drop / No Drop programme.
+## Identify hazards and hazardous events
+With the system mapped, the team identifies **hazards** and **hazardous events** at every step. The distinction matters:
+- a **hazard** is any **physical, chemical, biological or radiological agent** that can cause harm; and
+- a **hazardous event** is a **process that introduces a hazard, or fails to remove it** — for example heavy rain washing agricultural runoff into the intake.
 
-_Source: SANS 241:2015 Parts 1 & 2; Drinking Water Management (DWS 2024) Ch 4-6._`,
+Hazards are looked for **location by location**: in the **catchment** (land use, settlements, agriculture, upstream discharges), at **treatment** (chemical dosing, filtration failure), in the **distribution network** (pipe bursts, ingress, dead ends), and at **consumer premises**.
 
-  'c-pot-301/m2': `## A layered sampling scheme
+## Assess the risks
+Not every hazard matters equally, so each hazardous event is **risk-assessed**. Risk is the combination of **likelihood and consequence** — how probable the event is, against how serious its effect on health or supply would be. Scoring each event (its **risk score**) lets the team **prioritise**: a frequent event with serious consequences rises to the top, while a rare, minor one can wait. This prioritised risk register is what drives every later decision in the plan.
 
-The compliance sampling matrix has three layers:
+_Source: Training Manual on Climate Resilient Water Safety Plans (DWSS/WHO), Modules 1–3; SANS 241-2:2015 §4, §8._`,
 
-### Source / raw water
-Catches catchment-scale changes — algal blooms, agricultural run-off, upstream sewer spills. Monthly full-panel + daily operational micro at the intake.
+  'c-pot-301/m3': `## Control measures and critical control points
+For each significant risk, the team identifies the **control measures** already in place. A **control measure** is **any action that prevents, eliminates or reduces a hazard** to an acceptable level — catchment protection, coagulation, filtration, disinfection, a covered reservoir. The control measures that are **essential** to safety become **critical control points**, each with a **critical limit** — the threshold separating acceptable from unacceptable — and the **multiple-barrier principle** means no single barrier carries the whole load.
 
-### In-process
-After each unit operation: post-coagulation, post-filtration, pre- and post-disinfection, post-chlorine-contact tank. These are operational samples (turbidity, residual Cl, pH) used by the operator to drive treatment, not SANS compliance.
+The team then judges whether the existing controls are **adequate** for the risk. Where they are, the risk is controlled; where they are not, it goes into the improvement plan.
 
-### Final / distribution
-The legally required samples. Final is post-chlorination at the works boundary. Distribution samples sweep the network at multiple representative points (weekly micro, monthly chemistry).
+## The improvement plan
+For every risk that is **not adequately controlled**, the WSP includes an **improvement (or upgrade) plan**. Because capital and resources are usually **limited**, the plan is **prioritised by risk level** — the **critical risks identified earlier are addressed first** — and split into **short-, medium- and long-term** actions, each with the time and cost to make it effective. The improvement plan is where the risk register turns into a programme of work.
 
-## Statistical sub-sampling for big networks
+## Operational monitoring, verification and corrective action
+Three linked activities keep the plan honest:
+- **Operational monitoring** — a planned sequence of observations confirming each control measure is **working within its limits**, monitored at the critical control points. This is the **operational monitoring** you met in POT-302.
+- **Verification** — confirming the WSP **as a whole** is effective, through **compliance monitoring**, **audits** and **consumer-satisfaction** checks. This is where POT-302’s compliance calculations feed back in.
+- **Corrective action** — the **remedial steps taken when monitoring shows a control has failed**, governed by an **incident-management protocol**. This mirrors POT-302’s response monitoring.
 
-Joburg's network has ≈ 14 000 km of pipe. You can't sample everything every month. SANS allows _statistically representative_ sampling — a defined sub-set rotated quarterly, with critical points (dead-ends, tower bases) sampled monthly. The plan must be documented and defended to the regulator.
+Together they answer three questions: are the barriers working, is the plan delivering safe water, and what happens when something goes wrong.
 
-## What "operational" really means
+_Source: Training Manual on Climate Resilient Water Safety Plans (DWSS/WHO), Modules 4–7; SANS 241-2:2015 §6–7._`,
 
-SANS 241-2 lists test methods (e.g. APHA 4500-Cl G for free chlorine). Choosing the right method matters: a comparator-tube DPD test is operational (good enough for daily), but a SANAS-accredited DPD photometer reading is what the regulator counts. Operators who try to substitute one for the other lose audits.
+  'c-pot-301/m4': `## How climate change threatens water safety
+Climate change does not create a new kind of hazard so much as **intensify the ones a WSP already manages**. Global warming is projected to amplify climatic and hydrological variability, bringing more **intense storms, floods and droughts**, and it acts on water safety in several ways:
+- **more intense rainfall** raises **surface-water turbidity** and seasonal **contaminant loading** of shallow groundwater — raising the risk of **water-borne disease**;
+- **flooding** can **overwhelm sanitary protection** and **damage infrastructure**, contaminating supply and disabling intakes;
+- **drought** deteriorates source quality (taste, odour) and **reduces the reliable volume** of surface water;
+- **higher temperatures** increase **water demand**, can trigger **water-borne disease epidemics**, and affect a source’s own self-purification capacity; and
+- **groundwater recharge, level and quality** shift over the longer term.
 
-## The compliance file
+These are exactly the events a WSP risk assessment exists to catch — climate change simply makes them more likely and more severe.
 
-Every sample produces a chain-of-custody, an analytical report, a CoA, and a record in the LIMS. The compliance file is what an auditor sees first. Disorganised files = automatic fail.
+## Building climate into each WSP step
+A **climate-resilient WSP (CR-WSP)** does not bolt climate on at the end; it **layers climate considerations onto every step**:
+- **hazard identification** considers climate-driven events (floods, droughts, algal blooms from warmer water);
+- **risk assessment** weighs how climate raises the **likelihood** of those events;
+- **control measures** are checked for whether they still hold under climate extremes; and
+- **vulnerable areas** are identified, **design criteria redefined**, and **climate-friendly technologies** chosen.
 
-_Source: SANS 241-2:2015; DWS Drinking Water Management Ch 5; Hadron LIMS Compliance reporting._`,
+Adaptive capacity is not uniform: it is **higher** where the water service provider has **strong operational capacity**, **low unaccounted-for water (UFW)** and **high user awareness** of conservation, and **lower** in arid, groundwater-dependent areas.
 
-  'c-pot-301/m3': `## Why WSPs exist
+## Adaptation and contingency
+Resilience means having a planned response ready:
+- **drought** → water rationing in severe cases, **mixing sources** to meet quality, **emergency treatment options**, and **alternative sources** such as groundwater or tankers;
+- **floods** → **increase chlorine dosing** to maintain disinfection as turbidity climbs, with monitoring focused on **bacteriological** pollution;
+- **the 3R principles** — **recharge, retain and reuse** — plus **rainwater harvesting**, to stretch supply;
+- **strengthened hydrological and meteorological monitoring** for early warning; and
+- a **sustainable-supply check** — a water balance of inflow, demand and losses against **current and future** need.
 
-A SANS-241 standard tells you what the water must look like. A **Water Safety Plan** tells you how to keep it that way. WHO formalised the WSP framework in 2004 — a risk-based, preventive approach that pulls the entire catchment-to-tap system into one document.
+_Source: Training Manual on Climate Resilient Water Safety Plans (DWSS/WHO) — climate impacts and adaptation; Drinking Water Quality Management (WRC) — source risk response._`,
 
-## The five WSP modules
+  'c-pot-301/m5': `## Management procedures and supporting programmes
+The final WSP step makes the plan **operable and durable**. **Management procedures** set out what to do in **normal and incident conditions**, supported by **standard operating procedures (SOPs)** for each part of the system. Around these sit the **supporting programmes** — the training and management practices that make safe water possible: operator competence, calibration, maintenance, and communication with stakeholders and consumers.
 
-1. **Assemble the team and describe the system** — every stakeholder from catchment manager to plumber, plus a complete process flow diagram with control points.
-2. **Hazard identification and risk assessment** — every conceivable hazard (microbial, chemical, physical, radiological) at every step. Score each on likelihood × consequence (1–5 each, score 1–25). Anything > 12 is unacceptable risk and demands a control measure.
-3. **Control measures and validation** — for each unacceptable risk, specify the barrier (coagulation, disinfection, distribution-network integrity). Validate that the control _actually works_ at the design rate.
-4. **Operational monitoring** — define what to measure, where, how often, and the trigger value that says the control has failed (e.g. turbidity > 0.5 NTU after filter for > 15 min).
-5. **Management procedures, supporting programmes, and periodic review** — corrective action, training, internal audit, annual WSP refresh. The WSP is a living document, not a once-off paper exercise.
+All of it is **documented**. The WSP — system description, risk register, monitoring plans, improvement plan and incident protocol — is captured and kept current in the **servicereport** record, and roles are assigned so that team members **walk the system from source to tap** at least twice a year.
 
-## Documenting the WSP
+## The WSP cycle and review
+A WSP is a **living document, not a one-off**. After a full cycle, the team **reviews the plan at least once a year** and updates it by amendment or improvement; in normal conditions the cycle restarts from the **monitoring** step. It is also reviewed **whenever something changes** — which lines up exactly with the **SANS 241-2 risk-assessment triggers** from POT-302: a raw-water change, a treatment failure, a new or refurbished plant, an altered distribution zone, or a new treatment chemical. The plan must also carry **contingency actions** for emergencies that degrade water quality.
 
-A typical full WSP runs 80–200 pages: process diagram, hazard register, risk matrix, monitoring table, escalation procedures, contact lists, training records. The whole thing sits in the LIMS Documents module so it's revision-controlled.
+## Worked example: prioritising a hazard
+Consider a hazardous event: **heavy rainfall washes agricultural runoff into the river intake**, raising turbidity and microbial load. Score it on a **1–5 scale** for each dimension and multiply (record in **servicereport**):
+- **likelihood** in the rainy season — **4** (likely);
+- **consequence** — microbial contamination of supply is an acute-health risk — **4** (major);
+- **risk score** = \`4 × 4 = 16\` out of 25 — a **high** score that demands action.
 
-## How South African utilities use WSPs
+The existing controls (coagulation and chlorination) may cope at normal flow but could be **overwhelmed under flood**, so the improvement plan adds **increased chlorine dosing under flood conditions**, a **turbidity trigger**, and **catchment source control**. **Sanity-check:** it is the **product** that ranks the risk, not either factor alone — a control that works in normal flow may fail under climate extremes, which is precisely why climate scenarios belong in the risk assessment.
 
-Blue-Drop assessment now requires a WSP. Many works treat it as a tick-box exercise; the ones that genuinely live their plan get noticeably better outcomes — fewer outbreaks, lower chemical cost, faster response to upsets.
-
-_Source: WHO Climate-Resilient WSP Training Manual (uploaded); Drinking Water Management (DWS 2024) Ch 7._`,
-
-  'c-pot-301/m4': `## Why climate matters now
-
-Catchments don't behave the way they did 20 years ago. Drought concentrates pollutants. Veld fires deposit ash and increase NOM. Floods produce 1000-NTU turbidity pulses that overwhelm conventional treatment. Sea-level rise threatens coastal abstraction with salinity intrusion. The WHO's 2023 update to the WSP framework adds a _climate-resilience_ chapter for exactly this reason.
-
-## Drought scenarios
-
-Lower flows = higher concentration of every dissolved species. Ammonia, nitrate, sulfate, dissolved metals all climb. Algal blooms thrive in still warm water. The treatment plant's coagulant demand rises sharply, chlorine demand rises with NOM and ammonia. Operators need an in-place "low-flow operating mode" plan.
-
-## Post-fire ash and NOM surges
-
-When a catchment burns, the next rain washes ash + char + nutrients into the source water. NOM (as TOC) can quadruple. Coagulant dose triples. Manganese and iron leach out. Some plants in Cape Town and KZN saw chlorine-demand spikes of 5× post-fire. Stockpile coagulant; consider PAC for its broader pH window.
-
-## Flood pulses
-
-Heavy rain pushes turbidity from 30 NTU baseline to 1 000+ NTU in hours. Conventional sedimentation chokes; filters break through. Pre-sedimentation or bypass storage helps; many plants have an emergency "raw water lagoon" specifically for storm events.
-
-## Sea-level rise and salinity intrusion
-
-Coastal abstraction (Bushman's River, Knysna, eThekwini coastal works) is increasingly hit by tidal salinity. Conductivity climbs from 30 mS/m to 200+ during spring high tides. RO becomes the only viable treatment.
-
-## Resilience interventions in the WSP
-
-The WSP must specify _what changes_ during each scenario: dose ranges, alternate raw sources, customer demand-side actions, emergency disinfection. A plant that has run its WSP through tabletop scenario exercises responds in hours; one that hasn't responds in days.
-
-_Source: WHO Climate-Resilient WSP Training Manual (uploaded), Modules 4–6._`,
-
-  'c-pot-301/m5': `## What constitutes a non-conformance
-
-A non-conformance (NC) is any departure from the specified treatment / sampling plan or any analytical result outside SANS limits. It can be:
-
-- **Process** — coagulant feed pump tripped for 4 h
-- **Quality** — turbidity > 1.0 NTU for an hour
-- **Compliance** — E. coli detected in distribution
-- **System** — calibration overdue on the residual analyser
-
-Every NC must be logged in the LIMS, regardless of severity.
-
-## Immediate actions
-
-For an _acute health_ exceedance (e.g. E. coli):
-1. Re-sample immediately (within 1 h)
-2. Phone the plant manager and public-health authority
-3. Check disinfection — residual, contact time, dose
-4. If confirmed on second sample, consider boil-water notice
-5. Increase chlorine residual at affected zone
-6. Sample upstream and downstream to localise
-7. Issue customer notification within 24 h
-
-For a chronic-health exceedance, the timeline is days, not minutes — but still requires re-sample, RCA, action.
-
-## Root-cause analysis
-
-The 5-Why technique is the simplest reliable method:
-
-> _Why did E. coli appear in zone 4?_ — Reservoir 4B was emptied for cleaning.
-> _Why did emptying introduce E. coli?_ — Inspection hatches were left open for 6 h.
-> _Why were hatches left open?_ — No SOP for cleaning procedure.
-> _Why no SOP?_ — Reservoir cleaning was outsourced; contractor procedure not adopted.
-> _Why not adopted?_ — Procurement specification didn't require it.
-
-The corrective action sits at the deepest "why" — write the SOP and put it in procurement specs.
-
-## CAPA documentation
-
-A proper CAPA has: problem statement, immediate action taken, root cause, corrective action (fix the immediate issue), preventive action (stop recurrence), responsible person, target date, verification. The Hadron LIMS QC module gives you the template.
-
-## Verification re-sampling
-
-Don't close a CAPA on a single re-sample. Three consecutive in-spec results are minimum; for an acute exceedance, ten consecutive samples over a week.
-
-_Source: SANS 241:2015 § 4 (action levels); DWS Drinking Water Management Ch 8 (corrective action); WSP Module 5._`,
+_Source: Training Manual on Climate Resilient Water Safety Plans (DWSS/WHO), Module 8 and risk-prioritisation exercise; SANS 241-2:2015 §4.2._`,
 
   /* ════════════════════════════════════════════════════════════════
      TRACK 2 — DISINFECTION
