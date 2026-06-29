@@ -186,6 +186,11 @@
         .topbar-theme-toggle { width:32px; height:32px; border-radius:9999px; background:rgba(0,0,0,0.06); color:inherit; border:none; display:grid; place-items:center; cursor:pointer; transition:background .15s ease; padding:0; flex:0 0 auto; }
         .topbar-theme-toggle:hover { background:rgba(0,0,0,0.14); }
         .topbar-theme-toggle svg { display:block; }
+        /* Inline emoji-replacement icons (emoji.js swaps mapped emoji → Tristroke SVG). */
+        .hg-emoji-ico { display:inline-flex; align-items:center; vertical-align:-0.14em; line-height:0; }
+        .hg-emoji-ico svg { width:1.05em; height:1.05em; }
+        /* Window hero icons sit on coloured gradients — force light-on-dark strokes so they pop. */
+        .hg-hero-icon { --icon-primary:#FFFFFF; --icon-secondary:#25B6D2; --icon-accent:#FFC52B; }
         @media print { .no-print{ display:none !important; } }
 
         * {
@@ -2617,7 +2622,7 @@
                 <div class="hg-section-title">About</div>
                 <div class="hg-kvgrid">
                     <div class="hg-kv"><div class="k">App</div><div class="v">Hadron Group</div></div>
-                    <div class="hg-kv"><div class="k">Version</div><div class="v">v58</div></div>
+                    <div class="hg-kv"><div class="k">Version</div><div class="v">v59</div></div>
                     <div class="hg-kv"><div class="k">Platform</div><div class="v">PWA</div></div>
                 </div>
             </div>
