@@ -2625,7 +2625,7 @@
                 <div class="hg-section-title">About</div>
                 <div class="hg-kvgrid">
                     <div class="hg-kv"><div class="k">App</div><div class="v">Hadron Group</div></div>
-                    <div class="hg-kv"><div class="k">Version</div><div class="v">v66</div></div>
+                    <div class="hg-kv"><div class="k">Version</div><div class="v">v67</div></div>
                     <div class="hg-kv"><div class="k">Platform</div><div class="v">PWA</div></div>
                 </div>
             </div>
@@ -4386,6 +4386,7 @@
             initLanguage();
             paintHadronIcons();
             setTimeout(paintHadronIcons, 400); // repaint after customize/emoji load handlers settle
+            ensureWindowHeros();                // give every window the yellow hero banner
             calculateDosage();
             calculateClO2();
             calculateCoagulants();
@@ -4552,6 +4553,56 @@
             });
         }
         window.paintHadronIcons = paintHadronIcons;
+
+        // Windows whose content is fully rendered by their own module — skip them
+        // (a static hero would be overwritten; they manage their own UI).
+        const HERO_SKIP = ['lims','qr','pool','academy','jartest-dss','historydetail'];
+        const HERO_ICON = {
+            waterindex:'water_index', coolingtower:'cooling_tower', rocalc:'ro_performance',
+            converters:'converters', neutralise:'neutralise', effluent:'effluent',
+            removalcalc:'reports', fmcalc:'reports', srtcalc:'hourglass', jartest:'jar_test',
+            assets:'barcode', sites:'location', consumables:'inventory', qrscan:'qr_builder',
+            schedule:'calendar', safety:'shield_check', msds:'document', spill:'hazard',
+            ppe:'shield_check', loto:'lock', incident:'hazard', catalogue:'product',
+            troubleshoot:'work_order', jobs:'tasks', trends:'trend_up', sops:'sops',
+            calibration:'calibration', labcom:'lims', sites:'location'
+        };
+
+        // Give every window the same yellow hero banner. For windows that don't
+        // already have one, promote the leading <h2> into a hero (so the heading
+        // isn't duplicated) and drop in a fitting Tristroke icon.
+        function ensureWindowHeros() {
+            if (typeof hadronIcon !== 'function') return;
+            document.querySelectorAll('.window[id^="window-"]').forEach(function (win) {
+                const id = win.id.slice('window-'.length);
+                if (HERO_SKIP.indexOf(id) > -1) return;
+                const content = win.querySelector('.window-content');
+                if (!content) return;
+                const existing = content.querySelector('.hg-hero');
+                if (existing) {   // already has a hero — ensure it carries a Tristroke icon
+                    if (HERO_ICON[id]) {
+                        let ei = existing.querySelector('.hg-hero-icon');
+                        if (!ei) { ei = document.createElement('div'); ei.className = 'hg-hero-icon'; existing.appendChild(ei); }
+                        if (!ei.querySelector('svg')) ei.innerHTML = hadronIcon(HERO_ICON[id]);
+                    }
+                    return;
+                }
+                let title = '';
+                const first = content.firstElementChild;
+                if (first && first.tagName === 'H2') { title = first.textContent.trim(); first.remove(); }
+                if (!title) { const t = win.querySelector('.window-title'); title = t ? t.textContent.trim() : ''; }
+                const hero = document.createElement('div');
+                hero.className = 'hg-hero';
+                const left = document.createElement('div');
+                const h = document.createElement('h2'); h.className = 'hg-hero-title'; h.textContent = title;
+                left.appendChild(h);
+                const ico = document.createElement('div'); ico.className = 'hg-hero-icon';
+                ico.innerHTML = hadronIcon(HERO_ICON[id] || 'document');
+                hero.appendChild(left); hero.appendChild(ico);
+                content.insertBefore(hero, content.firstChild);
+            });
+        }
+        window.ensureWindowHeros = ensureWindowHeros;
 
         function initDarkMode() {
             let theme = null;
