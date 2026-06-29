@@ -14,7 +14,10 @@
   function loadProgress() {
     try { return JSON.parse(localStorage.getItem(PROGRESS_KEY) || '{}'); } catch (e) { return {}; }
   }
-  function saveProgress(p) { try { localStorage.setItem(PROGRESS_KEY, JSON.stringify(p)); } catch (e) {} }
+  function saveProgress(p) {
+    try { localStorage.setItem(PROGRESS_KEY, JSON.stringify(p)); } catch (e) {}
+    academySyncPush();   // mirror to the cloud (debounced; no-ops if not signed in)
+  }
 
   function markModuleComplete(courseId, moduleId) {
     const p = loadProgress();
@@ -32,6 +35,86 @@
     if (!course.modules.length) return 0;
     return Math.round((p.completed.length / course.modules.length) * 100);
   }
+
+  // Record the best score (0–100) a learner has achieved on a module's quiz.
+  function recordQuizScore(courseId, moduleId, pct) {
+    const p = loadProgress();
+    p[courseId] = p[courseId] || { startedAt: new Date().toISOString(), completed: [], lastViewed: null };
+    p[courseId].scores = p[courseId].scores || {};
+    if (!(moduleId in p[courseId].scores) || pct > p[courseId].scores[moduleId]) {
+      p[courseId].scores[moduleId] = pct;
+    }
+    saveProgress(p);
+  }
+
+  // Average of the learner's best quiz scores across a course's quiz modules.
+  function courseQuizResult(course) {
+    const scores = progressFor(course.id).scores || {};
+    const quizModules = course.modules.filter(m => Array.isArray(m.quiz) && m.quiz.length);
+    const taken = quizModules.filter(m => m.id in scores);
+    if (!taken.length) return { has: false, count: 0, total: quizModules.length, avg: 0 };
+    const avg = Math.round(taken.reduce((n, m) => n + scores[m.id], 0) / taken.length);
+    return { has: true, count: taken.length, total: quizModules.length, avg: avg };
+  }
+
+  /* ---------- Cloud sync (per-user training record) ----------
+     The progress blob (completed modules + quiz scores) syncs per user, scoped to
+     the org, into the academy_progress table. Pull-merge when the profile loads,
+     debounced push on every change. No-ops gracefully until the user is signed in
+     and migration 0004 has created the table. Mirrors lims-sync's lifecycle. */
+  const SYNC = { orgId: null, userId: null, pushTimer: null };
+
+  function mergeProgress(localP, cloudP) {
+    Object.keys(cloudP || {}).forEach(function (cid) {
+      const cloud = cloudP[cid]; if (!cloud) return;
+      const loc = localP[cid] || { startedAt: cloud.startedAt || null, completed: [], lastViewed: null, scores: {} };
+      const seen = {};
+      (loc.completed || []).concat(cloud.completed || []).forEach(function (mid) { seen[mid] = 1; });
+      loc.completed = Object.keys(seen);                                   // union of completed modules
+      loc.scores = loc.scores || {};
+      const cs = cloud.scores || {};
+      Object.keys(cs).forEach(function (mid) { if (!(mid in loc.scores) || cs[mid] > loc.scores[mid]) loc.scores[mid] = cs[mid]; }); // best score wins
+      if (cloud.startedAt && (!loc.startedAt || cloud.startedAt < loc.startedAt)) loc.startedAt = cloud.startedAt;
+      if (cloud.lastViewed && (!loc.lastViewed || cloud.lastViewed > loc.lastViewed)) loc.lastViewed = cloud.lastViewed;
+      localP[cid] = loc;
+    });
+    return localP;
+  }
+
+  function academySyncPull() {
+    if (!SYNC.userId || !window.HG_DB || !window.HG_DB.academy_progress) return;
+    window.HG_DB.academy_progress.get(SYNC.userId).then(function (row) {
+      if (row && row.payload) {
+        saveProgress(mergeProgress(loadProgress(), row.payload));          // merge cloud → local (and push the union back)
+        if (typeof window.academyRerender === 'function') window.academyRerender();
+      }
+    }).catch(function () {});   // table may not exist yet (pre-migration)
+  }
+
+  function academySyncPushNow() {
+    if (!SYNC.userId || !SYNC.orgId || !window.HG_DB || !window.HG_DB.academy_progress) return;
+    window.HG_DB.academy_progress.upsert({
+      id: SYNC.userId, organisation_id: SYNC.orgId, user_id: SYNC.userId,
+      payload: loadProgress(), updated_at: new Date().toISOString()
+    }).catch(function () {});
+  }
+  function academySyncPush() {
+    if (SYNC.pushTimer) clearTimeout(SYNC.pushTimer);
+    SYNC.pushTimer = setTimeout(academySyncPushNow, 1500);
+  }
+
+  function academySyncActivate() {
+    const prof = window.HG_PROFILE;
+    if (!prof || !prof.organisation_id || !prof.id) return;
+    SYNC.orgId = prof.organisation_id;
+    SYNC.userId = prof.id;
+    academySyncPull();
+  }
+  if (window.HG_PROFILE) academySyncActivate();
+  document.addEventListener('hg:profile:loaded', academySyncActivate);
+  document.addEventListener('hg:auth:changed', function (e) {
+    if (!e.detail || !e.detail.session) { SYNC.orgId = null; SYNC.userId = null; }   // signed out
+  });
 
   /* ---------- Linked calc tools metadata ---------- */
   // Map app-window IDs to friendly labels so lessons can deep-link cleanly.
@@ -1542,6 +1625,28 @@
         }).join('')}
       </div>
 
+      ${(function () {
+        const r = courseQuizResult(c);
+        if (!r.total) return '';   // course has no quizzes
+        if (!r.has) return `
+          <div class="hg-card">
+            <div class="hg-section-title">${esc(tt('academy.quizResult','Quiz result'))}</div>
+            <div style="font-size:13px; color:#6b7684;">${esc(tt('academy.quizNotTaken','Complete the knowledge check to earn your course result.'))}</div>
+          </div>`;
+        const passed = r.avg >= 70;
+        return `
+          <div class="hg-card">
+            <div class="hg-section-title">${esc(tt('academy.quizResult','Quiz result'))}</div>
+            <div style="display:flex; align-items:center; gap:16px; flex-wrap:wrap;">
+              <div style="font-size:32px; font-weight:800; color:${passed ? '#157b3a' : '#c0392b'};">${r.avg}%</div>
+              <div style="flex:1; min-width:170px;">
+                <span class="hg-chip ${passed ? 'ok' : 'warn'}">${passed ? '✓ ' + esc(tt('academy.passed','Passed')) : esc(tt('academy.notYetPassed','Not yet passed'))}</span>
+                <div style="font-size:12px; color:#6b7684; margin-top:6px;">${esc(tt('academy.avgAcross','Average across'))} ${r.count}/${r.total} ${esc(tt('academy.assessments','assessment(s)'))}</div>
+              </div>
+            </div>
+          </div>`;
+      })()}
+
       <div class="hg-card">
         <div class="hg-section-title">${esc(tt('academy.sources','Sources & references'))}</div>
         <ul style="margin:0; padding-left:20px; line-height:1.7; font-size:13px; color:#4f4f4f;">
@@ -1718,7 +1823,9 @@
     const quiz = quizFor(m); if (!quiz) return;
     if (Object.keys(QUIZ.picks).length < quiz.length) return;   // must answer all
     QUIZ.submitted = true;
-    if (quizScore(quiz).pct >= QUIZ_PASS) markModuleComplete(c.id, m.id);
+    const s = quizScore(quiz);
+    recordQuizScore(c.id, m.id, s.pct);
+    if (s.pct >= QUIZ_PASS) markModuleComplete(c.id, m.id);
     repaintQuiz();
   };
   window.academyQuizRetry = function () {

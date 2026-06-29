@@ -311,6 +311,17 @@ create table if not exists public.lims_quotes (
 );
 create index if not exists lims_quotes_org_idx on public.lims_quotes (organisation_id);
 
+create table if not exists public.academy_progress (
+  id              text primary key,                          -- = the learner's auth user id
+  organisation_id uuid not null references public.organisations (id) on delete cascade,
+  user_id         uuid not null references auth.users (id)   on delete cascade,
+  payload         jsonb not null,
+  created_at      timestamptz default now(),
+  updated_at      timestamptz default now()
+);
+create index if not exists academy_progress_org_idx  on public.academy_progress (organisation_id);
+create index if not exists academy_progress_user_idx on public.academy_progress (user_id);
+
 create table if not exists public.audit_log (
   id              bigserial primary key,
   organisation_id uuid references public.organisations (id) on delete cascade,
@@ -418,6 +429,19 @@ alter table public.lims_personnel      enable row level security;
 alter table public.lims_calibrations   enable row level security;
 alter table public.lims_ncs            enable row level security;
 alter table public.lims_quotes         enable row level security;
+alter table public.academy_progress    enable row level security;
+
+-- academy_progress (migration 0004): read = any signed-in org member (team training
+-- dashboards); write = ONLY the learner's own record. Not in the generic loop below
+-- because its write policy is per-user, not role-based.
+drop policy if exists academy_progress_select on public.academy_progress;
+create policy academy_progress_select on public.academy_progress
+  for select using (organisation_id = current_org());
+drop policy if exists academy_progress_write on public.academy_progress;
+create policy academy_progress_write on public.academy_progress
+  for all
+  using      (organisation_id = current_org() and user_id = auth.uid())
+  with check (organisation_id = current_org() and user_id = auth.uid());
 
 -- TENANT ISOLATION (migration 0001): every policy is purely organisation-scoped.
 -- A Tenant's data is visible ONLY to members of that same Tenant. There is no
@@ -524,7 +548,8 @@ alter publication supabase_realtime add table
   public.lims_personnel,
   public.lims_calibrations,
   public.lims_ncs,
-  public.lims_quotes;
+  public.lims_quotes,
+  public.academy_progress;
 
 -- ============================================================
 -- 8. SEED — run AFTER your first user signs up via the app.
