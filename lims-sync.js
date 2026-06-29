@@ -55,11 +55,15 @@
       case 'clients':
         return Object.assign(base, {
           name:          row.name || row.client || 'Unknown',
-          contact_name:  row.contactName || row.contact || null,
+          contact_name:  row.contact || row.contactName || null,
           contact_email: row.email || null,
           contact_phone: row.phone || null,
           address:       row.address || null,
           notes:         row.notes || null,
+          // Preserve provenance so the ERP read-only contract survives even if a
+          // push-guard is ever bypassed (mirrors mapIn).
+          source:        row.source || 'app',
+          external_id:   row.external_id || null,
         });
       case 'samples':
         return Object.assign(base, {
@@ -112,7 +116,10 @@
     // Reconstruct minimally from typed cols.
     switch (localStore) {
       case 'clients':
-        return { id: cloudRow.id, name: cloudRow.name, contactName: cloudRow.contact_name,
+        // NOTE: the LIMS client model uses `contact` (not contactName) everywhere
+        // (lims.js render/form/COA). ERP customers arrive payload-less and hit this
+        // branch, so contact_name MUST map to `contact` or the contact person is lost.
+        return { id: cloudRow.id, name: cloudRow.name, contact: cloudRow.contact_name,
                  email: cloudRow.contact_email, phone: cloudRow.contact_phone,
                  address: cloudRow.address, notes: cloudRow.notes,
                  source: cloudRow.source || 'app', external_id: cloudRow.external_id || null };
@@ -178,6 +185,12 @@
         if (!rows.length) continue;
         await pause(async () => {
           for (const r of rows) {
+            // Defence-in-depth: never write another org's row locally. RLS already
+            // scopes the query server-side; this is a second line of tenant isolation.
+            if (r.organisation_id && r.organisation_id !== state.orgId) {
+              console.error('[HG_LIMS_SYNC] dropped cross-org row on pull', store, r.id);
+              continue;
+            }
             const local = mapIn(store, r);
             await window.HG_LIMS_DB.putLocal(store, local);
             pulled++;
@@ -235,6 +248,11 @@
           } else {
             const row = payload.new;
             if (!row) return;
+            // Defence-in-depth: ignore a realtime row from another org.
+            if (row.organisation_id && row.organisation_id !== state.orgId) {
+              console.error('[HG_LIMS_SYNC] dropped cross-org realtime row', store, row.id);
+              return;
+            }
             const local = mapIn(store, row);
             await pause(() => window.HG_LIMS_DB.putLocal(store, local));
           }
