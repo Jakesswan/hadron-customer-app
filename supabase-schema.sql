@@ -274,6 +274,43 @@ create table if not exists public.lims_competencies (
 );
 create index if not exists lims_comp_org_idx on public.lims_competencies (organisation_id);
 
+-- LIMS stores synced from migration 0003 (lab staff, calibrations, NCs, quotes).
+create table if not exists public.lims_personnel (
+  id              text primary key,
+  organisation_id uuid not null references public.organisations (id) on delete cascade,
+  payload         jsonb not null,
+  created_at      timestamptz default now(),
+  updated_at      timestamptz default now()
+);
+create index if not exists lims_personnel_org_idx on public.lims_personnel (organisation_id);
+
+create table if not exists public.lims_calibrations (
+  id              text primary key,
+  organisation_id uuid not null references public.organisations (id) on delete cascade,
+  payload         jsonb not null,
+  created_at      timestamptz default now(),
+  updated_at      timestamptz default now()
+);
+create index if not exists lims_calibrations_org_idx on public.lims_calibrations (organisation_id);
+
+create table if not exists public.lims_ncs (
+  id              text primary key,
+  organisation_id uuid not null references public.organisations (id) on delete cascade,
+  payload         jsonb not null,
+  created_at      timestamptz default now(),
+  updated_at      timestamptz default now()
+);
+create index if not exists lims_ncs_org_idx on public.lims_ncs (organisation_id);
+
+create table if not exists public.lims_quotes (
+  id              text primary key,
+  organisation_id uuid not null references public.organisations (id) on delete cascade,
+  payload         jsonb not null,
+  created_at      timestamptz default now(),
+  updated_at      timestamptz default now()
+);
+create index if not exists lims_quotes_org_idx on public.lims_quotes (organisation_id);
+
 create table if not exists public.audit_log (
   id              bigserial primary key,
   organisation_id uuid references public.organisations (id) on delete cascade,
@@ -377,6 +414,10 @@ alter table public.lims_instruments    enable row level security;
 alter table public.lims_inventory      enable row level security;
 alter table public.lims_documents      enable row level security;
 alter table public.lims_competencies   enable row level security;
+alter table public.lims_personnel      enable row level security;
+alter table public.lims_calibrations   enable row level security;
+alter table public.lims_ncs            enable row level security;
+alter table public.lims_quotes         enable row level security;
 
 -- TENANT ISOLATION (migration 0001): every policy is purely organisation-scoped.
 -- A Tenant's data is visible ONLY to members of that same Tenant. There is no
@@ -425,7 +466,8 @@ declare t text;
 begin
   for t in select unnest(array[
     'customers','sites','equipment','samples','sample_results','jobs','audit_log',
-    'lims_tests','lims_test_profiles','lims_worksheets','lims_instruments','lims_inventory','lims_documents','lims_competencies'
+    'lims_tests','lims_test_profiles','lims_worksheets','lims_instruments','lims_inventory','lims_documents','lims_competencies',
+    'lims_personnel','lims_calibrations','lims_ncs','lims_quotes'
   ]) loop
     execute format('drop policy if exists %I on public.%I', t||'_select', t);
     execute format(
@@ -478,7 +520,11 @@ alter publication supabase_realtime add table
   public.lims_instruments,
   public.lims_inventory,
   public.lims_documents,
-  public.lims_competencies;
+  public.lims_competencies,
+  public.lims_personnel,
+  public.lims_calibrations,
+  public.lims_ncs,
+  public.lims_quotes;
 
 -- ============================================================
 -- 8. SEED — run AFTER your first user signs up via the app.

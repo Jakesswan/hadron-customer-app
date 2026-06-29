@@ -44,7 +44,11 @@
     instruments: 'lims_instruments',
     inventory:   'lims_inventory',
     documents:    'lims_documents',
-    competencies: 'lims_competencies'
+    competencies: 'lims_competencies',
+    users:        'lims_personnel',     // lab staff (the LIMS "Personnel" view reads the 'users' store)
+    calibrations: 'lims_calibrations',
+    ncs:          'lims_ncs',
+    quotes:       'lims_quotes'
   };
 
   // ── Mappers: local row → cloud row ──────────────────────
