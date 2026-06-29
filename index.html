@@ -189,8 +189,9 @@
         /* Inline emoji-replacement icons (emoji.js swaps mapped emoji → Tristroke SVG). */
         .hg-emoji-ico { display:inline-flex; align-items:center; vertical-align:-0.14em; line-height:0; }
         .hg-emoji-ico svg { width:1.05em; height:1.05em; }
-        /* Window hero icons sit on coloured gradients — force light-on-dark strokes so they pop. */
-        .hg-hero-icon { --icon-primary:#FFFFFF; --icon-secondary:#25B6D2; --icon-accent:#FFC52B; }
+        /* Window hero icons + the header back arrow sit on dark gradients — force
+           light-on-dark strokes so they pop (and stay white in light mode too). */
+        .hg-hero-icon, .window-header { --icon-primary:#FFFFFF; --icon-secondary:#25B6D2; --icon-accent:#FFC52B; }
         @media print { .no-print{ display:none !important; } }
 
         * {
@@ -659,7 +660,7 @@
 
         .window-header {
             min-height: 56px;
-            background: linear-gradient(135deg, #3AAEDB 0%, #F5B82E 100%);
+            background: linear-gradient(135deg, #2B7DB3 0%, #123E63 100%);
             color: white;
             display: flex;
             align-items: center;
@@ -2622,7 +2623,7 @@
                 <div class="hg-section-title">About</div>
                 <div class="hg-kvgrid">
                     <div class="hg-kv"><div class="k">App</div><div class="v">Hadron Group</div></div>
-                    <div class="hg-kv"><div class="k">Version</div><div class="v">v64</div></div>
+                    <div class="hg-kv"><div class="k">Version</div><div class="v">v65</div></div>
                     <div class="hg-kv"><div class="k">Platform</div><div class="v">PWA</div></div>
                 </div>
             </div>
