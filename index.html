@@ -2625,7 +2625,7 @@
                 <div class="hg-section-title">About</div>
                 <div class="hg-kvgrid">
                     <div class="hg-kv"><div class="k">App</div><div class="v">Hadron Group</div></div>
-                    <div class="hg-kv"><div class="k">Version</div><div class="v">v67</div></div>
+                    <div class="hg-kv"><div class="k">Version</div><div class="v">v68</div></div>
                     <div class="hg-kv"><div class="k">Platform</div><div class="v">PWA</div></div>
                 </div>
             </div>
@@ -4533,7 +4533,13 @@
             catalogue:'product', troubleshoot:'work_order', jobs:'tasks',
             trends:'trend_up', sops:'sops', calibration:'calibration',
             lims:'lims', qr:'qr_builder', pool:'pool', academy:'academy',
-            'jartest-dss':'jar_test', data:'data_manager'
+            'jartest-dss':'jar_test', data:'data_manager',
+            // in-window sub-tiles (effluent / assets / safety grids) — without these
+            // they fell through to the tiny emoji-swap path or stayed raw emoji.
+            removalcalc:'reports', fmcalc:'reports', srtcalc:'hourglass', jartest:'jar_test',
+            sites:'location', consumables:'inventory', qrscan:'camera', qrgen:'qr_builder',
+            schedule:'calendar', msds:'document', spill:'hazard', ppe:'shield_check',
+            loto:'lock', incident:'hazard'
             // (labcom intentionally unmapped — keeps its LabCom logo)
         };
 
@@ -4561,7 +4567,7 @@
             waterindex:'water_index', coolingtower:'cooling_tower', rocalc:'ro_performance',
             converters:'converters', neutralise:'neutralise', effluent:'effluent',
             removalcalc:'reports', fmcalc:'reports', srtcalc:'hourglass', jartest:'jar_test',
-            assets:'barcode', sites:'location', consumables:'inventory', qrscan:'qr_builder',
+            assets:'barcode', sites:'location', consumables:'inventory', qrscan:'camera',
             schedule:'calendar', safety:'shield_check', msds:'document', spill:'hazard',
             ppe:'shield_check', loto:'lock', incident:'hazard', catalogue:'product',
             troubleshoot:'work_order', jobs:'tasks', trends:'trend_up', sops:'sops',
