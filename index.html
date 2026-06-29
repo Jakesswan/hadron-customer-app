@@ -2622,7 +2622,7 @@
                 <div class="hg-section-title">About</div>
                 <div class="hg-kvgrid">
                     <div class="hg-kv"><div class="k">App</div><div class="v">Hadron Group</div></div>
-                    <div class="hg-kv"><div class="k">Version</div><div class="v">v63</div></div>
+                    <div class="hg-kv"><div class="k">Version</div><div class="v">v64</div></div>
                     <div class="hg-kv"><div class="k">Platform</div><div class="v">PWA</div></div>
                 </div>
             </div>
@@ -2763,7 +2763,7 @@
 
     <div class="window" id="window-dosage">
         <div class="window-header">
-            <button class="back-button" onclick="closeWindow('dosage')">←</button>
+            <button class="back-button" onclick="dosageBack()">←</button>
             <span class="window-title" id="dosageTitle">Dosage Calculators</span>
         </div>
         <div class="window-content" style="overflow-y: auto;">
@@ -4174,6 +4174,17 @@
             document.getElementById('coagulantsCalculator').style.display = 'none';
             document.getElementById('clo2skidCalculator').style.display = 'none';
             document.getElementById('dosageTitle').textContent = 'Dosage Calculators';
+        }
+
+        // Header back button: if a calculator is open, step back to the calculator
+        // menu (the previous page); only close the whole window from the menu itself.
+        function dosageBack() {
+            const menu = document.getElementById('calculatorMenu');
+            if (menu && menu.style.display === 'none') {
+                showCalculatorMenu();
+            } else {
+                closeWindow('dosage');
+            }
         }
 
         // --- Chlorine Dioxide Skid Sizing ---
