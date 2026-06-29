@@ -593,6 +593,8 @@
             --icon-secondary: #25B6D2;
             --icon-accent: #FFC52B;
         }
+        /* Make the Tristroke launcher icons fill most of the tile so they read clearly. */
+        .app-icon .icon svg { width: 64%; height: 64%; }
         body.dark .app-icon .icon {
             box-shadow: 0 4px 14px rgba(0,0,0,0.40);
         }
@@ -1999,7 +2001,7 @@
         .hg-empty h3 { margin: 0 0 6px; color: #2e3742; font-weight: 700; font-size: 16px; }
         body.dark .hg-empty h3 { color: #e8ecef; }
 
-        .hg-hero { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 18px; padding: 18px 20px; background: linear-gradient(135deg, #3AAEDB 0%, #0078a3 100%); border-radius: 16px; color: #fff; box-shadow: 0 4px 16px rgba(0,125,150,0.25); }
+        .hg-hero { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 18px; padding: 18px 20px; background: linear-gradient(135deg, #f5a623 0%, #e07b00 100%) !important; border-radius: 16px; color: #fff; box-shadow: 0 4px 16px rgba(224,123,0,0.25); }
         .hg-hero-title { font-size: 19px; font-weight: 700; margin: 0; }
         .hg-hero-sub { font-size: 12px; opacity: 0.9; margin-top: 3px; }
         .hg-hero-icon { font-size: 40px; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.2)); }
@@ -2623,7 +2625,7 @@
                 <div class="hg-section-title">About</div>
                 <div class="hg-kvgrid">
                     <div class="hg-kv"><div class="k">App</div><div class="v">Hadron Group</div></div>
-                    <div class="hg-kv"><div class="k">Version</div><div class="v">v65</div></div>
+                    <div class="hg-kv"><div class="k">Version</div><div class="v">v66</div></div>
                     <div class="hg-kv"><div class="k">Platform</div><div class="v">PWA</div></div>
                 </div>
             </div>
@@ -2820,9 +2822,6 @@
 
             <!-- Chlorine Calculator -->
             <div id="chlorineCalculator" style="display: none;">
-                <button onclick="showCalculatorMenu()" style="padding: 8px 16px; background: rgba(0,177,202,0.1); color: #3AAEDB; border: 1px solid #3AAEDB; border-radius: 8px; cursor: pointer; font-size: 14px; margin-bottom: 20px;">
-                    ← Back to Menu
-                </button>
                 <h2 style="margin-bottom: 20px;">Chlorine (TCCA) Calculator</h2>
                 
                 <div style="background: #f8f9fa; padding: 20px; border-radius: 10px; margin-bottom: 25px;">
@@ -2863,9 +2862,6 @@
 
             <!-- Chlorine Dioxide Calculator -->
             <div id="chlorinedioxideCalculator" style="display: none;">
-                <button onclick="showCalculatorMenu()" style="padding: 8px 16px; background: rgba(0,177,202,0.1); color: #3AAEDB; border: 1px solid #3AAEDB; border-radius: 8px; cursor: pointer; font-size: 14px; margin-bottom: 20px;">
-                    ← Back to Menu
-                </button>
                 <h2 style="margin-bottom: 20px;">Chlorine Dioxide (ClO2) Calculator</h2>
                 
                 <div style="background: #f8f9fa; padding: 20px; border-radius: 10px; margin-bottom: 25px;">
@@ -2906,9 +2902,6 @@
 
             <!-- Coagulants Calculator -->
             <div id="coagulantsCalculator" style="display: none;">
-                <button onclick="showCalculatorMenu()" style="padding: 8px 16px; background: rgba(0,177,202,0.1); color: #3AAEDB; border: 1px solid #3AAEDB; border-radius: 8px; cursor: pointer; font-size: 14px; margin-bottom: 20px;">
-                    ← Back to Menu
-                </button>
                 <h2 style="margin-bottom: 20px;">Coagulants Calculator</h2>
                 
                 <div style="background: #f8f9fa; padding: 20px; border-radius: 10px; margin-bottom: 25px;">
@@ -2977,9 +2970,6 @@
 
             <!-- Chlorine Dioxide Skid Sizing Calculator -->
             <div id="clo2skidCalculator" style="display: none;">
-                <button onclick="showCalculatorMenu()" style="padding: 8px 16px; background: rgba(0,177,202,0.1); color: #3AAEDB; border: 1px solid #3AAEDB; border-radius: 8px; cursor: pointer; font-size: 14px; margin-bottom: 20px;">
-                    ← Back to Menu
-                </button>
                 <h2 style="margin-bottom: 20px;">Chlorine Dioxide Skid Sizing</h2>
 
                 <div style="background: #f8f9fa; padding: 20px; border-radius: 10px; margin-bottom: 25px;">
