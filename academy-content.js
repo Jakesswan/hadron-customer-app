@@ -1176,6 +1176,145 @@ Some utilities (Cape Town, Johannesburg) run free Cl in winter, chloramine in su
 
 _Source: Drinking Water Management (DWS 2024) Ch 9; Nalco Water Handbook Ch 9; AWWA M56 — Nitrification Prevention._`,
 
+  /* ───── DIS-203 — Gas Chlorine: Handling, Storage & Emergency Response ───── */
+
+  'c-dis-203/m1': `## Chlorine's physical and chemical properties
+Chlorine for water treatment is supplied as **liquefied gas under pressure** in steel cylinders (typically 68 kg) and one-tonne drums. Its UN number is \`UN1017\` and its CAS number is \`7782-50-5\`. A handful of properties decide almost everything about how you handle it.
+
+Chlorine gas is **denser than air**, so a leak does not rise and blow away — it sinks and collects in low-lying spots, pits and basements. This is the single most important reason subsurface storage and below-grade chlorine rooms are forbidden.
+
+Dry chlorine gas is chemically reactive but **not especially corrosive** to the right metals. The moment it meets water — including humidity in the air or moisture left in a pipe — it forms **hydrochloric acid**, which attacks steel and brass. Keeping moisture out of the system is therefore a handling priority, not a nicety.
+
+Chlorine is **not flammable**, but it is a strong **oxidiser**: it makes other materials burn far more fiercely. It is only slightly soluble in water, and it **liquefies** readily under modest pressure or cold — which matters when you route and size gas lines.
+
+## Health effects and routes of exposure
+Chlorine is highly toxic. Released into the air it can cause severe injury or death through inhalation and contact, and even low concentrations are a powerful irritant.
+
+- **Eyes:** burning, watering (lacrimation) and, at worst, corrosive damage; escaping compressed liquid can freeze the tissue.
+- **Skin:** corrosive damage, and frostbite from contact with the cold liquid.
+- **Lungs:** the gas irritates the airways. A person breathing it in feels their throat tighten and panics with a sense of suffocation, much like drowning. Severe exposure can stop breathing and turn the victim blue.
+
+Knowing what exposure feels like helps you catch a leak early — a faint chlorine smell or stinging eyes is your cue to act, not to wait and see.
+
+## The legal and code-of-practice framework
+A chlorine installation is a regulated facility. Storage, equipment and handling must comply with the **Occupational Health and Safety Act**, and transport of containers follows the dangerous-goods provisions of the **National Road Traffic Act, 1996 (Act 93 of 1996)**.
+
+Every facility must run an ongoing, documented safety programme: regular inspections, annual servicing of equipment by qualified people, operator training, and — for sites near people or animals — an early-warning gas-detection system. Your supplier's code of practice and the chlorine wallcharts are the reference you keep on the wall and actually read.
+
+_Source: Chlorine Handling Information Pack, Chlorine Tech Services (Pty) Ltd, §§1–2, 5–6; Operation of Water Treatment Works (WRC), Chapter B4 — Handling of chlorine compounds._`,
+
+  'c-dis-203/m2': `## Storage rules and incompatible materials
+Store chlorine containers — **full or empty** — in a clean, well-ventilated area. Keep the space free of rubbish, and never put chlorine in subsurface rooms or near elevators, gangways or building ventilation intakes, where a leak could be drawn through the site.
+
+Segregate chlorine from all other compressed-gas cylinders, and keep it well clear of incompatible materials:
+- turpentine, ether and hydrocarbons such as oil
+- other flammable materials and finely divided metals
+- **anhydrous ammonia**
+
+Because chlorine is an oxidiser, storing it beside fuels or organics turns a small problem into a fire. Run the store on a **first-in, first-out** basis, keep full and empty containers separated, and arrange them so daily inspection and removal need a minimum of handling. Leak-test both full and "empty" containers — an "empty" drum still holds chlorine.
+
+## Container orientation, temperature and the supply room
+**Cylinders are stored and used upright; one-tonne portable tanks lie on their sides.** Orientation decides whether the valve draws gas or liquid, so it is not optional.
+
+Temperature controls how the gas behaves. Storage should never exceed **55 °C (130 °F)** — heat makes the chlorine expand and can rupture the container. At the other extreme, below about **10 °C** the flow turns sluggish and erratic. The practical sweet spot is **18–25 °C**, with the container kept slightly cooler than the chlorinator so chlorine does not re-condense in the dosing equipment. Keep containers out of direct sunlight and away from any heat source.
+
+## Signage, gas detection and emergency-equipment access
+A compliant chlorine facility is set up so a person can act fast and safely:
+- the approved **symbolic safety signs**, emergency procedures and chlorine **wallcharts** are displayed
+- a **wind sock** is fitted in a conspicuous position, so anyone responding to a leak can read the wind at a glance
+- **self-contained breathing apparatus (BA) sets** are placed for easy access
+- personal protective equipment lives in a clearly marked, **locked cabinet near the plant — but never inside a room that contains chlorine**, so a leak cannot trap you away from your gear
+
+These details look like box-ticking until the day there is a leak; then they are the difference between a controlled response and a casualty.
+
+_Source: Chlorine Handling Information Pack, Chlorine Tech Services (Pty) Ltd, §§2, 7, 9; Operation of Water Treatment Works (WRC), Chapter B4 — Handling of chlorine compounds._`,
+
+  'c-dis-203/m3': `## Tools, PPE and pre-connection checks
+Changing a chlorine container is a routine job done with discipline. Lay out the correct kit before you start:
+- **PVC/rubber gloves** and a **full-face respirator**
+- an **ammonia squeeze bottle** for leak testing
+- the **correct chlorine valve spanner**, a **"32" spanner**, and new **lead washers**
+
+Before connecting, inspect the **serpentine** (the flexible "pigtail" linking the container to the manifold) for sharp burrs, cracks or holes, and check the threads on both the serpentine nut and the valve outlet. A new lead washer is fitted **every** time — never reuse an old one.
+
+## The connect and disconnect sequence
+Work in the right order so chlorine is never released to a joint you have not yet checked.
+
+To **connect**:
+1. Fit a new lead washer into the serpentine and seat the nut level with the valve outlet.
+2. Tighten the nut clockwise by hand to a solid seat, then lock it with the valve spanner.
+3. Open the chlorinator/manifold valves **first**, following your plant procedure.
+4. Open the container valve by turning the spindle **anti-clockwise**.
+5. Leak-test every connection by squirting **ammonia vapour** from the squeeze bottle. **Never squirt liquid ammonia solution onto the equipment** — it corrodes the fittings.
+
+To **disconnect**: close the container valve clockwise, wait about a minute, close the system valve, loosen the serpentine nut, and ammonia-test as you go.
+
+## Valve anatomy and freeing a stuck valve
+The container valve is mostly **brass**, with a **Monel** stem, **PTFE** packing, a **lead** outlet-cap gasket, and a **fusible plug** that melts to relieve pressure if the container overheats. Treat it gently — it is the seal between you and the gas.
+
+If a valve is stuck, **never strike the valve body with a hammer**. Use the chlorine valve spanner, hold it, and strike the **side of the spanner** with the palm of your gloved hand, turning **anti-clockwise** to open. Repeat if needed. If it still will not move, stop and tell your supervisor — forcing it risks shearing the valve and a full release.
+
+_Source: Chlorine Handling Information Pack, Chlorine Tech Services (Pty) Ltd, §§11–12._`,
+
+  'c-dis-203/m4': `## Finding a leak with ammonia
+Chlorine reacts with **ammonia vapour** to make a dense **white cloud of ammonium chloride** — the standard, reliable way to pinpoint a leak. Work the system methodically with the ammonia squeeze bottle:
+1. start at the **container valve**
+2. check the **serpentine** for cracks or holes
+3. test the **main-line chlorine valve**
+4. check the **chlorinator and flow meters**
+5. follow the main line to the **catch pot**, testing every flange and gasket
+6. continue to the end of the system
+
+The moment you find the source, **close the container valve** and follow your maintenance and disconnection procedure. Use only **ammonia vapour** — never the liquid — and remember chlorine is only slightly soluble, so it will not simply wash away.
+
+## Withdrawal rate and sizing the supply (worked example)
+You cannot pull gas out of a container as fast as you like. Drawing too hard cools the container, **frosts** the pipework and makes the flow erratic. The maximum withdrawal rates are about **1.3 kg/h from a 68 kg cylinder** and **9.0 kg/h from a one-tonne drum** (guideline: no more than ~1 % of contents per hour at 18–20 °C).
+
+**Worked example.** A works dosing chlorine uses **50 kg/day**. How many 68 kg cylinders must be online?
+- Convert to an hourly rate: \`50 kg/day ÷ 24 h = 2.1 kg/h\` (use the **converters** and **dosage** tools).
+- Each cylinder safely delivers \`1.3 kg/h\`.
+- Cylinders needed: \`2.1 ÷ 1.3 = 1.6 → round up to 2\`.
+
+So **two cylinders must be manifolded** (2 × 1.3 = 2.6 kg/h ≥ 2.1 kg/h). **Sanity-check:** drawing all 2.1 kg/h from one cylinder exceeds 1.3 kg/h, which would frost the cylinder and starve the dose — exactly the symptom that tells you a manifold is undersized.
+
+## Suck-back, liquefaction, frosting and ferric chloride
+Several classic faults follow from the same physics:
+- **Suck-back (reverse flow):** if chlorine flow stops — supply runs empty, the wrong valve is shut, or an injector seat fails — water can be drawn back into the line, forming acid and a dark-red **ferric chloride** sludge that has caused serious accidents. Prevent it with **non-return valves, flow interlocks, vacuum breakers** or a **barometric loop** (useful only at atmospheric pressure, extending more than **11 m** above the liquid).
+- **Liquefaction:** gas re-condenses where a line runs colder than the pressure-temperature equilibrium; a **pressure-reducing valve** prevents it.
+- **Frosting:** harmless in itself, but a clear sign you are exceeding the withdrawal rate.
+- **Moist chlorine:** moisture entering during connections forms ferric chloride — a yellow powder that turns brown and viscous, plugging lines and crippling vaporisers. Minimise moisture every time you break a joint.
+
+_Source: Chlorine Handling Information Pack, Chlorine Tech Services (Pty) Ltd, §§5, 12–13; Operation of Water Treatment Works (WRC), Chapter B4 — Handling of chlorine compounds._`,
+
+  'c-dis-203/m5': `## The chlorine-incident drill
+Any escape of chlorine to the atmosphere is an **incident**. Work the steps in order and do not improvise:
+1. **Call for assistance** and alert the people who must be notified.
+2. Fetch safety equipment from a **clean area free of chlorine**, and have an **assistant stand by outside** the contaminated zone.
+3. **Close the container valve** to stop the source, confirming it is shut.
+4. Read the **wind direction** and begin evacuating.
+5. If near buildings or a vehicle, **breathe through a wet cloth**, close vents and **switch off air-conditioning** so gas is not drawn inside.
+6. **Ammonia-test** to confirm where the leak is; if it is not under control, seal the container with the **Emergency Kit** and hand over to the professionals.
+
+## Evacuation and responder PPE
+Move people **sideways — 90° to the wind — and then upwind**, and keep going until the chlorine smell is gone. Do **not** assume an upper floor or rooftop is safe: local air currents carry the gas, and height alone is no protection. Where levels are high, those without protection breathe through a wet cloth with **slow, shallow** breaths while they leave.
+
+A responder who enters the gas must wear the right protection or they become the next casualty. The minimum kit is a **self-contained breathing apparatus (BA) set**, a **chlorine gas suit**, a **full-face mask and respirator**, **safety boots** and **PVC gloves**. Renew canisters and cartridges whenever they are damaged or you can smell chlorine through them.
+
+## First aid by exposure type
+Protect yourself first (BA set or full-face mask), remove the casualty from the danger area, and reassure them — exposure causes real panic. Give **nothing by mouth** to anyone unconscious or convulsing.
+- **Skin (no frostbite):** flush with copious running water for 20 minutes. **If frostbitten** by liquid chlorine, get medical help — do **not** rub or flush.
+- **Eyes:** flush at low pressure for 15–20 minutes with the lids held apart; attempt **no** chemical neutralisation. If the tissue is frozen, seek medical attention.
+- **Mild inhalation:** move to clean air, keep the person upright, warm and quiet, and have them breathe slowly and shallowly, resisting the urge to cough.
+- **Severe inhalation:** if breathing has stopped, secure the airway and begin **artificial respiration**, continuing until a doctor or emergency service arrives.
+
+## Emergency kits, the action plan and fire
+Keep **Emergency Kit "A" (cylinders) or "B" (tanks)** ready, stored cool and dry, away from sunlight **and away from the chlorine installation** so a leak cannot block access. Inspect it every six months: replace cracked gaskets, check threads, remove rust using no penetrating oil, and confirm the kit is complete.
+
+A **displayed emergency action plan** must name the key people to notify, give step-by-step actions for staff near the leak, and set out the first-aid procedure. In a **fire**, remember chlorine does not burn but **intensifies** other fires as an oxidiser; **water** is the preferred medium (responders wear BA sets because it releases some gas), and the priority is to evacuate and tell the fire department exactly what is stored and where.
+
+_Source: Chlorine Handling Information Pack, Chlorine Tech Services (Pty) Ltd, §§3, 5–8; Hadron Group Chlorine Training Manual — Emergency Response Procedures._`,
+
+
   /* ───── DIS-301 — Disinfection By-products & Compliance ───── */
 
   'c-dis-301/m1': `## The four families of DBPs
