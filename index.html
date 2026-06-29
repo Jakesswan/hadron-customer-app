@@ -181,6 +181,11 @@
         .badge-gray{ background:var(--bg-soft); color:var(--muted); }
         .theme-toggle { width:32px; height:32px; border-radius:var(--radius-full); background:var(--bg-soft); color:var(--text); border:none; display:grid; place-items:center; cursor:pointer; transition:background .15s ease; }
         .theme-toggle:hover{ background:var(--border); }
+        /* Theme toggle that lives in the yellow top banner (matches the ERP topbar control).
+           Icon uses currentColor, so it inherits the banner's dark text on yellow in both themes. */
+        .topbar-theme-toggle { width:32px; height:32px; border-radius:9999px; background:rgba(0,0,0,0.06); color:inherit; border:none; display:grid; place-items:center; cursor:pointer; transition:background .15s ease; padding:0; flex:0 0 auto; }
+        .topbar-theme-toggle:hover { background:rgba(0,0,0,0.14); }
+        .topbar-theme-toggle svg { display:block; }
         @media print { .no-print{ display:none !important; } }
 
         * {
@@ -2325,6 +2330,7 @@
                 </div>
             </div>
             <div class="user-info">
+                <button class="topbar-theme-toggle no-print" id="topThemeToggle" aria-label="Toggle light/dark theme" title="Toggle light/dark theme" onclick="setTheme(document.documentElement.getAttribute('data-theme')==='dark'?'light':'dark')"></button>
                 <div class="user-avatar" id="userAvatar">U</div>
                 <span id="userName">User</span>
                 <button class="logout-btn" onclick="logout()" data-i18n="header.logout">Logout</button>
@@ -2605,7 +2611,7 @@
                 <div class="hg-section-title">About</div>
                 <div class="hg-kvgrid">
                     <div class="hg-kv"><div class="k">App</div><div class="v">Hadron Group</div></div>
-                    <div class="hg-kv"><div class="k">Version</div><div class="v">v56</div></div>
+                    <div class="hg-kv"><div class="k">Version</div><div class="v">v57</div></div>
                     <div class="hg-kv"><div class="k">Platform</div><div class="v">PWA</div></div>
                 </div>
             </div>
@@ -4486,6 +4492,10 @@
             const btnDark  = document.getElementById('btnDark');
             if (btnLight) btnLight.classList.toggle('active', !enabled);
             if (btnDark)  btnDark.classList.toggle('active', enabled);
+            const topToggle = document.getElementById('topThemeToggle');
+            if (topToggle && typeof hadronThemeIcon === 'function') {
+                topToggle.innerHTML = hadronThemeIcon(theme);   // sun when dark, moon when light
+            }
         }
 
         function setTheme(theme) {
