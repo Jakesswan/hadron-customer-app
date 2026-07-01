@@ -24,6 +24,11 @@
     p[courseId] = p[courseId] || { startedAt: new Date().toISOString(), completed: [], lastViewed: null };
     if (p[courseId].completed.indexOf(moduleId) === -1) p[courseId].completed.push(moduleId);
     p[courseId].lastViewed = moduleId;
+    // Stamp the completion date the first time every module is done — used on the certificate.
+    const course = COURSES.find(x => x.id === courseId);
+    if (course && !p[courseId].completedAt && p[courseId].completed.length >= course.modules.length) {
+      p[courseId].completedAt = new Date().toISOString();
+    }
     saveProgress(p);
   }
   function progressFor(courseId) {
@@ -56,6 +61,126 @@
     const avg = Math.round(taken.reduce((n, m) => n + scores[m.id], 0) / taken.length);
     return { has: true, count: taken.length, total: quizModules.length, avg: avg };
   }
+
+  /* ---------- Completion certificates ----------
+     A course is "complete" (certificate-eligible) at 100% module progress. Because
+     a Knowledge-check module only completes on a passing quiz score, 100% implies
+     the quiz was passed. The certificate is a branded, self-contained HTML page
+     opened in a new tab for print / Save-as-PDF — no library, works offline. */
+  function courseIsComplete(course) { return course && course.modules.length > 0 && courseProgressPct(course) === 100; }
+
+  function fmtCertDate(d) {
+    const M = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+    return d.getDate() + ' ' + M[d.getMonth()] + ' ' + d.getFullYear();
+  }
+  // Deterministic, stable certificate id from learner + course (FNV-1a → base36).
+  function certHash(s) {
+    let h = 0x811c9dc5;
+    for (let i = 0; i < s.length; i++) { h ^= s.charCodeAt(i); h = Math.imul(h, 0x01000193); }
+    return (h >>> 0).toString(36).toUpperCase();
+  }
+  function certId(profId, course) { return 'HA-' + course.code + '-' + certHash((profId || 'anon') + '|' + course.id).slice(0, 5); }
+
+  function academyCertData(courseId) {
+    const c = COURSES.find(x => x.id === courseId);
+    if (!c) return null;
+    const prof = window.HG_PROFILE || {};
+    const p = progressFor(c.id);
+    const res = courseQuizResult(c);
+    const completedAt = p.completedAt ? new Date(p.completedAt) : new Date();
+    const name = (prof.full_name && prof.full_name.trim()) || prof.email || 'Hadron Academy Learner';
+    const org = (prof.organisations && prof.organisations.name) || '';
+    return {
+      eligible: courseIsComplete(c),
+      code: c.code, title: c.title, level: c.level, duration: c.duration,
+      track: (TRACKS.find(t => t.id === c.trackId) || {}).name || '',
+      name: name, org: org,
+      scoreText: res.has ? (res.avg + '%') : null,
+      dateText: fmtCertDate(completedAt),
+      certId: certId(prof.id, c)
+    };
+  }
+
+  function academyCertHtml(d) {
+    const e = esc;
+    return '<!doctype html><html lang="en"><head><meta charset="utf-8">' +
+      '<title>Certificate — ' + e(d.title) + '</title><meta name="viewport" content="width=device-width, initial-scale=1">' +
+      '<style>' +
+      '@page { size: A4 landscape; margin: 0; }' +
+      ':root { --blue:#123E63; --blue2:#1a3d9e; --accent:#3AAEDB; --ink:#2e3742; --gold:#d4a12a; --gold2:#f5a623; }' +
+      '* { box-sizing: border-box; }' +
+      'body { margin:0; font-family: Georgia, "Times New Roman", serif; color: var(--ink); background:#5b6b78; }' +
+      '.bar { text-align:center; padding:14px; }' +
+      '.bar button { font-family: system-ui, sans-serif; font-size:14px; font-weight:600; cursor:pointer; border:0; border-radius:8px; padding:10px 18px; margin:0 4px; background:var(--accent); color:#fff; }' +
+      '.bar button.ghost { background:#fff; color:var(--ink); border:1px solid #ccc; }' +
+      '.sheet { width:297mm; min-height:210mm; margin:0 auto 24px; background:#fff; position:relative; padding:18mm 20mm; }' +
+      '.frame { position:absolute; inset:8mm; border:2px solid var(--blue); }' +
+      '.frame:after { content:""; position:absolute; inset:3mm; border:1px solid var(--accent); }' +
+      '.inner { position:relative; text-align:center; height:100%; display:flex; flex-direction:column; }' +
+      '.brand { font-family: system-ui, sans-serif; letter-spacing:3px; font-size:13px; font-weight:700; color:var(--blue); text-transform:uppercase; }' +
+      '.brand small { display:block; letter-spacing:2px; font-size:10px; font-weight:600; color:var(--accent); margin-top:3px; }' +
+      '.title { font-size:40px; font-weight:700; color:var(--blue); margin:18px 0 2px; letter-spacing:1px; }' +
+      '.rule { width:90px; height:3px; background:var(--gold2); margin:6px auto 14px; border-radius:2px; }' +
+      '.pre { font-size:15px; color:#5a6a76; }' +
+      '.name { font-size:38px; color:var(--ink); margin:10px 0 6px; }' +
+      '.course { font-size:24px; font-weight:700; color:var(--blue2); margin:8px 0 2px; padding:0 10mm; }' +
+      '.meta { font-family: system-ui, sans-serif; font-size:13px; color:#5a6a76; }' +
+      '.chips { font-family: system-ui, sans-serif; margin:12px 0 4px; }' +
+      '.chip { display:inline-block; border:1px solid #d7dee4; border-radius:999px; padding:5px 12px; margin:0 4px; font-size:12px; color:var(--ink); }' +
+      '.chip b { color:var(--blue); }' +
+      '.seal { width:96px; height:96px; margin:14px auto 0; }' +
+      '.foot { margin-top:auto; display:flex; justify-content:space-between; align-items:flex-end; font-family: system-ui, sans-serif; padding-top:16px; }' +
+      '.sig { text-align:center; }' +
+      '.sig .line { width:200px; border-top:1.5px solid var(--ink); margin:0 auto 4px; }' +
+      '.sig .who { font-size:13px; font-weight:600; color:var(--ink); }' +
+      '.sig .sub { font-size:11px; color:#5a6a76; }' +
+      '.cid { text-align:right; font-size:11px; color:#5a6a76; line-height:1.6; }' +
+      '.cid b { color:var(--ink); }' +
+      '@media print { body { background:#fff; } .bar { display:none; } .sheet { margin:0; box-shadow:none; } }' +
+      '@media screen { .sheet { box-shadow:0 10px 40px rgba(0,0,0,.35); margin-top:8px; } }' +
+      '</style></head><body>' +
+      '<div class="bar"><button onclick="window.print()">Print / Save as PDF</button><button class="ghost" onclick="window.close()">Close</button></div>' +
+      '<div class="sheet"><div class="frame"></div><div class="inner">' +
+      '<div class="brand">Hadron Academy<small>Water Treatment Training</small></div>' +
+      '<div class="title">Certificate of Completion</div><div class="rule"></div>' +
+      '<div class="pre">This is to certify that</div>' +
+      '<div class="name">' + e(d.name) + '</div>' +
+      (d.org ? '<div class="meta">of ' + e(d.org) + '</div>' : '') +
+      '<div class="pre" style="margin-top:14px;">has successfully completed the course</div>' +
+      '<div class="course">' + e(d.title) + '</div>' +
+      '<div class="meta">' + e(d.code) + ' · ' + e(d.level) + ' · ' + e(d.track) + ' Track · ' + e(d.duration) + '</div>' +
+      '<div class="chips">' +
+      (d.scoreText ? '<span class="chip">Knowledge check: <b>' + e(d.scoreText) + '</b></span>' : '') +
+      '<span class="chip">Completed: <b>' + e(d.dateText) + '</b></span></div>' +
+      '<div class="seal">' + certSealSvg() + '</div>' +
+      '<div class="foot">' +
+      '<div class="sig"><div class="line"></div><div class="who">Hadron Group</div><div class="sub">Water Treatment Specialists</div></div>' +
+      '<div class="cid">Certificate ID<br><b>' + e(d.certId) + '</b><br>Issued by Hadron Academy</div>' +
+      '</div></div></div></body></html>';
+  }
+
+  // Self-contained gold rosette seal (no external assets).
+  function certSealSvg() {
+    return '<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" width="96" height="96">' +
+      '<defs><radialGradient id="g" cx="50%" cy="40%" r="60%"><stop offset="0%" stop-color="#f5cf6a"/><stop offset="100%" stop-color="#d4a12a"/></radialGradient></defs>' +
+      '<path d="M42 78 L36 96 L50 88 L64 96 L58 78 Z" fill="#1a3d9e"/>' +
+      '<circle cx="50" cy="46" r="30" fill="url(#g)" stroke="#b9861f" stroke-width="2"/>' +
+      '<circle cx="50" cy="46" r="23" fill="none" stroke="#fff" stroke-width="1.5" opacity="0.7"/>' +
+      '<path d="M40 47 l7 7 l14 -16" fill="none" stroke="#123E63" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round"/>' +
+      '</svg>';
+  }
+
+  window.academyCertificate = function (courseId) {
+    const d = academyCertData(courseId);
+    if (!d) return;
+    if (!d.eligible) { alert('Complete all modules (including the Knowledge check) to earn your certificate.'); return; }
+    const w = window.open('', '_blank');
+    if (!w) { alert('Please allow pop-ups so your certificate can open in a new tab.'); return; }
+    w.document.open(); w.document.write(academyCertHtml(d)); w.document.close();
+  };
+  // exposed for verification/testing
+  window._academyCertData = academyCertData;
+  window._academyCertHtml = academyCertHtml;
 
   /* ---------- Cloud sync (per-user training record) ----------
      The progress blob (completed modules + quiz scores) syncs per user, scoped to
@@ -2030,6 +2155,7 @@
     const totalCompleted = Object.values(allProgress).reduce((n, p) => n + (p.completed || []).length, 0);
     const totalCourses = COURSES.length;
     const startedCourses = Object.keys(allProgress).length;
+    const earnedCerts = COURSES.filter(c => courseIsComplete(c));
 
     root.innerHTML = `
       <div class="hg-hero" style="background: linear-gradient(135deg, #7a59d4 0%, #3AAEDB 100%);">
@@ -2045,6 +2171,7 @@
         <div class="hg-kv"><div class="k">${esc(tt('academy.courses','Courses'))}</div><div class="v">${totalCourses}</div></div>
         <div class="hg-kv"><div class="k">${esc(tt('academy.started','Started'))}</div><div class="v">${startedCourses}</div></div>
         <div class="hg-kv"><div class="k">${esc(tt('academy.modulesDone','Modules done'))}</div><div class="v">${totalCompleted}</div></div>
+        <div class="hg-kv"><div class="k">${esc(tt('academy.certificates','Certificates'))}</div><div class="v">${earnedCerts.length}</div></div>
       </div>
 
       <div class="hg-card">
@@ -2067,6 +2194,20 @@
           }).join('')}
         </div>
       </div>
+
+      ${earnedCerts.length ? `
+        <div class="hg-card">
+          <div class="hg-section-title">${esc(tt('academy.myCerts','My certificates'))}</div>
+          ${earnedCerts.map(c => `
+            <div class="academy-module" style="cursor:default;">
+              <div class="academy-module-num">✓</div>
+              <div style="flex:1;">
+                <div style="font-weight:700; font-size:14px;">${esc(c.title)}</div>
+                <div style="font-size:12px; color:#6b7684; margin-top:2px;">${esc(c.code)} · ${esc(c.level)}</div>
+              </div>
+              <button class="hg-btn primary" onclick="academyCertificate('${c.id}')">${esc(tt('academy.getCertShort','Certificate'))}</button>
+            </div>`).join('')}
+        </div>` : ''}
 
       <div class="hg-card">
         <div class="hg-section-title">${esc(tt('academy.howItWorks','How it works'))}</div>
@@ -2222,6 +2363,13 @@
             </div>
           </div>`;
       })()}
+
+      ${courseIsComplete(c) ? `
+        <div class="hg-card academy-cert-card" style="text-align:center;">
+          <div class="hg-section-title" style="justify-content:center;">${esc(tt('academy.certReady','Course complete — your certificate is ready'))}</div>
+          <p style="font-size:13px; color:#6b7684; margin:2px 0 12px;">${esc(tt('academy.certBlurb','Open a printable certificate with your name, score and a verification ID — save it as a PDF from the print dialog.'))}</p>
+          <button class="hg-btn primary" onclick="academyCertificate('${c.id}')">${esc(tt('academy.getCert','Download certificate (PDF)'))}</button>
+        </div>` : ''}
 
       <div class="hg-card">
         <div class="hg-section-title">${esc(tt('academy.sources','Sources & references'))}</div>
