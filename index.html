@@ -77,6 +77,8 @@
     <script src="pool.js" defer></script>
     <!-- Cooling Tower field calculator -->
     <script src="coolingtower.js" defer></script>
+    <!-- Boiler / Steam field calculator -->
+    <script src="boiler.js" defer></script>
     <script src="academy-content.js" defer></script>
     <script src="academy.js" defer></script>
 
@@ -2436,6 +2438,10 @@
                     <div class="icon">🏭</div>
                     <div class="app-name" data-i18n="pt.coolingtower">Cooling Tower</div>
                 </div>
+                <div class="app-icon" data-app="boiler" onclick="openWindow('boiler')">
+                    <div class="icon">🔥</div>
+                    <div class="app-name">Boiler / Steam</div>
+                </div>
                 <div class="app-icon" data-app="rocalc" onclick="openWindow('rocalc')">
                     <div class="icon">💧</div>
                     <div class="app-name" data-i18n="pt.rocalc">RO Performance</div>
@@ -2663,7 +2669,7 @@
                 <div class="hg-section-title">About</div>
                 <div class="hg-kvgrid">
                     <div class="hg-kv"><div class="k">App</div><div class="v">Hadron Group</div></div>
-                    <div class="hg-kv"><div class="k">Version</div><div class="v">v81</div></div>
+                    <div class="hg-kv"><div class="k">Version</div><div class="v">v82</div></div>
                     <div class="hg-kv"><div class="k">Platform</div><div class="v">PWA</div></div>
                 </div>
             </div>
@@ -3240,6 +3246,16 @@
         </div>
         <div class="window-content">
             <div id="ct_root"></div>
+        </div>
+    </div>
+
+    <div class="window" id="window-boiler">
+        <div class="window-header">
+            <button class="back-button" onclick="closeWindow('boiler')">←</button>
+            <span class="window-title">Boiler / Steam</span>
+        </div>
+        <div class="window-content">
+            <div id="bo_root"></div>
         </div>
     </div>
 
@@ -4012,6 +4028,7 @@
             if (appName === 'pool') poolOpen();
             if (appName === 'academy') academyOpen();
             if (appName === 'coolingtower') coolingtowerOpen();
+            if (appName === 'boiler') boilerOpen();
         }
 
         function closeWindow(appName) {
@@ -4043,7 +4060,7 @@
                 profile: '👤', messages: '💬', settings: '⚙️', files: '📁',
                 labcom: '🧪', support: '🎧', store: '🛒', dosage: '💊',
                 waterindex: '🧮', history: '📋', protools: '🧰',
-                coolingtower: '🏭', rocalc: '💧', converters: '🔁', neutralise: '⚗️',
+                coolingtower: '🏭', boiler: '🔥', rocalc: '💧', converters: '🔁', neutralise: '⚗️',
                 effluent: '🌊', removalcalc: '🧪', fmcalc: '🌬️', srtcalc: '⏱️',
                 jartest: '🥽', servicereport: '📝', assets: '🏷️', sites: '🏢',
                 consumables: '📦', qrscan: '📷', schedule: '📅', safety: '🦺',
@@ -4886,6 +4903,15 @@
                 collect: function () {
                     var r = (window.HG_CT && window.HG_CT.lastReading) ? window.HG_CT.lastReading() : { inputs: [], results: [], summary: '' };
                     return { inputs: r.inputs || [], results: r.results || [], summary: r.summary || 'Cooling tower reading' };
+                }
+            },
+            boiler: {
+                label: 'Boiler Reading',
+                // The boiler calculator lives in boiler.js; it supplies the live reading via
+                // window.HG_BOILER.lastReading().
+                collect: function () {
+                    var r = (window.HG_BOILER && window.HG_BOILER.lastReading) ? window.HG_BOILER.lastReading() : { inputs: [], results: [], summary: '' };
+                    return { inputs: r.inputs || [], results: r.results || [], summary: r.summary || 'Boiler reading' };
                 }
             },
             rocalc: {
