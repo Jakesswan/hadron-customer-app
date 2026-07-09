@@ -4725,6 +4725,164 @@ Returning condensate halves make-up water demand and dramatically reduces chemic
 
 _Source: Nalco Water Handbook Ch 13–14; Drew — Steam System Operations._`,
 
+  /* ───── BOIL-202 — Mass Balance, Cycles & Blowdown Optimisation ───── */
+
+  'c-boil-202/m1': `## Steam leaves, solids stay
+A boiler is a separation device whether you intend it or not. Water is boiled and the vapour discharged at controlled temperature and pressure, and **as vapour leaves the boiling water, the dissolved solids originally in the water are left behind**.
+
+The consequence is inescapable: **the boiler water left behind becomes increasingly concentrated**. Add fresh makeup, boil it, and the solids in that makeup join the ones already there. Left alone, the boiler water would concentrate without limit.
+
+## What blowdown prevents — and what the limits are
+Eventually concentration reaches a level where further concentration would **cause scale or deposits to form, or result in problems with steam quality or steam purity**. That highly concentrated water must be removed **to prevent scale deposition or corrosion**. This deliberate removal is **blowdown** — a planned loss of boiler water, replaced by makeup.
+
+How concentrated is too concentrated? **Exact limits are impossible to determine.** Consensus guidelines exist, published by **ASME**, the **ABMA** and **Nalco**, with further references from **EPRI**, **VGB**, **VdTÜV**, the **BSI** and **JIS**. Each approaches the problem differently, so **recommended values differ depending on the source**.
+
+Treat all of them as **suggested guidelines**. The actual boiler specification limits **must be established on an individual basis**, depending on the desired steam purity and the end use of the steam.
+
+## Continuous, surface and bottom blowdown
+Blowdown is not one thing, because the boiler holds two kinds of contaminant.
+
+- **Continuous blowdown** is a steady bleed, and its line is **designed to remove soluble species efficiently**. It is **not optimised to remove particulate matter**.
+- **Surface blowdown** — typically via a surface skimmer under conductivity control — removes **some particulate**, but it is **not isokinetically designed** to remove two-phase material (liquid plus solids).
+- **Intermittent manual blowdown of the mud drum** exists precisely because of those gaps. Suspended material settles, and the bottom blowdown is what clears it.
+
+A boiler is simply **not designed to remove suspended material effectively**; much of the iron reaching steam-generating surfaces **deposits there and never becomes available for removal by blowdown at all**.
+
+_Source: The Nalco Water Handbook, 3rd ed., Ch.9 — Boiler Systems (steam generation, blowdown); Ch.11 — boiler iron transport._`,
+
+  'c-boil-202/m2': `## Total makeup and the loss streams
+Everything that leaves must be replaced. The top-level balance is:
+
+\`TM = SL + CL + BL\`  (Eq. 9.1)
+
+where **TM** is total makeup, **SL** steam losses, **CL** condensate losses and **BL** boiler water losses. Blowdown sits inside BL — which is why **every kilogram of blowdown is a kilogram of treated makeup you must buy, heat and treat again**.
+
+## Feedwater, condensate and the deaerator
+Feedwater is what the boiler actually receives, and it is assembled from three streams:
+
+\`FW = MU + RC + DA − V\`  (Eq. 9.8)
+
+- **MU** — makeup
+- **RC** — returned steam condensate
+- **DA** — deaerator heating steam
+- **V** — deaerator vent loss
+
+Returned condensate is the most valuable water in the plant: it is hot, and it is nearly free of dissolved solids. **The more condensate you return, the lower the feedwater solids, and the higher the cycles the boiler can safely hold.** Every condensate loss is paid for twice — once in fresh makeup, once in the extra blowdown its solids demand.
+
+## Steam and returned condensate
+Steam divides into what comes back and what does not:
+
+\`S = RC + NRC\`  (Eq. 9.9)
+
+where **NRC** is non-returned condensate — steam sent to process and lost, vented, or contaminated and discarded.
+
+Reading Eqs. 9.1, 9.8 and 9.9 together gives the operator's picture. Steam goes out; some returns as clean condensate; the rest must be replaced with makeup, whose dissolved solids then concentrate in the boiler and must be blown down. **Blowdown is therefore governed by the quality of your makeup and the fraction of your condensate you get back.** Use the **boiler** tool to assemble the balance.
+
+_Source: The Nalco Water Handbook, 3rd ed., Ch.9, Eqs. 9.1, 9.8, 9.9 (mass balance equations)._`,
+
+  'c-boil-202/m3': `## Percent blowdown and percent makeup
+Blowdown and makeup are usually expressed as a **percentage of feedwater**. (They can be calculated as a percentage of steam flow instead; this course uses the **feedwater convention** throughout.)
+
+\`%BD = (100)(BD)/FW\`  (Eq. 9.2)
+\`%MU = (100)(MU)/FW\`  (Eq. 9.3)
+
+**Warning:** this differs from the cooling tower convention in COOL-202, where the concentration ratio is built on makeup and blowdown flows. Keep the two straight; the equations look similar and are not interchangeable.
+
+Where flows are unknown — the usual case — the percentages come from chemistry instead:
+
+\`%BD = (100)(TDS_FW)/TDS_BD\`  (Eq. 9.4)
+\`%MU = (100)(TDS_FW − TDS_C)/(TDS_MU − TDS_C)\`  (Eq. 9.5)
+
+where subscript C denotes condensate.
+
+## Cycles of concentration
+Cycles (COC) are simply the **reciprocal of the percent blowdown**:
+
+\`COC = 100/%BD\`  (Eq. 9.6)
+
+So 5% blowdown is 20 cycles; 4% is 25 cycles. Cycles can equally be read straight off a water analysis:
+
+\`COC = boiler water concentration / feedwater concentration\`  (Eq. 9.7a)
+
+## Calculating blowdown from steam flow
+Steam flow is metered in most plants. **Blowdown rate is rarely metered**, most plants meter makeup, and only some meter feedwater. So the practical route is to get cycles from chemistry, then compute the rest:
+
+\`COC = (S + BD)/BD\`  (Eq. 9.7b)
+\`BD = S/(COC − 1)\`  (Eq. 9.7c)
+\`FW = S + BD\`  (Eq. 9.7d)
+\`FW = (S)(COC)/(COC − 1)\`  (Eq. 9.7e)
+
+**Worked check.** A boiler makes **S = 10 000 kg/h** of steam at **COC = 20**:
+- \`BD = 10 000 ÷ 19 = 526,3 kg/h\`
+- \`FW = 10 000 + 526,3 = 10 526,3 kg/h\` — and Eq. 9.7e agrees: \`10 000 × 20 ÷ 19 = 10 526,3\` ✓
+- \`%BD = 100 × 526,3 ÷ 10 526,3 = 5,0%\`, and \`COC = 100 ÷ 5,0 = 20\` ✓
+
+One equation to avoid:
+\`BD = FW − S\`  (Eq. 9.7f)
+It is valid, but it **results in a higher error, because a relatively small number is calculated from the difference between two larger numbers, taken from two separate meters, both of which may be out of calibration**.
+
+_Source: The Nalco Water Handbook, 3rd ed., Ch.9, Eqs. 9.2–9.7f._`,
+
+  'c-boil-202/m4': `## The feedwater sample
+Every chemistry-based blowdown calculation stands on two samples. Get either one wrong and the arithmetic is flawless and meaningless.
+
+**The feedwater sample must be taken after all chemicals have been added to the system.** Sample upstream of the chemical feed and you measure a feedwater that never existed — one carrying fewer solids than the boiler actually receives. Since \`%BD = 100 × TDS_FW / TDS_BD\`, understating TDS_FW **understates the blowdown** you appear to need.
+
+## The boiler water sample
+**If conductivity is used to measure dissolved solids, the boiler water sample must first be neutralised before measuring the conductivity.**
+
+The reason is chemical. Boiler water carries **hydrate (O) alkalinity**, and hydroxide is exceptionally conductive. Any hydrate alkalinity present will **greatly increase the conductivity of the sample**. The meter therefore reports a **falsely high TDS_BD**, and in Eq. 9.4 a high denominator produces a **low percent blowdown**.
+
+Follow the consequence through to the plant floor. The operator reads 3% blowdown when the truth is 5%. Believing there is headroom, they cycle the boiler up. The boiler water concentrates past its real limit, and scale, corrosion or carryover follow — all from an un-neutralised sample.
+
+Ideally, **both the feedwater and the boiler water samples** are handled with this discipline, and the **boiler** tool should refuse to display TDS-derived results until both conditions are confirmed.
+
+## When TDS methods do not apply
+There is a case where these equations simply cannot be used. Where the makeup is **demineralised or otherwise of high purity**, the **TDS in the feedwater is too low to measure accurately**, and dividing one unreliable small number by another gives nonsense.
+
+For those systems, cycles are determined by **tracer methods** instead: an inert, soluble, non-volatile, accurately measurable species is fed to the feedwater until it reaches equilibrium, and cycles are derived from the relative tracer concentrations in feedwater and blowdown. The **boiler** tool routes you to the tracer method automatically when feedwater TDS is too low.
+
+_Source: The Nalco Water Handbook, 3rd ed., Ch.9 — sampling requirements for percent blowdown; Ch.33 — tracer determination of cycles._`,
+
+  'c-boil-202/m5': `## Maximum concentration ratio
+Cycles are not limited by one number but by **whichever species hits its boiler limit first**. For each species:
+
+\`COC_max = boiler limit ÷ feedwater concentration\`
+
+Compute it for every species you have a limit for — TDS, silica, alkalinity, and so on — and the **lowest answer governs**. That species is your **controlling factor**, and it alone sets the minimum blowdown: \`%BD = 100 ÷ COC_max\`.
+
+This reframes optimisation entirely. You do not raise cycles by deciding to; you raise them by **finding the controlling species and removing it upstream**.
+
+One rule to enforce alongside: maintain an **O (hydrate) alkalinity to SiO₂ ratio of at least 3:1** to inhibit silica deposition. Silica may be carried at higher levels **if there are no condensing turbines in the cycle**.
+
+## Worked example: silica versus TDS
+A boiler is fed from hot-lime-softened, ion-exchanged makeup. Boiler limits are **TDS 2000 mg/L** and **silica 30 mg/L**. Compute the maximum cycles each species allows:
+
+- **TDS** — makeup 150, feedwater 75, boiler limit 2000 → COC_max = \`2000 ÷ 75 = 26,7\`
+- **SiO₂** — makeup 3, feedwater 1,5, boiler limit 30 → COC_max = \`30 ÷ 1,5 = 20,0\`
+
+**Silica is the controlling factor**, setting the maximum CR at **20**, i.e. \`%BD = 100 ÷ 20 = 5%\`. The water could have been concentrated **26,7 times** on TDS — so there is real incentive to reduce silica.
+
+Now reduce makeup silica from **3 to 2 mg/L**, by adding **dolomitic lime rather than hydrated lime**, or magnesium oxide, in the hot lime softener. Feedwater silica falls proportionally to **1,0 mg/L**:
+- silica now allows \`30 ÷ 1,0 = 30\` cycles;
+- **TDS becomes the limiting factor** at **26,7** cycles;
+- \`%BD = 100 ÷ 26,7 = 3,75%\`.
+
+Blowdown drops from **5% to 3,75%** — a **25% reduction**. Depending on steam production, the availability of blowdown heat recovery and fuel costs, that can mean **sizeable fuel savings**, plus **reduced makeup water costs and blowdown sewer costs**.
+
+**Sanity-check:** the limiting species **changed** when silica was relieved. Always recompute every species after an upstream change; relieving one constraint simply exposes the next.
+
+## The cycles ceiling and blowdown heat recovery
+Two closing constraints.
+
+**The ceiling.** Despite whatever the TDS maximum permits, **industrial boilers — as opposed to utility units — should not be operated above 50 cycles of concentration.** Treat 50 as a hard stop regardless of what the arithmetic offers.
+
+**The heat.** Blowdown leaves at boiler temperature and pressure, carrying **valuable heat**. In low-pressure units, or systems not producing large quantities of steam, blowdown is often simply **sewered**. In larger systems it is recovered: **flash tanks extract low-pressure steam** and send it to the **deaerator or lower-pressure processes**, and the **water leaving the flash tank still has considerable heat value** and can **preheat incoming makeup water**.
+
+Where heat recovery exists, the fuel penalty of blowdown is partly recovered — so the fuel saving from reducing blowdown is **largest on boilers with no heat recovery at all**.
+
+_Source: The Nalco Water Handbook, 3rd ed., Ch.9, Table 9.1 and blowdown heat recovery; Ch.11, Table 11.5 (50-cycle limit, silica/alkalinity ratio)._`,
+
   /* ───── BOIL-301 — Layup, Cleaning & Failure Analysis ───── */
 
   'c-boil-301/m1': `## Layup philosophy

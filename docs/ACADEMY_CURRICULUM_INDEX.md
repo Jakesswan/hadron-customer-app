@@ -4,7 +4,7 @@
 > Project so it can (1) judge NEW vs DEEPENING + flag overlap, and (2) pick the next
 > free id/code in a track. Code convention: **1xx = Foundation, 2xx = Intermediate, 3xx = Advanced**.
 
-**47 courses across 10 tracks.**
+**48 courses across 10 tracks.**
 
 ## Potable Water  `track-potable`
 _Drinking water treatment from source to tap_
@@ -147,7 +147,7 @@ Codes used (COOL-): 101, 201, 202, 301, 302
 ## Boiler Water  `track-boiler`
 _Steam systems & internal treatment_
 
-Codes used (BOIL-): 101, 201, 301
+Codes used (BOIL-): 101, 201, 202, 301
 
 - **BOIL-101** `c-boil-101` - Boiler Water Chemistry _(Foundation, 3 hrs, 3 modules)_
   - prereqs: c-pot-101
@@ -157,6 +157,10 @@ Codes used (BOIL-): 101, 201, 301
   - prereqs: c-boil-101
   - tools: boiler, dosage, converters
   - modules: m1 External pretreatment | m2 Internal treatment | m3 Deaeration & oxygen scavengers | m4 Steam, condensate & amines
+- **BOIL-202** `c-boil-202` - Boiler Mass Balance, Cycles & Blowdown Optimisation _(Intermediate, 4 hrs, 6 modules, has quiz)_
+  - prereqs: c-boil-201
+  - tools: boiler, converters, lims
+  - modules: m1 Why boilers blow down | m2 The boiler mass balance | m3 Cycles and percent blowdown | m4 Sampling: the two mistakes that ruin the numbers | m5 Optimising blowdown: the limiting species | m6 Knowledge check
 - **BOIL-301** `c-boil-301` - Layup, Cleaning & Failure Analysis _(Advanced, 3 hrs, 3 modules)_
   - prereqs: c-boil-201
   - tools: boiler, lims, converters
