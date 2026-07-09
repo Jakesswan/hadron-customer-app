@@ -2669,7 +2669,7 @@
                 <div class="hg-section-title">About</div>
                 <div class="hg-kvgrid">
                     <div class="hg-kv"><div class="k">App</div><div class="v">Hadron Group</div></div>
-                    <div class="hg-kv"><div class="k">Version</div><div class="v">v87</div></div>
+                    <div class="hg-kv"><div class="k">Version</div><div class="v">v88</div></div>
                     <div class="hg-kv"><div class="k">Platform</div><div class="v">PWA</div></div>
                 </div>
             </div>
@@ -2922,6 +2922,53 @@
                                style="padding: 12px; border: 2px solid #e0e0e0; border-radius: 8px; width: 100%; font-size: 16px; max-width: 300px;"
                                oninput="calculateClO2()">
                         <span style="color: #666; font-size: 13px;">mg/L required in treated water</span>
+
+                        <label style="font-weight: 600; font-size: 15px; margin-top: 15px;">Operating hours per day:</label>
+                        <input type="number" id="clo2Hours" value="24" step="1" min="1" max="24"
+                               style="padding: 12px; border: 2px solid #e0e0e0; border-radius: 8px; width: 100%; font-size: 16px; max-width: 300px;"
+                               oninput="calculateClO2()">
+                        <span style="color: #666; font-size: 13px;">Generator run-time — sets pump L/h and mL/min</span>
+                    </div>
+                </div>
+
+                <div style="background: #f8f9fa; padding: 20px; border-radius: 10px; margin-bottom: 25px;">
+                    <h3 style="margin-bottom: 6px; color: #3AAEDB; font-size: 18px;">On-Site Generator — Feed Chemicals</h3>
+                    <p style="color:#666; font-size:13px; margin-bottom:15px;">Acid process: 5&nbsp;NaClO₂ + 4&nbsp;HCl → 4&nbsp;ClO₂ + 5&nbsp;NaCl + 2&nbsp;H₂O. Stoichiometric estimate — adjust strengths, density, yield and acid factor to match your generator.</p>
+                    <div style="display:flex; flex-direction:column; gap:12px;">
+                        <label style="font-weight:600; font-size:15px;">System preset:</label>
+                        <select id="clo2ChemPreset" onchange="onClo2ChemPreset()" style="padding:12px; border:2px solid #e0e0e0; border-radius:8px; width:100%; font-size:16px; max-width:340px;">
+                            <option value="conc">Concentrated — NaClO₂ 25% / HCl 33%</option>
+                            <option value="dilute">Dilute — NaClO₂ 7.5% / HCl 9%</option>
+                            <option value="custom">Custom</option>
+                        </select>
+
+                        <div style="display:grid; grid-template-columns:repeat(auto-fit,minmax(200px,1fr)); gap:12px; margin-top:6px;">
+                            <div>
+                                <label style="font-weight:600; font-size:14px;">Chem A — NaClO₂ strength (%):</label>
+                                <input type="number" id="clo2NaStr" value="25" step="0.5" min="1" oninput="onClo2ChemCustom()" style="padding:10px; border:2px solid #e0e0e0; border-radius:8px; width:100%; font-size:15px;">
+                            </div>
+                            <div>
+                                <label style="font-weight:600; font-size:14px;">Chem A — density (kg/L):</label>
+                                <input type="number" id="clo2NaDen" value="1.21" step="0.01" min="0.5" oninput="onClo2ChemCustom()" style="padding:10px; border:2px solid #e0e0e0; border-radius:8px; width:100%; font-size:15px;">
+                            </div>
+                            <div>
+                                <label style="font-weight:600; font-size:14px;">Chem B — HCl strength (%):</label>
+                                <input type="number" id="clo2HclStr" value="33" step="0.5" min="1" oninput="onClo2ChemCustom()" style="padding:10px; border:2px solid #e0e0e0; border-radius:8px; width:100%; font-size:15px;">
+                            </div>
+                            <div>
+                                <label style="font-weight:600; font-size:14px;">Chem B — density (kg/L):</label>
+                                <input type="number" id="clo2HclDen" value="1.16" step="0.01" min="0.5" oninput="onClo2ChemCustom()" style="padding:10px; border:2px solid #e0e0e0; border-radius:8px; width:100%; font-size:15px;">
+                            </div>
+                            <div>
+                                <label style="font-weight:600; font-size:14px;">ClO₂ yield (%):</label>
+                                <input type="number" id="clo2Yield" value="80" step="1" min="10" max="100" oninput="calculateClO2()" style="padding:10px; border:2px solid #e0e0e0; border-radius:8px; width:100%; font-size:15px;">
+                            </div>
+                            <div>
+                                <label style="font-weight:600; font-size:14px;">HCl factor (× stoich):</label>
+                                <input type="number" id="clo2AcidX" value="1.0" step="0.1" min="1" oninput="calculateClO2()" style="padding:10px; border:2px solid #e0e0e0; border-radius:8px; width:100%; font-size:15px;">
+                            </div>
+                        </div>
+                        <p style="color:#c0392b; font-size:12px; margin-top:4px;">⚠ HCl is corrosive. Verify pump materials, containment and dosing against the generator manufacturer's data before commissioning.</p>
                     </div>
                 </div>
 
@@ -2940,6 +2987,28 @@
                         </div>
                     </div>
                 </div>
+
+                <div style="margin-top: 20px; padding: 20px; background: linear-gradient(135deg, #3AAEDB 0%, #2e3742 100%); border-radius: 10px; color: white;">
+                    <h3 style="margin-bottom: 6px; font-size: 18px;">Generator Feed Chemicals &amp; Pump Rates</h3>
+                    <div style="font-size:13px; opacity:0.9; margin-bottom:15px;">Active ClO₂ generated: <strong id="clo2Active">0</strong> kg/day</div>
+                    <div style="display:grid; grid-template-columns:repeat(auto-fit,minmax(240px,1fr)); gap:15px;">
+                        <div style="background: rgba(255,255,255,0.15); padding: 18px; border-radius: 8px;">
+                            <div style="font-size: 15px; font-weight:700; margin-bottom: 10px;">Chem A — Sodium Chlorite (NaClO₂)</div>
+                            <div style="display:flex; justify-content:space-between; font-size:14px; margin-bottom:6px;"><span style="opacity:0.9;">Consumption</span><span><strong id="clo2AkgDay">0</strong> kg/day</span></div>
+                            <div style="display:flex; justify-content:space-between; font-size:14px; margin-bottom:6px;"><span style="opacity:0.9;">Volume</span><span><strong id="clo2ALday">0</strong> L/day</span></div>
+                            <div style="display:flex; justify-content:space-between; font-size:14px; margin-bottom:6px;"><span style="opacity:0.9;">Pump flow</span><span><strong id="clo2ALh">0</strong> L/h</span></div>
+                            <div style="display:flex; justify-content:space-between; font-size:14px;"><span style="opacity:0.9;">Pump calibration</span><span><strong id="clo2AmlMin">0</strong> mL/min</span></div>
+                        </div>
+                        <div style="background: rgba(255,255,255,0.15); padding: 18px; border-radius: 8px;">
+                            <div style="font-size: 15px; font-weight:700; margin-bottom: 10px;">Chem B — Hydrochloric Acid (HCl)</div>
+                            <div style="display:flex; justify-content:space-between; font-size:14px; margin-bottom:6px;"><span style="opacity:0.9;">Consumption</span><span><strong id="clo2BkgDay">0</strong> kg/day</span></div>
+                            <div style="display:flex; justify-content:space-between; font-size:14px; margin-bottom:6px;"><span style="opacity:0.9;">Volume</span><span><strong id="clo2BLday">0</strong> L/day</span></div>
+                            <div style="display:flex; justify-content:space-between; font-size:14px; margin-bottom:6px;"><span style="opacity:0.9;">Pump flow</span><span><strong id="clo2BLh">0</strong> L/h</span></div>
+                            <div style="display:flex; justify-content:space-between; font-size:14px;"><span style="opacity:0.9;">Pump calibration</span><span><strong id="clo2BmlMin">0</strong> mL/min</span></div>
+                        </div>
+                    </div>
+                </div>
+
                 <button onclick="saveCalculation('clo2', this)" class="save-calc-btn">💾 Save to History</button>
                 <button onclick="exportPdf('clo2')" class="pdf-calc-btn">📄 Export PDF</button>
             </div>
@@ -3057,27 +3126,6 @@
                     </div>
                 </div>
 
-                <div style="background: #f8f9fa; padding: 20px; border-radius: 10px; margin-bottom: 25px;">
-                    <h3 style="margin-bottom: 15px; color: #3AAEDB; font-size: 18px;">Feed Chemicals — 2-chemical generator</h3>
-                    <div style="display: flex; flex-direction: column; gap: 12px;">
-                        <label style="font-weight: 600; font-size: 15px;">System preset:</label>
-                        <select id="skidChemPreset" onchange="onSkidChemPreset(); calculateClO2Skid()" style="padding: 12px; border: 2px solid #e0e0e0; border-radius: 8px; width: 100%; font-size: 16px; max-width: 340px; background: #fff;">
-                            <option value="conc">Concentrated — 25% NaClO₂ / 33% HCl</option>
-                            <option value="dilute">Dilute — 7.5% NaClO₂ / 9% HCl</option>
-                            <option value="custom">Custom…</option>
-                        </select>
-                        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px; max-width: 540px;">
-                            <div><label style="font-weight:600;font-size:13px;">NaClO₂ strength (% w/w)</label><input type="number" id="skidChlStr" value="25" step="0.5" min="0.1" oninput="calculateClO2Skid()" style="padding:10px;border:2px solid #e0e0e0;border-radius:8px;width:100%;font-size:15px;"></div>
-                            <div><label style="font-weight:600;font-size:13px;">NaClO₂ density (kg/L)</label><input type="number" id="skidChlDens" value="1.22" step="0.01" min="0.5" oninput="calculateClO2Skid()" style="padding:10px;border:2px solid #e0e0e0;border-radius:8px;width:100%;font-size:15px;"></div>
-                            <div><label style="font-weight:600;font-size:13px;">HCl strength (% w/w)</label><input type="number" id="skidAcidStr" value="33" step="0.5" min="0.1" oninput="calculateClO2Skid()" style="padding:10px;border:2px solid #e0e0e0;border-radius:8px;width:100%;font-size:15px;"></div>
-                            <div><label style="font-weight:600;font-size:13px;">HCl density (kg/L)</label><input type="number" id="skidAcidDens" value="1.163" step="0.001" min="0.5" oninput="calculateClO2Skid()" style="padding:10px;border:2px solid #e0e0e0;border-radius:8px;width:100%;font-size:15px;"></div>
-                            <div><label style="font-weight:600;font-size:13px;">ClO₂ yield (%)</label><input type="number" id="skidYield" value="80" step="1" min="1" max="100" oninput="calculateClO2Skid()" style="padding:10px;border:2px solid #e0e0e0;border-radius:8px;width:100%;font-size:15px;"></div>
-                            <div><label style="font-weight:600;font-size:13px;">HCl dose (× stoichiometric)</label><input type="number" id="skidAcidX" value="1" step="0.1" min="0.1" oninput="calculateClO2Skid()" style="padding:10px;border:2px solid #e0e0e0;border-radius:8px;width:100%;font-size:15px;"></div>
-                        </div>
-                        <span style="color: #666; font-size: 13px;">Reaction 5 NaClO₂ + 4 HCl → 4 ClO₂ + 5 NaCl + 2 H₂O. The yield scales the chlorite; the acid factor lets you match a generator that runs excess HCl.</span>
-                    </div>
-                </div>
-
                 <div style="margin-top: 20px; padding: 20px; background: linear-gradient(135deg, #4f4f4f 0%, #F5B82E 100%); border-radius: 10px; color: white;">
                     <h3 style="margin-bottom: 15px; font-size: 18px;" data-i18n="calc.clo2Consumption">ClO₂ Consumption</h3>
                     <div style="display: grid; grid-template-columns: 1fr; gap: 15px;">
@@ -3097,25 +3145,6 @@
                             <div style="font-size: 14px; opacity: 0.9; margin-top: 5px;">L/week</div>
                         </div>
                     </div>
-                </div>
-
-                <div style="margin-top: 20px; padding: 20px; background: linear-gradient(135deg, #3AAEDB 0%, #2e3742 100%); border-radius: 10px; color: white;">
-                    <h3 style="margin-bottom: 15px; font-size: 18px;">Feed Chemical Consumption &amp; Pump Rates</h3>
-                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 15px;">
-                        <div style="background: rgba(255,255,255,0.2); padding: 18px; border-radius: 8px;">
-                            <div style="font-size: 14px; opacity: 0.9;">Chemical A — Sodium chlorite (NaClO₂)</div>
-                            <div style="font-size: 30px; font-weight: 700; margin-top: 6px;"><span id="skidChemA_lh">0.00</span> <span style="font-size:16px;font-weight:600;opacity:0.85;">L/h</span></div>
-                            <div style="font-size: 14px; opacity: 0.9; margin-top: 4px;">pump ≈ <b><span id="skidChemA_mlmin">0</span> mL/min</b></div>
-                            <div style="font-size: 13px; opacity: 0.9; margin-top: 8px;"><span id="skidChemA_Lday">0</span> L/day · <span id="skidChemA_kgday">0</span> kg/day (100% NaClO₂)</div>
-                        </div>
-                        <div style="background: rgba(255,255,255,0.2); padding: 18px; border-radius: 8px;">
-                            <div style="font-size: 14px; opacity: 0.9;">Chemical B — Hydrochloric acid (HCl)</div>
-                            <div style="font-size: 30px; font-weight: 700; margin-top: 6px;"><span id="skidChemB_lh">0.00</span> <span style="font-size:16px;font-weight:600;opacity:0.85;">L/h</span></div>
-                            <div style="font-size: 14px; opacity: 0.9; margin-top: 4px;">pump ≈ <b><span id="skidChemB_mlmin">0</span> mL/min</b></div>
-                            <div style="font-size: 13px; opacity: 0.9; margin-top: 8px;"><span id="skidChemB_Lday">0</span> L/day · <span id="skidChemB_kgday">0</span> kg/day (100% HCl)</div>
-                        </div>
-                    </div>
-                    <div style="margin-top: 15px; padding: 12px; background: rgba(255,255,255,0.15); border-radius: 8px; font-size: 12.5px; line-height: 1.5;">⚠ Stoichiometric estimate (5 NaClO₂ + 4 HCl → 4 ClO₂ ≈ 1,68 kg NaClO₂ and 0,54 kg HCl per kg ClO₂); chlorite is scaled by the ClO₂ yield and acid by your × factor. <b>Confirm against your generator's data sheet before setting the pumps — HCl is a hazardous acid.</b></div>
                 </div>
 
                 <div style="margin-top: 20px; padding: 20px; background: linear-gradient(135deg, #3AAEDB 0%, #4f4f4f 100%); border-radius: 10px; color: white;">
@@ -4293,35 +4322,6 @@
             document.getElementById('skidLday').textContent  = lday.toLocaleString(undefined,  { maximumFractionDigits: 2 });
             document.getElementById('skidLweek').textContent = lweek.toLocaleString(undefined, { maximumFractionDigits: 2 });
 
-            // --- Feed chemical consumption: 2-chemical acid process ---
-            // 5 NaClO2 + 4 HCl -> 4 ClO2 + 5 NaCl + 2 H2O  (Nalco Ch.24 / acid process)
-            const M_NaClO2 = 90.44, M_HCl = 36.46, M_ClO2 = 67.45;
-            const STO_A = (5 * M_NaClO2) / (4 * M_ClO2);   // 1.676 kg NaClO2(100%) per kg ClO2
-            const STO_B = (4 * M_HCl)    / (4 * M_ClO2);   // 0.541 kg HCl(100%)   per kg ClO2
-            const chlStr   = parseFloat(document.getElementById('skidChlStr').value)   || 0;
-            const chlDens  = parseFloat(document.getElementById('skidChlDens').value)  || 0;
-            const acidStr  = parseFloat(document.getElementById('skidAcidStr').value)  || 0;
-            const acidDens = parseFloat(document.getElementById('skidAcidDens').value) || 0;
-            const yld      = parseFloat(document.getElementById('skidYield').value)    || 0;
-            const acidX    = parseFloat(document.getElementById('skidAcidX').value)    || 0;
-            const clo2kgday = (flow * dose * hours) / 1e6;   // kg ClO2 produced per day (flow L/h × dose mg/L × h)
-            const setSkidChem = (prefix, sto, str, dens, adj) => {
-                let kg100 = 0, Lday = 0, lhr = 0, mlmin = 0;
-                if (clo2kgday > 0 && str > 0 && dens > 0 && adj > 0) {
-                    kg100 = clo2kgday * sto * adj;           // kg of 100% chemical per day
-                    Lday  = (kg100 / (str / 100)) / dens;    // L of commercial solution per day
-                    lhr   = hours > 0 ? Lday / hours : 0;    // L/h — the feed-pump flow rate
-                    mlmin = lhr * 1000 / 60;                 // mL/min — pump calibration setpoint
-                }
-                const f = (v, dp) => v.toLocaleString(undefined, { maximumFractionDigits: dp });
-                document.getElementById(prefix + '_lh').textContent    = f(lhr, 3);
-                document.getElementById(prefix + '_mlmin').textContent = f(mlmin, 1);
-                document.getElementById(prefix + '_Lday').textContent  = f(Lday, 2);
-                document.getElementById(prefix + '_kgday').textContent = f(kg100, 2);
-            };
-            setSkidChem('skidChemA', STO_A, chlStr, chlDens, yld > 0 ? 100 / yld : 0);  // chlorite scaled up by 1/yield
-            setSkidChem('skidChemB', STO_B, acidStr, acidDens, acidX);                   // acid × stoichiometric factor
-
             // Pick smallest skid whose max plant flow covers the user's plant flow
             const skid = CLO2_SKIDS.find(s => flow <= s.maxFlow);
             const tankEl   = document.getElementById('skidTank');
@@ -4369,15 +4369,6 @@
             noteEl.textContent = warn.join('  ');
         }
 
-        // Fill the feed-chemical strength/density fields from a system preset.
-        function onSkidChemPreset() {
-            const v = document.getElementById('skidChemPreset').value;
-            const set = (id, val) => { const el = document.getElementById(id); if (el) el.value = val; };
-            if (v === 'conc') { set('skidChlStr', 25); set('skidChlDens', 1.22); set('skidAcidStr', 33); set('skidAcidDens', 1.163); }
-            else if (v === 'dilute') { set('skidChlStr', 7.5); set('skidChlDens', 1.05); set('skidAcidStr', 9); set('skidAcidDens', 1.043); }
-            // 'custom' leaves the fields exactly as the operator set them
-        }
-
         // ClO2 Calculator
         function calculateClO2() {
             const treatmentSize = 1000000; // litres in 1 Megaliter
@@ -4391,6 +4382,59 @@
             const clo2Monthly = clo2Daily * 30;
             document.getElementById('clo2Daily').textContent = clo2Daily.toLocaleString(undefined, {maximumFractionDigits: 2});
             document.getElementById('clo2Monthly').textContent = clo2Monthly.toLocaleString(undefined, {maximumFractionDigits: 2});
+
+            // ── On-site generator feed chemicals (acid process) ──────────────
+            // 5 NaClO2 + 4 HCl -> 4 ClO2 + 5 NaCl + 2 H2O
+            //   kg NaClO2 (100%) per kg ClO2 = (5*90.44)/(4*67.45) = 1.6761
+            //   kg HCl    (100%) per kg ClO2 = (4*36.46)/(4*67.45) = 0.5406
+            const STO_A = 1.6761, STO_B = 0.5406;
+            const clo2Active = mld * targetPpm;                       // kg active ClO2 / day (mg/L × MLD)
+            const hours  = parseFloat(document.getElementById('clo2Hours').value) || 24;
+            const naStr  = (parseFloat(document.getElementById('clo2NaStr').value)  || 0) / 100;
+            const naDen  =  parseFloat(document.getElementById('clo2NaDen').value)  || 0;
+            const hclStr = (parseFloat(document.getElementById('clo2HclStr').value) || 0) / 100;
+            const hclDen =  parseFloat(document.getElementById('clo2HclDen').value) || 0;
+            const yieldF = (parseFloat(document.getElementById('clo2Yield').value)  || 100) / 100;
+            const acidX  =  parseFloat(document.getElementById('clo2AcidX').value)  || 1;
+
+            // Chem A — sodium chlorite (more chlorite is needed at lower yield)
+            const aPure = yieldF > 0 ? clo2Active * STO_A / yieldF : 0;   // kg 100% NaClO2 / day
+            const aSupp = naStr  > 0 ? aPure / naStr : 0;                 // kg as-supplied solution / day
+            const aL    = naDen  > 0 ? aSupp / naDen : 0;                 // L / day
+            const aLh   = hours  > 0 ? aL / hours : 0;                    // pump L / h
+            const aMl   = hours  > 0 ? aL * 1000 / (hours * 60) : 0;      // pump mL / min
+
+            // Chem B — hydrochloric acid (acidX = feed ratio to stoichiometric)
+            const bPure = clo2Active * STO_B * acidX;                     // kg 100% HCl / day
+            const bSupp = hclStr > 0 ? bPure / hclStr : 0;
+            const bL    = hclDen > 0 ? bSupp / hclDen : 0;
+            const bLh   = hours  > 0 ? bL / hours : 0;
+            const bMl   = hours  > 0 ? bL * 1000 / (hours * 60) : 0;
+
+            const f2 = n => (isFinite(n) ? n : 0).toLocaleString(undefined, { maximumFractionDigits: 2 });
+            document.getElementById('clo2Active').textContent  = f2(clo2Active);
+            document.getElementById('clo2AkgDay').textContent  = f2(aSupp);
+            document.getElementById('clo2ALday').textContent   = f2(aL);
+            document.getElementById('clo2ALh').textContent     = f2(aLh);
+            document.getElementById('clo2AmlMin').textContent  = f2(aMl);
+            document.getElementById('clo2BkgDay').textContent  = f2(bSupp);
+            document.getElementById('clo2BLday').textContent   = f2(bL);
+            document.getElementById('clo2BLh').textContent     = f2(bLh);
+            document.getElementById('clo2BmlMin').textContent  = f2(bMl);
+        }
+
+        // ClO2 feed-chemical presets
+        function onClo2ChemPreset() {
+            const p = document.getElementById('clo2ChemPreset').value;
+            const set = (id, v) => { document.getElementById(id).value = v; };
+            if (p === 'conc')   { set('clo2NaStr', 25);  set('clo2NaDen', 1.21); set('clo2HclStr', 33); set('clo2HclDen', 1.16); }
+            else if (p === 'dilute') { set('clo2NaStr', 7.5); set('clo2NaDen', 1.06); set('clo2HclStr', 9);  set('clo2HclDen', 1.045); }
+            calculateClO2();
+        }
+        // Editing a strength/density by hand switches the preset to Custom
+        function onClo2ChemCustom() {
+            document.getElementById('clo2ChemPreset').value = 'custom';
+            calculateClO2();
         }
 
         // Coagulants Calculator
@@ -4860,20 +4904,43 @@
             clo2: {
                 label: 'Chlorine Dioxide (ClO₂) Dosage',
                 collect: function () {
-                    const mld  = parseFloat(document.getElementById('mldInputClO2').value);
-                    const ppm  = parseFloat(document.getElementById('clo2Ppm').value);
-                    const day  = document.getElementById('clo2Daily').textContent;
-                    const mth  = document.getElementById('clo2Monthly').textContent;
+                    const mld   = parseFloat(document.getElementById('mldInputClO2').value);
+                    const ppm   = parseFloat(document.getElementById('clo2Ppm').value);
+                    const day   = document.getElementById('clo2Daily').textContent;
+                    const mth   = document.getElementById('clo2Monthly').textContent;
+                    const hours = document.getElementById('clo2Hours').value;
+                    const preset = document.getElementById('clo2ChemPreset');
+                    const presetTxt = preset.options[preset.selectedIndex].text;
+                    const naStr = document.getElementById('clo2NaStr').value;
+                    const hclStr = document.getElementById('clo2HclStr').value;
+                    const active = document.getElementById('clo2Active').textContent;
+                    const aKg = document.getElementById('clo2AkgDay').textContent;
+                    const aL  = document.getElementById('clo2ALday').textContent;
+                    const aLh = document.getElementById('clo2ALh').textContent;
+                    const aMl = document.getElementById('clo2AmlMin').textContent;
+                    const bKg = document.getElementById('clo2BkgDay').textContent;
+                    const bL  = document.getElementById('clo2BLday').textContent;
+                    const bLh = document.getElementById('clo2BLh').textContent;
+                    const bMl = document.getElementById('clo2BmlMin').textContent;
                     return {
                         inputs: [
-                            { label: 'Plant Size',  value: mld + ' MLD' },
-                            { label: 'Target ClO2', value: ppm + ' ppm' }
+                            { label: 'Plant Size',      value: mld + ' MLD' },
+                            { label: 'Target ClO2',     value: ppm + ' ppm' },
+                            { label: 'Operating Hours', value: hours + ' h/day' },
+                            { label: 'Feed System',     value: presetTxt },
+                            { label: 'NaClO₂ Strength', value: naStr + ' %' },
+                            { label: 'HCl Strength',    value: hclStr + ' %' }
                         ],
                         results: [
-                            { label: 'Daily Requirement',   value: day + ' Kg/Day' },
-                            { label: 'Monthly Requirement', value: mth + ' Kg/Month' }
+                            { label: 'Daily Requirement',      value: day + ' Kg/Day' },
+                            { label: 'Monthly Requirement',    value: mth + ' Kg/Month' },
+                            { label: 'Active ClO₂ Generated',  value: active + ' kg/day' },
+                            { label: 'Chem A NaClO₂ Use',      value: aKg + ' kg/day · ' + aL + ' L/day' },
+                            { label: 'Chem A Pump',            value: aLh + ' L/h · ' + aMl + ' mL/min' },
+                            { label: 'Chem B HCl Use',         value: bKg + ' kg/day · ' + bL + ' L/day' },
+                            { label: 'Chem B Pump',            value: bLh + ' L/h · ' + bMl + ' mL/min' }
                         ],
-                        summary: mld + ' MLD · ' + ppm + ' ppm → ' + day + ' Kg/Day'
+                        summary: mld + ' MLD · ' + ppm + ' ppm → ' + day + ' Kg/Day · NaClO₂ ' + aL + ' L/day, HCl ' + bL + ' L/day'
                     };
                 }
             },
@@ -4924,10 +4991,6 @@
                     const pump   = document.getElementById('skidPump').textContent;
                     const press  = document.getElementById('skidPressure').textContent;
                     const refill = document.getElementById('skidRefill').textContent;
-                    const chemA   = document.getElementById('skidChemA_lh').textContent;
-                    const chemAml = document.getElementById('skidChemA_mlmin').textContent;
-                    const chemB   = document.getElementById('skidChemB_lh').textContent;
-                    const chemBml = document.getElementById('skidChemB_mlmin').textContent;
                     return {
                         inputs: [
                             { label: 'Application',       value: appTxt },
@@ -4942,9 +5005,7 @@
                             { label: 'Weekly Consumption',   value: lweek + ' L/week' },
                             { label: 'Recommended Tank',     value: tank + ' (' + mxf + ')' },
                             { label: 'Recommended Pump',     value: pump + ' — ' + press },
-                            { label: 'Refill Interval',      value: refill },
-                            { label: 'NaClO₂ (Chem A) pump', value: chemA + ' L/h · ' + chemAml + ' mL/min' },
-                            { label: 'HCl (Chem B) pump',    value: chemB + ' L/h · ' + chemBml + ' mL/min' }
+                            { label: 'Refill Interval',      value: refill }
                         ],
                         summary: appTxt + ' · ' + flow + ' L/h · ' + dose + ' ppm → ' + lh + ' L/h · ' + tank + ' tank'
                     };
