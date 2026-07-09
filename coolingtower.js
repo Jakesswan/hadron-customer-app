@@ -23,11 +23,15 @@
   'use strict';
 
   /* ============================================================
-     PALETTE — THG brand (per project brief)
+     PALETTE — Hadron ERP theme (matches the rest of the Customer App).
+     NOTE (keep this): every colour in this tool must stay on the app's ERP design
+     palette — teal #3AAEDB, dark #2e3742, gold #f5a623, green #157b3a, red #c0392b.
+     Do NOT introduce off-scheme brand hexes; future changes must stay consistent
+     with the rest of the app so the whole product reads as one system.
      ============================================================ */
-  var THG = {
-    charcoal: '#3D3D3D', teal: '#4AABB8', gold: '#E8A020',
-    ok: '#2e9e5b', watch: '#E8A020', action: '#c0392b'
+  var PAL = {
+    charcoal: '#2e3742', teal: '#3AAEDB', gold: '#f5a623',
+    ok: '#157b3a', watch: '#f5a623', action: '#c0392b'
   };
 
   /* Shared Langelier pHs/LSI/RSI — SINGLE SOURCE OF TRUTH for this tool AND the LSI/RSI
@@ -312,13 +316,15 @@
   function injectStyles() {
     if (document.getElementById('ct-styles')) return;
     var css = '' +
-      '#ct_root{--ct-char:' + THG.charcoal + ';--ct-teal:' + THG.teal + ';--ct-gold:' + THG.gold + ';--ct-ok:' + THG.ok + ';--ct-watch:' + THG.watch + ';--ct-act:' + THG.action + ';}' +
+      '#ct_root{--ct-char:' + PAL.charcoal + ';--ct-teal:' + PAL.teal + ';--ct-gold:' + PAL.gold + ';--ct-ok:' + PAL.ok + ';--ct-watch:' + PAL.watch + ';--ct-act:' + PAL.action + ';}' +
       '#ct_root .ct-lead{font-size:13px;color:#6b7684;margin:0 0 12px;}' +
       '#ct_root .ct-toolbar{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:12px;}' +
       '#ct_root .ct-seg{display:inline-flex;border:1.5px solid var(--ct-teal);border-radius:10px;overflow:hidden;}' +
       '#ct_root .ct-seg button{border:0;background:#fff;color:var(--ct-teal);font-weight:700;padding:9px 16px;font-size:14px;cursor:pointer;}' +
       '#ct_root .ct-seg button.on{background:var(--ct-teal);color:#fff;}' +
       'body.dark #ct_root .ct-seg button{background:#0F172A;}' +
+      'body.dark #ct_root .ct-seg button.on{background:var(--ct-teal);color:#fff;}' +   /* keep active toggle teal in dark */
+      'body.dark #ct_root details.ct-sec[data-accent="gold"]{border-left-color:var(--ct-gold);}' +   /* keep gold headline accent in dark */
       '#ct_root details.ct-sec{border:1px solid #e3e9ee;border-left:4px solid var(--ct-teal);border-radius:12px;margin-bottom:12px;background:#fff;overflow:hidden;}' +
       'body.dark #ct_root details.ct-sec{background:#0F172A;border-color:#1A222F;border-left-color:var(--ct-teal);}' +
       '#ct_root details.ct-sec[data-accent="gold"]{border-left-color:var(--ct-gold);}' +
@@ -352,8 +358,8 @@
       'body.dark #ct_root .ct-fx code{color:#9fe6f0;}' +
       '#ct_root .ct-flag{border-radius:10px;padding:10px 12px;margin:8px 0;font-size:13px;line-height:1.5;}' +
       '#ct_root .ct-flag.red{background:rgba(192,57,43,.10);border:1px solid rgba(192,57,43,.4);color:#8e2419;}' +
-      '#ct_root .ct-flag.amber{background:rgba(232,160,32,.12);border:1px solid rgba(232,160,32,.5);color:#8a5a00;}' +
-      '#ct_root .ct-flag.info{background:rgba(74,171,184,.10);border:1px solid rgba(74,171,184,.4);color:#1f6f7a;}' +
+      '#ct_root .ct-flag.amber{background:rgba(245,166,35,.12);border:1px solid rgba(245,166,35,.5);color:#8a5a00;}' +
+      '#ct_root .ct-flag.info{background:rgba(58,174,219,.10);border:1px solid rgba(58,174,219,.4);color:#1f6f7a;}' +
       'body.dark #ct_root .ct-flag.info{color:#8fd3dd;} body.dark #ct_root .ct-flag.amber{color:#f0c674;} body.dark #ct_root .ct-flag.red{color:#f5b0a6;}' +
       '#ct_root .ct-chart{margin-top:10px;}' +
       '#ct_root .ct-bar{display:flex;align-items:center;gap:8px;margin:5px 0;font-size:12px;}' +
@@ -508,7 +514,7 @@
       '<li><b>Start with the ion balance.</b> Enter make-up and tower concentrations for whatever the lab gave you. Equal cycles = balanced. A red flag = probable CaCO₃ scaling.</li>' +
       '<li><b>Water balance:</b> enter recirculation, temperatures (or ΔT) and target cycles. Prefer a <b>measured</b> make-up/blowdown or a chemistry tracer over the evaporation rule-of-thumb.</li>' +
       '<li>Every result has a <b>Show formula</b> link with its Nalco equation number and the constants used.</li>' +
-      '<li>Colours: <span style="color:' + THG.ok + ';font-weight:700;">green</span> OK · <span style="color:' + THG.watch + ';font-weight:700;">amber</span> watch · <span style="color:' + THG.action + ';font-weight:700;">red</span> action.</li>' +
+      '<li>Colours: <span style="color:' + PAL.ok + ';font-weight:700;">green</span> OK · <span style="color:' + PAL.watch + ';font-weight:700;">amber</span> watch · <span style="color:' + PAL.action + ';font-weight:700;">red</span> action.</li>' +
       '<li><b>Save reading</b> stores it on this device (works offline); <b>Copy as text</b> gives a summary to paste into WhatsApp or email.</li>' +
       '<li>Adjust coefficients under <b>⚙ Settings</b> — they persist on this device.</li>' +
       '</ol><p class="ct-note">This tool flags risk; it does not certify safety. Confirm against your water-treatment programme.</p></div>';
@@ -540,7 +546,7 @@
       ib.rows.forEach(function (r) {
         if (!isN(r.cr)) return;
         var dev = ib.median ? Math.abs(r.cr - ib.median) / ib.median : 0;
-        var col = dev > S.ionDevPct / 100 ? (r.cr < ib.median ? THG.action : THG.gold) : THG.teal;
+        var col = dev > S.ionDevPct / 100 ? (r.cr < ib.median ? PAL.action : PAL.gold) : PAL.teal;
         var w = Math.max(3, Math.round(r.cr / maxCr * 100));
         var medLeft = ib.median ? Math.round(ib.median / maxCr * 100) : 0;
         ionOut += '<div class="ct-bar"><span class="lab">' + r.label + '</span><span class="track"><span class="fill" style="width:' + w + '%;background:' + col + ';"></span><span class="med" style="left:' + medLeft + '%;"></span></span><span class="val">' + r.cr.toFixed(1) + '×</span></div>';
