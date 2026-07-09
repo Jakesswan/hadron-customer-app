@@ -3904,6 +3904,144 @@ Every test result, every dose change, every cleaning event logged in LIMS / Serv
 
 _Source: Nalco Water Handbook Ch 18; Hadron Service Report; Hadron Calibration module._`,
 
+  /* ───── COOL-202 — Cooling System Dynamics ───── */
+
+  'c-cool-202/m1': `## Once-through systems
+In a **once-through** system, water is drawn from a source, passed through the heat exchangers once, and returned to the source. Nothing concentrates, because nothing is evaporated — but the **volumes are enormous**, so the character of the source water dominates the problems you see.
+
+The two sources behave differently. **Groundwater** has had a very long contact time with the minerals surrounding it, so it generally carries **higher dissolved minerals** than surface water in the same locality. **Surface water** is lower in dissolved minerals but brings suspended solids, organics and biological life.
+
+## Closed recirculating systems
+A **closed** system recirculates the same water with **no evaporation** and effectively no makeup. Because water is not lost, dissolved solids do not concentrate, and a high-quality fill water can be treated once and held. The concerns are corrosion, contamination and leaks — not cycles.
+
+## Open recirculating systems and cooling lakes
+The **open recirculating** system — the cooling tower — is where this course lives. Water is cooled by **evaporating a fraction of it**. The vapour leaves pure; every dissolved solid it left behind stays in the circulating water. Concentration is therefore **inevitable**, and if nothing were removed the water would concentrate to brine, causing massive scale and corrosion. Controlled **blowdown** is what prevents that.
+
+A **cooling lake or pond** is a hybrid. Its volume is so large that the condenser water is treated like a once-through system, yet the lake does recycle, with makeup from a river and often **no blowdown other than seepage**. Salts concentrate slowly, more in summer than winter. Its chemistry drifts too: as bicarbonate dissociates and **CO₂ is lost to the atmosphere**, pH climbs; during daylight **algae consume CO₂ by photosynthesis**, pushing pH higher still, while bacterial respiration returns some CO₂ at night. The result is a **diurnal pH cycle** that can rise far enough for calcium carbonate scale to form.
+
+_Source: The Nalco Water Handbook, 3rd ed., Ch.14 — Cooling System Dynamics (system types, Table 14.1)._`,
+
+  'c-cool-202/m2': `## Recirculation rate and the range
+**Recirculation rate (R)** is the flow being pumped around the entire cooling loop. Do not take it from the **pump nameplate**: throttling valves, pipe restrictions and head pressure mean actual flow is **seldom more than nameplate and frequently 10–20% less**. A **pump curve** — measuring the pressure increase across the pump and reading flow from the manufacturer’s curve — is far more accurate. The most accurate method of all is a **tracer diagnostic study**.
+
+The **range** (ΔT) is the temperature drop across the tower:
+\`ΔT = T1 − T2\`  (Eq. 14.7)
+where T₁ is the hot return water and T₂ the cold basin water. The range feeds directly into the evaporation calculation.
+
+## Approach temperature and tower performance
+The **approach** is the difference between the **cold basin water temperature and the ambient wet-bulb temperature**. It is the measure of how well the tower is doing its job — the closer the cold water comes to the wet bulb, the better the tower.
+
+For economic reasons, water cooling towers are designed for an approach of **3–6 °C (5–10 °F)**. A widening approach over time means fouled fill, poor air flow, or a distribution problem. Note that a water tower works against the **wet-bulb** temperature, whereas a **dry** cooling tower works against the **dry-bulb**.
+
+## Calculating the evaporation rate
+Evaporation is the water lost to atmosphere in cooling. It depends on the amount of water cooled, the heat load, and the ambient air:
+
+\`E = f × R × ΔT × Cp ÷ λ\`  (Eq. 14.8)
+
+where **Cp** = 4,1868 kJ/(kg·°C) and **λ** (latent heat of evaporation) ≈ 2300 kJ/kg at normal temperature and pressure.
+
+**f** is the **evaporation factor** — the decimal fraction of heat rejection that occurs by evaporation. If every joule left as latent heat, f = 1. But **sensible heat loss always occurs**, and can be as much as **20%** of the system heat loss. Ambient conditions matter too: **low air temperature reduces** evaporation, **high air temperature increases** it, **low humidity increases** it and **high humidity decreases** it. In extreme cases f falls as low as **0,5**.
+
+The working rule of thumb is **f = 0,85** — 85% of heat rejection is evaporative. This is an **approximation only**, with real error at low ambient temperature or at the humidity extremes. Where you have a **measured makeup or blowdown rate** and the cycles, calculating from those is better.
+
+_Source: The Nalco Water Handbook, 3rd ed., Ch.14, Eqs. 14.7–14.8._`,
+
+  'c-cool-202/m3': `## Two ways to calculate cycles
+**Cycles of concentration** — also called the **concentration ratio (CR)** — is how many times the dissolved solids in the tower have concentrated above the makeup. There are two routes.
+
+**From chemistry (preferred).** Divide the concentration of any conservative ion in the recirculating water by its concentration in the makeup:
+\`CR = C_recirc ÷ C_makeup\`  (Eq. 14.9)
+Conductivity, calcium, magnesium, chloride and sodium are all usable. A water analysis is easy to obtain, which is why this is the everyday method.
+
+**From flows.** If flows are accurately known:
+\`CR = MU ÷ BD\`  (Eq. 14.10)
+In practice flows are often unmetered or the meters are out of calibration, so this is the weaker route.
+
+## The economics of cycling up
+Cycling up saves water and chemical, but with **diminishing returns**. As CR rises from **1 to about 6**, the makeup demand drops **steeply**. Above about **6 cycles**, the further reduction in makeup is **small**.
+
+There is a hard floor: **the lower limit for the makeup rate is the evaporation rate**. No matter how high you cycle, you must always replace what evaporates. That single fact bounds every water-saving claim anyone makes about a tower.
+
+## Makeup and blowdown
+**Makeup (MU)** replaces everything lost. Three equivalent expressions:
+\`MU = BD + E\`  (Eq. 14.11)
+\`MU = CR × BD\`  (Eq. 14.12)
+\`MU = E × CR ÷ (CR − 1)\`  (Eq. 14.13)
+
+**Blowdown (BD)** is the concentrated water leaving the system. Related to the other variables:
+\`BD = MU − E\`  (Eq. 14.15)
+\`BD = MU ÷ CR\`  (Eq. 14.16)
+\`BD = E ÷ (CR − 1)\`  (Eq. 14.17)
+
+Equation 14.17 is the one an operator reaches for: knowing the evaporation and the cycles you want to hold, it gives the blowdown required. Use the **coolingtower** tool to compute these together.
+
+_Source: The Nalco Water Handbook, 3rd ed., Ch.14, Eqs. 14.9–14.17, Fig. 14.27._`,
+
+  'c-cool-202/m4': `## Drift and what total blowdown contains
+**Total blowdown is not just the valve you open.** It is every route by which concentrated water leaves:
+
+\`BD = BDᴄ + D + L\`  (Eq. 14.14)
+
+- **BDᴄ** is the **controlled blowdown**, calculated to remove solids at the same rate the makeup introduces them.
+- **D** is **drift**.
+- **L** is **leakage**.
+
+So the blowdown the operator actually valves is **BDᴄ = BD − D − L**. Confusing total with controlled blowdown is one of the commonest errors on a tower.
+
+**Drift** is the fine droplets of water carried out of the tower through the **drift eliminators** in the plenum. Unlike evaporated vapour, drift is **liquid water carrying dissolved solids** — and any organisms in the water. Modern eliminators have improved from 0,005–0,02% down to as low as **0,0005%** of recirculation; the figure is usually in the tower specification. Where the specification cannot be found:
+\`D = 0,0001 × R\`  (Eq. 14.18) — an approximation of **0,01% of R**.
+
+## Leakage and its limit on cycles
+**Leakage (L)** is circulating water lost through pump or valve leaks, once-through cooling of pump glands, compressor jackets or bearings, or simply because someone uses the cooling line to wash a floor. It is sometimes deliberate, usually accidental.
+
+Leakage is corrosive to good practice. In some plants, **large miscellaneous usage of recirculating cooling water prevents operation above a concentration ratio of 1,2 to 1,5**. That severely limits economical chemical treatment and prevents effective water conservation. Finding and stopping leakage is often the cheapest water saving available.
+
+## System volume, time per cycle and holding time index
+**Holding volume (V)** is mostly the basin. Approximate it as the basin volume plus **20–30%** for pipes and equipment, adding more for open box condensers, jacketed vessels or holding tanks. Because systems vary, **this estimate can be very inaccurate** — a tracer study gives volume, blowdown and holding time index together.
+
+**Time per cycle** is the time for water to make one trip around the loop:
+\`t = V ÷ R\`  (Eq. 14.19)
+
+**Holding time index (HTI)** is the time for any ion to dilute to **50% of its original concentration** — the **half-life** of a chemical added to the system:
+\`HTI = 0,693 × V ÷ BD\`  (Eq. 14.20)
+
+HTI governs treatment. A long HTI means a slug-dosed biocide or inhibitor **persists far longer** than the operator expects; a short one means it is flushed away before it acts.
+
+_Source: The Nalco Water Handbook, 3rd ed., Ch.14, Eqs. 14.14, 14.18–14.20._`,
+
+  'c-cool-202/m5': `## Reading cycles ion by ion
+Here is the diagnostic that separates a technician from an operator. Calculate the concentration ratio **for several individual ions**, not just conductivity. In an ideal system, **the CR of every ion is the same** — calcium, magnesium, chloride, sodium, alkalinity all concentrate together.
+
+**Unequal cycles mean something is leaving the water.** If the CR for **calcium and alkalinity are more than 10% below the CR for magnesium**, then **calcium carbonate is probably precipitating** in the cooling system — scaling that no single conductivity reading would have revealed.
+
+Before blaming scale, check the chemical feeds, because dosing skews cycles too:
+- **sulfate CR raised** by sulfuric acid dosing, or by SO₂ in the plant atmosphere;
+- **alkalinity CR depressed**, because acid destroys alkalinity;
+- **chloride CR raised** by chlorination.
+
+Used this way, the ion balance is an early-warning instrument.
+
+## Worked example: a full water balance
+A tower runs at **R = 500 m³/h**, hot return **38 °C**, cold basin **30 °C**, system volume **V = 300 m³**, target **CR = 5**, negligible leakage. Work it with the **coolingtower** tool.
+
+- Range: \`ΔT = 38 − 30 = 8 °C\`
+- Evaporation (f = 0,85): \`E = 0,85 × 500 × 8 × 4,1868 ÷ 2300 = 6,19 m³/h\`
+- Total blowdown: \`BD = E ÷ (CR − 1) = 6,19 ÷ 4 = 1,55 m³/h\`
+- Makeup: \`MU = BD + E = 7,74 m³/h\`  — cross-check with Eq. 14.13: \`6,19 × 5 ÷ 4 = 7,74\` ✓
+- Drift: \`D = 0,0001 × 500 = 0,05 m³/h\`
+- Controlled blowdown: \`BDᴄ = 1,55 − 0,05 = 1,50 m³/h\`
+- Time per cycle: \`t = 300 ÷ 500 = 0,6 h\`
+- Holding time index: \`HTI = 0,693 × 300 ÷ 1,55 = 134 h\`
+
+**Sanity-checks:** evaporation is 1,2% of recirculation — about right for an 8 °C range. Makeup (7,74) exceeds evaporation (6,19), as it always must. And an HTI of 134 hours means a chemical dosed today is still at half strength in five and a half days — plan the biocide schedule accordingly.
+
+## Ambient air and other tower problems
+A cooling tower **scrubs the air** it pulls through, handling roughly **900–1800 m³ of air per cubic metre of water**. Whatever is in that air ends up in the water.
+
+In arid regions and dust-storm areas, or in plants with dirt roads, open ore, coal, lime or limestone storage, the airborne solids are **as damaging as silt** and demand **side-stream filtration**. Lime and limestone dust can **dramatically upset a scale control programme**. Acidic or alkaline gases in the plant atmosphere shift tower pH and alkalinity, and will show up in your ion balance long before anyone connects it to the air.
+
+_Source: The Nalco Water Handbook, 3rd ed., Ch.14 — concentration ratio (Table 14.3), ambient air effects._`,
+
   /* ───── COOL-301 — Optimisation & Cycle Management ───── */
 
   'c-cool-301/m1': `## How far can you push cycles?
