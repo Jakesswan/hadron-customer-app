@@ -4,7 +4,7 @@
 > Project so it can (1) judge NEW vs DEEPENING + flag overlap, and (2) pick the next
 > free id/code in a track. Code convention: **1xx = Foundation, 2xx = Intermediate, 3xx = Advanced**.
 
-**45 courses across 10 tracks.**
+**46 courses across 10 tracks.**
 
 ## Potable Water  `track-potable`
 _Drinking water treatment from source to tap_
@@ -122,18 +122,22 @@ Codes used (EFF-): 101, 201, 202, 203, 301
 ## Cooling Water  `track-cooling`
 _Cooling towers & closed-loop systems_
 
-Codes used (COOL-): 101, 201, 301
+Codes used (COOL-): 101, 201, 202, 301
 
 - **COOL-101** `c-cool-101` - Cooling Tower Fundamentals _(Foundation, 3 hrs, 4 modules)_
   - tools: coolingtower, waterindex
   - modules: m1 How a cooling tower works | m2 The mass balance | m3 Why cycles matter | m4 Plant walk
 - **COOL-201** `c-cool-201` - Scale, Corrosion & Biofouling Control _(Intermediate, 5 hrs, 4 modules)_
   - prereqs: c-cool-101, c-pot-101
-  - tools: coolingtower, waterindex, dosage, lims
+  - tools: coolingtower, dosage, converters
   - modules: m1 Scale chemistry & control | m2 Corrosion control | m3 Microbiological control | m4 On-site testing & dosing
+- **COOL-202** `c-cool-202` - Cooling System Dynamics: Water Balance, Cycles & Control _(Intermediate, 4 hrs, 6 modules, has quiz)_
+  - prereqs: c-cool-201
+  - tools: coolingtower, converters, dosage
+  - modules: m1 The three cooling system types | m2 The tower variables: range, approach & evaporation | m3 Cycles of concentration | m4 Drift, leakage, volume & holding time | m5 The ion balance & a full worked example | m6 Knowledge check
 - **COOL-301** `c-cool-301` - Optimisation & Cycle Management _(Advanced, 3 hrs, 4 modules)_
   - prereqs: c-cool-201
-  - tools: coolingtower, rocalc, waterindex
+  - tools: coolingtower, waterindex, lims
   - modules: m1 Pushing cycles up | m2 Side-stream filtration | m3 Blowdown reuse | m4 Chemical programme audit
 
 ## Boiler Water  `track-boiler`
@@ -147,11 +151,11 @@ Codes used (BOIL-): 101, 201, 301
   - modules: m1 The four enemies | m2 Limits by pressure | m3 Sampling boiler water
 - **BOIL-201** `c-boil-201` - Pretreatment, Internal Treatment & Steam _(Intermediate, 5 hrs, 4 modules)_
   - prereqs: c-boil-101
-  - tools: rocalc, dosage, converters
+  - tools: boiler, dosage, converters
   - modules: m1 External pretreatment | m2 Internal treatment | m3 Deaeration & oxygen scavengers | m4 Steam, condensate & amines
 - **BOIL-301** `c-boil-301` - Layup, Cleaning & Failure Analysis _(Advanced, 3 hrs, 3 modules)_
   - prereqs: c-boil-201
-  - tools: neutralise
+  - tools: boiler, lims, converters
   - modules: m1 Layup | m2 Off-line cleaning | m3 Deposit analysis & failures
 
 ## Reverse Osmosis  `track-ro`
