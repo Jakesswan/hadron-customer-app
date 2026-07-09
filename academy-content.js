@@ -4230,6 +4230,161 @@ Red flags: corrosion rate creeping up, biofouling cleaning interval shortening, 
 
 _Source: Nalco Water Handbook Ch 18; AWT — Cooling Water Audit Standard._`,
 
+  /* ───── COOL-302 — Cooling System Deposition & Corrosion ───── */
+
+  'c-cool-302/m1': `## Nucleation and crystal growth
+Scale begins when dissolved ions cluster into a stable particle larger than a critical size — **nucleation**, the beginning of a fixed **crystal lattice**. Whether growth continues depends on:
+- **degree of supersaturation**
+- **temperature**
+- **pH** of the water
+- presence of **impurities or seed crystals**
+- concentration of **dissolved CO₂** (which affects calcium carbonate nucleation)
+- **flow velocity**
+
+Once past critical size, crystals grow **outward in layers** called **terraces**, each only one molecule thick, with new seed clusters forming **steps** along the edges. Growth continues as molecules adsorb onto those steps.
+
+This matters practically: **scale inhibitors act either on the formation of the initial molecule clusters, or on the growing crystal steps**. Knowing which mechanism a product uses tells you when in the process it must be present.
+
+If precipitation is **rapid**, molecules adsorb in any orientation and the result is an **amorphous** deposit rather than a defined lattice. The form that grows depends on the mineral, supersaturation, pH, temperature, impurities and the inhibitors present.
+
+## Kinetics versus thermodynamics
+A solution seeks the lowest energy state, and a solid scale is often lower in energy than the dissolved ions — that is the **thermodynamic** case for scaling. But some minerals form **very slowly** even when energetically favoured. That is the **kinetic** aspect.
+
+The classic illustration: **quartz has a much lower solubility than amorphous silica, yet quartz will never occur in a cooling system** because its rate of formation is so slow. The distinction is not academic. It is the basis of the whole control strategy: **manage system conditions to minimise the thermodynamic driving force, and use inhibitors to slow the kinetic rate** of formation and growth.
+
+## Ageing, adherence and the corrosion link
+Scale that precipitates rapidly forms a relatively **porous structure, easily removed with little mechanical effort**. But **ageing changes it**: through dissolution, redeposition and regrowth, scale **hardens and becomes denser**. Older deposits are **more adherent and difficult to remove**, and **ageing is accelerated on heat transfer surfaces**.
+
+Adherence is governed chiefly by **surface roughness**. Consequently **adherent scale forms more readily on corroding surfaces than on non-corroding ones**, and corrosion by-products mix into the forming scale, **increasing the adhesion of the mixture**. Easily corroded metals accumulate **significantly more deposit** than metals that do not corrode.
+
+This is the coupling at the heart of the course: **corrosion breeds deposits, and deposits breed corrosion.** They cannot be managed separately.
+
+_Source: The Nalco Water Handbook, 3rd ed., Ch.15 — Cooling Water Deposition (nucleation, crystal growth, phase transitions, adherence)._`,
+
+  'c-cool-302/m2': `## Concentration, pH and CO₂ stripping
+Evaporation concentrates sparingly soluble compounds — that is what a tower does. Layered on top of it, **pH has a significant effect**: as pH rises, so does the scaling potential of most common cooling water scales, including **calcium carbonate, calcium and zinc phosphates, zinc hydroxide and magnesium silicate**.
+
+The tower drives its own pH up. Air–water contact **strips CO₂ from carbonate-buffered water**, raising pH and shifting the balance of **bicarbonate (HCO₃⁻) toward carbonate (CO₃²⁻)**. If **concentration ratio and pH are not controlled**, this shift alone can produce scale.
+
+Low pH is no refuge either: **low pH excursions accelerate corrosion**, producing soluble corrosion products that then promote scale formation.
+
+The other drivers to watch:
+- **Process leakage** — causes fouling and raises pH, making scale-forming minerals less soluble.
+- **Corrosion control chemicals** — cathodic inhibitors such as **phosphate or zinc can themselves scale** when misapplied, precipitating calcium phosphate or zinc compounds.
+- **Water quality** — microbial growth and suspended solids increase deposition potential.
+- **Operational variability** — poor cycles control, changing makeup composition, poor inhibitor dosage.
+- **Inhibitor overdose** — **overdosing some inhibitors causes scale**.
+
+## Temperature and inverse solubility
+Most substances dissolve better when hot. Many cooling water scales do the opposite.
+
+- **Inversely soluble** minerals are **less soluble at high temperature**, so they precipitate **in the heat exchangers**.
+- **Directly soluble** minerals are less soluble when cold, so they precipitate **in the cooling tower fill**.
+
+Either way the consequence is a loss of efficiency — of **heat transfer** in the exchanger, or of **water and air flow** in the tower. Knowing which type of mineral you carry tells you **where to go looking**.
+
+It is the **skin temperature of the heat transfer surface**, not the bulk water temperature, that governs deposition of some minerals — which is why a fouled, hot-skinned exchanger fouls faster still.
+
+## Ionic strength, ion pairing and coprecipitation
+Three effects that the simple indices do not capture:
+
+**Ionic strength.** High TDS made up of ions that **do not precipitate** — sodium, potassium, chloride — **extends the solubility of some scaling salts such as calcium sulfate**. High-TDS systems benefit most. Conversely, **high suspended solids increase scale potential** by adding **nucleation sites**.
+
+**Ion pairing.** Certain ions form soluble pairs that **decrease** the deposition potential of other salts. Add magnesium chloride, and the solubility of Ca²⁺ **increases**, because more soluble **MgCO₃ and Mg(HCO₃)₂ ion pairs** form. The pairing is a weak association, but the effect is real — and it is the **opposite of the common ion effect**.
+
+**Coprecipitation.** An ordinarily soluble mineral is captured by a scale that is precipitating. **Silica precipitates with calcium carbonate, magnesium hydroxide, zinc hydroxide or ferric hydroxide** even when silica sits **below** the level at which SiO₂ precipitation would be expected. Phosphates likewise deposit on precipitating iron hydroxide floc.
+
+_Source: The Nalco Water Handbook, 3rd ed., Ch.15 — factors affecting scale formation, ionic strength, ion pairing, coprecipitation, effect of system pH._`,
+
+  'c-cool-302/m3': `## The Langelier and Ryznar indices
+A variety of empirical and theoretical indices have been used to predict the probability of mineral scale. The two classics both rest on **pHs**, the pH at which the water would be **saturated** with calcium carbonate.
+
+**Langelier Saturation Index:**
+\`LSI = pH − pHs\`  (Eq. 15.3)
+- **LSI > 0** → scaling
+- **LSI ≤ 0** → non-scaling
+
+**Ryznar Stability Index:**
+\`RSI = 2 × pHs − pH\`  (Eq. 15.4)
+- **RSI > 6,0** → corrosive
+- **RSI < 6,0** → scaling
+
+Note that pHs itself is obtained from the water analysis — calcium, alkalinity, total dissolved solids and temperature — and is normally reported by the laboratory or computed by the **waterindex** tool.
+
+## Worked example: when the indices disagree
+A cooling water is measured at **pH 8,3**, and the laboratory reports **pHs = 7,5**. Compute both.
+
+- \`LSI = 8,3 − 7,5 = +0,8\` → above zero → **scaling**
+- \`RSI = (2 × 7,5) − 8,3 = 15,0 − 8,3 = 6,7\` → above 6,0 → **corrosive**
+
+**The two indices contradict each other on the same water.** The arithmetic is correct in both cases; neither is a mistake. This is not a curiosity — it is the lesson. Treat each index as a **direction of travel**, not a verdict, and never make a treatment decision from an index alone.
+
+**Sanity-check:** both results depend entirely on pHs. Since pHs is derived only from calcium, alkalinity, TDS and temperature, both indices are blind to every other scaling species in the water.
+
+## Why indices mislead on cooling towers
+The Nalco Handbook is blunt about this: **simple indices are rules of thumb and should seldom be applied to cooling tower systems.** They are considered largely obsolete alongside modern computer models. The specific failings:
+
+- they **ignore or severely limit temperature effects**;
+- they **ignore or severely limit ionic strength effects** — so the calcium sulfate solubility gain in a high-TDS tower is invisible to them;
+- they **address only calcium carbonate**, and say nothing about calcium phosphate, zinc compounds, magnesium silicate or silica;
+- they **take no account of ion pairing**, the effect that raises calcium solubility in real water.
+
+Use them, by all means — they are cheap and quick, and they will tell you which way a water is leaning. But confirm against your water treatment programme, the exchanger inspections, and the ion balance from COOL-202 before you act.
+
+_Source: The Nalco Water Handbook, 3rd ed., Ch.15, Eqs. 15.3–15.4 and the stated limitations of scaling indices._`,
+
+  'c-cool-302/m4': `## The corrosion cell
+Corrosion is electrochemical. **Metal dissolves at the anode, and oxygen is reduced at the cathode**, with electrons flowing between them through the metal and ions through the water. The **anode gains a more positive potential by losing electrons**.
+
+Geometry decides the damage. When a **small anode** is coupled to a **large cathode**, all the current concentrates on a tiny area of metal, and a **deep pit** forms at the anode. A large anode and small cathode spreads the same current thinly as general wastage. This is why **localised attack is far more dangerous than uniform corrosion** at the same overall rate: the metal loss is concentrated where it can perforate a tube.
+
+## Carbon steel
+Mild or carbon steel is **one of the most economical materials** for cooling systems, and one of the **most easily corroded in oxygenated water**.
+
+Its behaviour is dominated by **pH and temperature**:
+- **significant corrosion at low pH** (acid conditions);
+- the corrosion rate **drops as pH rises above 8,5**;
+- corrosion **increases again at very high pH** (caustic conditions above pH 12);
+- like any chemical reaction, corrosion **increases with temperature** — so **high-heat-flux or high-temperature exchangers suffer greater metal loss than transfer piping**.
+
+Its corrosion products are **brown or orange iron oxides**. These can go either way: they may form a **protective oxide film** that limits further attack, or a **porous, non-protective deposit**. Soluble iron in the water also deposits as non-protective iron oxide. With the right inhibitor and concentration, a **dense passive film** forms on the steel surface — which is why an effective steel inhibitor plus good system control repays itself in exchanger life.
+
+## Copper alloys and galvanic effects
+Copper alloys — **admiralty brass** (copper, zinc, tin, and antimony or arsenic) in tower exchangers, **cupro-nickel** in large utility condensers — are **more resistant to oxygenated water than carbon steel**, but they sit **on the borderline between immunity and active corrosion**. **Oxidising agents such as halogens can push copper alloys into the corrosive state**, so **chlorination of cooling water can increase copper corrosion**. Corrosion is also influenced by **dissolved CO₂, chloride and ammonia**, and **precipitation of manganese dioxide can induce localised corrosion**.
+
+Copper produces far fewer corrosion products than steel, because **cupric ions (Cu²⁺) are much more soluble than ferric ions (Fe³⁺)**. But that solubility is itself the hazard: **dissolved copper — from the makeup water or from corrosion — plates onto less noble metals such as steel or aluminium, setting up galvanic corrosion** on those surfaces. A copper problem becomes a steel problem.
+
+Stainless steels resist corrosion through **11% or more chromium** in the alloy.
+
+_Source: The Nalco Water Handbook, 3rd ed., Ch.16 — Cooling System Corrosion (corrosion cell, carbon steel, copper alloys, stainless steel)._`,
+
+  'c-cool-302/m5': `## Under-deposit and microbiologically influenced corrosion
+Any deposit on a metal surface — scale, silt, corrosion product or biofilm — creates the conditions for **under-deposit corrosion**. Beneath it, water stagnates, oxygen is depleted relative to the surrounding surface, and the covered patch becomes a small anode against a large cathode. That is the pitting geometry from the previous module, created by the deposit itself.
+
+**Microbiologically influenced corrosion (MIC)** is the biological version. Even the name is contested — some hold that corrosion is **induced** by organisms, others that it is only **influenced** by them — but the outcome is not in doubt: a biofilm establishes differential aeration and local chemistry that drives localised attack beneath it.
+
+The practical rule follows directly from module 1: **deposits and corrosion reinforce one another.** Deposit control is corrosion control.
+
+## Flow velocity and hydrodynamics
+Deposition is a **steady-state balance** between scale-forming processes — surface precipitation and particle agglomeration — and scale-removal processes — **shearing and sloughing**. The rate of removal by shear depends directly on **flow velocity**.
+
+Below about **0,6 m/s (2 ft/s)** in exchanger tubes, flow becomes **non-turbulent or laminar**. A **very low velocity boundary layer** of water forms next to the metal. Two consequences follow:
+- **less efficient convective heat transfer**, and therefore
+- **higher surface temperatures** — which, for inversely soluble minerals, means more scale.
+
+And with little shear, nothing sloughs off. Low flow is thus a scaling problem, a heat transfer problem and, through under-deposit attack, a corrosion problem.
+
+## Monitoring: coupons and acceptable rates
+Corrosion is measured with **coupons** — pre-weighed metal specimens exposed in the circulating water, then cleaned and re-weighed to give an average metal loss over the exposure period. Record results in **lims** and trend them.
+
+The accepted targets for a properly controlled programme:
+- **Carbon steel** — generally considered acceptable below **3 mpy (76 µm/y)**.
+- **Copper alloys** — general corrosion rates below **0,2 mpy (5 µm/y)**, achievable **if the surfaces are kept clean**.
+
+Two cautions when reading a coupon. First, it reports an **average** rate over the whole coupon; a low average can still hide **deep localised pitting**, so inspect the coupon surface, do not just read the number. Second, a coupon reports the **past exposure period**, not today — pair it with the continuous indicators (pH, cycles, inhibitor residual, halogen residual) from the **coolingtower** tool.
+
+_Source: The Nalco Water Handbook, 3rd ed., Ch.15 (flow velocity and hydrodynamics); Ch.16 (microbiologically influenced corrosion, carbon steel and copper alloy corrosion rates)._`,
+
   /* ════════════════════════════════════════════════════════════════
      TRACK 6 — BOILER WATER
      ════════════════════════════════════════════════════════════════ */

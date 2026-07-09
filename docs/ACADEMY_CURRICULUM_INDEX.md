@@ -4,7 +4,7 @@
 > Project so it can (1) judge NEW vs DEEPENING + flag overlap, and (2) pick the next
 > free id/code in a track. Code convention: **1xx = Foundation, 2xx = Intermediate, 3xx = Advanced**.
 
-**46 courses across 10 tracks.**
+**47 courses across 10 tracks.**
 
 ## Potable Water  `track-potable`
 _Drinking water treatment from source to tap_
@@ -122,7 +122,7 @@ Codes used (EFF-): 101, 201, 202, 203, 301
 ## Cooling Water  `track-cooling`
 _Cooling towers & closed-loop systems_
 
-Codes used (COOL-): 101, 201, 202, 301
+Codes used (COOL-): 101, 201, 202, 301, 302
 
 - **COOL-101** `c-cool-101` - Cooling Tower Fundamentals _(Foundation, 3 hrs, 4 modules)_
   - tools: coolingtower, waterindex
@@ -139,6 +139,10 @@ Codes used (COOL-): 101, 201, 202, 301
   - prereqs: c-cool-201
   - tools: coolingtower, waterindex, lims
   - modules: m1 Pushing cycles up | m2 Side-stream filtration | m3 Blowdown reuse | m4 Chemical programme audit
+- **COOL-302** `c-cool-302` - Cooling System Deposition & Corrosion _(Advanced, 5 hrs, 6 modules, has quiz)_
+  - prereqs: c-cool-202
+  - tools: waterindex, coolingtower, lims
+  - modules: m1 How scale forms | m2 What drives deposition | m3 Predicting scale: the indices and their limits | m4 Cooling system corrosion | m5 Deposits, attack & monitoring | m6 Knowledge check
 
 ## Boiler Water  `track-boiler`
 _Steam systems & internal treatment_
