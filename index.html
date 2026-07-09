@@ -75,6 +75,8 @@
 
     <!-- Pool Water module -->
     <script src="pool.js" defer></script>
+    <!-- Cooling Tower field calculator -->
+    <script src="coolingtower.js" defer></script>
     <script src="academy-content.js" defer></script>
     <script src="academy.js" defer></script>
 
@@ -2661,7 +2663,7 @@
                 <div class="hg-section-title">About</div>
                 <div class="hg-kvgrid">
                     <div class="hg-kv"><div class="k">App</div><div class="v">Hadron Group</div></div>
-                    <div class="hg-kv"><div class="k">Version</div><div class="v">v79</div></div>
+                    <div class="hg-kv"><div class="k">Version</div><div class="v">v80</div></div>
                     <div class="hg-kv"><div class="k">Platform</div><div class="v">PWA</div></div>
                 </div>
             </div>
@@ -3237,25 +3239,7 @@
             <span class="window-title">Cooling Tower</span>
         </div>
         <div class="window-content">
-            <h2>Cooling Tower Chemistry</h2>
-            <p style="color:#666;font-size:13px;">Enter any three and the rest are derived. Units: m³/h unless noted.</p>
-            <div class="calc-form">
-                <div class="form-group"><label>Circulation rate (m³/h)</label><input type="number" id="ct_circ" step="0.01" placeholder="e.g. 500"></div>
-                <div class="form-group"><label>ΔT across tower (°C)</label><input type="number" id="ct_dt" step="0.1" value="10"></div>
-                <div class="form-group"><label>Makeup conductivity (µS/cm)</label><input type="number" id="ct_condM" step="1" placeholder="e.g. 300"></div>
-                <div class="form-group"><label>Blowdown conductivity (µS/cm)</label><input type="number" id="ct_condB" step="1" placeholder="e.g. 1200"></div>
-                <div class="form-group"><label>Drift loss factor (%)</label><input type="number" id="ct_drift" step="0.001" value="0.02"></div>
-                <button type="button" class="calc-btn" onclick="calcCoolingTower()">Calculate</button>
-            </div>
-            <div id="ct_results" class="result-box" style="display:none;">
-                <div class="result-row"><span>Cycles of concentration:</span><strong id="ct_coc">—</strong></div>
-                <div class="result-row"><span>Evaporation (m³/h):</span><strong id="ct_evap">—</strong></div>
-                <div class="result-row"><span>Drift (m³/h):</span><strong id="ct_driftL">—</strong></div>
-                <div class="result-row"><span>Blowdown (m³/h):</span><strong id="ct_bd">—</strong></div>
-                <div class="result-row"><span>Make-up (m³/h):</span><strong id="ct_mu">—</strong></div>
-                <button onclick="saveCalculation('coolingtower', this)" class="save-calc-btn">💾 Save to History</button>
-                <button onclick="exportPdf('coolingtower')" class="pdf-calc-btn">📄 Export PDF</button>
-            </div>
+            <div id="ct_root"></div>
         </div>
     </div>
 
@@ -4027,6 +4011,7 @@
             if (appName === 'qr') qrOpen();
             if (appName === 'pool') poolOpen();
             if (appName === 'academy') academyOpen();
+            if (appName === 'coolingtower') coolingtowerOpen();
         }
 
         function closeWindow(appName) {
@@ -4384,14 +4369,17 @@
                 return;
             }
 
-            const A = (Math.log10(tds) - 1) / 10;
-            const B = -13.12 * Math.log10(tC + 273.15) + 34.55;
-            const C = Math.log10(ca) - 0.4;
-            const D = Math.log10(alk);
-
-            const pHs = (9.3 + A + B) - (C + D);
-            const lsi = pH - pHs;
-            const rsi = 2 * pHs - pH;
+            // Shared Langelier pHs/LSI/RSI — single source of truth (also used by the Cooling
+            // Tower tool). Defined here if coolingtower.js has not already provided it.
+            if (typeof window.HG_langelier !== 'function') {
+                window.HG_langelier = function (pH2, tC2, tds2, ca2, alk2) {
+                    const a = (Math.log10(tds2) - 1) / 10, b = -13.12 * Math.log10(tC2 + 273.15) + 34.55,
+                        c = Math.log10(ca2) - 0.4, d = Math.log10(alk2), phs = (9.3 + a + b) - (c + d);
+                    return { pHs: phs, lsi: pH2 - phs, rsi: 2 * phs - pH2 };
+                };
+            }
+            const _lang = window.HG_langelier(pH, tC, tds, ca, alk);
+            const pHs = _lang.pHs, lsi = _lang.lsi, rsi = _lang.rsi;
 
             phsEl.textContent = pHs.toFixed(2);
             lsiEl.textContent = (lsi > 0 ? '+' : '') + lsi.toFixed(2);
@@ -4892,25 +4880,12 @@
                 }
             },
             coolingtower: {
-                label: 'Cooling Tower Chemistry',
+                label: 'Cooling Tower Reading',
+                // The cooling-tower calculator lives in coolingtower.js; it supplies the live
+                // reading (inputs + results + summary) via window.HG_CT.lastReading().
                 collect: function () {
-                    return {
-                        inputs: [
-                            { label: 'Circulation', value: (document.getElementById('ct_circ').value || '-') + ' m³/h' },
-                            { label: 'ΔT',          value: (document.getElementById('ct_dt').value   || '-') + ' °C' },
-                            { label: 'Cond. makeup',value: (document.getElementById('ct_condM').value|| '-') + ' µS/cm' },
-                            { label: 'Cond. blowdown',value:(document.getElementById('ct_condB').value|| '-') + ' µS/cm' },
-                            { label: 'Drift factor',value: (document.getElementById('ct_drift').value|| '-') + ' %' }
-                        ],
-                        results: [
-                            { label: 'Cycles of concentration', value: document.getElementById('ct_coc').textContent },
-                            { label: 'Evaporation',             value: document.getElementById('ct_evap').textContent + ' m³/h' },
-                            { label: 'Drift',                   value: document.getElementById('ct_driftL').textContent + ' m³/h' },
-                            { label: 'Blowdown',                value: document.getElementById('ct_bd').textContent + ' m³/h' },
-                            { label: 'Make-up',                 value: document.getElementById('ct_mu').textContent + ' m³/h' }
-                        ],
-                        summary: 'CoC ' + document.getElementById('ct_coc').textContent + ' · MU ' + document.getElementById('ct_mu').textContent + ' m³/h'
-                    };
+                    var r = (window.HG_CT && window.HG_CT.lastReading) ? window.HG_CT.lastReading() : { inputs: [], results: [], summary: '' };
+                    return { inputs: r.inputs || [], results: r.results || [], summary: r.summary || 'Cooling tower reading' };
                 }
             },
             rocalc: {
@@ -5303,26 +5278,11 @@
         const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
         const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 
-        /* ---------- Cooling Tower ---------- */
-        function calcCoolingTower() {
-            const circ = +document.getElementById('ct_circ').value || 0;
-            const dt   = +document.getElementById('ct_dt').value || 0;
-            const cm   = +document.getElementById('ct_condM').value || 0;
-            const cb   = +document.getElementById('ct_condB').value || 0;
-            const drift= (+document.getElementById('ct_drift').value || 0) / 100;
-            const coc  = cm > 0 ? cb / cm : 0;
-            // Evaporation ≈ 0.00085 × circulation × ΔT (°F). Convert °C→°F.
-            const evap = 0.00085 * circ * (dt * 9 / 5);
-            const driftL = drift * circ;
-            const bd = coc > 1 ? (evap - (coc - 1) * driftL) / (coc - 1) : 0;
-            const mu = evap + driftL + bd;
-            document.getElementById('ct_coc').textContent   = coc.toFixed(2);
-            document.getElementById('ct_evap').textContent  = evap.toFixed(3);
-            document.getElementById('ct_driftL').textContent= driftL.toFixed(3);
-            document.getElementById('ct_bd').textContent    = Math.max(0, bd).toFixed(3);
-            document.getElementById('ct_mu').textContent    = Math.max(0, mu).toFixed(3);
-            document.getElementById('ct_results').style.display = 'block';
-        }
+        /* ---------- Cooling Tower ----------
+           Superseded: the cooling-tower calculator now lives in coolingtower.js
+           (window.coolingtowerOpen). It renders into #ct_root, computes the full Nalco
+           Ch.14 water balance + ion balance + indices, and feeds Save/PDF via
+           window.HG_CT.lastReading(). The old imperial rule-of-thumb evap calc was removed. */
 
         /* ---------- RO performance ---------- */
         function calcRO() {
