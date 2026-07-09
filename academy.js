@@ -247,6 +247,7 @@
     dosage:        { label: 'Dosage Calculator (Cl, ClO₂, Coagulants, Skid)', icon: '💊' },
     waterindex:    { label: 'LSI / RSI Index',                                icon: '🧮' },
     coolingtower:  { label: 'Cooling Tower',                                  icon: '🏭' },
+    boiler:        { label: 'Boiler / Steam',                                 icon: '🔥' },
     rocalc:        { label: 'RO Performance',                                 icon: '💧' },
     converters:    { label: 'Unit Converters (M ↔ N ↔ ppm)',                  icon: '🔁' },
     neutralise:    { label: 'Acid / Alkali Neutralisation',                   icon: '⚗️' },
@@ -1465,7 +1466,7 @@
         'Run an oxidising + non-oxidising biocide rotation'
       ],
       prereqs: ['c-cool-101', 'c-pot-101'],
-      linkedTools: ['coolingtower', 'waterindex', 'dosage', 'lims'],
+      linkedTools: ['coolingtower', 'dosage', 'converters'],
       sources: ['Nalco Water Handbook', 'AWT Technical Reference', 'Hadron LSI Calc'],
       modules: [
         { id:'m1', title:'Scale chemistry & control', duration:'60 min',
@@ -1495,7 +1496,7 @@
         'Audit the chemical programme'
       ],
       prereqs: ['c-cool-201'],
-      linkedTools: ['coolingtower', 'rocalc', 'waterindex'],
+      linkedTools: ['coolingtower', 'waterindex', 'lims'],
       sources: ['Nalco Water Handbook — sustainability chapters'],
       modules: [
         { id:'m1', title:'Pushing cycles up', duration:'50 min',
@@ -1554,7 +1555,7 @@
         'Choose neutralising amines for condensate pH'
       ],
       prereqs: ['c-boil-101'],
-      linkedTools: ['rocalc', 'dosage', 'converters'],
+      linkedTools: ['boiler', 'dosage', 'converters'],
       sources: ['Nalco Water Handbook — Boilers / Steam', 'EPRI feedwater chemistry'],
       modules: [
         { id:'m1', title:'External pretreatment', duration:'60 min',
@@ -1584,7 +1585,7 @@
         'Diagnose caustic gouging, hydrogen damage, fatigue'
       ],
       prereqs: ['c-boil-201'],
-      linkedTools: ['neutralise'],
+      linkedTools: ['boiler', 'lims', 'converters'],
       sources: ['Nalco Water Handbook — Cleaning chapter', 'NACE corrosion handbook'],
       modules: [
         { id:'m1', title:'Layup', duration:'40 min',
