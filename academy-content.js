@@ -2009,6 +2009,168 @@ Run continuously, this cycle is what “complying with SANS 241” actually mean
 
 _Source: SANS 241-2:2015, Drinking water — Part 2 (§7.4, 8); Introduction to Water Treatment (Rand Water) — DWS regulation and Blue/Green Drop._`,
 
+  /* POT-303 - Legionella & Building Water Systems */
+
+  'c-pot-303/m1': `## Legionellosis: two diseases, one genus
+Most organisms that live and grow in engineered water systems present **no significant health hazard**. *Legionella* is the exception. Of particular concern is **Legionella pneumophila serogroup 1**, which causes **over 90% of the legionellosis outbreaks that occur worldwide**.
+
+**Legionellosis** is the umbrella term for all infections caused by *Legionella* bacteria, and it covers two very different illnesses.
+
+**Legionnaires’ disease** is a serious infection of the respiratory system, first identified in **1976**. It is hard to distinguish from other bacterial pneumonias: **high fever, chills, headache, fatigue and muscle pain**, followed by a **dry cough** and, in most patients, **breathing difficulty**. Some develop **diarrhoea or vomiting**, or become **confused or delirious**. It develops **2 to 10 days after exposure** and can **persist for weeks, or be fatal if not treated properly**. Diagnosed early, it is **treatable with antibiotics**. Survivors of severe infection may suffer **weakness, poor memory and fatigue for months**, with **lung damage persisting even longer**.
+
+**Pontiac fever** is the milder variant, named from a **1968 outbreak in Pontiac, Michigan**. It presents as a **flu-like illness** — headache, fatigue, fever, joint and muscle pain, sometimes nausea, vomiting and coughing. **No deaths have been attributed to Pontiac fever.** It is considered **similar to influenza rather than pneumonia**.
+
+**Only a qualified healthcare professional can diagnose legionellosis.** Anyone with these symptoms should seek immediate attention from a physician. This course teaches water system risk management, not clinical diagnosis.
+
+## Who is susceptible
+**Most people exposed to the bacteria do not become ill.** According to the CDC, **healthy people under 20 years of age generally do not become ill**, even if exposed. Healthy people over 20 can catch the disease, but it occurs far more often in the **elderly** and in those with common risk factors.
+
+The age threshold varies between references from **over 40** to **over 65**. Additional risk factors include:
+- **smoking**
+- **cancer or a suppressed immune system**
+- **lung or respiratory disease**, including **chronic obstructive lung disease** such as emphysema
+- **liver or kidney failure**
+- **heart disease**
+
+This is not a complete list, and **only a qualified medical practitioner can properly assess an individual’s susceptibility**. Data from some regions suggests **men are more likely to contract the disease than women**, and **person-to-person transmission is unlikely**.
+
+## The scale of the problem
+Case numbers are hard to pin down, because even when diagnosed the disease is **sometimes not reported**. Larger outbreaks attract publicity and get counted; **sporadic cases may go unreported**.
+
+The **CDC** states that between **8000 and 18 000 people are hospitalised in the United States each year** due to legionellosis. The **EU** estimates occurrence varying up to around **120 cases per million people**, depending on national reporting procedures. Both bodies believe the true figure is higher. Projecting the CDC value across the world population suggests **several hundred thousand cases of Legionnaires’ disease each year**.
+
+Of these, about **20% are acquired during hospitalisation**, and **10 to 20% can be linked to larger outbreaks**. The **mortality rate is 5 to 20%** of those who contract the disease.
+
+Two facts anchor everything that follows: **large outbreaks are uncommon, and the disease is deemed preventable.**
+
+_Source: The Nalco Water Handbook, 3rd ed., Ch.20 — Legionella and Legionellosis (the disease, symptoms, susceptibility, Pontiac fever variant)._`,
+
+  'c-pot-303/m2': `## Where Legionella lives
+Engineered water systems become contaminated with *Legionella* for an unglamorous reason: **these bacteria are common in many natural waterways**, like **lakes and rivers**. They arrive with the water.
+
+Once inside, they find homes. **Spas, decorative fountains, and even potable hot water systems** may be contaminated, and **all of these systems can provide adequate environmental conditions for the bacteria to survive and grow**.
+
+This reframes the operator’s job. You are not trying to keep *Legionella* out — that battle was lost at the river. You are trying to **deny it the conditions to multiply**, and to **prevent the aerosol that delivers it to a lung**.
+
+## Temperature: the master variable
+Warm water is the single most important growth factor, and the numbers are worth memorising:
+
+- **Below 20 °C (68 °F)** — they **seldom grow**, and may lie **dormant**.
+- **20 to 50 °C (68–122 °F)** — **growth and multiplication occur**.
+- **35 to 45 °C (95–113 °F)** — **optimal growth**.
+- **Above 60 °C (140 °F)** — they **do not survive**, and the temperature **kills** them, **if maintained for sufficient contact time**.
+
+Dormant bacteria in cold water **begin to grow when the water temperature rises above 20 °C**. Note the gap between **50 °C** (top of the growth range) and **60 °C** (kill threshold): water sitting in that band is neither growing bacteria nor killing them, and it is exactly where badly-set water heaters live.
+
+## Stagnation, biofilms and protozoa
+*Legionella* survive and grow best under a **combination**: **warm water temperature together with stagnant conditions, deposits and biofilms**. **Stagnation, or water age, reduces biocide residual, reduces exposure of the organisms to the biocide, and promotes deposit formation** — which in turn allows complex biofilms to form and protozoa to grow.
+
+Stagnant zones are familiar: **non-flowing or low-flow areas in a cooling tower basin, a water tank with low flow, or dead leg piping**. There **sediment, sludge, scale and iron deposits collect**, providing **inorganic and organic nutrients**.
+
+But two subtleties defeat the simple story.
+
+**First, stagnation is not the primary factor determining whether biofilm forms.** Biofilms also form on surfaces with **high water flow rates, such as heat exchanger tubes**; flow rate governs the **morphology and composition** of the biofilm, not its existence. On man-made surfaces, biofilms hold **a large majority of the microbial population**, with only a small part floating in the bulk water. The biofilm **facilitates nutrient and gaseous exchange** and **protects microorganisms not only from biocides but from periodic changes in physical conditions like temperature** — especially where surfaces are **scaled or corroded**.
+
+**Second, *Legionella* are aerobic** — the water must contain some oxygen for them to grow. So **anaerobic stagnant areas may be less prone to *Legionella* growth** than areas with reasonable flow and oxygen content, **such as tower fill**. Stagnation alone does not predict risk.
+
+Then there is the protozoan sanctuary. ***Legionella* can live inside specific amoebae and some protozoa as facultative parasites**, able to infest **at least 14 different species**, where they **thrive and multiply**. When conditions turn harsh, **certain protozoa form a cyst**, and ***Legionella* can survive inside those cysts** — which **makes control much more difficult in heavily contaminated water systems**, and may even allow survival **within airborne aerosols**.
+
+The most striking conclusion: **it is now believed that adaptation to live within protozoa is what gives *Legionella* the ability to infect humans.** The organism learned to parasitise a single-celled predator, and in doing so learned to parasitise a human macrophage.
+
+_Source: The Nalco Water Handbook, 3rd ed., Ch.20 — the bacteria, occurrence, conditions for growth and proliferation, role of biofilms, role of protozoa._`,
+
+  'c-pot-303/m3': `## Why the aerosol is the danger
+Contaminated water only becomes dangerous when it becomes **breathable**. If the water contains *Legionella*, the systems that **produce aerosols, mists or sprays of fine water droplets that can be inhaled and penetrate deep into the lungs pose the greatest risk for infection**.
+
+That single sentence sets the control priority. A tank of contaminated water that never aerosolises is a hazard waiting for a mechanism; a showerhead is the mechanism. Notice too what this means for a cooling tower: **it is the drift — liquid droplets carrying dissolved solids and organisms — not the evaporated vapour, that carries the risk.** The **coolingtower** tool’s drift calculation is therefore a Legionella control parameter, not merely a water balance term.
+
+## The systems that generate aerosols
+**Cooling towers and evaporative condensers may be the most notorious systems, but they are not the only source** of legionellosis infections. Many others have the right characteristics and have been associated with Legionnaires’ disease:
+- **whirlpool spas** that aerate or rapidly agitate the water;
+- **hot and cold potable water systems with showerheads** or taps;
+- **decorative fountains**;
+- and other engineered systems that spray, mist or agitate.
+
+The common feature is not the water’s purpose but its **droplet size and its route to a lung**.
+
+## How building water systems amplify risk
+Here is the crucial point for anyone who works upstream in a treatment works. **Water supplied to a building is usually of potable water quality, and the level of *Legionella* contamination is expected to be at a very low level.** The water arriving is not the problem.
+
+**Risk of legionellosis occurring from hot and cold potable water systems is amplified by failures in design and operation.** The building does the amplifying — warm storage, long pipe runs, dead legs, low turnover, deposits, and the aerosol at the outlet.
+
+Some systems feed water **directly to an outlet**; others **store it in tanks before distribution**, and the use of storage tanks may be limited by local regulations. Many health authorities implement *Legionella* control policies precisely because they serve a **highly susceptible population** and recognise that **any water utility may pose a risk to health**.
+
+A compliant SANS 241 result at the works, in other words, does not discharge the duty. The building is a treatment system in its own right — usually an unmanaged one.
+
+_Source: The Nalco Water Handbook, 3rd ed., Ch.20 — sources of risk; Ch.21 — control scheme for hot and cold potable water systems._`,
+
+  'c-pot-303/m4': `## Keep hot water hot and cold water cold
+For hot and cold potable water systems, **the main risk reduction programme employed by many countries is control by temperature**, following a simple rule: **“keep hot water hot and cold water cold.”** And crucially, **proof is required to ensure that this simple control process remains active**.
+
+The targets follow directly from the growth curve. The general growth range is **20 to 50 °C**, and temperatures of **25 to 42 °C (77–108 °F) provide an ideal growth environment and should be avoided as far as possible** within hot and cold potable distribution systems.
+
+- **Hot water:** water heaters with storage tanks should **operate above 60 °C (140 °F)**, with hot water distribution **giving a temperature of 51 °C (124 °F) to the point of use or tap**. Storage capacity and rate of recovery should be selected to meet **normal fluctuations in demand**.
+- **Cold water:** ideally **below 20 °C (68 °F)** to restrict bacterial activity. **In some countries incoming water is frequently above this temperature** — a live concern in South Africa — and in such cases **secondary disinfection should be considered**. **Climatic conditions may raise water temperature**, and this effect must be considered.
+
+Where **high temperatures cannot be maintained** due to operating peculiarities or design — which happens in large, sprawling distribution systems where attaining the target is impractical without significant capital investment — **chemical disinfection should be considered as a remedial action**, and a **secondary disinfectant may be applied**. Whichever control method is used, **risk assessment is still the starting point**.
+
+## System design: tanks, heaters and dead legs
+Temperature control is defeated by bad plumbing. The design faults to hunt for:
+
+**Materials and fittings.** Distribution systems must be **installed by competent people using only approved fittings and materials**. Incorrect materials may contravene water supply regulations and **provide suitable habitat for microbiological activity** — certain materials support growth, for example **rubber sleeves within some flexible fittings**.
+
+**Storage tanks.** Water entering a site is frequently stored in a tank, **which can be a source of contamination**, especially if tanks and other parts of the system are **not enclosed to prevent entry of foreign matter**. Tanks should be **constructed of materials that allow cleaning** and be **readily accessible for inspection and testing**. **Multilinked storage tanks should be avoided** where possible, and **tanks should not allow water to stagnate**. Size tanks to usage — in general, a **24-hour maximum storage**. Fit an **insect and vermin screen**, keep the **lid in good condition and tightly fitting**, keep the **water surface free of deposition**, and keep the **thermal insulation sound**.
+
+**Water heaters.** Size them to meet demand and ensure they can heat their **entire contents** to the desired temperature. They are **prone to thermal stratification, with cooler water at the base** — and those cooler zones **are more likely to support growth** and must be **avoided or prevented**. Heaters become **scaled and contaminated with debris**; they should be accessible for cleaning, and **debris in the base purged to a suitable drain annually**. Alternatively, **point-of-use water heaters with minimal storage and low-temperature feed water are low risk** replacements.
+
+**Accumulators.** If fitted, they should have **diaphragms accessible for cleaning**, since diaphragms have been **associated with supporting bacterial growth**.
+
+**Dead legs.** Dead legs and low-flow zones **create a suitable habitat for *Legionella* to proliferate**. All such areas **should be avoided**, and those identified **removed from the system**.
+
+## Thermal disinfection and flushing
+Two standing procedures.
+
+**Thermal disinfection.** If a water heater or any substantial part of the system is **on standby**, the heater and recirculating water temperature should be **raised to 60 °C (140 °F) for at least one hour**, and **during this period each outlet should be flushed for five minutes**. This is a **pasteurisation of the water heater**.
+
+**Flushing.** Where sections remain unused for long periods — the classic case is **an infrequently used shower in a hotel room** — **run good quality water through them to waste for several minutes, at least weekly**, or long enough to flush the **whole pipe length**. Where a section **has not been used or flushed**, a **disinfection procedure should be performed before use**. Where sections will stay unused indefinitely, **isolate them, and consider removing the piping and fixtures completely**.
+
+Tanks should be **cleaned and disinfected if there is visual evidence of deposits, sludge or contamination**.
+
+_Source: The Nalco Water Handbook, 3rd ed., Ch.21 — control scheme for hot and cold potable water systems (system design factors, operational considerations)._`,
+
+  'c-pot-303/m5': `## Assessing the risk
+A water management programme begins, as a Water Safety Plan does (POT-301), with **risk assessment**. Here it resolves into three questions:
+
+- **Growth risk** — does this system provide the conditions for *Legionella* to multiply? Warm water in the 20–50 °C band, stagnation, deposits, biofilm, protozoa.
+- **Aerosol risk** — can this system produce breathable droplets? Showerheads, spray taps, spas, fountains, cooling tower drift.
+- **Human risk** — who is exposed, and how susceptible are they? A hospital, a care home or a hotel carries a very different human risk from a warehouse.
+
+Risk is the product of all three. A system with high growth risk and no aerosol route is a different problem from a well-controlled cooling tower next to a hospital ward intake. **The risk assessment should identify all parts of the system that present a risk. If the risk cannot be eliminated, then a control programme is required.**
+
+Note that some things you cannot change: **operating conditions favourable to growth may be impossible to alter**. But **design factors that produce stagnant conditions or allow collection of deposits may possibly be changed**, and **treatment to minimise biological growth in general also helps minimise the risk from *Legionella***.
+
+## Monitoring and proving control
+Proactive management means nothing unless you can **prove it worked**. Monitoring programmes should be devised to ensure the treatment regime and the whole control programme **continue to reduce risk, and that control can be demonstrated**.
+
+Typical tests, carried out **regularly, at least weekly**, and logged in **lims**:
+- **system pH**
+- **enumeration of general bacterial levels**, using for example **dip slides**
+- **analysis of free halogen residual**
+- **conductivity measurements**
+
+For potable systems, the programme should **detail the control scheme, the tasks, the frequency of each task, and the specific location** — often by asset number — so records clearly identify **what work was done and where**. Record it through **servicereport**. **Water turnover within a tank on a typical day should be monitored annually**, because operational changes quietly alter water usage: a documented example is hospital staff switching to **alcohol gel** for hand hygiene to limit **MRSA**, which **reduced water usage and so increased water age and stagnation**. An infection control measure created a *Legionella* risk.
+
+**When control limits are not met**, a defined management process must follow: **undertake the remedial action; prove the action was effective in reducing the risk; and document the event.** This record — called in some countries a **defect/action log or escalation process** — details **all personnel responsible for each action** and all correspondence. Such systems **should be auditable**, and the review must **validate and verify that the programme has been effective**.
+
+## Cooling towers: cleaning and online disinfection
+Cooling towers deserve their notoriety, and their own measures.
+
+**Cleaning.** Give specific consideration to the **cleanliness of the tower fill**. If dirty, the **fill should be removed and physically cleaned or replaced**; in some countries fill removal is a **legislative requirement** unless cleanliness can be proven, and the **statutory duty holder must be made aware of that obligation**. **Borescopes** may serve as additional evidence of cleanliness. Where internals cannot be accessed, **in-situ cleaning** may be considered — but **the time to do the cleaning must be fully scheduled, and the process must not be compromised**. **Incomplete cleaning and disinfection programmes because of production pressures constitute a non-compliance in many countries**, and then **supplementary controls — increased monitoring or additional chemical treatment — are required**.
+
+**Online disinfection.** For systems **continuously operated and unable to shut down** — heavy industry, large power stations — **online disinfection (also known as super chlorination) should be carried out every three months, or when results indicate a lack of control**. This typically involves **dosing the system to achieve 5 mg/L free residual oxidant for 5 or 6 hours**, depending on local requirements, **including the addition of a dispersant**. Automated dosing and monitoring are often favoured, and the objective is to **address the balance of risk by applying additional control factors** — typically **increased monitoring of key performance indicators and continuous biocide treatment** — which themselves **require proof of being effective**.
+
+_Source: The Nalco Water Handbook, 3rd ed., Ch.21 — assessment of risk (growth, aerosol and human risk), water management programme, review of control measures, records._`,
+
   /* ════════════════════════════════════════════════════════════════
      TRACK 3 — SEWAGE TREATMENT
      ════════════════════════════════════════════════════════════════ */

@@ -4,12 +4,12 @@
 > Project so it can (1) judge NEW vs DEEPENING + flag overlap, and (2) pick the next
 > free id/code in a track. Code convention: **1xx = Foundation, 2xx = Intermediate, 3xx = Advanced**.
 
-**48 courses across 10 tracks.**
+**49 courses across 10 tracks.**
 
 ## Potable Water  `track-potable`
 _Drinking water treatment from source to tap_
 
-Codes used (POT-): 101, 201, 202, 203, 204, 301, 302
+Codes used (POT-): 101, 201, 202, 203, 204, 301, 302, 303
 
 - **POT-101** `c-pot-101` - Introduction to Drinking Water Treatment _(Foundation, 4 hrs, 5 modules, has quiz)_
   - tools: waterindex, dosage, lims
@@ -38,6 +38,10 @@ Codes used (POT-): 101, 201, 202, 203, 204, 301, 302
   - prereqs: c-pot-204
   - tools: lims, converters, servicereport
   - modules: m1 The two-part monitoring system | m2 The water quality risk assessment | m3 Routine monitoring: determinands & frequency | m4 Response monitoring & verification | m5 Performance categories & the Water Safety Plan | m6 Knowledge check
+- **POT-303** `c-pot-303` - Legionella & Building Water Systems _(Advanced, 5 hrs, 6 modules, has quiz)_
+  - prereqs: c-pot-301
+  - tools: servicereport, lims, coolingtower
+  - modules: m1 The disease | m2 The bacterium and how it thrives | m3 Sources of risk: the aerosol route | m4 Controlling hot and cold potable water | m5 The water management programme | m6 Knowledge check
 
 ## Disinfection  `track-disinfection`
 _Chlorine, ClO₂, UV, ozone & DBPs_
