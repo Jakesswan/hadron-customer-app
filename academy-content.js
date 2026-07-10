@@ -2926,6 +2926,174 @@ And when ammonia is passing through untreated, check the **sludge age before the
 
 _Source: The Nalco Water Handbook, 3rd ed., Ch.23 — sludge volume index, dissolved oxygen uptake, process control concepts (Eqs. 23.11–23.12)._`,
 
+  /* SEW-204 - Fixed-Film & Natural Treatment Systems */
+
+  'c-sew-204/m1': `## Not a filter at all
+Start by discarding the name. **Trickling filters are not a filtering or straining process as the name implies.** The rocks in a rock filter are **25 to 102 mm in diameter — far too large to strain solids**.
+
+What they actually do: **provide large amounts of surface area where microorganisms cling and grow in slime on the rocks as they feed on organic matter**. It is an **attached growth** process, the counterpart to the suspended growth of activated sludge.
+
+A trickling filter is **a bed of coarse material — stones, slats or plastic — over which effluent is discharged from moving spray distributors or fixed nozzles**. Because **excess growths of microorganisms wash from the media and would cause high levels of suspended solids in the plant effluent if not removed**, a **secondary clarifier usually follows** to settle them.
+
+Sometimes the filter is not the whole treatment at all: **trickling or high-rate filters are used as a first stage for high-BOD effluents, followed by an activated sludge system** — a roughing stage that knocks the load down before the biology proper.
+
+## Components and the rotary distributor
+Three parts do the work:
+- the **distribution system**, which applies effluent to the filter media;
+- the **filter media**, which provides surface area for microorganisms to grow; and
+- the **under-drain system**, which **supports the media and provides drainage of waste flow to a collection channel, while permitting air circulation up through the media to supply oxygen to the microorganisms**.
+
+That last clause matters more than it looks. The organisms are **aerobic**, and their air arrives **from below**, drawn up through the void spaces. Blind the under-drain and you suffocate the bed.
+
+The **rotary distributor** exists for a specific reason: **to prevent growth of flies that were common in older designs using pipe headers and nozzles**. It needs no motor — **distributors are rotated by reaction of the discharge of water through orifices on the distributor arms**.
+
+## Media, depth and recirculation
+**Synthetic media** — **modules of corrugated plastic sheets, redwood slats and plastic rings** — have displaced rock for good reasons:
+- **larger surface area for slime growth**: typically **2,5 m² per 0,028 m³**, against **1,1 to 1,7 m²** for 76 mm rocks;
+- **greatly increased void ratios for increased airflow**;
+- **about 30 times lighter than rock**, so **filters can be much taller without structural problems**.
+
+Consequently, **rock in filters is usually not more than 3 m deep, while synthetic media depths are often 6,1 m or more**, reducing the overall space requirement. **Moulded plastic media use interlocking corrugated sheets that look like a honeycomb**, stacked so they interlock inside the filter structure.
+
+Two operating measures round it out. When **effluent flows are too low to keep the filter wet**, the biological slime dries out and dies. **Recycle filter effluent**: recirculation **reduces odour potential and improves filter efficiency**, giving microbes **another opportunity to consume organics that escaped the first pass**. And to **improve performance or handle strong effluents**, use **two filters in series — a two-stage trickling filter system**.
+
+_Source: The Nalco Water Handbook, 3rd ed., Ch.23 — Trickling Filters (principles of operation, media)._`,
+
+  'c-sew-204/m2': `## How an RBC works
+A **rotating biological contactor (RBC)**, also called a **bio-disc**, **uses a biological slime of microorganisms which grow on a series of thin discs mounted side-by-side on a shaft**. Like a trickling filter, it is an **attached growth** process.
+
+The **discs are rotated slowly and are partially submerged in effluent**, and are **usually made of lightweight plastic**. **The RBC may be covered to protect the process from low temperatures and to reduce odours.**
+
+On startup, **microbes in the effluent begin to stick to the disc surfaces and grow there until all discs are covered with a 1,6 to 3,2 mm layer of biological slime**. Then the cycle repeats endlessly: **a thin film of effluent and the organisms on the disc get oxygen from air as the disc rotates**, and **this film of effluent then mixes with the rest of the effluent, adding oxygen to the treated and partially treated effluent**. **Excess growth of microbes breaks off from the discs and flows to the clarifier** to be separated.
+
+Rotation does three jobs at once: it **provides fresh media surface for buildup of attached microbial growth**, **brings growth into contact with effluent**, and **aerates effluent and growths in the effluent reservoir**.
+
+The cleanest way to hold the distinction in mind: **the attached growth is like the growth in a trickling filter, except that microbes are passed through the effluent rather than effluent passing over the microbes.**
+
+## Staging and nitrification
+**The process can achieve secondary effluent quality or better.** And **by placing several sets of discs in series, it is possible to achieve even higher degrees of treatment, including biological conversion of ammonia to nitrate — nitrification.**
+
+The logic is the same as sludge age in activated sludge (recall SEW-302): the slow-growing autotrophs need conditions the fast heterotrophs will not leave them. In a staged RBC, the **first stage** strips the carbonaceous BOD, and by the **later stages** the heterotrophs have run out of food — leaving surface, oxygen and time to the nitrifiers. Staging buys, in space, what sludge age buys in time.
+
+## Loading rates and design
+**RBC system design is based on disc surface area and percent BOD and ammonia removal efficiency.**
+
+- **Secondary treatment of municipal effluents:** common loading rates are **0,08 to 0,16 m³/(d·m²) of effective media area**.
+- **Nitrification:** **at temperatures above 15 °C, 90% nitrification can be obtained at loadings of 0,06 m³/(d·m²)**.
+
+Read those two numbers together. Nitrifying demands a loading roughly **a third** of the upper secondary rate — which is to say **roughly three times the disc area** for the same flow. Nitrification is never free; on an RBC you pay for it in media, and on an activated sludge plant you pay for it in sludge age and air.
+
+Note also the temperature qualifier: **above 15 °C**. Below it, the same caution from SEW-302 applies — the autotrophs slow, and the covered RBC that protects the process from low temperatures earns its cover.
+
+_Source: The Nalco Water Handbook, 3rd ed., Ch.23 — Rotating Biological Contactors._`,
+
+  'c-sew-204/m3': `## Activated sludge without the recycle
+**Aerated lagoons or ponds evolved from facultative stabilization ponds when surface aerators were installed to overcome odours from organically overloaded ponds.** The aerator was a fix, and the fix became a process.
+
+In an aerated lagoon, **all solids are maintained in suspension**. They are **operated as flow-through activated sludge systems without recycle, usually followed by large settling ponds**. That single difference — **no recycle** — is what separates them from activated sludge. Add **a clarifier with sludge recycle** and **aerated lagoons become very similar to activated sludge systems with respect to operation and control**.
+
+An aerated lagoon is **usually deeper than a facultative pond**. **Mechanical or diffused aerators provide most of the DO required and mix the lagoon contents**, and **turbulence levels should be high enough to ensure uniform DO and suspended solids concentrations throughout**. There is a neat coupling here: **the higher the rate of oxygen transfer to the system, the more intense the mixing in the pond, and subsequently the less pronounced the tendency for sedimentation.** Air is both the oxygen supply and the mixer.
+
+The factors to consider are the familiar ones: **biological solids produced, SRT, BOD removal, pond mixing and temperature effects**.
+
+## Solids retention time and BOD removal
+**The basis of operation for an aerated lagoon is SRT.** Typical design values:
+- **3 to 6 days** for **low-strength industrial wastes**;
+- **10 to 20 days** in **paper mills, refineries and petrochemical plants**, which **generally operate in the extended aeration mode**.
+
+**High-rate aerated lagoons can generate 0,27 to 0,32 kg of suspended solids per kg of BOD₅ removed** — a lower yield than the 0,5–0,6 kg/kg of conventional activated sludge, reflecting the long retention and endogenous respiration.
+
+Performance: **properly designed, operated and maintained, aerated lagoons can produce an effluent low in solids with an effluent BOD₅ of less than 30 mg/L.** But be honest about the solids: **effluent solids concentrations are variable, 20 to 100 mg/L, and are affected by seasonal changes.**
+
+## pH, oxygen and temperature
+**In general, aerated lagoons operate most satisfactorily in the pH range of 7,2 to 7,8.** To achieve that, **influent waste pH should be maintained from 6,5 to 8,3**.
+
+**Oxygen required varies from 0,7 to 1,4 times the amount of BOD₅ removed**, based on operating results from a number of industrial and domestic installations. Compute with the **effluent** tool.
+
+**Temperature** presents two problems: **reduced biological activity and treatment efficiency**, and **formation of ice**.
+
+**Icing effects may be minimised by increasing the depth of the lagoon or by altering the method of operation.** And a striking design lever: **reducing the area by one-half increases effluent temperature**, an action that **corresponds roughly to about a 50% increase in the rate of biological activity**. A smaller, deeper lagoon loses less heat and treats faster — the opposite of the intuition that more surface area means more treatment.
+
+_Source: The Nalco Water Handbook, 3rd ed., Ch.23 — Aerated Lagoons (significant operational control parameters)._`,
+
+  'c-sew-204/m4': `## Classifying a pond
+A **stabilization pond**, also called an **oxidation pond**, is **a relatively shallow body of water contained in an earthen basin of controlled shape, designed for treating effluent**.
+
+Ponds are classified on three independent axes:
+- the **type of influent** — untreated, screened, settled effluent, or activated sludge effluent;
+- the **pond overflow condition** — non-existent, intermittent, or continuous; and
+- the **method of oxygenation** — **photosynthesis, atmospheric surface reaeration, or mechanical aerators**.
+
+That third axis is the interesting one. A pond can be oxygenated by **algae**, by the **wind on its surface**, or by a **machine** — and which it is determines almost everything about its behaviour.
+
+**Stabilization ponds have been used singly or in various combinations to treat both domestic and industrial wastes.**
+
+## Aerobic, facultative and anaerobic ponds
+By depth and oxygen regime:
+
+- **High-rate aerobic pond** — **0,2 to 0,6 m** deep. Application: **nutrient removal, treatment of soluble organic wastes, conversion of wastes**.
+- **Low-rate aerobic pond** — **0,6 to 1,5 m** deep, **designed to maintain aerobic conditions throughout the liquid depth**. Application: **treatment of soluble organic wastes and secondary effluents**.
+- **Maturation or tertiary pond** — **similar to low-rate aerobic ponds but very lightly loaded**. Application: **polishing (upgrading) effluents from conventional secondary treatment processes such as trickling filter or activated sludge**.
+- **Facultative (aerobic–anaerobic) pond** — **deeper than a high-rate pond**. **Photosynthesis and surface reaeration provide oxygen for aerobic stabilization in the upper layers. Lower layers are facultative. The bottom layer of solids undergoes anaerobic digestion.** Application: **treatment of screened or primary settled effluent and industrial wastes, and secondary effluent polishing**. A variant adds **small mechanical surface aerators** to supply the oxygen.
+- **Anaerobic ponds** — **especially effective in bringing about the rapid stabilization of strong organic wastes**. **Usually used in series with aerobic–anaerobic ponds to provide complete treatment.**
+
+**Aerobic–anaerobic (facultative) ponds are the most common type**, used for **domestic effluent and a wide variety of industrial wastes**. **Aerobic ponds are used primarily for treatment of soluble organic wastes and effluents from effluent treatment plants.**
+
+The facultative pond is a whole works in one basin — aerobic at the top, anaerobic at the bottom, a digester under a photosynthetic reactor.
+
+## Why ponds are out of favour
+**Lagoons and stabilization ponds are currently in use in older plants but are out of favour for new construction**, for three reasons:
+- **odours from algae blooms**;
+- **groundwater contamination concerns, because they are only clay lined**; and
+- **large land area requirements**.
+
+There is one capability worth preserving. **Seasonal continuous nitrification may be achieved in aerated lagoon systems**, with **the degree depending on design and operating conditions and on effluent temperature**. **Generally, with higher effluent temperatures and lower loadings — increased SRT — higher degrees of nitrification can be achieved.** In a warm climate with land available, that is not a trivial offer.
+
+_Source: The Nalco Water Handbook, 3rd ed., Ch.23 — Stabilization Ponds (Table 23.10), Aerated Lagoons._`,
+
+  'c-sew-204/m5': `## Comparing the options
+Set the four processes against the constraints that actually decide a small works:
+
+- **Land.** Ponds need the most by far; RBCs and deep synthetic-media trickling filters the least. Ponds’ **large land area requirements** are a stated reason they have fallen from favour.
+- **Energy.** Trickling filters and ponds oxygenate by **natural draught and photosynthesis**; aerated lagoons and activated sludge buy their oxygen. An RBC pays only to turn a shaft slowly.
+- **Operator skill.** A trickling filter has no MLSS, no SVI, no wasting decision. An activated sludge plant has all three. On a remote works, a process that cannot be mis-controlled is worth real money.
+- **Reliability under shock.** Fixed-film biomass is attached and cannot be washed out; a suspended-growth system can lose its sludge in one hydraulic surge.
+- **Effluent quality.** Activated sludge and staged RBCs reach secondary quality or better, including nitrification. Ponds polish but produce **variable solids**.
+- **Sludge.** All of them produce it; the aerated lagoon’s **0,27–0,32 kg SS per kg BOD₅ removed** is lower than activated sludge’s **0,5–0,6 kg/kg**.
+
+## The sludge reduction process
+Whatever you build, **biological effluent treatment processes always result in generation of a considerable amount of excess sludge that has to be wasted** — **in general 0,5 to 0,6 kg dry sludge per kg BOD treated**.
+
+Here is the number that reframes the whole subject: **the expense for excess sludge treatment has been estimated at 40 to 60% of the total expense of effluent treatment.** More than a third, possibly more than half, of what a works costs to run is spent on the by-product, not the product. **Landfilling may cause secondary pollution problems**, and where **landfilling of sludge is restricted, sludge disintegration methods have an economic benefit**; where **disposal is still relatively inexpensive, they are not readily employed** because of the equipment and operating cost.
+
+The **sludge reduction process** works by returning solubilised sludge to the biology. **Some part of the return sludge thickened in the clarifier is sent to a sludge disintegrator to solubilise it.** The **solubilised sludge, which contains soluble BOD and cell debris, is sent back to the bioreactors, where live microorganisms consume the BOD and cell debris.** The trick is in the carbon balance: **only about 60% of the carbon in disintegrated sludge is converted to new microorganisms, while about 40% turns to carbon dioxide** — so each pass through the loop **destroys** mass, and **net sludge reduction is readily achieved**.
+
+**In principle, all kinds of chemical, mechanical and biological methods that kill microorganisms can be used for disintegration.** **Ozone is most commonly used, at a dosage of 0,02 to 0,10 g O₃ per g TSS**; **ball mill, microwave, ultrasound, electrolysis and alkaline/acid treatments** are alternatives. Biological methods include **thermophilic reactors operated at 60 to 70 °C**, where most organisms in the return sludge die and their debris grows thermophiles that die in turn on recycle — and **anoxic selectors**, on identical logic.
+
+One limit: **about 8% of cell mass is non-biodegradable in aeration basin conditions**, so **inert material can accumulate** in the loop.
+
+## Worked example: RBC area and lagoon oxygen
+A small municipality discharges **Q = 2000 m³/d**, influent **BOD₅ = 250 mg/L**, target effluent **25 mg/L**. Summer temperature exceeds 15 °C. Use the **effluent** and **converters** tools.
+
+**Option A — RBC.**
+- Secondary treatment only, at the upper rate **0,16 m³/(d·m²)**:
+  \`A = 2000 ÷ 0,16 = 12 500 m²\` of media
+- With **nitrification**, at **0,06 m³/(d·m²)**:
+  \`A = 2000 ÷ 0,06 = 33 333 m²\` of media
+
+**Sanity-check:** nitrifying needs about **2,7 times** the media. That ratio, not the absolute number, is the design insight.
+
+**Option B — aerated lagoon.**
+- BOD removed: \`2000 m³/d × (250 − 25) g/m³ = 450 000 g/d = 450 kg BOD5/d\`
+- Oxygen required, at **0,7 to 1,4 × BOD₅ removed**:
+  \`450 × 0,7 = 315\` to \`450 × 1,4 = 630 kg O2/d\`
+- Suspended solids generated, at **0,27 to 0,32 kg/kg**:
+  \`450 × 0,27 = 122\` to \`450 × 0,32 = 144 kg SS/d\`
+
+**Sanity-check:** the lagoon’s oxygen factor (0,7–1,4) is **well below** the 1,5–2,5 and 2–4 kg O₂/kg BOD rules of thumb for activated sludge from SEW-203. That is not an error — a flow-through lagoon without recycle carries less biomass, so less air goes into endogenous respiration. Compare processes on their own coefficients, never by borrowing one another’s.
+
+_Source: The Nalco Water Handbook, 3rd ed., Ch.23 — Sludge Reduction Process; Aerated Lagoons; Rotating Biological Contactors._`,
+
   /* ───── SEW-301 — Plant Optimisation & Compliance ───── */
 
   'c-sew-301/m1': `## What Green Drop measures
@@ -3242,6 +3410,178 @@ Now contrast the industrial case: **BOD 100 mg/L, TKN 40 mg/L**.
 The lesson binds the course together. **Denitrification is not merely a nitrogen polish — it is the alkalinity strategy.** By reducing the net acid formed by nitrification, it holds pH in range, protects the biology, and reduces the alkali bill. Where the carbon is there, take it. Where it is not, decide honestly whether methanol is cheaper than caustic plus a nitrate consent breach.
 
 _Source: The Nalco Water Handbook, 3rd ed., Ch.23 — Phosphorous Removal (chemical), Nitrogen Removal (BOD/TKN ratio, alkalinity)._`,
+
+  /* SEW-303 - Anaerobic Systems, Digestion & Membrane Bioreactors */
+
+  'c-sew-303/m1': `## What digestion achieves
+**Anaerobic digestion is one of the oldest processes used for stabilisation and reduction of domestic primary and biological sludges.** Note the scope: **typically it is not used in industrial effluent treatment systems** — it is a municipal sludge process.
+
+**In the process, organic material in sludge is converted biologically to a variety of end products, including methane (CH₄) and carbon dioxide (CO₂), under anaerobic conditions.** It is **carried out in an airtight reactor with sludge introduced and removed on an intermittent basis**.
+
+Two outcomes justify it. **The resulting sludge is well stabilised** — no longer putrescible, safer to handle and dispose of — and **total solids are reduced 45 to 50% by weight**. Recall from SEW-204 that **excess sludge treatment can be 40 to 60% of the total cost of effluent treatment**. Halving the solids halves the largest cost line in the works.
+
+## Standard rate and high rate
+**There are two basic types of sludge digestion systems: standard rate and high rate.**
+
+**Standard rate.** **The reactor contents are unmixed and unheated. The detention time is 60 to 90 days.** Simple, tolerant, and enormous.
+
+**High rate.** **The reactor is completely mixed and heated to 29 to 38 °C (85 to 100 °F), resulting in a typical detention time of 15 days or less.**
+
+Mixing and heat buy a **four- to six-fold reduction in reactor volume**. That is the entire economic case for the high-rate digester, and it is why the methane balance in module 4 matters: the heat has to come from somewhere.
+
+## The two-stage system and methane
+**The most common configuration is the two-stage system.**
+
+- **The first stage is heated and mixed** — this is where the biology happens.
+- **The second stage reactor is not mixed or heated, and is allowed to stratify** to separate **concentrated digested sludge, supernatant liquor, and methane gas**. **Generally a scum layer develops on the surface of the liquor in domestic systems.**
+
+Stage one digests; stage two separates. Splitting the duties lets each be optimised, and gives a quiet vessel in which gas can disengage.
+
+**Methane produced is used to heat the digester, heat buildings, generate electricity, or drive mechanical equipment such as pumps and blowers.** In a well-run works the digester is not merely a cost centre — it is the plant’s power station, and it heats itself first.
+
+_Source: The Nalco Water Handbook, 3rd ed., Ch.23 — Anaerobic Systems: Anaerobic Sludge Digestion._`,
+
+  'c-sew-303/m2': `## Where anaerobic treatment fits
+Distinguish this from digestion. **The anaerobic treatment process involves decomposition of organics in effluent to methane and carbon dioxide in the absence of oxygen.** It treats the **wastewater itself**, not the sludge.
+
+**Process kinetics and material balances are similar to aerobic systems, but there are certain basic differences that require consideration.**
+
+**The anaerobic process may be the sole treatment, or it may be ahead of an aerobic treatment system, depending on treated water discharge requirements.** **Typical organic removals are 75 to 95%, depending on design and application** — excellent for a roughing stage, usually insufficient for direct discharge.
+
+## The consequences of slow growth
+Everything distinctive about anaerobic treatment traces to one fact: **conversion of organics to methane gas yields little energy.**
+
+Little energy means **the rate of cell growth is slow and the quantity of organic growth is low**. From which: **the rate of treatment and the sludge solids yield are both considerably less than in the activated sludge process.**
+
+**Advantages and disadvantages of the anaerobic treatment process, as compared to aerobic systems, relate directly to the slow growth rate of organisms.** Read them as two sides of one coin:
+
+- **The disadvantage:** **slow growth rates mean that reactor detention times have to be relatively long for high efficiency.** Big vessels, long residence.
+- **The advantage:** **slow growth also means that only a small portion of organic material is synthesised into new cells** — therefore **there is a minimal amount of sludge for disposal.**
+
+And a third: instead of paying for air, you **produce a fuel**.
+
+**A sufficient amount of nutrients must be present, just as in aerobic systems** — though the amount required is substantially lower, tracking the lower cell yield.
+
+## The effluents it suits
+**The anaerobic treatment process is used for treating effluents that have high organic content.** Among the industries: **meatpacking, breweries, alcohol production, pharmaceutical, various types of food processing, pulp and paper, and oilfield produced water.**
+
+The strengths involved dwarf municipal sewage. **Influent BOD and COD in some effluents are very high, such as alcohol stillage with 40 g/L BOD and 120 g/L COD.** For orientation, typical strengths:
+
+- **sugar** — BOD 50–500, COD 250–1500 mg/L
+- **dairy** — BOD 150–500, COD 250–1200 mg/L
+- **potato** — BOD 200–300, COD 250–1500 mg/L
+- **wine** — BOD 3500 mg/L
+- **pulp** — BOD 350–900, COD 1400–8000 mg/L
+- **fibre board** — BOD 2500–5500, COD 8800–14 900 mg/L
+- **paper mill** — BOD 100–200, COD 280–300 mg/L
+- **landfill leachate** — COD 500–4000 mg/L
+- **brewery** — COD 200–350 mg/L; **distillery** — COD 320–400 mg/L
+
+Now apply SEW-203’s aerobic arithmetic to a fibre board effluent at 5000 mg/L BOD: the air demand and the sludge yield are both ruinous. Anaerobic treatment is not a curiosity for these streams — it is the only affordable answer.
+
+_Source: The Nalco Water Handbook, 3rd ed., Ch.23 — Anaerobic Treatment (Table 23.11)._`,
+
+  'c-sew-303/m3': `## Acidification
+Anaerobic degradation runs in three biological stages, performed by three different groups of organisms in sequence. Understanding where COD actually disappears explains every operating fault.
+
+**Stage one — hydrolysis and acidification.** Complex organics are broken to simple **acids: acetic, propionic and butyric**.
+
+The critical point: **in the acidification stage, there is minimal reduction of COD.** Should a large amount of hydrogen be formed, some COD reduction occurs, but **this seldom exceeds 10%**. The COD has been **rearranged, not removed**.
+
+This is why a stalled digester **acidifies**. If acidification proceeds and the later stages do not keep up, acids accumulate, pH falls, and the acid-sensitive methanogens are inhibited — a self-reinforcing failure. Volatile acid and alkalinity monitoring in **lims** is the early warning.
+
+## Acetogenesis
+**Stage two.** **All acids higher than acetic acid are converted to acetic acid and hydrogen by acetogenic microorganisms.** For propionic acid:
+
+\`C3H6O2 + 2H2O → C2H4O2 + CO2 + 3H2\`  (Eq. 23.18)
+
+**In this reaction, COD reduction does occur, in the form of H₂.** The oxygen demand leaves the liquid as hydrogen gas.
+
+## Methanogenesis
+**Stage three.** **Acetic acid and hydrogen are converted to methane by methanogenic organisms — the methane formers.**
+
+From acetic acid:
+\`C2H4O2 → CO2 + CH4\`  (Eq. 23.19)
+\`CH3COO- + H2O → CH4 + HCO3-\`  (Eq. 23.20)
+
+From hydrogen:
+\`HCO3- + 4H2 → CH4 + OH- + 2H2O\`  (Eq. 23.21)
+
+Note Eq. 23.21 produces **hydroxide**. The hydrogen-consuming methanogens **generate alkalinity**, buffering the acids made in stage one. In a healthy reactor the three stages are in balance and the pH holds itself. Knock out the methanogens — by a temperature drop, a toxic slug, or an organic overload — and stage one runs on unchecked. **The acids that accumulate are the symptom; the methanogens are the patient.**
+
+_Source: The Nalco Water Handbook, 3rd ed., Ch.23 — Anaerobic Treatment (Eqs. 23.18–23.21)._`,
+
+  'c-sew-303/m4': `## The Monod relationship
+**The kinetic relationship commonly employed for anaerobic degradation is the Monod relationship:**
+
+\`ds/dt = Kmax × S × X ÷ (KS + S)\`  (Eq. 23.22)
+
+where **ds/dt** is the **substrate (COD) utilisation rate** in mg/(L·d), **K_max** the **maximum specific substrate utilisation rate** in g COD/(g VSS·d), **S** the **effluent COD concentration** (mg/L), **X** the **biomass concentration** (mg/L), and **K_S** the **half saturation concentration** (mg/L).
+
+Read the structure. When **S is much greater than K_S**, the fraction approaches 1 and the rate is set by **K_max** alone — the reactor is saturated with food and running flat out. When **S is comparable to or below K_S**, the fraction collapses and the rate falls sharply. **K_S is the concentration at which the rate is half its maximum**, and it decides how hard the reactor must work to reach a low effluent COD.
+
+## Temperature coefficients
+Now the coefficients, and the reason temperature dominates anaerobic design:
+
+- **35 °C** — K_max 6,67 per day, K_S 164 mg/L
+- **25 °C** — K_max 4,65 per day, K_S 930 mg/L
+- **20 °C** — K_max 3,85 per day, K_S 2130 mg/L
+
+Between 35 and 20 °C, **K_max falls by about 42%** — unremarkable. But **K_S rises thirteen-fold**, from 164 to 2130 mg/L. And because K_S sits in the denominator, the damage at **low effluent COD** is severe.
+
+Test it. At an effluent **S = 200 mg/L**:
+- at **35 °C**: \`6,67 × 200 ÷ (164 + 200) = 6,67 × 0,549 = 3,66\` (per unit biomass)
+- at **20 °C**: \`3,85 × 200 ÷ (2130 + 200) = 3,85 × 0,0858 = 0,33\`
+
+**The treatment rate falls by a factor of about eleven** for a 15 °C drop. Not 42% — **eleven times**. This is why the high-rate digester is **heated to 29–38 °C**, and why an unheated anaerobic reactor in a cold month is not slow but effectively stopped.
+
+## Worked example: methane yield and self-heating
+**One key yield figure:** **0,45 kg of COD or ultimate BOD_L removed in the process yields 0,16 m³ of methane at standard conditions (0 °C and one atmosphere).** That is approximately **0,36 m³ of methane per kg of COD removed**.
+
+A brewery discharges **Q = 500 m³/d** at **COD = 3000 mg/L**, and the anaerobic reactor achieves **85% removal** (within the stated 75–95%). Use the **effluent** and **converters** tools.
+
+- COD removed: \`500 m³/d × 3,0 kg/m³ × 0,85 = 1275 kg COD/d\`
+- Methane: \`1275 × 0,36 = 459 m³ CH4 per day\`
+
+**Sanity-check:** cross-check against the source ratio directly — \`1275 ÷ 0,45 × 0,16 = 453 m³/d\`. The two agree within rounding. ✓
+
+**The self-heating question.** **Low BOD and COD effluents may not produce enough gas to heat the reactor. Conversely, high-strength wastes produce excess gas that is used as a source of energy such as heat and electricity.** At 3000 mg/L COD this brewery generates a substantial gas stream and will comfortably heat its own reactor to the 29–38 °C the Monod coefficients demand. Halve the COD to 1500 mg/L and the gas halves — while the heat loss through the reactor wall does not. **There is a strength below which anaerobic treatment cannot pay for its own warmth**, and below that line it slides down the K_S curve into the eleven-fold penalty above.
+
+_Source: The Nalco Water Handbook, 3rd ed., Ch.23 — Anaerobic Treatment (Eq. 23.22, Table 23.12, methane yield)._`,
+
+  'c-sew-303/m5': `## Decoupling biology from settling
+**Use of MBR has expanded considerably, from a few systems in the 1980s to several thousand in 2005.** In these systems, **ultrafiltration (UF) or microfiltration (MF) membranes replace sedimentation basins for separation of biomass from water.**
+
+**The membrane can be installed in the bioreactor tank** — submerged — **or in an external tank**, where biomass is continuously separated from water. **These microporous membranes have a pore size range between 0,04 and 0,4 µm and allow for almost complete particle separation from mixed liquor.** **Since solids–liquid separation is performed by a membrane, lower effluent TSS can be achieved compared to a conventional settling basin.**
+
+But the headline benefit is not cleaner effluent. **More importantly, MBR decouples the biological process from the process of settling biomass.**
+
+Consider what that undoes. Everything limiting in SEW-203 — the SVI, the bulking, the pin floc, the straggler floc, the sludge blanket — exists because the **clarifier** must settle what the **aeration basin** grows. Remove the clarifier and the biology is freed. **This allows operation of the biological process at conditions that would be untenable in a conventional system, including high MLSS of 8 to 15 g/L, long SRT, and low hydraulic retention time.** **In conventional systems, such conditions could lead to sludge bulking and poor settleability.**
+
+## The operating envelope
+The stated benefits of MBR:
+- **MLSS can be increased to 8 to 15 g/L**, versus **1,5 to 8 g/L for conventional systems**;
+- **higher MLSS can reduce HRT** — more biomass per litre means less litre needed;
+- **lower sludge production**;
+- **lower effluent TSS**;
+- **lower effluent BOD**;
+- **up to 50% footprint reduction**; and
+- **higher SRT can produce good nitrification**.
+
+That last point closes a loop from SEW-302. Nitrification fails **below five days SRT** because autotrophs wash out, and it **fails below 10 °C** — **except where MLSS is very high, such as in membrane bioreactor processes running around 10 g/L**. The MBR carries enough retained autotroph mass to nitrify through conditions that would defeat a conventional plant. The membrane is, indirectly, a cold-weather nitrification strategy.
+
+## Flux, fouling and cleaning
+Nothing is free, and the MBR pays in **fouling** — particle build-up on the membrane surface.
+
+**The main operating variables used to maintain flow across the membrane surface (flux) are the aeration rate and suction pressure**, the latter being **the driving force that controls the amount of water transported across the membranes, and directly related to flux**. In an **external MBR**, **cross-flow velocity is the main operating variable that controls flux**.
+
+**To further maintain flux, both systems depend on intermittent operation.** **During the off cycle, the membrane surface continues to be scoured by water and air, and solid debris is loosened and removed.** In **hollow fibre** systems, **a periodic back pulse of permeate** helps remove accumulated solids. When that is not enough, **membranes can be taken out of service and cleaned chemically with sodium hypochlorite, caustic, or organic acids**.
+
+**Membranes are constructed of polymeric or ceramic materials**, but **the vast majority are polymeric — polyvinylidene difluoride, polyethylene, and chlorinated polyethylene**. **Membrane geometry is usually either hollow fibre or flat sheet.**
+
+The operator’s summary: an MBR trades a **settling problem** you cannot control for a **fouling problem** you can — with aeration, suction, back pulse and a cleaning schedule. That is usually a good trade, and it is the reason the clarifier is disappearing from new plants.
+
+_Source: The Nalco Water Handbook, 3rd ed., Ch.23 — Membrane Bioreactors (MBR process, fouling, membrane materials)._`,
 
   /* ════════════════════════════════════════════════════════════════
      TRACK 4 — INDUSTRIAL EFFLUENT

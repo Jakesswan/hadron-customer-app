@@ -4,7 +4,7 @@
 > Project so it can (1) judge NEW vs DEEPENING + flag overlap, and (2) pick the next
 > free id/code in a track. Code convention: **1xx = Foundation, 2xx = Intermediate, 3xx = Advanced**.
 
-**52 courses across 10 tracks.**
+**54 courses across 10 tracks.**
 
 ## Potable Water  `track-potable`
 _Drinking water treatment from source to tap_
@@ -80,7 +80,7 @@ Codes used (DIS-): 101, 201, 202, 203, 204, 301, 302
 ## Sewage Treatment  `track-sewage`
 _Wastewater treatment & sludge_
 
-Codes used (SEW-): 101, 201, 202, 203, 301, 302
+Codes used (SEW-): 101, 201, 202, 203, 204, 301, 302, 303
 
 - **SEW-101** `c-sew-101` - Sewage Composition & Treatment Overview _(Foundation, 4 hrs, 4 modules)_
   - tools: effluent, servicereport
@@ -97,6 +97,10 @@ Codes used (SEW-): 101, 201, 202, 203, 301, 302
   - prereqs: c-sew-101
   - tools: effluent, lims, converters
   - modules: m1 Why biology, and who does the work | m2 The control parameters | m3 Sludge production & oxygen demand | m4 Activated sludge process control | m5 Settling, diagnosis & a worked example | m6 Knowledge check
+- **SEW-204** `c-sew-204` - Fixed-Film & Natural Treatment Systems _(Intermediate, 4 hrs, 6 modules, has quiz)_
+  - prereqs: c-sew-203
+  - tools: effluent, converters, lims
+  - modules: m1 The trickling filter | m2 Rotating biological contactors | m3 Aerated lagoons | m4 Stabilization ponds | m5 Choosing a process & reducing the sludge | m6 Knowledge check
 - **SEW-301** `c-sew-301` - Plant Optimisation & Compliance _(Advanced, 4 hrs, 4 modules)_
   - prereqs: c-sew-202
   - tools: servicereport, effluent
@@ -105,6 +109,10 @@ Codes used (SEW-): 101, 201, 202, 203, 301, 302
   - prereqs: c-sew-203
   - tools: effluent, lims, dosage
   - modules: m1 Why nutrients matter | m2 Nitrification | m3 Denitrification | m4 Biological phosphorus removal | m5 Chemical phosphorus removal & worked example | m6 Knowledge check
+- **SEW-303** `c-sew-303` - Anaerobic Systems, Digestion & Membrane Bioreactors _(Advanced, 5 hrs, 6 modules, has quiz)_
+  - prereqs: c-sew-302
+  - tools: effluent, converters, lims
+  - modules: m1 Anaerobic sludge digestion | m2 Anaerobic treatment of high-strength effluent | m3 The anaerobic biochemistry | m4 Kinetics, temperature & methane yield | m5 Membrane bioreactors | m6 Knowledge check
 
 ## Industrial Effluent  `track-effluent`
 _Trade waste, paint detack, F&B, DAF_
