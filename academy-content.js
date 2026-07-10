@@ -3092,6 +3092,157 @@ Three pages — findings, recommendations, scoring. Distribute to plant manager,
 
 _Source: DWS Green Drop audit framework; WISA Plant Operations Auditor course._`,
 
+  /* SEW-302 - Nutrient Removal: Nitrification, Denitrification & Biological Phosphorus */
+
+  'c-sew-302/m1': `## Phosphorus, nitrogen and eutrophication
+In water environments such as **rivers, lakes and oceans, the most stringent nutrient for algal growth is phosphorus**. The conclusion follows directly: **controlling phosphorus in the water environment is the single most effective means to maintain clean water and prevent eutrophication** — that is, algal growth.
+
+**Nitrogen is the next most stringent nutrient**, though with an important caveat: **some algae can fix gaseous nitrogen from the air**. Deny an algal bloom phosphorus and it starves; deny it nitrogen and some species simply take theirs from the atmosphere. That asymmetry is why phosphorus control comes first.
+
+## Why ammonia outranks nitrate
+Nitrogen exists in many oxidation states, but they are not equally dangerous.
+
+**Ammonia nitrogen is the most readily utilised form for most organisms that contaminate water.** Worse, **ammonia nitrogen consumes dissolved oxygen and may suffocate fish and higher life forms when it is biologically oxidised** in the receiving water — the nitrification you failed to do at the works simply happens in the river instead, at the fish’s expense.
+
+Both matter, but **controlling ammonia nitrogen is given higher priority than controlling nitrate nitrogen**. Nitrate, once formed, is **less harmful to the water environment**.
+
+## What the biomass removes anyway
+Some nutrient removal happens whether you plan it or not. **Microorganisms treating effluent contain 1,7% phosphorus and 8,7% nitrogen.** So **some part of the phosphorus and nitrogen is converted to biomass and eventually removed through sludge wastage** — every kilogram of waste activated sludge carries nutrients out of the plant.
+
+Beyond that, **if SRT and other conditions are properly managed, the majority of ammonia and organic nitrogen can be oxidised to nitrate**, which is less harmful. That is nitrification, and it is achievable in any conventional activated sludge plant with sufficient sludge age.
+
+To go further — to convert nitrate to nitrogen gas, and to strip phosphorus below what cell synthesis takes — **phosphorus and nitrogen removal can be further enhanced biologically using cyclic DO conditions**. That single phrase, *cyclic DO conditions*, is the foundation of everything in this course. You do not add a new chemical. You **vary the oxygen in time and space**, and let the organisms sort themselves out.
+
+_Source: The Nalco Water Handbook, 3rd ed., Ch.23 — Nutrient Removal in Activated Sludge._`,
+
+  'c-sew-302/m2': `## The nitrogen pathway
+Nitrogen removal is a relay, not a single reaction:
+
+\`NH4+ --O2--> NO2- --O2--> NO3- --BOD--> N2 (gas)\`  (Eq. 23.14)
+
+Read it as three distinct requirements. The first two arrows need **oxygen**. The third arrow needs **BOD, and no free oxygen**. A plant that supplies only aeration can complete the first two steps and will discharge nitrate. A plant that wants nitrogen **gone** must build an environment where the third arrow can happen — an **anoxic zone**.
+
+## The autotrophs and their reactions
+**Nitrification occurs by autotrophs in aerobic conditions with consumption of DO.** **All biological processes having oxygen-rich stages and long sludge age can oxidise ammonia nitrogen to nitrate.** Two genera do the work in sequence:
+
+\`2NH4+ + 3O2 --Nitrosomonas--> 2NO2- + 2H2O + 4H+\`  (Eq. 23.15)
+\`2NO2- + O2 --Nitrobacter--> 2NO3-\`  (Eq. 23.16)
+
+Look at what Eq. 23.15 produces besides nitrite: **4H⁺**. Nitrification is an **acid-generating** reaction, and that acid is the subject of the next module.
+
+Note also that these are **autotrophs** — they build their cells from inorganic carbon, not from the BOD in the sewage. They are not competing with the heterotrophs for food. They are competing for **oxygen and time**.
+
+## Why nitrification fails: sludge age and temperature
+Two failures dominate, and neither is fixed by adding air.
+
+**Sludge age.** The autotrophs grow **slowly**. **Below five days SRT, autotrophs rarely build up to a sufficient level, due to washout** — they are removed from the system faster than they reproduce. This is the same constraint met in SEW-203, seen now from the biology: **nitrification is not possible at low SRT**, and no amount of dissolved oxygen substitutes for sludge age.
+
+**Temperature.** **Autotrophs are more sensitive to temperature** than the heterotrophs around them. **Nitrification can be severely affected below 10 °C (50 °F)** — which in a South African winter is a live risk on an exposed works. The exception: **where MLSS is very high, such as in membrane bioreactor (MBR) processes running around 10 g/L**, the sheer mass of retained autotrophs can carry nitrification through the cold.
+
+A third failure comes from the influent itself. Recall from SEW-203 that **high levels of unionised ammonia inhibit nitrification**, and that **sulfide is toxic for nitrification bacteria**. When ammonia passes through a plant with adequate SRT, temperature and DO, look for an inhibitor before you look for a design fault. Trend the results in **lims**.
+
+_Source: The Nalco Water Handbook, 3rd ed., Ch.23 — Nitrogen Removal (Eqs. 23.14–23.16)._`,
+
+  'c-sew-302/m3': `## Anoxic respiration
+**Denitrification occurs in the absence of free oxygen** — the **anoxic** condition. The insight is that oxygen does not have to arrive as O₂. **Most heterotrophs can respire with consumption of combined oxygen in the form of nitrate, nitrite, hypochlorite and so on.**
+
+\`2NO3- + 2H+ → N2 (gas) ↑ + H2O + 2.5 O2\`  (Eq. 23.17)
+
+The nitrogen leaves the plant as **gas**, up through the surface of the basin. Nothing is wasted to sludge, nothing is precipitated, nothing needs disposal. It is the cheapest removal in the whole works — provided two conditions are met.
+
+**Condition one: no free oxygen.** If dissolved oxygen is present, the heterotrophs will use it in preference and ignore the nitrate. An anoxic zone that is accidentally aerated does nothing.
+
+**Condition two: carbon.** Which brings us to the ratio.
+
+## The carbon requirement
+**Since the combined oxygen in nitrate is utilised during BOD oxidation by heterotrophs, a certain amount of BOD is necessary to reduce nitrate.** The organisms are eating BOD and breathing nitrate; take away the food and the breathing stops.
+
+**Theoretically, the BOD/TKN ratio should be at least 3,4:1 to denitrify all nitrogen.** If the ratio is **lower than 3,4:1**, **nitrogen removal is limited to some extent depending on the BOD deficiency**. In those cases, **a source of carbon such as methanol is added to the denitrification basin**.
+
+This is why municipal sewage denitrifies readily and many industrial effluents do not. Domestic sewage arrives carbon-rich. A nitrogen-bearing industrial stream may arrive with plenty of TKN and almost no biodegradable carbon — and must then **buy** its carbon, by the tanker.
+
+Sequence matters too: put the anoxic zone **where the carbon is**, at the head of the process, and recycle nitrate back to it. Put it at the end, after the heterotrophs have consumed all the BOD, and you must dose methanol to do the same job.
+
+## Alkalinity: what nitrification takes and denitrification returns
+Recall Eq. 23.15 produced **4H⁺**. In practice, **pH in the aeration basin often decreases below the optimum range (6,5–7,5), mainly due to formation of nitrates during oxidation of TKN** (ammonia nitrogen plus organic nitrogen) contained in the influent.
+
+**In theory, 1 mg of nitrogen can consume 3,6 mg of alkalinity as CaCO₃, if it is not denitrified.**
+
+_A caution on this figure: references differ on the alkalinity demand of nitrification, and the value above is as stated in the source for this course. Before sizing an alkali dose, verify against your own plant’s alkalinity balance across the aeration basin rather than relying on a textbook coefficient alone._
+
+The elegant part: **when denitrification is performed, net acid formation by nitrification can be reduced, and pH can be maintained more easily.** Denitrification hands back a share of the alkalinity that nitrification consumed. A plant that nitrifies but does not denitrify pays twice — once in nitrate discharged, and once in the caustic or lime it must buy to hold pH in range.
+
+_Source: The Nalco Water Handbook, 3rd ed., Ch.23 — Nitrogen Removal (Eq. 23.17, BOD/TKN ratio, alkalinity)._`,
+
+  'c-sew-302/m4': `## The cyclic DO strategy
+Biological phosphorus removal rests on a piece of ecological engineering. **If sludge containing many kinds of different microorganisms is circulated periodically between low anaerobic and high DO conditions, some species that can adapt well in this cyclic DO condition will have an advantage over other microorganisms.**
+
+You are not dosing anything. You are **changing the rules of the environment** so that the organism you want wins.
+
+**Most heterotrophic microorganisms can make energy only under an oxygen-rich environment.** But **some microorganisms — polyphosphate accumulating organisms (PAO) — can make energy without oxygen, by hydrolysing the polyphosphate accumulated in the cell.** They carry their own energy reserve, in the form of stored phosphorus.
+
+Cycle the sludge, and the PAO thrive where the others merely survive. **During anaerobic conditions, PAO have a clear advantage in survival over other microorganisms.**
+
+## PAO, PHB and luxury uptake
+Follow one PAO cell around the loop.
+
+**In the DO-rich (aerobic) zone**, the PAO **accumulate excess phosphorus to prepare for the DO-scarce conditions** ahead. They take up **more phosphorus than they need for growth**. This is **“luxury uptake”** — the mechanism the whole process exploits. **Under aerobic conditions, more phosphorus is accumulated by PAO to prepare for anaerobic conditions.**
+
+**In the DO-scarce (anaerobic) zone**, the PAO **absorb fatty acids from the liquid phase and store them in the form of polyhydroxybutyrate (PHB)**, paying for that uptake by hydrolysing their stored polyphosphate — which releases phosphorus back to the water. The stored **PHB is then used to produce new PAO during the DO-rich conditions**.
+
+So phosphorus is **released** in the anaerobic zone and **taken up in excess** in the aerobic zone. Net removal happens not in the water but in the **sludge**: PAO leave the plant as waste activated sludge, carrying far more phosphorus per cell than an ordinary heterotroph would.
+
+The corollary catches people out: **biological phosphorus removal only removes phosphorus when you waste sludge.** Hold the sludge, and the phosphorus you so carefully packed into it is released straight back when the cells go anaerobic in the clarifier blanket or the thickener.
+
+## What biological phosphorus removal demands of the plant
+Three demands follow directly from the mechanism:
+
+- **A genuine anaerobic zone** — not merely anoxic. Nitrate arriving in the anaerobic zone lets heterotrophs respire and consume the fatty acids the PAO need, undermining their advantage.
+- **Volatile fatty acids** in the influent for the PAO to store as PHB. Septic, fermented sewage is friendlier to bio-P than fresh, well-aerated sewage.
+- **Sludge wasting discipline**, and prompt handling of the wasted sludge, so the phosphorus leaves the plant rather than being released back into a sidestream.
+
+Where those can be met, phosphorus is removed with **no chemical, no extra sludge beyond the biomass itself, and no alkalinity penalty** — which is exactly what the chemical route cannot claim.
+
+_Source: The Nalco Water Handbook, 3rd ed., Ch.23 — Phosphorous Removal (PAO, PHB, luxury uptake)._`,
+
+  'c-sew-302/m5': `## Metal salt precipitation
+**Phosphorus can also be removed chemically.** **Addition of chemicals to the secondary clarifier for phosphate precipitation is commonly practised.** A **mineral salt addition involving Fe³⁺ or Al³⁺ combines with the soluble orthophosphate available and precipitates as insoluble metal phosphates.**
+
+It is reliable, fast-acting and indifferent to the state of the biology — which is precisely why it is popular, and why it is over-used. Note also that **the solubility of the metal salts used in phosphorus precipitation is strongly pH dependent**, so dose control and pH control are the same problem.
+
+Dosages for chemical phosphorus removal, and the reactions of the various agents, are treated in the tertiary treatment chapter; use the **dosage** tool to compute product feed from the chosen dose.
+
+## The alkalinity and sludge penalties
+Chemical phosphorus removal is not free, and both penalties land on the biology.
+
+**The alkalinity penalty.** **Adding acid salts of these metals neutralises the alkalinity of the waste and drops pH.** And **reduction in alkalinity sometimes inhibits biological treatment in the activated sludge process.** You are already fighting for alkalinity because nitrification consumes it; ferric or alum dosing takes more of the same reserve. A plant that nitrifies, does not denitrify, **and** dose ferric for phosphorus can find its aeration basin drifting out of the 6,5–7,5 optimum with no obvious single cause.
+
+**The sludge penalty.** **Formation of a substantial amount of insoluble iron or aluminium hydroxide can increase sludge handling and dewatering costs significantly.** The hydroxide is inert bulk — you pay to thicken it, dewater it and haul it.
+
+**The mitigation.** **Where chemical phosphorus removal is intended to take place in activated sludge, tests should be run to see if sodium aluminate can be substituted for the acid metal salts of iron or aluminium.** Sodium aluminate is the alkaline aluminium coagulant — it delivers Al³⁺ without the acid load, sparing the alkalinity the biology needs. **Run the test; do not assume.**
+
+## Worked example: carbon and alkalinity check
+A works receives **BOD 250 mg/L** and **TKN 45 mg/L**, with influent alkalinity **200 mg/L as CaCO₃**. It nitrifies. Should it denitrify, and can it? Use the **effluent** and **converters** tools.
+
+**Step 1 — carbon check.**
+\`BOD ÷ TKN = 250 ÷ 45 = 5,6\`
+This is comfortably **above the 3,4:1 minimum**, so the effluent carries enough carbon to denitrify all its nitrogen. **No methanol required.**
+
+**Step 2 — alkalinity consumed if nitrogen is NOT denitrified.**
+\`45 mg/L N × 3,6 mg CaCO3 per mg N = 162 mg/L as CaCO3\`
+
+**Step 3 — alkalinity remaining.**
+\`200 − 162 = 38 mg/L as CaCO3\`
+
+**Sanity-check and conclusion.** Only **38 mg/L** of alkalinity survives — a thin buffer, and the aeration basin pH will be under real pressure, drifting toward the bottom of the 5–9 operating range and out of the 6,5–7,5 optimum. The plant would need caustic or lime.
+
+Now contrast the industrial case: **BOD 100 mg/L, TKN 40 mg/L**.
+\`100 ÷ 40 = 2,5\` — **below 3,4:1**, so nitrogen removal is **limited in proportion to the BOD deficiency**, and **a carbon source such as methanol must be added to the denitrification basin**.
+
+The lesson binds the course together. **Denitrification is not merely a nitrogen polish — it is the alkalinity strategy.** By reducing the net acid formed by nitrification, it holds pH in range, protects the biology, and reduces the alkali bill. Where the carbon is there, take it. Where it is not, decide honestly whether methanol is cheaper than caustic plus a nitrate consent breach.
+
+_Source: The Nalco Water Handbook, 3rd ed., Ch.23 — Phosphorous Removal (chemical), Nitrogen Removal (BOD/TKN ratio, alkalinity)._`,
+
   /* ════════════════════════════════════════════════════════════════
      TRACK 4 — INDUSTRIAL EFFLUENT
      ════════════════════════════════════════════════════════════════ */

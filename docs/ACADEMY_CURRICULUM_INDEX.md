@@ -4,7 +4,7 @@
 > Project so it can (1) judge NEW vs DEEPENING + flag overlap, and (2) pick the next
 > free id/code in a track. Code convention: **1xx = Foundation, 2xx = Intermediate, 3xx = Advanced**.
 
-**50 courses across 10 tracks.**
+**51 courses across 10 tracks.**
 
 ## Potable Water  `track-potable`
 _Drinking water treatment from source to tap_
@@ -80,7 +80,7 @@ Codes used (DIS-): 101, 201, 202, 203, 204, 301, 302
 ## Sewage Treatment  `track-sewage`
 _Wastewater treatment & sludge_
 
-Codes used (SEW-): 101, 201, 202, 203, 301
+Codes used (SEW-): 101, 201, 202, 203, 301, 302
 
 - **SEW-101** `c-sew-101` - Sewage Composition & Treatment Overview _(Foundation, 4 hrs, 4 modules)_
   - tools: effluent, servicereport
@@ -101,6 +101,10 @@ Codes used (SEW-): 101, 201, 202, 203, 301
   - prereqs: c-sew-202
   - tools: servicereport, effluent
   - modules: m1 Green-Drop framework | m2 Aeration energy | m3 Digital tools & dashboards | m4 Audit walk-through
+- **SEW-302** `c-sew-302` - Nutrient Removal: Nitrification, Denitrification & Biological Phosphorus _(Advanced, 5 hrs, 6 modules, has quiz)_
+  - prereqs: c-sew-203
+  - tools: effluent, lims, dosage
+  - modules: m1 Why nutrients matter | m2 Nitrification | m3 Denitrification | m4 Biological phosphorus removal | m5 Chemical phosphorus removal & worked example | m6 Knowledge check
 
 ## Industrial Effluent  `track-effluent`
 _Trade waste, paint detack, F&B, DAF_
