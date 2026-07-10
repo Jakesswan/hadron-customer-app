@@ -2707,6 +2707,225 @@ Use the Hadron F:M and SRT calculators to convert "we wasted 100 m³ today" into
 
 _Source: WRC TT 685/16; Metcalf & Eddy Ch 8; Hadron Effluent Tools._`,
 
+  /* SEW-203 - Biological Treatment & Activated Sludge Process Control */
+
+  'c-sew-203/m1': `## The two essential components
+Strip any biological treatment system down and you find the same two parts:
+
+1. **A reactor** — in which organic matter is brought **into contact with the microbial population**.
+2. **A clarifier** — in which **biological solids are settled and collected in the sludge blanket**, and thereby **separated from the clarified effluent**, which passes to the receiving waters.
+
+Everything else is variation. **Secondary effluent treatment methods include activated sludge, aerated lagoons, trickling filters, and rotating biological contactors.** They divide into families:
+
+- **Suspended growth (aerobic)** — activated sludge in its many forms (conventional plug flow, continuous flow stirred tank, step aeration, pure oxygen, modified aeration, contact stabilization, extended aeration, oxidation ditch), suspended growth nitrification, aerated lagoons, aerobic digestion.
+- **Attached growth (aerobic)** — trickling filters (low rate, high rate, roughing), **rotating biological contactors (RBC)**, and packed bed reactors for nitrification.
+- **Combined processes** — trickling filter plus activated sludge, or the reverse.
+- **Anoxic processes** — denitrification, in both suspended and attached growth forms.
+
+Biological waste treatment removes organic matter **much as naturally occurring stream biota would** in surface receiving waters — but **there is usually not as much time**. Microorganisms work **most efficiently on dissolved organic matter**, and the **active microorganisms are a relatively small fraction of the total biomass**.
+
+## The microbial community
+**Bacteria are the most important group**, because they are **responsible for the structural and functional activity of the activated sludge floc**. All types of bacteria except pathogens make up activated sludge, and the predominant type is set by the **nature of the organic substances, the mode of plant operation, and the environmental conditions**.
+
+Above them sit the grazers, and each tells you something:
+- **Free-swimming ciliates** (for example **Paramecium**) must swim after bacteria and **require a great deal of food**, because they expend so much energy swimming.
+- **Stalked ciliates** (for example **Vorticella**) attach to something solid and catch food as it passes. Their limited movement means they **require less food**. Vorticella is especially important in the activated sludge process.
+- **Rotifers** are aerobic, heterotrophic, multicellular organisms with two sets of rotating cilia on the head. They are very effective at consuming **dispersed and flocculated bacteria and small particles of organic matter**, and **their presence in mixed liquor indicates a highly efficient aerobic biological purification process**.
+- **Worms** are characteristic higher life forms appearing in systems with **very high sludge age**.
+
+A microscope is therefore a process instrument, not a curiosity.
+
+## How bacteria grow
+Bacteria reproduce by **binary fission**, and the **generation time** can vary from **days to less than 20 minutes**. In a batch culture, the population passes through four phases by **cell number**:
+
+1. **Lag phase** — time required for organisms to **acclimate** to the new environment.
+2. **Log growth phase** — cells divide at a rate set by generation time and their ability to process food (constant percentage growth rate).
+3. **Stationary phase** — the population remains stationary; **substrate or nutrients are exhausted**, and growth of new cells is offset by death of old ones.
+4. **Log death phase** — the **death rate exceeds production** of new cells.
+
+Described by **mass** rather than number, the phases become **log growth** (excess food, growth limited by ability to consume), **stationary** (food and organisms in balance), **declining growth**, and finally **endogenous respiration**. That last phase is where the sludge yield comes from — the subject of module 3.
+
+_Source: The Nalco Water Handbook, 3rd ed., Ch.23 — Secondary Effluent Treatment (general principles, important microorganisms, bacterial growth, Table 23.1)._`,
+
+  'c-sew-203/m2': `## The ten parameters
+To ensure a favourable environment for the biological reactions, **ten parameters must be controlled**:
+
+- **pH and alkalinity**
+- **temperature**
+- **oxygen requirements**
+- **nutrient requirements**
+- **solids separation**
+- **biological solids recirculation**
+- **aeration capacity**
+- **mixing energy**
+- **hydraulic retention time**
+- **solids retention time**
+
+Note what this list implies. Six of the ten are **physical or hydraulic**, not chemical. An operator who only watches the chemistry is watching four-tenths of the process.
+
+Certain constituents **adversely affect** the process, and knowing which is the difference between a diagnosis and a guess:
+- **Ammonia nitrogen** — **needed for growth**; too little **inhibits growth**, but **high levels of unionised ammonia inhibit nitrification**.
+- **Phosphate** — needed for growth; too little inhibits growth.
+- **Calcium and magnesium** — very small amounts needed.
+- **Chloride** — corrosive; **toxic to microorganisms at very high levels**.
+- **Mercury and other heavy metals** — **toxic at designated levels**.
+- **Sulfate** — needed in small amounts.
+- **Sulfide** — corrosive, **depletes oxygen**, and **toxic for nitrification bacteria**.
+- **Petrochemicals** — toxic at high levels.
+- **Phenol compounds** — toxic at high levels **until organisms acclimate**.
+- **Surfactants** — **cause foaming and can decrease oxygen transfer efficiency**.
+
+Nor is all organic matter equal. **Easily biodegradable:** sugars, alcohols. **Slower or moderately biodegradable:** ketones, phenol compounds, organic acids, esters, ethers. **Less easily biodegradable:** cellulose, fats, lignins, polymeric compounds, and aliphatic and aromatic hydrocarbons.
+
+## pH, alkalinity and temperature
+**pH of effluent is not always a problem** — but in biological treatment **pH can drop**, mainly because of **nitrate and carbon dioxide generation from BOD and nitrogen**.
+
+Operation of most biological processes is **limited to a pH range of 5 to 9, with an optimum of 6,5 to 7,5**. If the effluent **does not contain enough alkalinity (bicarbonate)**, the biological production of CO₂ and nitrate can **drop pH out of the optimum range**. If it falls below optimum, **caustics, limes or other alkalis can be added as needed**.
+
+**Temperature** works through oxygen. **Oxygen solubility increases as temperature decreases** — so cold water holds more oxygen, while warm water accelerates the biology that consumes it. The two effects pull in opposite directions across the seasons.
+
+## Nutrients and the 100/5/1 rule
+Microorganisms are not just carbon. **In general, a ratio of BOD/nitrogen/phosphorus of 100/5/1 is recommended for maintaining the best biological conditions.**
+
+To confirm sufficiency, **maintain a small excess in the final effluent** — approximately **1 or 2 mg/L of nitrogen (as ammonia)** and **soluble orthophosphate on a filtered sample**.
+
+Source selection matters:
+- **Phosphorus:** phosphoric acid, and mono-, di- and trisodium phosphate. **Polyphosphates and hexametaphosphate are NOT a readily available source of phosphate for microorganisms, and should not be used.**
+- **Nitrogen:** anhydrous or aqueous ammonia, and urea. **Ammonium phosphate can be used**, but it is difficult to meet the different demands for N and P from a single product.
+
+Beyond N and P, many **mineral elements are essential**. For an effluent of 200 mg/L BOD (300 mg/L COD), minimum influent concentrations run: **N 10, P 2, K 1,2, Ca 1,2, Mg 0,8, S 0,7, Na 0,4, Cl 0,4, Fe 0,2, Zn 0,02, Mn 0,01** mg/L. **At higher BOD, minimum requirements increase proportionally.**
+
+Here is the practical divide: **municipal effluents usually contain enough of all micronutrients.** But **many industrial effluents suffer from nutrient deficiency** because of a narrow range of raw materials — chemical and pharmaceutical effluents often carry **very high BOD and COD with low mineral content**. For proper treatment, **K, Ca, Mg, S and Fe should be added as needed, along with N and P**.
+
+_Source: The Nalco Water Handbook, 3rd ed., Ch.23 — biological treatment control parameters, pH and alkalinity, nutrient requirements (Tables 23.3–23.5)._`,
+
+  'c-sew-203/m3': `## Where the sludge comes from
+Sludge production is **the net effect of two competing processes**:
+
+1. **Synthesis of new organisms** resulting from assimilation of the organic matter removed; minus
+2. **Reduction of the mass of organisms under aeration**, by die-off and oxidation over an extended period — known as **endogenous respiration**.
+
+Net sludge production is therefore **mainly a function of the total BOD treated and the solids retention time (SRT)**, also known as **mean cell residence time (MCRT)**.
+
+The number to carry: **for an activated sludge process where SRT is 5 to 10 days, sludge yield is typically 0,5 to 0,6 kg of dry mass per 1 kg of domestic BOD treated — and lower with longer SRT**, because endogenous respiration has more time to consume the biomass. **Sludge yield is different for different industrial effluents.**
+
+That single relationship explains a real operating tension: **running a longer sludge age makes less sludge to dispose of, but demands a bigger aeration basin and more air.**
+
+## Carbonaceous oxygen demand
+The theoretical oxygen requirement starts from the **five-day BOD**, less the organisms wasted from the system per day. If all the BOD₅ were converted to CO₂ and H₂O, the total demand would follow from converting BOD₅ to **BOD_L**. But **a portion of the waste is converted to cell structure and removed from the system**, so the BOD_L of the wasted cells is subtracted:
+
+\`ODC = [Q(S' − S)fC / fBOD] − 1.42 Px\`  (Eq. 23.6)
+
+where **OD_C** is carbonaceous oxygen demand (kg O₂/d), **Q** the influent flow (m³/d), **S′** the influent BOD and **S** the effluent BOD (mg/L), **f_C** the unit conversion factor (1/1000 in metric), **f_BOD** the factor converting BOD₅ to BOD_L (**0,68 for municipal effluent**), and **P_x** the net sludge production as volatile solids (kg/d). The **1,42** arises because **one mole of cells is equal to 1,42 times the concentration of cells**.
+
+## Nitrogenous oxygen demand and rules of thumb
+**When nitrification occurs**, the total oxygen requirement is the carbonaceous demand **plus** the oxygen needed to convert ammonia to nitrate:
+
+\`ODN = 4.57 × Q(N0 − N) × fC\`  (Eq. 23.7)
+
+where **N₀** and **N** are the influent and effluent **total Kjeldahl nitrogen (TKN)** in mg/L, and **4,57** is the conversion factor for the oxygen needed for **complete oxidation of TKN**. Nitrification is not a free add-on — it carries its own, substantial air bill.
+
+For a quick check, use the loading rules of thumb for **total oxygen supplied to a biological plant**:
+- **2 to 4 kg O₂ per kg BOD removed** for **low loaded systems** (0,05 kg BOD/kg MLSS);
+- **1,5 to 2,5 kg O₂ per kg BOD removed** for **medium loaded systems** (0,1–0,2 kg BOD/kg MLSS).
+
+Note the pattern: the **more lightly loaded the system, the more oxygen per kilogram of BOD** it consumes — because at low loading a larger share of the air goes into endogenous respiration rather than into treating new food. Low sludge production is paid for in air.
+
+_Source: The Nalco Water Handbook, 3rd ed., Ch.23 — sludge production, oxygen requirements (Eqs. 23.6–23.7)._`,
+
+  'c-sew-203/m4': `## The conventional process
+The **conventional activated sludge process** consists of an **aeration tank**, a **secondary clarifier**, a **method of returning sludge** to the aeration tank, and a **means of wasting excess sludge**. **Sludge wasting is accomplished from the recycle or mixed liquor line.**
+
+The flow model is **plug flow with clarifier underflow recycle**. Both the **influent settled effluent and the recycled sludge enter the tank at the head end**, and are **aerated for a period of 4 to 12 hours**. During this period, **absorption, flocculation and oxidation of organic matter occur**, with mixing by diffused or mechanical aeration held constant as the mixed liquor moves down the tank.
+
+Mixed liquor then settles in the **activated sludge clarifier/thickener**, and **sludge is returned at a rate of approximately 25 to 100% of the influent flow rate**.
+
+Some equipment constraints worth knowing: aeration tanks are usually **reinforced concrete, open to the atmosphere**, and **rectangular** so that multiple tanks share common walls. **If total capacity exceeds 142 m³, the volume should be divided among two or more units capable of independent operation.** For diffused air, **water depth should be 3 to 4,9 m** so diffusers work efficiently, with **0,3 to 0,61 m of freeboard** above the waterline.
+
+Four control methods are in common use: **solids retention time (SRT)**, **food-to-microorganism ratio (F/M)**, **constant MLSS**, and **return activated sludge control**. The objective throughout is to **keep process parameters within a narrow range**, so that swings in efficiency from **shock loads or upsets are minimised**.
+
+## Solids retention time
+**SRT** — also called **MCRT or sludge age** — is calculated by **dividing the total quantity of sludge in the aeration basin and clarifier by the daily sludge losses through waste activated sludge and effluent** (Eq. 23.9):
+
+\`SRT = (solids in aeration basin + solids in clarifier) ÷ (solids leaving in WAS + solids leaving in effluent)\`, in days.
+
+The system can be controlled by holding SRT constant. Both directions of error have a signature:
+
+**SRT too high.** This means **scarce food, a low F/M ratio**. The **sludge floc can be dismantled and pin floc formed**, often accompanied by **solids loss and an increase in effluent turbidity** from the secondary clarifier.
+
+**SRT too low.** A condition called **“young sludge”**: **light, fluffy, buoyant sludge**, also called **straggler floc**, which **settles slowly**. It is witnessed in the clarifier when **fluffy floc particles are pulled over the weirs even though the effluent may be relatively clear**, and in the aeration basin as **white billowy foam**. These conditions are **typical just after startup**.
+
+And the constraint that governs nitrogen: **an SRT lower than five days is not sufficient to grow enough of the slowly growing autotrophic microorganisms that oxidise nitrogen. Consequently, nitrification is not possible at low SRT.** No amount of aeration substitutes for sludge age.
+
+## Food-to-microorganism ratio
+**F/M** expresses the **organic loading** of the process, and is **a critical factor in process design and operation, especially in determining aeration basin volume**:
+
+\`F/M = Q0(S0 − Se) ÷ (XA × VA)\`  (Eq. 23.10)
+
+with **Q₀** the influent flow (m³/d), **S₀** and **S_e** the influent and effluent BOD₅ (mg/L), **X_A** the **mixed liquor volatile suspended solids (MLVSS)** in the aeration basin (mg/L), and **V_A** the basin volume (m³). Units are **kg BOD per kg MLVSS per day**.
+
+Two conversions for when the lab data is incomplete, for **domestic effluent**:
+- if **only COD is available**, **divide COD by 1,5** to approximate BOD₅;
+- **multiply MLSS by 0,75** to approximate MLVSS.
+
+**BOD/COD and MLSS/MLVSS ratios for industrial effluent can vary significantly** with the process, so do not carry these factors across to an industrial works without checking.
+
+**F/M and MLVSS are important design criteria for sizing the aeration basin**, and together with **sludge age** they are the important **operating** criteria. Use the **effluent** tool to compute and trend them.
+
+_Source: The Nalco Water Handbook, 3rd ed., Ch.23 — activated sludge process, process equipment, process control concepts (Eqs. 23.9–23.10)._`,
+
+  'c-sew-203/m5': `## Sludge volume index
+**SVI** is defined as the **volume in millilitres occupied by one gram of activated sludge mixed liquor solids, dry weight, after settling for 30 minutes in a 1000 mL graduated cylinder**:
+
+\`SVI = Vs ÷ MLSS\`  (Eq. 23.11)
+
+where **V_s** is the volume of settled sludge after 30 minutes (mL/L) and **MLSS** is in **g/L**. The sample is taken **at the outlet of the aeration tank**.
+
+For mixed liquor concentrations in the range **1500–3500 mg/L**:
+- **SVI 80–120** — **normal, considered good settling**
+- **SVI above 120** — **an indication of possible bulking in the clarifier**
+- **SVI below 80** — **an indication of very compact and heavy floc**
+
+**The trap.** The Handbook is explicit: **the SVI characteristic of good settling sludge varies with the type of industrial waste and the concentration of mixed liquor solids, and observed values at a given plant should not be compared with those reported for other plants or in the literature.** SVI is a **trend instrument for your works**, not a league table.
+
+Alongside SVI, track **oxygen uptake rate**, **microscopic examination**, **aerator loading**, **detention time** and **mixed liquor DO level**. Oxygen uptake rate follows Eq. 23.12: \`OUR = (DO0 − DO10) × 60 ÷ 10\`, from a short-duration DO test in a standard 300 mL BOD bottle, taken once or twice a shift.
+
+## Worked example: a full process check
+A works treats **Q₀ = 5000 m³/d**. Influent BOD₅ **S₀ = 250 mg/L**, effluent **S_e = 20 mg/L**. Aeration basin **V_A = 2000 m³**, **MLSS = 3000 mg/L**. The 30-minute settled volume is **300 mL/L**. Work it with the **effluent** and **converters** tools.
+
+**Step 1 — SVI.**
+\`SVI = 300 mL/L ÷ 3,0 g/L = 100 mL/g\` → sits in the **80–120 band: good settling**.
+
+**Step 2 — MLVSS.**
+\`MLVSS ≈ 0,75 × 3000 = 2250 mg/L\`
+
+**Step 3 — F/M.**
+\`F/M = 5000 × (250 − 20) ÷ (2250 × 2000) = 1 150 000 ÷ 4 500 000 = 0,26 kg BOD/(kg MLVSS·d)\`
+
+**Step 4 — BOD load removed.**
+\`5000 m³/d × 230 g/m³ = 1 150 000 g/d = 1150 kg BOD/d\`
+
+**Step 5 — aerator loading, on an MLSS basis.**
+MLSS inventory = \`3,0 kg/m³ × 2000 m³ = 6000 kg\`
+\`1150 ÷ 6000 = 0,19 kg BOD/(kg MLSS·d)\` → a **medium loaded** system (0,1–0,2).
+
+**Step 6 — oxygen demand check.**
+Medium loaded rule of thumb, **1,5–2,5 kg O₂ per kg BOD removed**:
+\`1150 × 1,5 = 1725\` to \`1150 × 2,5 = 2875 kg O₂/d\`
+
+**Sanity-check:** the picture is internally consistent — an SVI of 100 (good settling), an F/M of 0,26, and an aerator loading of 0,19 that lands squarely in the medium-loaded band the oxygen rule of thumb assumes. Had the aerator loading come out at 0,05, the correct oxygen factor would have been 2–4 kg/kg, not 1,5–2,5, and the air demand estimate would have nearly doubled. **Always confirm which loading band you are in before applying the rule of thumb.**
+
+## Reading the process: pin floc, straggler floc and bulking
+The three levers now become three diagnoses.
+
+- **Pin floc.** SVI low, effluent turbid, solids lost over the weirs, SRT well above the recommended range and **F/M low**. The floc has been **dismantled by starvation**. Waste more sludge to bring SRT down.
+- **Straggler floc (young sludge).** SVI unhelpful, effluent relatively **clear** yet **light fluffy floc rides over the weirs**, **white billowy foam** in the basin, SRT below range. **Waste less sludge** and let the population build. Expect this after startup.
+- **Bulking.** **SVI above 120**, sludge blanket rising in the clarifier, poor compaction. Check **F/M**, **DO**, and the **nutrient balance** — remember that surfactants **cause foaming and decrease oxygen transfer efficiency**, sulfide **depletes oxygen and is toxic to nitrifying bacteria**, and a **nutrient-deficient industrial effluent** starves the floc-formers.
+
+And when ammonia is passing through untreated, check the **sludge age before the aeration**: below **five days**, nitrification is simply not available to you.
+
+_Source: The Nalco Water Handbook, 3rd ed., Ch.23 — sludge volume index, dissolved oxygen uptake, process control concepts (Eqs. 23.11–23.12)._`,
+
   /* ───── SEW-301 — Plant Optimisation & Compliance ───── */
 
   'c-sew-301/m1': `## What Green Drop measures

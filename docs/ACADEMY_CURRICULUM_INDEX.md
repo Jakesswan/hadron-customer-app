@@ -4,7 +4,7 @@
 > Project so it can (1) judge NEW vs DEEPENING + flag overlap, and (2) pick the next
 > free id/code in a track. Code convention: **1xx = Foundation, 2xx = Intermediate, 3xx = Advanced**.
 
-**49 courses across 10 tracks.**
+**50 courses across 10 tracks.**
 
 ## Potable Water  `track-potable`
 _Drinking water treatment from source to tap_
@@ -80,7 +80,7 @@ Codes used (DIS-): 101, 201, 202, 203, 204, 301, 302
 ## Sewage Treatment  `track-sewage`
 _Wastewater treatment & sludge_
 
-Codes used (SEW-): 101, 201, 202, 301
+Codes used (SEW-): 101, 201, 202, 203, 301
 
 - **SEW-101** `c-sew-101` - Sewage Composition & Treatment Overview _(Foundation, 4 hrs, 4 modules)_
   - tools: effluent, servicereport
@@ -93,6 +93,10 @@ Codes used (SEW-): 101, 201, 202, 301
   - prereqs: c-sew-201
   - tools: effluent, servicereport
   - modules: m1 Sludge handling | m2 Anaerobic digestion | m3 Biological nutrient removal | m4 Operator targets
+- **SEW-203** `c-sew-203` - Biological Treatment & Activated Sludge Process Control _(Intermediate, 5 hrs, 6 modules, has quiz)_
+  - prereqs: c-sew-101
+  - tools: effluent, lims, converters
+  - modules: m1 Why biology, and who does the work | m2 The control parameters | m3 Sludge production & oxygen demand | m4 Activated sludge process control | m5 Settling, diagnosis & a worked example | m6 Knowledge check
 - **SEW-301** `c-sew-301` - Plant Optimisation & Compliance _(Advanced, 4 hrs, 4 modules)_
   - prereqs: c-sew-202
   - tools: servicereport, effluent
