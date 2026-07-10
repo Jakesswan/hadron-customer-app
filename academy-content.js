@@ -4054,6 +4054,167 @@ These cut metal load to the wastewater plant by 50–90 %, often saving more tha
 
 _Source: NEMWA classification; HASA and CMP local case-studies; Eskom mining-effluent papers._`,
 
+  /* EFF-302 - Tertiary Treatment, Heavy Metal Removal & Sludge Handling */
+
+  'c-eff-302/m1': `## What tertiary treatment adds
+Secondary treatment removes BOD and suspended solids. **Tertiary** treatment addresses what is left, and its objectives are specific:
+- **disinfection**, through chemical or mechanical means;
+- **dechlorination** for water discharge;
+- **solids removal**;
+- **ammonia reduction**;
+- **phosphate reduction**; and
+- **organics removal**.
+
+Note the second item. If you chlorinate to disinfect, you must then **remove the chlorine before discharge** — the disinfectant that protects the public is toxic to the receiving water.
+
+## Mechanical disinfection and the residual problem
+The goal of disinfection is **killing microorganisms in water to ensure suitability of the water for entry into the environment**. But a kill alone is not sufficient. The process **must not only provide a sufficient kill of microorganisms but also provide a residual effect to maintain control over the microbial population**, controlling and **preventing pathogenic bacteria from growing and recontaminating the water**.
+
+That requirement condemns the mechanical methods to a supporting role. **Mechanical or physical disinfection processes include ultraviolet light, radiation, and heat. While these treatments can kill bacteria, none have a residual effect, and the bacteria can recontaminate water after treatment.** Consequently, **mechanical treatment is often followed by chemical treatment that has disinfection persistence in water**.
+
+## Chlorination and its alternatives
+The chemical options are **chloramines, bromine, iodine, hydrogen peroxide, chlorination with chlorine gas or bleach (sodium hypochlorite)**, and in some cases **ozone and chlorine dioxide**.
+
+**Use of ozone and chlorine dioxide is less common because, as gases, they tend to flash off and do not provide long-term microbial control.**
+
+**Chlorination is the most common disinfection practice, due to the extensive knowledge of how it works, industry-wide acceptance of the practice, and overall lower cost.** It is **widely practised in municipal effluent treatment because of regulations requiring disinfection of effluents**.
+
+One elegant special case: **ozone combined with ultraviolet light is used to maintain bacterial control in critical process waters where halogens are undesirable.** The **ozone provides bacterial control, and the ultraviolet light is used to destroy the ozone before the water is used** — disinfection with a deliberately terminated residual. It is not a common effluent practice, but **ultraviolet light is being used to disinfect effluent**, and technology developments may promote further use.
+
+_Source: The Nalco Water Handbook, 3rd ed., Ch.24 — Tertiary Effluent Treatment (disinfection, chlorination)._`,
+
+  'c-eff-302/m2': `## Why phosphate persists
+Phosphate is not an unwanted intruder in secondary treatment — it is a **requirement**. **Phosphate is required in secondary effluent treatment plants to maintain healthy biomass for efficient BOD reduction**, and **typically 0,5 mg/L phosphate residual in the aeration basin effluent is required to ensure biomass health**.
+
+**Although this level is sufficiently low for most surface water discharge requirements, there is a general trend in regulations to require lower levels.** Hence a tertiary step.
+
+**Tertiary treatment for phosphate removal involves precipitation of orthophosphate with metallic ions such as aluminium, iron and calcium.** But note the qualifier: **orthophosphate**. **Polyphosphates and organic phosphates do not readily react with metallic ions, and are removed only after conversion to orthophosphate by biological treatment and hydrolysis, followed then by chemical precipitation.** **Small amounts may be removed through absorption on floc solids** formed by the metal precipitation products.
+
+## Aluminium, iron and calcium precipitation
+**Aluminium.** Compounds include **alum, sodium aluminate, and the various polyaluminium chloride and sulfate products**.
+
+\`Al3+ + PO4 3- → AlPO4\`  (Eq. 24.4)
+
+**Optimum pH for precipitation of metal phosphate using alum ranges from 5,5 to 6,5, with 6,0 being best.** The operating rule: **adjust the water pH to a value where, once the chemical treatment is added, the final pH is as close to 6,0 as possible. This reduces formation of aluminium hydroxide and maximises aluminium phosphate formation.** The actual alum quantity is affected by **alkalinity and final pH**, and by **sulfate, fluoride and sodium, the quantity and nature of suspended solids, microorganisms, intensity of mixing** and other physical conditions.
+
+**Iron.** Effective in a **pH range of 7 to 8**.
+
+\`Fe3+ + PO4 3- → FePO4\`  (Eq. 24.5)
+\`3Fe2+ + 2PO4 3- → Fe3(PO4)2\`  (Eq. 24.6)
+
+Again, adjust so the **desired final pH is obtained once the treatment chemical is added** — maximising ferric phosphate and **minimising ferric hydroxide**.
+
+**Calcium (lime).** Calcium ions react with orthophosphate **in the presence of hydroxyl ions to form hydroxyapatite**. The **lime dose is largely determined by alkalinity reactions**, similar to lime softening, rather than by phosphate mass balance. The **largest fraction of phosphate is removed where the solubility of hydroxyapatite is lowest, at about pH 7**; in practice, **operating pH is often set by what is needed for good suspended solids removal, and as long as pH does not exceed 9,0, good phosphate removal generally follows**.
+
+And the number that decides many plants: **the total amount of lime sludge generated is more than 2,25 times the amount when sodium aluminate is used for phosphate removal.** Compute doses with the **dosage** tool, and cost the sludge before choosing.
+
+## Activated carbon for organics
+**The principal uses of activated carbon as a tertiary treatment process are removal of objectionable organics from effluent and removal of chlorine residual.** Both **granular activated carbon (GAC)** and **powdered activated carbon (PAC)** are used.
+
+Its value is specific: **activated carbon removes organics that are not degraded in conventional biological treatment** — the refractory fraction the biology could not touch. And because it also strips chlorine residual, one carbon bed can serve both the **organics removal** and the **dechlorination** objectives from module 1.
+
+_Source: The Nalco Water Handbook, 3rd ed., Ch.24 — Phosphate Removal (Eqs. 24.4–24.6), Organics Removal._`,
+
+  'c-eff-302/m3': `## The solubility product
+Every metal precipitation decision reduces to one number. **K_sp is the solubility product**, and it is **a measure of the tendency of metals to precipitate when the appropriate anion is added to a solution of the metal**. Because **temperature affects the solubility of all solids, K_sp is reported for a specific temperature**.
+
+The rule is simple and it is the whole chapter: **in general, the smaller the solubility product, the less soluble the compound and the more effectively a metal can be removed from solution.**
+
+**Ferric hydroxide is among the least soluble metal hydroxides (K_sp = 1,1 × 10⁻³⁶), and ferric ion is very effectively removed from solution by addition of caustic.**
+
+## Hydroxide, sulfide and carbonate precipitation
+Comparing solubility products across anions tells you which reagent to reach for. At room temperature:
+
+- **Sulfides** are the least soluble: **HgS ≈ 10⁻⁵⁰**, **CuS ≈ 10⁻³⁶**, **PbS ≈ 10⁻²⁶**, **ZnS ≈ 10⁻²⁴**, **NiS ≈ 10⁻²²**.
+- **Hydroxides** are intermediate: **Cu(OH)₂ ≈ 10⁻²⁰**, **Zn(OH)₂ ≈ 10⁻¹⁷**, **Pb(OH)₂ ≈ 10⁻¹⁵**, **Ni(OH)₂ ≈ 10⁻¹⁵**, **Mn(OH)₂ ≈ 10⁻¹³**.
+- **Carbonates** are the most soluble of the three: **PbCO₃ ≈ 10⁻¹³**, **ZnCO₃ ≈ 10⁻¹¹**, **MnCO₃ ≈ 10⁻¹¹**, **CuCO₃ ≈ 10⁻¹⁰**, **NiCO₃ ≈ 10⁻⁹**.
+
+**Their low K_sp makes hydroxide, sulfide and carbonate effective precipitation agents for metal removal.** Where a hydroxide leaves too much metal in solution — nickel and manganese are the usual offenders — a **sulfide** will take it several orders of magnitude lower. Log the residual metals in **lims** and trend them against the reagent in use.
+
+## Hexavalent chromium and cyanide
+Two species defeat straightforward precipitation, and both require **pretreatment**.
+
+**Hexavalent chromium** must be **reduced to the trivalent state** before it can be precipitated as the hydroxide. The operational caution: **to ensure that a sufficient amount of reductant has been added, analytical testing needs to be done to determine chromium levels in the treated water accurately** — you cannot infer completeness from dose alone.
+
+**Cyanide (CN⁻)** is used in plating processes for **zinc, cadmium, copper, brass, silver and gold**. Beyond its toxicity, **cyanide forms soluble complexes with metals that hinder subsequent removal with precipitation agents** — so it poisons the treatment of everything else in the stream. **Cyanide must be removed from rinse waters in a pretreatment process that typically reduces the level of cyanide below 1 mg/L.**
+
+The standard route is **two-stage alkaline chlorination**:
+
+**Stage one** — pH is adjusted to approximately **11**, and **chlorine gas or sodium hypochlorite oxidises cyanide to cyanate**:
+\`Cl2 + NaCN + 2NaOH → NaCNO + 2NaCl + H2O\`  (Eq. 25.17)
+
+**Stage two** — pH is lowered to **8 to 9** (about 8,5, by sulfuric acid addition), and more oxidant **further oxidises cyanate to carbon dioxide and nitrogen**:
+\`3Cl2 + 4NaOH + 2NaCNO → 2CO2 + N2 + 6NaCl + 2H2O\`  (Eq. 25.18)
+
+**The first stage is monitored and controlled by two independent loops:** caustic addition on a **pH controller**, and chlorine addition on an **ORP probe** calling for oxidant to hold a specified ORP in the tank.
+
+_Source: The Nalco Water Handbook, 3rd ed., Ch.25 — Heavy Metal Removal (solubility products, Table 25.2; cyanide, Eqs. 25.17–25.18)._`,
+
+  'c-eff-302/m4': `## Prevention before end-of-pipe
+The most important sentence in the heavy metals chapter is not about chemistry. **The best approach to heavy metal pollution control is a comprehensive programme of prevention practices and point source treatment.**
+
+That programme may include **production modifications, operational changes, material substitution, materials and water conservation, recycling, and end-of-pipe chemical and equipment treatment**. Put another way: **a successful environmental management system requires a mechanical, operational and chemical (MOC) approach in order to meet regulatory compliance.**
+
+Chemistry is one leg of three. A plant that treats metals only at the outfall is solving, at maximum cost and minimum reliability, a problem it created upstream.
+
+## Operational factors
+Five operational levers, each of which reduces the metal load before it reaches a treatment chemical:
+
+- **Training and supervision.** Ensures everyone is aware of the company’s regulatory goals, and emphasises that **equipment must be operated as designed in order to minimise waste**.
+- **Production planning.** Can **eliminate unnecessary steps, such as cleaning operations, that contribute to overall waste generated**.
+- **Raw material substitution.** Where possible, **toxic raw materials and products should be replaced with less hazardous substitutes** — for example, **replacing hexavalent chromium and cyanide in plating and metal finishing operations reduces the toxicity of the waste generated**. Note this eliminates exactly the two species that demanded pretreatment in the previous module.
+- **Waste segregation and separation.** Facilities must **handle hazardous and non-hazardous waste separately**, because **mixing wastes complicates removal of the hazardous components**. For example, **cyanide-bearing effluent should be pretreated before mixing with other waste streams**.
+- **Loss prevention and housekeeping.** **Maintenance of equipment to minimise spills and leaks** is necessary. And a sharp point: **use chemical analysis, rather than elapsed time or production numbers, to determine when process solutions need replacement** — dumping a bath on a calendar rather than on an assay generates avoidable waste.
+
+## Closed loop recycling
+**Closed loop recycling is often linked to mechanical or equipment methods in waste treatment.** The principle: **any equipment treatment process — for example ion exchange or reverse osmosis — that is capable of separating or concentrating metals so that they can be returned to the process is of great value in reducing the amount of metals that are treated in an end-of-pipe treatment.**
+
+The metal that goes back into the plating bath is not a waste at all. It is inventory. **Separation and concentration methods that form a recycle loop** convert a compliance cost into a raw material saving — and shrink the end-of-pipe plant that must be built, operated and sludge-handled forever after.
+
+_Source: The Nalco Water Handbook, 3rd ed., Ch.25 — Metal Removal (MOC approach, operational factors, closed loop recycling)._`,
+
+  'c-eff-302/m5': `## Why thickening pays
+Everything upstream in this course produces sludge. **Sludge thickening removes free water from a slurry to reduce volume**, and the arithmetic is unusually generous:
+
+- increasing solids from **1% to 2%** dry solids by weight **reduces sludge volume by 50%**;
+- increasing solids from **1% to 10%** **reduces sludge volume by 90%**.
+
+**Thickening reduces the capital and operating costs of subsequent sludge processing** — **digestion, dewatering, or liquid transport by pipeline or truck** — **since these process costs are sensitive to the amount of water that has to be handled.** It also delivers **sludge flow and concentration equalisation**.
+
+Scale decides whether it is a separate unit. **Separate thickening is seldom practised in treatment plants with less than about 158 m³/h capacity**; there, **gravity thickening is accomplished in the primary clarifier, the sludge digestion units, or both**. In larger plants, the **improved control and the higher concentrations attained** justify the additional cost, because the savings downstream are so large.
+
+## Thickening and dewatering methods
+**Thickening** methods include **gravity thickening, flotation thickening, the rotary drum thickener, gravity table thickeners and centrifugal thickening**. Primary clarifiers, flotation clarification and digestion processes all thicken incidentally.
+
+Understand the distinction from clarification, because it decides how a unit is judged. **Gravity thickening involves separation of solid particles from the liquid phase by gravity, just like clarification** — but **thickening treats slurries having a relatively high solids concentration and processes them to a higher concentration, and the clarity of the water removed is of secondary importance**. Clarification does the reverse: it treats **dilute slurries to produce clear liquor, with thickening being of secondary importance**. Where **both high effluent clarity and maximum underflow solids** are required, the device should properly be called a **clarifier-thickener**.
+
+**Dewatering is normally the final liquid/solids separation step.** The method is **dictated by the nature of the solids, the final method of sludge disposal, and specific local conditions**, and the goal is a **cake of such density, solids content and strength as to meet subsequent disposal requirements**. The disposal route sets the target:
+- **incineration** → extract maximum water, to **minimise auxiliary fuel**;
+- **landfill** → **low cake moisture**, to **pass cake drainage tests and minimise hauling costs**;
+- **land reclamation** → the cake **may not need dewatering to such a high extent**.
+
+The **nature of the sludge** covers **viscosity, volatile (organic) content, compressibility, and particle size, shape, density and electrical surface charge**. Some of these are design considerations beyond operational control. **Within plant control are: feed solids concentration, accumulation of fines, sludge age, and biological health** — and **a change in feed solids concentration can affect solids capture, cake solids, polymer dosage and sludge throughput** of the dewatering device.
+
+## Worked example: thickening and the chemical choice
+A works produces **100 m³/d of sludge at 1% dry solids**. It thickens to **5%**. Use the **effluent** and **converters** tools.
+
+**Step 1 — solids mass (unchanged by thickening).**
+\`100 m³/d × 1% ≈ 1,0 m³/d of dry solids equivalent\`
+
+**Step 2 — thickened volume.**
+\`V2 = V1 × C1 ÷ C2 = 100 × 1 ÷ 5 = 20 m³/d\`
+
+**Step 3 — volume reduction.**
+\`(100 − 20) ÷ 100 = 80% reduction\`
+
+**Sanity-check:** consistent with the handbook’s figures — 1% to 2% gives 50%, and 1% to 10% gives 90%; 1% to 5% lands sensibly between them. **Thickening removes water, not solids**, so the solids mass in Step 1 must be identical before and after; if it is not, the calculation is wrong.
+
+**Now the integration.** Suppose this plant removes phosphorus with **lime** rather than **sodium aluminate**. Recall from module 2 that **lime generates more than 2,25 times the sludge**. The 80% volume reduction so carefully won by thickening is substantially **cancelled by the reagent chosen four process steps upstream**.
+
+That is the lesson of the whole effluent track. **Every chemical decision at the head of the works is a sludge decision at the tail of it** — and the sludge is where the money is spent.
+
+_Source: The Nalco Water Handbook, 3rd ed., Ch.26 — Sludge Thickening, Sludge Dewatering; Ch.24 — Calcium Treatment (lime sludge factor)._`,
+
   /* ════════════════════════════════════════════════════════════════
      TRACK 5 — COOLING WATER
      ════════════════════════════════════════════════════════════════ */

@@ -4,7 +4,7 @@
 > Project so it can (1) judge NEW vs DEEPENING + flag overlap, and (2) pick the next
 > free id/code in a track. Code convention: **1xx = Foundation, 2xx = Intermediate, 3xx = Advanced**.
 
-**51 courses across 10 tracks.**
+**52 courses across 10 tracks.**
 
 ## Potable Water  `track-potable`
 _Drinking water treatment from source to tap_
@@ -109,7 +109,7 @@ Codes used (SEW-): 101, 201, 202, 203, 301, 302
 ## Industrial Effluent  `track-effluent`
 _Trade waste, paint detack, F&B, DAF_
 
-Codes used (EFF-): 101, 201, 202, 203, 301
+Codes used (EFF-): 101, 201, 202, 203, 301, 302
 
 - **EFF-101** `c-eff-101` - Effluent Characterisation & Standards _(Foundation, 3 hrs, 3 modules)_
   - tools: effluent, lims, neutralise
@@ -130,6 +130,10 @@ Codes used (EFF-): 101, 201, 202, 203, 301
   - prereqs: c-eff-101
   - tools: neutralise, effluent, lims
   - modules: m1 Metal hydroxide chemistry | m2 Two-stage neutraliser | m3 Polishing techniques | m4 Sludge & disposal
+- **EFF-302** `c-eff-302` - Tertiary Treatment, Heavy Metal Removal & Sludge Handling _(Advanced, 5 hrs, 6 modules, has quiz)_
+  - prereqs: c-eff-201
+  - tools: effluent, dosage, lims
+  - modules: m1 Tertiary objectives & disinfection | m2 Phosphate & organics removal | m3 Heavy metals: the chemistry | m4 Heavy metals: the programme | m5 Sludge thickening & dewatering | m6 Knowledge check
 
 ## Cooling Water  `track-cooling`
 _Cooling towers & closed-loop systems_
