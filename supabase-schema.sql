@@ -489,7 +489,7 @@ do $$
 declare t text;
 begin
   for t in select unnest(array[
-    'customers','sites','equipment','samples','sample_results','jobs','audit_log',
+    'sites','equipment','samples','sample_results','jobs','audit_log',
     'lims_tests','lims_test_profiles','lims_worksheets','lims_instruments','lims_inventory','lims_documents','lims_competencies',
     'lims_personnel','lims_calibrations','lims_ncs','lims_quotes'
   ]) loop
@@ -508,6 +508,26 @@ begin
       t||'_write', t);
   end loop;
 end $$;
+
+-- customers: special-cased (migration 0005) so ERP-mastered rows are read-only
+-- in the App. App users READ every customer in their org (ERP + App), but may
+-- only WRITE (insert/update/delete) rows where source <> 'erp'. Records mastered
+-- by the ERP (source='erp', written by the erp-ingest Edge Function via
+-- service_role, which bypasses RLS) are therefore read-only to the App. The
+-- select policy carries NO source check so the App can still SEE ERP customers.
+drop policy if exists customers_select on public.customers;
+create policy customers_select on public.customers
+  for select using (organisation_id = current_org());
+
+drop policy if exists customers_write on public.customers;
+create policy customers_write on public.customers
+  for all
+  using      (current_app_role() in ('admin','customer_admin','operator')
+              and organisation_id = current_org()
+              and source <> 'erp')
+  with check (current_app_role() in ('admin','customer_admin','operator')
+              and organisation_id = current_org()
+              and source <> 'erp');
 
 -- messages: special-cased because it uses recipient_org / recipient_user
 -- instead of the generic organisation_id column.
