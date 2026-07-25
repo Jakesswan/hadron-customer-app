@@ -2669,7 +2669,7 @@
                 <div class="hg-section-title">About</div>
                 <div class="hg-kvgrid">
                     <div class="hg-kv"><div class="k">App</div><div class="v">Hadron Group</div></div>
-                    <div class="hg-kv"><div class="k">Version</div><div class="v">v96</div></div>
+                    <div class="hg-kv"><div class="k">Version</div><div class="v">v97</div></div>
                     <div class="hg-kv"><div class="k">Platform</div><div class="v">PWA</div></div>
                 </div>
             </div>
@@ -3646,6 +3646,25 @@
                     <input id="sr_test_search" placeholder="Search SANS 241 — name, code, risk class…" oninput="srRenderPickerList()" style="margin:12px 16px 4px;padding:11px;border:2px solid #e0e0e0;border-radius:8px;font-size:15px;">
                     <p style="margin:2px 16px 8px;color:#888;font-size:11px;">Tap ★ to keep a test in your everyday favourites.</p>
                     <div id="sr_picker_list" style="overflow:auto;padding:0 8px 14px;"></div>
+                </div>
+            </div>
+
+            <!-- OCR crop overlay: frame just the digits before reading -->
+            <div id="sr_crop_overlay" style="display:none;position:fixed;inset:0;z-index:12500;background:#0b0f14;flex-direction:column;">
+                <div style="padding:12px 16px;color:#fff;display:flex;align-items:center;gap:10px;">
+                    <strong style="flex:1;font-size:15px;">Frame the reading</strong>
+                    <button type="button" class="calc-btn" style="margin:0;padding:5px 12px;background:#888;" onclick="srCropCancel()">Cancel</button>
+                </div>
+                <p style="color:#9fb0bd;font-size:12px;margin:0 16px 8px;">Drag the box over just the digits (drag the corner to resize), then Read — tighter is better.</p>
+                <div id="sr_crop_stage" style="flex:1;position:relative;overflow:hidden;touch-action:none;background:#000;">
+                    <canvas id="sr_crop_canvas" style="position:absolute;left:0;top:0;"></canvas>
+                    <div id="sr_crop_box" style="position:absolute;border:2px solid #3AAEDB;box-shadow:0 0 0 9999px rgba(0,0,0,.5);border-radius:4px;cursor:move;">
+                        <div id="sr_crop_handle" style="position:absolute;right:-12px;bottom:-12px;width:24px;height:24px;background:#3AAEDB;border-radius:50%;border:2px solid #fff;cursor:nwse-resize;"></div>
+                    </div>
+                </div>
+                <div style="padding:14px 16px;display:flex;gap:10px;">
+                    <button type="button" class="calc-btn" style="margin:0;flex:1;background:#888;" onclick="srCropRetake()">Retake</button>
+                    <button type="button" class="calc-btn" style="margin:0;flex:2;" onclick="srCropRead()">Read this area</button>
                 </div>
             </div>
         </div>
@@ -5910,37 +5929,117 @@
         }
 
         // ── On-device OCR (offline, best-effort) ──
-        let _tessPromise = null;
+        // Pipeline: capture → drag-to-crop just the digits → grayscale + Otsu
+        // auto-threshold + auto-invert + upscale → Tesseract (single line, digits
+        // only) → number filled for the operator to CONFIRM. Cropping to the
+        // digits is the single biggest accuracy lever for meter/LCD photos.
+        let _tessApi = null, _tessWorker = null;
+        let sr_cropImg = null, sr_cropGeom = null, sr_cropDrag = null;
+
         function srLoadTesseract() {
-            if (window.Tesseract) return Promise.resolve(window.Tesseract);
-            if (_tessPromise) return _tessPromise;
-            _tessPromise = new Promise((res, rej) => { const s = document.createElement('script'); s.src = 'https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js'; s.onload = () => res(window.Tesseract); s.onerror = () => rej(new Error('load')); document.head.appendChild(s); });
-            return _tessPromise;
+            if (_tessApi) return _tessApi;
+            return _tessApi = new Promise((res, rej) => {
+                if (window.Tesseract) return res(window.Tesseract);
+                const s = document.createElement('script'); s.src = 'https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js';
+                s.onload = () => res(window.Tesseract); s.onerror = () => rej(new Error('load')); document.head.appendChild(s);
+            });
+        }
+        async function srGetWorker() {
+            if (_tessWorker) return _tessWorker;
+            const T = await srLoadTesseract();
+            const w = await T.createWorker('eng', 1);   // LSTM; created once and reused
+            await w.setParameters({ tessedit_pageseg_mode: '7', tessedit_char_whitelist: '0123456789.-' }); // single line, digits only
+            _tessWorker = w; return w;
         }
         function srOcrPhoto(id) { sr_ocrTarget = id; const f = document.getElementById('sr_ocr_file'); f.value = ''; f.click(); }
-        // Shrink to a storage-friendly thumbnail so localStorage doesn't fill up.
-        function srThumb(dataUrl, max, q) { return new Promise(res => { const img = new Image(); img.onload = () => { const s = Math.min(1, (max || 560) / Math.max(img.width, img.height)); const w = Math.round(img.width * s), h = Math.round(img.height * s); const cv = document.createElement('canvas'); cv.width = w; cv.height = h; cv.getContext('2d').drawImage(img, 0, 0, w, h); res(cv.toDataURL('image/jpeg', q || 0.6)); }; img.onerror = () => res(dataUrl); img.src = dataUrl; }); }
-        // Grayscale + threshold + upscale to help OCR of LCD/meter displays.
-        function srPreprocess(dataUrl) { return new Promise(res => { const img = new Image(); img.onload = () => { const s = Math.min(1600 / img.width, 3); const w = Math.round(img.width * s), h = Math.round(img.height * s); const cv = document.createElement('canvas'); cv.width = w; cv.height = h; const cx = cv.getContext('2d'); cx.drawImage(img, 0, 0, w, h); const d = cx.getImageData(0, 0, w, h), px = d.data; for (let i = 0; i < px.length; i += 4) { const g = 0.3 * px[i] + 0.59 * px[i + 1] + 0.11 * px[i + 2]; const v = g > 125 ? 255 : 0; px[i] = px[i + 1] = px[i + 2] = v; } cx.putImageData(d, 0, 0); res(cv.toDataURL('image/png')); }; img.onerror = () => res(dataUrl); img.src = dataUrl; }); }
-        function srExtractNumber(text) { const m = (text || '').replace(/[oO]/g, '0').replace(/,/g, '.').match(/-?\d+(?:\.\d+)?/g); if (!m || !m.length) return null; m.sort((a, b) => b.replace(/[.-]/g, '').length - a.replace(/[.-]/g, '').length); return m[0]; }
+        // Storage-friendly thumbnail so localStorage doesn't fill up.
+        function srThumb(dataUrl, max, q) { return new Promise(res => { const img = new Image(); img.onload = () => { const s = Math.min(1, (max || 640) / Math.max(img.width, img.height)); const w = Math.round(img.width * s), h = Math.round(img.height * s); const cv = document.createElement('canvas'); cv.width = w; cv.height = h; cv.getContext('2d').drawImage(img, 0, 0, w, h); res(cv.toDataURL('image/jpeg', q || 0.62)); }; img.onerror = () => res(dataUrl); img.src = dataUrl; }); }
+        function srExtractNumber(text) { const m = (text || '').replace(/[oODQ]/g, '0').replace(/[lI]/g, '1').replace(/,/g, '.').match(/-?\d+(?:\.\d+)?/g); if (!m || !m.length) return null; m.sort((a, b) => b.replace(/[.-]/g, '').length - a.replace(/[.-]/g, '').length); return m[0]; }
+
+        // Read the file → open the crop overlay (don't OCR the whole frame).
         async function srOcrCapture(ev) {
             const f = ev.target.files && ev.target.files[0]; ev.target.value = '';
-            const id = sr_ocrTarget; sr_ocrTarget = null;
-            if (!f || !id) return;
-            const t = sr_tests.find(x => x.id === id); if (!t) return;
+            if (!f || !sr_ocrTarget) return;
             const dataUrl = await new Promise(r => { const rd = new FileReader(); rd.onload = e => r(e.target.result); rd.readAsDataURL(f); });
-            t.photo = await srThumb(dataUrl); srRenderTests();
-            showToast('Reading photo…');
+            srShowCrop(dataUrl);
+        }
+        function srShowCrop(dataUrl) {
+            const ov = document.getElementById('sr_crop_overlay'); ov.style.display = 'flex';
+            const img = new Image();
+            img.onload = () => {
+                sr_cropImg = img;
+                const stage = document.getElementById('sr_crop_stage');
+                const SW = stage.clientWidth, SH = stage.clientHeight;
+                const scale = Math.min(SW / img.width, SH / img.height);
+                const dw = Math.round(img.width * scale), dh = Math.round(img.height * scale);
+                const ox = Math.round((SW - dw) / 2), oy = Math.round((SH - dh) / 2);
+                const cv = document.getElementById('sr_crop_canvas');
+                cv.width = dw; cv.height = dh; cv.style.left = ox + 'px'; cv.style.top = oy + 'px';
+                cv.getContext('2d').drawImage(img, 0, 0, dw, dh);
+                sr_cropGeom = { scale, ox, oy, dw, dh };
+                const bw = Math.round(dw * 0.66), bh = Math.round(dh * 0.24);
+                srSetBox(ox + (dw - bw) / 2, oy + (dh - bh) / 2, bw, bh);
+                srWireCrop();
+            };
+            img.src = dataUrl;
+        }
+        function srSetBox(x, y, w, h) {
+            const g = sr_cropGeom; if (!g) return;
+            w = Math.max(30, w); h = Math.max(22, h);
+            x = Math.min(Math.max(x, g.ox), g.ox + g.dw - w); y = Math.min(Math.max(y, g.oy), g.oy + g.dh - h);
+            w = Math.min(w, g.ox + g.dw - x); h = Math.min(h, g.oy + g.dh - y);
+            const b = document.getElementById('sr_crop_box'); b._r = { x, y, w, h };
+            b.style.left = x + 'px'; b.style.top = y + 'px'; b.style.width = w + 'px'; b.style.height = h + 'px';
+        }
+        function srWireCrop() {
+            const stage = document.getElementById('sr_crop_stage'), box = document.getElementById('sr_crop_box'), handle = document.getElementById('sr_crop_handle');
+            const pt = e => { const t = e.touches ? e.touches[0] : e; return { x: t.clientX, y: t.clientY }; };
+            const down = e => { const p = pt(e); sr_cropDrag = { mode: (e.target === handle) ? 'resize' : 'move', sx: p.x, sy: p.y, r: { ...box._r } }; e.preventDefault(); };
+            const move = e => { if (!sr_cropDrag) return; const p = pt(e), d = sr_cropDrag, dx = p.x - d.sx, dy = p.y - d.sy; if (d.mode === 'move') srSetBox(d.r.x + dx, d.r.y + dy, d.r.w, d.r.h); else srSetBox(d.r.x, d.r.y, d.r.w + dx, d.r.h + dy); e.preventDefault(); };
+            const up = () => { sr_cropDrag = null; };
+            box.onmousedown = down; handle.onmousedown = down; stage.onmousemove = move; window.onmouseup = up;
+            box.ontouchstart = down; handle.ontouchstart = down; stage.ontouchmove = move; window.ontouchend = up;
+        }
+        function srCropCancel() { document.getElementById('sr_crop_overlay').style.display = 'none'; sr_cropImg = null; sr_cropDrag = null; }
+        function srCropRetake() { const id = sr_ocrTarget; srCropCancel(); srOcrPhoto(id); }
+        // Grayscale + Otsu auto-threshold + auto-invert (digits dark on white).
+        function srOtsu(canvas) {
+            const cx = canvas.getContext('2d'), w = canvas.width, h = canvas.height;
+            const d = cx.getImageData(0, 0, w, h), px = d.data;
+            const hist = new Array(256).fill(0), gray = new Uint8Array(w * h);
+            for (let i = 0, p = 0; i < px.length; i += 4, p++) { const g = (0.3 * px[i] + 0.59 * px[i + 1] + 0.11 * px[i + 2]) | 0; gray[p] = g; hist[g]++; }
+            const total = w * h; let sum = 0; for (let t = 0; t < 256; t++) sum += t * hist[t];
+            let sumB = 0, wB = 0, mx = -1, thr = 127;
+            for (let t = 0; t < 256; t++) { wB += hist[t]; if (!wB) continue; const wF = total - wB; if (!wF) break; sumB += t * hist[t]; const mB = sumB / wB, mF = (sum - sumB) / wF; const bt = wB * wF * (mB - mF) * (mB - mF); if (bt > mx) { mx = bt; thr = t; } }
+            let dark = 0; for (let p = 0; p < gray.length; p++) if (gray[p] <= thr) dark++;
+            const invert = dark > gray.length * 0.5;
+            for (let i = 0, p = 0; i < px.length; i += 4, p++) { let v = gray[p] <= thr ? 0 : 255; if (invert) v = 255 - v; px[i] = px[i + 1] = px[i + 2] = v; }
+            cx.putImageData(d, 0, 0);
+        }
+        async function srCropRead() {
+            const g = sr_cropGeom, box = document.getElementById('sr_crop_box'), id = sr_ocrTarget;
+            const t = id && sr_tests.find(x => x.id === id);
+            if (!g || !sr_cropImg || !t) { srCropCancel(); return; }
+            const r = box._r;
+            const sx = (r.x - g.ox) / g.scale, sy = (r.y - g.oy) / g.scale, sw = r.w / g.scale, sh = r.h / g.scale;
+            const up = Math.max(1, 190 / sh), cw = Math.round(sw * up), ch = Math.round(sh * up);
+            const cv = document.createElement('canvas'); cv.width = cw; cv.height = ch;
+            cv.getContext('2d').drawImage(sr_cropImg, sx, sy, sw, sh, 0, 0, cw, ch);
+            srOtsu(cv);
+            const proc = cv.toDataURL('image/png');
+            const full = sr_cropImg.src;
+            srCropCancel();
+            t.photo = await srThumb(full); srRenderTests();   // keep the full photo as evidence
+            showToast('Reading…');
             try {
-                const Tesseract = await srLoadTesseract();
-                const proc = await srPreprocess(dataUrl);
-                const out = await Tesseract.recognize(proc, 'eng', { tessedit_char_whitelist: '0123456789.-' });
-                const num = srExtractNumber(out.data.text);
-                if (num != null) { t.value = num; srRenderTests(); showToast('Read “' + num + '” — please check it'); }
-                else { srRenderTests(); showToast('No number found — type it in'); }
+                const w = await srGetWorker();
+                const out = await w.recognize(proc);
+                const num = srExtractNumber(out.data.text), conf = Math.round(out.data.confidence || 0);
+                if (num != null) { t.value = num; srRenderTests(); showToast('Read “' + num + '”' + (conf ? ' · ' + conf + '%' : '') + ' — check it'); }
+                else { srRenderTests(); showToast('No number found — retake tighter, or type it'); }
             } catch (e) {
                 srRenderTests();
-                showToast(navigator.onLine ? 'Couldn’t read it — type the value in' : 'OCR needs a connection the first time — type it in');
+                showToast(navigator.onLine ? 'Couldn’t read it — type the value in' : 'OCR needs one online use first — type it in');
             }
         }
 
