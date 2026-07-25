@@ -2669,7 +2669,7 @@
                 <div class="hg-section-title">About</div>
                 <div class="hg-kvgrid">
                     <div class="hg-kv"><div class="k">App</div><div class="v">Hadron Group</div></div>
-                    <div class="hg-kv"><div class="k">Version</div><div class="v">v98</div></div>
+                    <div class="hg-kv"><div class="k">Version</div><div class="v">v99</div></div>
                     <div class="hg-kv"><div class="k">Platform</div><div class="v">PWA</div></div>
                 </div>
             </div>
@@ -5848,7 +5848,24 @@
         ];
         function srCatalog() { return SR_EXTRA_PARAMS.concat(window.HG_SANS241_TESTS || []); }
         function srCatItem(id) { return srCatalog().find(t => t.id === id); }
-        function srNewRow(c) { return { id:c.id, code:c.code, name:c.name, unit:c.unit, specMin:(c.specMin==null?null:c.specMin), specMax:(c.specMax==null?null:c.specMax), sans241:c.sans241||'', category:c.category||'', value:'', photo:null }; }
+        // Custom pass/fail limits (persisted per device). An entry here OVERRIDES the
+        // SANS 241 / catalog spec for that parameter — a Tenant can set their own
+        // operational targets, and give the operational params (ORP, Total Cl…) a
+        // limit at all. Saved reports snapshot the limits used, so changing a limit
+        // later never rewrites an old report.
+        function srLimits() { return LS.get('hadron_sr_limits', {}); }
+        function srLimitFor(id) {
+            const o = srLimits()[id];
+            if (o) return { min: (o.min == null ? null : o.min), max: (o.max == null ? null : o.max), custom: true };
+            const c = srCatItem(id);
+            return { min: (c && c.specMin != null ? c.specMin : null), max: (c && c.specMax != null ? c.specMax : null), custom: false };
+        }
+        function srSaveLimit(id, min, max) { const all = srLimits(); all[id] = { min, max }; LS.set('hadron_sr_limits', all); }
+        function srResetLimit(id) { const all = srLimits(); delete all[id]; LS.set('hadron_sr_limits', all); }
+        function srNewRow(c) {
+            const L = srLimitFor(c.id);
+            return { id:c.id, code:c.code, name:c.name, unit:c.unit, specMin:L.min, specMax:L.max, custom:L.custom, sans241:c.sans241||'', category:c.category||'', value:'', photo:null };
+        }
 
         // Favourites (persisted per device). First run seeds the everyday set
         // that mirrors the old fixed form so nothing is lost.
@@ -5886,9 +5903,22 @@
             if (p === true)  return '<span style="background:#157b3a;color:#fff;font-size:11px;font-weight:700;padding:2px 8px;border-radius:999px;">PASS</span>';
             if (p === false) return '<span style="background:#c0392b;color:#fff;font-size:11px;font-weight:700;padding:2px 8px;border-radius:999px;">FAIL</span>';
             const lt = srLimitText(t);
-            return lt ? '<span style="color:#888;font-size:11px;">SANS ' + esc(lt) + '</span>' : '';
+            return lt ? '<span style="color:#888;font-size:11px;">' + (t.custom ? 'Own limit ' : 'SANS ') + esc(lt) + '</span>' : '<span style="color:#bbb;font-size:11px;">no limit</span>';
         }
         function srUpdateChip(id) { const el = document.getElementById('sr_chip_' + id); const t = sr_tests.find(x => x.id === id); if (el && t) el.innerHTML = srChip(t); }
+        // Inline limit editor per test row — persists as this parameter's preferred limit.
+        function srToggleLimitEditor(id) { const el = document.getElementById('sr_lim_' + id); if (el) el.style.display = (el.style.display === 'flex') ? 'none' : 'flex'; }
+        function srEditLimit(id, which, val) {
+            const t = sr_tests.find(x => x.id === id); if (!t) return;
+            let v; if (val === '' || val == null) v = null; else { v = parseFloat(val); if (isNaN(v)) return; }
+            if (which === 'min') t.specMin = v; else t.specMax = v;
+            t.custom = true; srSaveLimit(id, t.specMin, t.specMax); srUpdateChip(id);
+        }
+        function srResetLimitRow(id) {
+            srResetLimit(id);
+            const t = sr_tests.find(x => x.id === id); if (t) { const L = srLimitFor(id); t.specMin = L.min; t.specMax = L.max; t.custom = false; }
+            srRenderTests();
+        }
 
         function srAddTest(id) { if (sr_tests.some(t => t.id === id)) return; const c = srCatItem(id); if (c) { sr_tests.push(srNewRow(c)); srRenderTests(); } }
         function srRemoveTest(id) { sr_tests = sr_tests.filter(t => t.id !== id); srRenderTests(); }
@@ -5902,12 +5932,21 @@
                 <div style="display:grid;grid-template-columns:1fr auto;gap:6px 10px;align-items:center;padding:10px;border:1px solid #e0e0e0;border-radius:10px;background:#fafafa;">
                     <div style="min-width:0;">
                         <div style="font-weight:600;font-size:14px;">${esc(t.name)} <span style="color:#888;font-weight:400;">${esc(t.unit || '')}</span></div>
-                        <div id="sr_chip_${esc(t.id)}" style="margin-top:2px;">${srChip(t)}</div>
+                        <div style="margin-top:3px;display:flex;align-items:center;gap:10px;">
+                            <span id="sr_chip_${esc(t.id)}">${srChip(t)}</span>
+                            <button type="button" onclick="srToggleLimitEditor('${esc(t.id)}')" title="Set your own pass/fail limit" style="border:none;background:transparent;color:#3AAEDB;font-size:12px;cursor:pointer;padding:0;">✎ limit</button>
+                        </div>
                     </div>
                     <div style="display:flex;align-items:center;gap:6px;">
                         <input type="number" step="any" inputmode="decimal" value="${esc(t.value == null ? '' : t.value)}" oninput="srSetVal('${esc(t.id)}', this.value)" placeholder="value" style="width:86px;padding:8px;border:2px solid #e0e0e0;border-radius:8px;font-size:15px;">
                         <button type="button" title="Read value from a photo" onclick="srOcrPhoto('${esc(t.id)}')" style="border:1px solid #d0d0d0;background:#fff;border-radius:8px;width:38px;height:38px;font-size:16px;cursor:pointer;">📷</button>
                         <button type="button" title="Remove test" onclick="srRemoveTest('${esc(t.id)}')" style="border:none;background:transparent;color:#c0392b;font-size:20px;cursor:pointer;width:24px;">×</button>
+                    </div>
+                    <div id="sr_lim_${esc(t.id)}" style="display:none;grid-column:1/-1;margin-top:8px;padding:9px 10px;background:rgba(127,127,127,.07);border-radius:8px;font-size:13px;align-items:center;gap:8px;flex-wrap:wrap;">
+                        <span style="color:#777;">Pass range —</span>
+                        <label style="display:flex;align-items:center;gap:5px;">min <input type="number" step="any" inputmode="decimal" value="${esc(t.specMin == null ? '' : t.specMin)}" oninput="srEditLimit('${esc(t.id)}','min',this.value)" placeholder="—" style="width:72px;padding:6px;border:2px solid #e0e0e0;border-radius:6px;font-size:14px;"></label>
+                        <label style="display:flex;align-items:center;gap:5px;">max <input type="number" step="any" inputmode="decimal" value="${esc(t.specMax == null ? '' : t.specMax)}" oninput="srEditLimit('${esc(t.id)}','max',this.value)" placeholder="—" style="width:72px;padding:6px;border:2px solid #e0e0e0;border-radius:6px;font-size:14px;"></label>
+                        <button type="button" onclick="srResetLimitRow('${esc(t.id)}')" style="border:1px solid #d0d0d0;background:#fff;border-radius:6px;padding:6px 11px;cursor:pointer;font-size:12px;">Reset to default</button>
                     </div>
                     ${t.photo ? `<div style="grid-column:1/-1;"><img src="${t.photo}" style="height:50px;border-radius:6px;border:1px solid #e0e0e0;"></div>` : ''}
                 </div>`).join('');
@@ -6074,7 +6113,7 @@
                 tests: sr_tests.map(t => ({
                     id: t.id, code: t.code, name: t.name, unit: t.unit,
                     value: (t.value === '' || t.value == null) ? null : t.value,
-                    specMin: t.specMin, specMax: t.specMax, pass: srEvalPass(t),
+                    specMin: t.specMin, specMax: t.specMax, pass: srEvalPass(t), custom: t.custom || false,
                     sans241: t.sans241, category: t.category, photo: t.photo || null
                 })),
                 obs: id('sr_obs'), act: id('sr_act'), chem: id('sr_chem'),
@@ -6121,7 +6160,7 @@
             if (r.tests && r.tests.length) {
                 y += 8; doc.setFontSize(14); doc.setFont('helvetica','bold'); doc.text('Test Results', 36, y); y += 16;
                 doc.setFontSize(9); doc.setFont('helvetica','bold'); doc.setTextColor.apply(doc, SOFT);
-                doc.text('Parameter', 36, y); doc.text('Result', 250, y); doc.text('Unit', 320, y); doc.text('SANS 241', 400, y); y += 6;
+                doc.text('Parameter', 36, y); doc.text('Result', 250, y); doc.text('Unit', 320, y); doc.text('Limit', 400, y); y += 6;
                 doc.setDrawColor(210,210,210); doc.line(36, y, PAGE_W - 36, y); y += 12; doc.setTextColor(0,0,0);
                 r.tests.forEach(t => {
                     if (t.value == null || t.value === '') return;
