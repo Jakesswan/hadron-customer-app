@@ -2669,7 +2669,7 @@
                 <div class="hg-section-title">About</div>
                 <div class="hg-kvgrid">
                     <div class="hg-kv"><div class="k">App</div><div class="v">Hadron Group</div></div>
-                    <div class="hg-kv"><div class="k">Version</div><div class="v">v97</div></div>
+                    <div class="hg-kv"><div class="k">Version</div><div class="v">v98</div></div>
                     <div class="hg-kv"><div class="k">Platform</div><div class="v">PWA</div></div>
                 </div>
             </div>
@@ -5852,8 +5852,18 @@
 
         // Favourites (persisted per device). First run seeds the everyday set
         // that mirrors the old fixed form so nothing is lost.
-        const SR_DEFAULT_FAVS = ['t-ph','t-fcl','x-tcl','t-cond','t-tds','x-temp','x-orp','t-hard','t-alk'];
-        function srFavs() { let f = LS.get('hadron_sr_favs', null); if (f === null) { f = SR_DEFAULT_FAVS.slice(); LS.set('hadron_sr_favs', f); } return f; }
+        const SR_DEFAULT_FAVS = ['t-ph','t-fcl','x-tcl','t-cl2','t-cond','t-tds','x-temp','x-orp','t-hard','t-alk'];
+        const SR_FAVS_SEED = 2;                     // bump when a new default favourite is introduced
+        const SR_FAVS_SEED_ADD = { 2: ['t-cl2'] };  // defaults added at each seed version, applied ONCE, non-destructively
+        function srFavs() {
+            let f = LS.get('hadron_sr_favs', null);
+            if (f === null) { f = SR_DEFAULT_FAVS.slice(); LS.set('hadron_sr_favs', f); LS.set('hadron_sr_favs_seed', SR_FAVS_SEED); return f; }
+            let seed = LS.get('hadron_sr_favs_seed', 1), changed = false;
+            while (seed < SR_FAVS_SEED) { seed++; (SR_FAVS_SEED_ADD[seed] || []).forEach(id => { if (!f.includes(id)) { f.push(id); changed = true; } }); }
+            if (changed) LS.set('hadron_sr_favs', f);
+            LS.set('hadron_sr_favs_seed', SR_FAVS_SEED);
+            return f;
+        }
         function srIsFav(id) { return srFavs().includes(id); }
         function srToggleFav(id) { let f = srFavs(); f = f.includes(id) ? f.filter(x => x !== id) : f.concat(id); LS.set('hadron_sr_favs', f); srRenderPickerList(); }
 
