@@ -253,6 +253,10 @@
     { id:'t-mcyst',  code:'MCYST',  name:'Microcystin-LR (free)',        method:'ELISA / LC-MS',         methodVer:'v1.0', unit:'µg/L',       lod:0.05, loq:0.1,  range:'0–10',     tat:5, specMin:0, specMax:1,     category:'Organic',          accredited:false, sans241:'Acute health' }
   ];
 
+  // Read-only SANS 241 catalog, shared with the Service Report test picker (and
+  // anything else that needs the determinand list) without pulling in LIMS.
+  window.HG_SANS241_TESTS = _SANS241_TESTS;
+
   const _SANS241_PROFILES = [
     { id:'p-sans241-acute',     name:'SANS 241 — Acute Health Suite',         tests:['t-ec','t-no3','t-no2','t-cn','t-mcyst'] },
     { id:'p-sans241-micro',     name:'SANS 241 — Microbiological',            tests:['t-ec','t-colif','t-hpc','t-somph'] },

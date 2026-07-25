@@ -2669,7 +2669,7 @@
                 <div class="hg-section-title">About</div>
                 <div class="hg-kvgrid">
                     <div class="hg-kv"><div class="k">App</div><div class="v">Hadron Group</div></div>
-                    <div class="hg-kv"><div class="k">Version</div><div class="v">v95</div></div>
+                    <div class="hg-kv"><div class="k">Version</div><div class="v">v96</div></div>
                     <div class="hg-kv"><div class="k">Platform</div><div class="v">PWA</div></div>
                 </div>
             </div>
@@ -3609,18 +3609,13 @@
                     <div class="form-group"><label>Date / time</label><input type="datetime-local" id="sr_dt"></div>
                     <div class="form-group"><label>GPS</label><input type="text" id="sr_gps" readonly placeholder="Tap 'Capture' →"> <button type="button" class="calc-btn" style="margin-top:6px;" onclick="captureGps()">📍 Capture GPS</button></div>
 
-                    <h3 style="margin-top:16px;">Water readings</h3>
-                    <div class="form-group"><label>pH</label><input type="number" id="sr_ph" step="0.01"></div>
-                    <div class="form-group"><label>Conductivity (µS/cm)</label><input type="number" id="sr_cond" step="1"></div>
-                    <div class="form-group"><label>ORP (mV)</label><input type="number" id="sr_orp" step="1"></div>
-                    <div class="form-group"><label>Free Cl (ppm)</label><input type="number" id="sr_fcl" step="0.01"></div>
-                    <div class="form-group"><label>Total Cl (ppm)</label><input type="number" id="sr_tcl" step="0.01"></div>
-                    <div class="form-group"><label>TDS (ppm)</label><input type="number" id="sr_tds" step="1"></div>
-                    <div class="form-group"><label>Temp (°C)</label><input type="number" id="sr_temp" step="0.1"></div>
-                    <div class="form-group"><label>Total hardness (mg/L CaCO₃)</label><input type="number" id="sr_hard" step="1"></div>
-                    <div class="form-group"><label>M-alkalinity (mg/L CaCO₃)</label><input type="number" id="sr_alk" step="1"></div>
-                    <div class="form-group"><label>Iron (mg/L)</label><input type="number" id="sr_fe" step="0.01"></div>
-                    <div class="form-group"><label>Phosphate (mg/L PO₄)</label><input type="number" id="sr_po4" step="0.01"></div>
+                    <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-top:16px;">
+                        <h3 style="margin:0;">Tests</h3>
+                        <button type="button" class="calc-btn" style="margin:0;padding:8px 14px;" onclick="srOpenTestPicker()">＋ Add Test</button>
+                    </div>
+                    <p style="color:#666;font-size:12px;margin:6px 0 4px;">Your ★ favourites load automatically each visit. Tap <b>Add Test</b> to search the full SANS 241 list and add one to today's report. Each test gives an automatic PASS / FAIL against its SANS&nbsp;241 limit, and 📷 reads the value from a photo of the meter.</p>
+                    <div id="sr_tests" style="display:flex;flex-direction:column;gap:8px;margin-top:6px;"></div>
+                    <input type="file" id="sr_ocr_file" accept="image/*" capture="environment" style="display:none;" onchange="srOcrCapture(event)">
 
                     <h3 style="margin-top:16px;">Actions</h3>
                     <div class="form-group"><label>Observations</label><textarea id="sr_obs" rows="3"></textarea></div>
@@ -3640,6 +3635,19 @@
                 </div>
             </div>
             <div id="sr_list" style="display:none;"></div>
+
+            <!-- Add-Test picker: searchable SANS 241 catalog + operational params -->
+            <div id="sr_test_picker" style="display:none;position:fixed;inset:0;z-index:12000;background:rgba(0,0,0,.45);">
+                <div style="max-width:540px;margin:5vh auto;background:#fff;border-radius:14px;max-height:88vh;display:flex;flex-direction:column;overflow:hidden;box-shadow:0 20px 60px rgba(0,0,0,.4);">
+                    <div style="padding:14px 16px;border-bottom:1px solid #e6e6e6;display:flex;align-items:center;gap:10px;">
+                        <strong style="flex:1;font-size:16px;">Add a test</strong>
+                        <button type="button" class="calc-btn" style="margin:0;padding:5px 14px;background:#888;" onclick="srCloseTestPicker()">Done</button>
+                    </div>
+                    <input id="sr_test_search" placeholder="Search SANS 241 — name, code, risk class…" oninput="srRenderPickerList()" style="margin:12px 16px 4px;padding:11px;border:2px solid #e0e0e0;border-radius:8px;font-size:15px;">
+                    <p style="margin:2px 16px 8px;color:#888;font-size:11px;">Tap ★ to keep a test in your everyday favourites.</p>
+                    <div id="sr_picker_list" style="overflow:auto;padding:0 8px 14px;"></div>
+                </div>
+            </div>
         </div>
     </div>
 
@@ -5728,10 +5736,24 @@
             // Defaults
             document.getElementById('sr_dt').value = new Date().toISOString().slice(0, 16);
             sr_photos = []; document.getElementById('sr_photos').innerHTML = '';
+            srLoadFavTests();
             initSignaturePad();
             // Populate customer dropdown + reset site dropdown on every open.
             await srPopulateCustomerDropdown();
             srRefreshSiteDropdown();
+        }
+        // One-line summary for a saved report card — new tests model, or legacy fixed readings.
+        function srSummary(r) {
+            if (r.tests && r.tests.length) {
+                const done = r.tests.filter(t => t.value != null && t.value !== '');
+                const fails = done.filter(t => t.pass === false).length;
+                return done.length + ' test' + (done.length === 1 ? '' : 's') + (fails ? ' · ' + fails + ' fail' : '');
+            }
+            const bits = [];
+            if (r.ph != null && r.ph !== '') bits.push('pH ' + r.ph);
+            if (r.cond != null && r.cond !== '') bits.push('Cond ' + r.cond + ' µS');
+            if (r.fcl != null && r.fcl !== '') bits.push('Cl ' + r.fcl + ' ppm');
+            return bits.join(' · ');
         }
         function listServiceReports() {
             document.getElementById('sr_form').style.display = 'none';
@@ -5741,7 +5763,7 @@
             el.innerHTML = list.length === 0 ? '<p style="color:#888;">No saved reports yet.</p>' :
                 list.map(r => `<div style="border:1px solid #eee;border-radius:6px;padding:10px;margin-bottom:8px;">
                     <strong>${esc(r.site)}</strong> · ${esc(r.date)}<br>
-                    <small>Tech: ${esc(r.tech)} · pH ${esc(r.ph)} · Cond ${esc(r.cond)} µS · Cl ${esc(r.fcl)} ppm</small>
+                    <small>Tech: ${esc(r.tech)}${srSummary(r) ? ' · ' + esc(srSummary(r)) : ''}</small>
                     <div style="margin-top:6px;">
                         <button class="pdf-calc-btn" onclick="exportStoredSrPdf('${r.id}')">📄 PDF</button>
                         <button class="save-calc-btn" style="background:#c44;" onclick="deleteSR('${r.id}')">🗑 Delete</button>
@@ -5788,6 +5810,140 @@
         }
         function clearSignature() { if (sr_sigCtx) { const c = document.getElementById('sr_sig'); sr_sigCtx.clearRect(0,0,c.width,c.height); } }
 
+        // ───────────────────────────────────────────────────────────────
+        // Service-Report tests — favourite-driven everyday fields + a
+        // searchable SANS 241 picker, auto PASS/FAIL vs the SANS limit, and
+        // best-effort on-device (offline) OCR that reads a meter/strip photo
+        // into the value for the operator to confirm.
+        // ───────────────────────────────────────────────────────────────
+        let sr_tests = [];        // rows on the current report
+        let sr_ocrTarget = null;  // test id currently capturing a photo
+
+        // Operational field measurements that aren't SANS 241 determinands but
+        // operators still record each visit. Shape mirrors the lims catalog rows.
+        const SR_EXTRA_PARAMS = [
+            { id:'x-orp',  code:'ORP',  name:'ORP (Redox)',        unit:'mV',   specMin:null, specMax:null, category:'Field / operational', sans241:'' },
+            { id:'x-tcl',  code:'TCL',  name:'Total Chlorine',     unit:'mg/L', specMin:null, specMax:null, category:'Field / operational', sans241:'' },
+            { id:'x-temp', code:'TEMP', name:'Temperature',        unit:'°C',   specMin:null, specMax:null, category:'Field / operational', sans241:'' },
+            { id:'x-po4',  code:'PO4',  name:'Phosphate (as PO₄)', unit:'mg/L', specMin:null, specMax:null, category:'Field / operational', sans241:'' }
+        ];
+        function srCatalog() { return SR_EXTRA_PARAMS.concat(window.HG_SANS241_TESTS || []); }
+        function srCatItem(id) { return srCatalog().find(t => t.id === id); }
+        function srNewRow(c) { return { id:c.id, code:c.code, name:c.name, unit:c.unit, specMin:(c.specMin==null?null:c.specMin), specMax:(c.specMax==null?null:c.specMax), sans241:c.sans241||'', category:c.category||'', value:'', photo:null }; }
+
+        // Favourites (persisted per device). First run seeds the everyday set
+        // that mirrors the old fixed form so nothing is lost.
+        const SR_DEFAULT_FAVS = ['t-ph','t-fcl','x-tcl','t-cond','t-tds','x-temp','x-orp','t-hard','t-alk'];
+        function srFavs() { let f = LS.get('hadron_sr_favs', null); if (f === null) { f = SR_DEFAULT_FAVS.slice(); LS.set('hadron_sr_favs', f); } return f; }
+        function srIsFav(id) { return srFavs().includes(id); }
+        function srToggleFav(id) { let f = srFavs(); f = f.includes(id) ? f.filter(x => x !== id) : f.concat(id); LS.set('hadron_sr_favs', f); srRenderPickerList(); }
+
+        // Auto PASS/FAIL vs the SANS limit. null = no numeric spec, or no value yet.
+        function srEvalPass(t) {
+            if (t.value === '' || t.value == null || isNaN(parseFloat(t.value))) return null;
+            if (t.specMin == null && t.specMax == null) return null;
+            const v = parseFloat(t.value);
+            if (t.specMin != null && v < t.specMin) return false;
+            if (t.specMax != null && v > t.specMax) return false;
+            return true;
+        }
+        function srLimitText(t) {
+            if (t.specMin != null && t.specMax != null && t.specMin > 0) return t.specMin + '–' + t.specMax;
+            if (t.specMax != null) return '≤ ' + t.specMax;
+            return '';
+        }
+        function srChip(t) {
+            const p = srEvalPass(t);
+            if (p === true)  return '<span style="background:#157b3a;color:#fff;font-size:11px;font-weight:700;padding:2px 8px;border-radius:999px;">PASS</span>';
+            if (p === false) return '<span style="background:#c0392b;color:#fff;font-size:11px;font-weight:700;padding:2px 8px;border-radius:999px;">FAIL</span>';
+            const lt = srLimitText(t);
+            return lt ? '<span style="color:#888;font-size:11px;">SANS ' + esc(lt) + '</span>' : '';
+        }
+        function srUpdateChip(id) { const el = document.getElementById('sr_chip_' + id); const t = sr_tests.find(x => x.id === id); if (el && t) el.innerHTML = srChip(t); }
+
+        function srAddTest(id) { if (sr_tests.some(t => t.id === id)) return; const c = srCatItem(id); if (c) { sr_tests.push(srNewRow(c)); srRenderTests(); } }
+        function srRemoveTest(id) { sr_tests = sr_tests.filter(t => t.id !== id); srRenderTests(); }
+        function srSetVal(id, v) { const t = sr_tests.find(x => x.id === id); if (t) { t.value = v; srUpdateChip(id); } }
+        function srLoadFavTests() { sr_tests = []; srFavs().forEach(id => { const c = srCatItem(id); if (c) sr_tests.push(srNewRow(c)); }); srRenderTests(); }
+
+        function srRenderTests() {
+            const host = document.getElementById('sr_tests'); if (!host) return;
+            if (!sr_tests.length) { host.innerHTML = '<p style="color:#888;font-size:13px;margin:4px 0;">No tests yet — ★ some in Add Test to make them your everyday fields.</p>'; return; }
+            host.innerHTML = sr_tests.map(t => `
+                <div style="display:grid;grid-template-columns:1fr auto;gap:6px 10px;align-items:center;padding:10px;border:1px solid #e0e0e0;border-radius:10px;background:#fafafa;">
+                    <div style="min-width:0;">
+                        <div style="font-weight:600;font-size:14px;">${esc(t.name)} <span style="color:#888;font-weight:400;">${esc(t.unit || '')}</span></div>
+                        <div id="sr_chip_${esc(t.id)}" style="margin-top:2px;">${srChip(t)}</div>
+                    </div>
+                    <div style="display:flex;align-items:center;gap:6px;">
+                        <input type="number" step="any" inputmode="decimal" value="${esc(t.value == null ? '' : t.value)}" oninput="srSetVal('${esc(t.id)}', this.value)" placeholder="value" style="width:86px;padding:8px;border:2px solid #e0e0e0;border-radius:8px;font-size:15px;">
+                        <button type="button" title="Read value from a photo" onclick="srOcrPhoto('${esc(t.id)}')" style="border:1px solid #d0d0d0;background:#fff;border-radius:8px;width:38px;height:38px;font-size:16px;cursor:pointer;">📷</button>
+                        <button type="button" title="Remove test" onclick="srRemoveTest('${esc(t.id)}')" style="border:none;background:transparent;color:#c0392b;font-size:20px;cursor:pointer;width:24px;">×</button>
+                    </div>
+                    ${t.photo ? `<div style="grid-column:1/-1;"><img src="${t.photo}" style="height:50px;border-radius:6px;border:1px solid #e0e0e0;"></div>` : ''}
+                </div>`).join('');
+        }
+
+        // ── Picker modal ──
+        function srOpenTestPicker() { document.getElementById('sr_test_picker').style.display = 'block'; document.getElementById('sr_test_search').value = ''; srRenderPickerList(); setTimeout(() => { const s = document.getElementById('sr_test_search'); if (s) s.focus(); }, 60); }
+        function srCloseTestPicker() { document.getElementById('sr_test_picker').style.display = 'none'; }
+        function srRenderPickerList() {
+            const q = (document.getElementById('sr_test_search').value || '').toLowerCase().trim();
+            const inReport = new Set(sr_tests.map(t => t.id));
+            const items = srCatalog().filter(c => !q || (c.name + ' ' + c.code + ' ' + (c.category || '') + ' ' + (c.sans241 || '')).toLowerCase().includes(q));
+            const host = document.getElementById('sr_picker_list');
+            if (!items.length) { host.innerHTML = '<p style="color:#888;padding:16px;">No match for “' + esc(q) + '”.</p>'; return; }
+            const groups = {}; items.forEach(c => { (groups[c.category || 'Other'] = groups[c.category || 'Other'] || []).push(c); });
+            host.innerHTML = Object.keys(groups).map(cat => `
+                <div style="font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:#999;padding:12px 8px 4px;font-weight:700;">${esc(cat)}</div>
+                ${groups[cat].map(c => `
+                    <div style="display:flex;align-items:center;gap:8px;padding:8px;border-radius:8px;">
+                        <button type="button" onclick="srToggleFav('${esc(c.id)}')" title="Favourite" style="border:none;background:transparent;font-size:19px;line-height:1;cursor:pointer;color:${srIsFav(c.id) ? '#f5a623' : '#cfcfcf'};">${srIsFav(c.id) ? '★' : '☆'}</button>
+                        <div style="flex:1;min-width:0;">
+                            <div style="font-weight:600;font-size:14px;">${esc(c.name)} <span style="color:#999;font-weight:400;font-size:12px;">${esc(c.unit || '')}</span></div>
+                            ${(c.sans241 || srLimitText(c)) ? `<div style="font-size:11px;color:#999;">${esc(c.sans241 || '')}${srLimitText(c) ? (c.sans241 ? ' · ' : '') + 'SANS ' + esc(srLimitText(c)) : ''}</div>` : ''}
+                        </div>
+                        ${inReport.has(c.id)
+                            ? '<span style="color:#157b3a;font-size:12px;font-weight:600;padding-right:6px;">added ✓</span>'
+                            : `<button type="button" class="calc-btn" style="margin:0;padding:5px 14px;" onclick="srAddTest('${esc(c.id)}');srRenderPickerList();">Add</button>`}
+                    </div>`).join('')}`).join('');
+        }
+
+        // ── On-device OCR (offline, best-effort) ──
+        let _tessPromise = null;
+        function srLoadTesseract() {
+            if (window.Tesseract) return Promise.resolve(window.Tesseract);
+            if (_tessPromise) return _tessPromise;
+            _tessPromise = new Promise((res, rej) => { const s = document.createElement('script'); s.src = 'https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js'; s.onload = () => res(window.Tesseract); s.onerror = () => rej(new Error('load')); document.head.appendChild(s); });
+            return _tessPromise;
+        }
+        function srOcrPhoto(id) { sr_ocrTarget = id; const f = document.getElementById('sr_ocr_file'); f.value = ''; f.click(); }
+        // Shrink to a storage-friendly thumbnail so localStorage doesn't fill up.
+        function srThumb(dataUrl, max, q) { return new Promise(res => { const img = new Image(); img.onload = () => { const s = Math.min(1, (max || 560) / Math.max(img.width, img.height)); const w = Math.round(img.width * s), h = Math.round(img.height * s); const cv = document.createElement('canvas'); cv.width = w; cv.height = h; cv.getContext('2d').drawImage(img, 0, 0, w, h); res(cv.toDataURL('image/jpeg', q || 0.6)); }; img.onerror = () => res(dataUrl); img.src = dataUrl; }); }
+        // Grayscale + threshold + upscale to help OCR of LCD/meter displays.
+        function srPreprocess(dataUrl) { return new Promise(res => { const img = new Image(); img.onload = () => { const s = Math.min(1600 / img.width, 3); const w = Math.round(img.width * s), h = Math.round(img.height * s); const cv = document.createElement('canvas'); cv.width = w; cv.height = h; const cx = cv.getContext('2d'); cx.drawImage(img, 0, 0, w, h); const d = cx.getImageData(0, 0, w, h), px = d.data; for (let i = 0; i < px.length; i += 4) { const g = 0.3 * px[i] + 0.59 * px[i + 1] + 0.11 * px[i + 2]; const v = g > 125 ? 255 : 0; px[i] = px[i + 1] = px[i + 2] = v; } cx.putImageData(d, 0, 0); res(cv.toDataURL('image/png')); }; img.onerror = () => res(dataUrl); img.src = dataUrl; }); }
+        function srExtractNumber(text) { const m = (text || '').replace(/[oO]/g, '0').replace(/,/g, '.').match(/-?\d+(?:\.\d+)?/g); if (!m || !m.length) return null; m.sort((a, b) => b.replace(/[.-]/g, '').length - a.replace(/[.-]/g, '').length); return m[0]; }
+        async function srOcrCapture(ev) {
+            const f = ev.target.files && ev.target.files[0]; ev.target.value = '';
+            const id = sr_ocrTarget; sr_ocrTarget = null;
+            if (!f || !id) return;
+            const t = sr_tests.find(x => x.id === id); if (!t) return;
+            const dataUrl = await new Promise(r => { const rd = new FileReader(); rd.onload = e => r(e.target.result); rd.readAsDataURL(f); });
+            t.photo = await srThumb(dataUrl); srRenderTests();
+            showToast('Reading photo…');
+            try {
+                const Tesseract = await srLoadTesseract();
+                const proc = await srPreprocess(dataUrl);
+                const out = await Tesseract.recognize(proc, 'eng', { tessedit_char_whitelist: '0123456789.-' });
+                const num = srExtractNumber(out.data.text);
+                if (num != null) { t.value = num; srRenderTests(); showToast('Read “' + num + '” — please check it'); }
+                else { srRenderTests(); showToast('No number found — type it in'); }
+            } catch (e) {
+                srRenderTests();
+                showToast(navigator.onLine ? 'Couldn’t read it — type the value in' : 'OCR needs a connection the first time — type it in');
+            }
+        }
+
         function gatherSR() {
             const id = id_ => document.getElementById(id_).value;
             const customerSel = id('sr_customerId');
@@ -5806,10 +5962,12 @@
                 site: siteLabel,
                 contact: id('sr_contact'), tech: id('sr_tech'),
                 date: id('sr_dt'), gps: id('sr_gps'),
-                ph: id('sr_ph'), cond: id('sr_cond'), orp: id('sr_orp'),
-                fcl: id('sr_fcl'), tcl: id('sr_tcl'), tds: id('sr_tds'),
-                temp: id('sr_temp'), hard: id('sr_hard'), alk: id('sr_alk'),
-                fe: id('sr_fe'), po4: id('sr_po4'),
+                tests: sr_tests.map(t => ({
+                    id: t.id, code: t.code, name: t.name, unit: t.unit,
+                    value: (t.value === '' || t.value == null) ? null : t.value,
+                    specMin: t.specMin, specMax: t.specMax, pass: srEvalPass(t),
+                    sans241: t.sans241, category: t.category, photo: t.photo || null
+                })),
                 obs: id('sr_obs'), act: id('sr_act'), chem: id('sr_chem'),
                 photos: sr_photos, sig: document.getElementById('sr_sig').toDataURL('image/png'),
                 savedAt: new Date().toISOString()
@@ -5851,11 +6009,31 @@
             const row = (k, v) => { if (v == null || v === '') return; doc.setFont('helvetica','bold'); doc.text(k, 36, y); doc.setFont('helvetica','normal'); doc.text(String(v), 200, y); y += 16; if (y > PAGE_H - 80) { doc.addPage(); y = 60; }};
             doc.setFontSize(14); doc.setFont('helvetica','bold'); doc.text('Site Details', 36, y); y += 18; doc.setFontSize(10);
             row('Date / time:', r.date); row('Technician:', r.tech); row('Contact:', r.contact); row('GPS:', r.gps);
-            y += 8; doc.setFontSize(14); doc.setFont('helvetica','bold'); doc.text('Readings', 36, y); y += 18; doc.setFontSize(10);
-            row('pH', r.ph); row('Conductivity (µS/cm)', r.cond); row('ORP (mV)', r.orp);
-            row('Free Cl (ppm)', r.fcl); row('Total Cl (ppm)', r.tcl); row('TDS (ppm)', r.tds);
-            row('Temperature (°C)', r.temp); row('Hardness (mg/L)', r.hard); row('Alkalinity (mg/L)', r.alk);
-            row('Iron (mg/L)', r.fe); row('Phosphate (mg/L)', r.po4);
+            if (r.tests && r.tests.length) {
+                y += 8; doc.setFontSize(14); doc.setFont('helvetica','bold'); doc.text('Test Results', 36, y); y += 16;
+                doc.setFontSize(9); doc.setFont('helvetica','bold'); doc.setTextColor.apply(doc, SOFT);
+                doc.text('Parameter', 36, y); doc.text('Result', 250, y); doc.text('Unit', 320, y); doc.text('SANS 241', 400, y); y += 6;
+                doc.setDrawColor(210,210,210); doc.line(36, y, PAGE_W - 36, y); y += 12; doc.setTextColor(0,0,0);
+                r.tests.forEach(t => {
+                    if (t.value == null || t.value === '') return;
+                    if (y > PAGE_H - 90) { doc.addPage(); y = 60; }
+                    doc.setFontSize(10); doc.setFont('helvetica','normal');
+                    doc.text(String(t.name || '').slice(0,44), 36, y);
+                    doc.setFont('helvetica','bold'); doc.text(String(t.value), 250, y); doc.setFont('helvetica','normal');
+                    doc.text(String(t.unit || ''), 320, y);
+                    const lt = (t.specMin != null && t.specMax != null && t.specMin > 0) ? (t.specMin + '–' + t.specMax) : (t.specMax != null ? '≤ ' + t.specMax : '');
+                    if (t.pass === false) { doc.setTextColor(192,57,43); doc.setFont('helvetica','bold'); doc.text((lt ? lt + '  ' : '') + 'FAIL', 400, y); doc.setFont('helvetica','normal'); doc.setTextColor(0,0,0); }
+                    else if (t.pass === true) { doc.setTextColor(21,123,58); doc.setFont('helvetica','bold'); doc.text((lt ? lt + '  ' : '') + 'PASS', 400, y); doc.setFont('helvetica','normal'); doc.setTextColor(0,0,0); }
+                    else if (lt) { doc.text(lt, 400, y); }
+                    y += 15;
+                });
+            } else {
+                y += 8; doc.setFontSize(14); doc.setFont('helvetica','bold'); doc.text('Readings', 36, y); y += 18; doc.setFontSize(10);
+                row('pH', r.ph); row('Conductivity (µS/cm)', r.cond); row('ORP (mV)', r.orp);
+                row('Free Cl (ppm)', r.fcl); row('Total Cl (ppm)', r.tcl); row('TDS (ppm)', r.tds);
+                row('Temperature (°C)', r.temp); row('Hardness (mg/L)', r.hard); row('Alkalinity (mg/L)', r.alk);
+                row('Iron (mg/L)', r.fe); row('Phosphate (mg/L)', r.po4);
+            }
             y += 8; doc.setFontSize(14); doc.setFont('helvetica','bold'); doc.text('Observations', 36, y); y += 18; doc.setFontSize(10);
             const writeBlock = txt => { if (!txt) return; const lines = doc.splitTextToSize(txt, PAGE_W - 72); doc.text(lines, 36, y); y += lines.length * 12 + 6; if (y > PAGE_H - 120) { doc.addPage(); y = 60; }};
             writeBlock(r.obs); doc.setFont('helvetica','bold'); doc.text('Actions taken:', 36, y); y += 14; doc.setFont('helvetica','normal'); writeBlock(r.act);
