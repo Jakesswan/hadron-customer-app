@@ -2669,7 +2669,7 @@
                 <div class="hg-section-title">About</div>
                 <div class="hg-kvgrid">
                     <div class="hg-kv"><div class="k">App</div><div class="v">Hadron Group</div></div>
-                    <div class="hg-kv"><div class="k">Version</div><div class="v">v100</div></div>
+                    <div class="hg-kv"><div class="k">Version</div><div class="v">v101</div></div>
                     <div class="hg-kv"><div class="k">Platform</div><div class="v">PWA</div></div>
                 </div>
             </div>
@@ -5469,7 +5469,7 @@
 
         const LS = {
             get: (k, d) => { try { const v = localStorage.getItem(k); return v ? JSON.parse(v) : d; } catch (e) { return d; } },
-            set: (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) { showToast('Storage full'); } },
+            set: (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); return true; } catch (e) { showToast('Storage full — could not save. Remove some photos or old items.'); return false; } },
             push: (k, item, cap) => { const list = LS.get(k, []); list.unshift(item); LS.set(k, cap ? list.slice(0, cap) : list); return list; }
         };
         const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
@@ -5659,6 +5659,7 @@
            Digital Service Report
            ========================================================= */
         let sr_photos = [];
+        let sr_reportId = null;   // stable id for the open form, so Save + Export are one report, not two
         let sr_sigCtx = null, sr_drawing = false;
 
         // Cache for customer/site dropdowns on the Service Report form.
@@ -5754,6 +5755,7 @@
             // Defaults
             document.getElementById('sr_dt').value = new Date().toISOString().slice(0, 16);
             sr_photos = []; document.getElementById('sr_photos').innerHTML = '';
+            sr_reportId = uid();   // one stable id for this report across Save + Export PDF
             srLoadFavTests();
             initSignaturePad();
             // Populate customer dropdown + reset site dropdown on every open.
@@ -5773,19 +5775,46 @@
             if (r.fcl != null && r.fcl !== '') bits.push('Cl ' + r.fcl + ' ppm');
             return bits.join(' · ');
         }
-        function listServiceReports() {
-            document.getElementById('sr_form').style.display = 'none';
-            document.getElementById('sr_list').style.display = 'block';
-            const list = LS.get('hadron_sr', []);
-            const el = document.getElementById('sr_list');
-            el.innerHTML = list.length === 0 ? '<p style="color:#888;">No saved reports yet.</p>' :
+        // ── Cloud sync: reports live in Supabase (service_reports) as well as in
+        // localStorage, so they survive the device and reach head office. ──
+        let srCloudMeta = [];   // last cloud fetch — metadata only, not full payloads
+        function srToCloudRow(r) { return { id: r.id, site: r.site || null, customer_name: r.customerName || null, technician: r.tech || null, report_date: r.date || null, payload: r }; }
+        function srCloudPushReport(r) {
+            try { if (window.HG_DB && window.HG_DB.service_reports && r && r.id) window.HG_DB.service_reports.upsert(srToCloudRow(r)).catch(() => {}); } catch (_) {}
+        }
+        async function srCloudList() {
+            try {
+                const sb = window.HG_SUPA;
+                if (!sb || !((await sb.auth.getSession()).data.session)) return srCloudMeta;
+                const { data, error } = await sb.from('service_reports')
+                    .select('id, site, customer_name, technician, report_date').order('report_date', { ascending: false });
+                if (!error && Array.isArray(data)) srCloudMeta = data;
+            } catch (_) {}
+            return srCloudMeta;
+        }
+        function srMergedReports() {
+            const byId = {};
+            srCloudMeta.forEach(m => { byId[m.id] = { id: m.id, site: m.site, date: m.report_date, tech: m.technician || '', _cloud: true }; });
+            LS.get('hadron_sr', []).forEach(r => { if (r && r.id) byId[r.id] = Object.assign({}, r, { _cloud: !!(byId[r.id] && byId[r.id]._cloud) }); });
+            return Object.values(byId).sort((a, b) => String(b.date || b.savedAt || '').localeCompare(String(a.date || a.savedAt || '')));
+        }
+        function srRenderReportList(list) {
+            const el = document.getElementById('sr_list'); if (!el) return;
+            el.innerHTML = !list.length ? '<p style="color:#888;">No saved reports yet.</p>' :
                 list.map(r => `<div style="border:1px solid #eee;border-radius:6px;padding:10px;margin-bottom:8px;">
-                    <strong>${esc(r.site)}</strong> · ${esc(r.date)}<br>
-                    <small>Tech: ${esc(r.tech)}${srSummary(r) ? ' · ' + esc(srSummary(r)) : ''}</small>
+                    <strong>${esc(r.site)}</strong> · ${esc(String(r.date || '').replace('T', ' '))}
+                    ${r._cloud ? '<span title="Synced to cloud" style="color:#157b3a;font-size:12px;">☁ synced</span>' : '<span title="On this device only — not yet synced" style="color:#b5852a;font-size:12px;">• local only</span>'}<br>
+                    <small>${r.tech ? 'Tech: ' + esc(r.tech) : ''}${srSummary(r) ? (r.tech ? ' · ' : '') + esc(srSummary(r)) : ''}</small>
                     <div style="margin-top:6px;">
                         <button class="pdf-calc-btn" onclick="exportStoredSrPdf('${r.id}')">📄 PDF</button>
                         <button class="save-calc-btn" style="background:#c44;" onclick="deleteSR('${r.id}')">🗑 Delete</button>
                     </div></div>`).join('');
+        }
+        function listServiceReports() {
+            document.getElementById('sr_form').style.display = 'none';
+            document.getElementById('sr_list').style.display = 'block';
+            srRenderReportList(srMergedReports());                            // instant: local (+ any cached cloud)
+            srCloudList().then(() => srRenderReportList(srMergedReports()));   // then refresh from cloud
         }
         function captureGps() {
             if (!navigator.geolocation) { showToast('GPS not available'); return; }
@@ -5794,15 +5823,13 @@
                 document.getElementById('sr_gps').value = p.coords.latitude.toFixed(5) + ', ' + p.coords.longitude.toFixed(5) + ' (±' + Math.round(p.coords.accuracy) + 'm)';
             }, e => showToast('GPS: ' + e.message), { enableHighAccuracy: true, timeout: 8000 });
         }
-        function addServicePhoto(ev) {
-            const files = ev.target.files;
+        async function addServicePhoto(ev) {
+            const files = [...ev.target.files]; ev.target.value = '';
             for (const f of files) {
-                const reader = new FileReader();
-                reader.onload = e => {
-                    sr_photos.push({ src: e.target.result, ts: new Date().toISOString() });
-                    renderSrPhotos();
-                };
-                reader.readAsDataURL(f);
+                const full = await new Promise(r => { const rd = new FileReader(); rd.onload = e => r(e.target.result); rd.readAsDataURL(f); });
+                // Downscale for storage — full-res photos overflow localStorage fast.
+                sr_photos.push({ src: await srThumb(full, 1000, 0.7), ts: new Date().toISOString() });
+                renderSrPhotos();
             }
         }
         function renderSrPhotos() {
@@ -5822,9 +5849,14 @@
             };
             const start = e => { sr_drawing = true; const p = pos(e); ctx.beginPath(); ctx.moveTo(p.x, p.y); e.preventDefault(); };
             const move  = e => { if (!sr_drawing) return; const p = pos(e); ctx.lineTo(p.x, p.y); ctx.stroke(); e.preventDefault(); };
-            const end   = () => { sr_drawing = false; };
-            c.onmousedown = start; c.onmousemove = move; window.onmouseup = end;
-            c.ontouchstart = start; c.ontouchmove = move; c.ontouchend = end;
+            c.onmousedown = start; c.onmousemove = move;
+            c.ontouchstart = start; c.ontouchmove = move;
+            // End-drawing on release anywhere — a shared document listener wired
+            // once, so it can't clobber (or be clobbered by) the OCR crop overlay's
+            // release handler the way the old window.onmouseup assignment did.
+            if (!window._srSigUpWired) { window._srSigUpWired = true;
+                document.addEventListener('mouseup', () => { sr_drawing = false; });
+                document.addEventListener('touchend', () => { sr_drawing = false; }); }
         }
         function clearSignature() { if (sr_sigCtx) { const c = document.getElementById('sr_sig'); sr_sigCtx.clearRect(0,0,c.width,c.height); } }
 
@@ -6044,9 +6076,13 @@
             const pt = e => { const t = e.touches ? e.touches[0] : e; return { x: t.clientX, y: t.clientY }; };
             const down = e => { const p = pt(e); sr_cropDrag = { mode: (e.target === handle) ? 'resize' : 'move', sx: p.x, sy: p.y, r: { ...box._r } }; e.preventDefault(); };
             const move = e => { if (!sr_cropDrag) return; const p = pt(e), d = sr_cropDrag, dx = p.x - d.sx, dy = p.y - d.sy; if (d.mode === 'move') srSetBox(d.r.x + dx, d.r.y + dy, d.r.w, d.r.h); else srSetBox(d.r.x, d.r.y, d.r.w + dx, d.r.h + dy); e.preventDefault(); };
-            const up = () => { sr_cropDrag = null; };
-            box.onmousedown = down; handle.onmousedown = down; stage.onmousemove = move; window.onmouseup = up;
-            box.ontouchstart = down; handle.ontouchstart = down; stage.ontouchmove = move; window.ontouchend = up;
+            box.onmousedown = down; handle.onmousedown = down; stage.onmousemove = move;
+            box.ontouchstart = down; handle.ontouchstart = down; stage.ontouchmove = move;
+            // Release handler wired once on document (not the shared window slot),
+            // so it coexists with the signature pad's release handler.
+            if (!window._srCropUpWired) { window._srCropUpWired = true;
+                document.addEventListener('mouseup', () => { sr_cropDrag = null; });
+                document.addEventListener('touchend', () => { sr_cropDrag = null; }); }
         }
         function srCropCancel() { document.getElementById('sr_crop_overlay').style.display = 'none'; sr_cropImg = null; sr_cropDrag = null; }
         function srCropRetake() { const id = sr_ocrTarget; srCropCancel(); srOcrPhoto(id); }
@@ -6102,7 +6138,7 @@
             // compatibility with existing PDF / list rendering.
             const siteLabel = (site && site.name) || id('sr_site') || '';
             return {
-                id: uid(),
+                id: sr_reportId || uid(),
                 customerId: (customerSel && customerSel !== '__manual__') ? customerSel : null,
                 customerName: (customer && customer.name) || '',
                 siteId: (siteSel && siteSel !== '__manual__') ? siteSel : null,
@@ -6120,25 +6156,36 @@
                 savedAt: new Date().toISOString()
             };
         }
+        function srLocalSave(r) {   // upsert into hadron_sr by id (newest on top) — Save then Export stays one report
+            const list = LS.get('hadron_sr', []).filter(x => x.id !== r.id); list.unshift(r);
+            return LS.set('hadron_sr', list);
+        }
         function saveServiceReport() {
             const r = gatherSR();
             if (!r.site) { showToast('Enter site name'); return; }
-            LS.push('hadron_sr', r);
-            showToast('Report saved');
+            if (srLocalSave(r)) showToast('Report saved');   // LS.set warns 'Storage full' itself on failure
+            srCloudPushReport(r);   // best-effort cloud sync (queues if offline / not signed in)
         }
         function deleteSR(id) {
-            const list = LS.get('hadron_sr', []).filter(r => r.id !== id);
-            LS.set('hadron_sr', list); listServiceReports();
+            if (!confirm('Delete this service report? It is removed from this device and the cloud, and cannot be undone.')) return;
+            LS.set('hadron_sr', LS.get('hadron_sr', []).filter(r => r.id !== id));
+            srCloudMeta = srCloudMeta.filter(m => m.id !== id);
+            try { if (window.HG_DB && window.HG_DB.service_reports) window.HG_DB.service_reports.remove(id).catch(() => {}); } catch (_) {}
+            listServiceReports();
         }
         function exportServiceReportPdf() {
             const r = gatherSR();
             if (!r.site) { showToast('Enter site name'); return; }
-            LS.push('hadron_sr', r);
+            srLocalSave(r);   // best-effort local save (upsert by id)
+            srCloudPushReport(r);
             generateSrPdf(r);
         }
-        function exportStoredSrPdf(id) {
-            const r = LS.get('hadron_sr', []).find(x => x.id === id);
-            if (r) generateSrPdf(r);
+        async function exportStoredSrPdf(id) {
+            let r = LS.get('hadron_sr', []).find(x => x.id === id);
+            if (!r) {   // cloud-only report (from another device) — fetch its full payload
+                try { const row = window.HG_DB && window.HG_DB.service_reports && await window.HG_DB.service_reports.get(id); r = row && row.payload; } catch (_) {}
+            }
+            if (r) generateSrPdf(r); else showToast('Report not found');
         }
         function generateSrPdf(r) {
             if (!window.jspdf) { showToast('PDF lib still loading'); return; }
