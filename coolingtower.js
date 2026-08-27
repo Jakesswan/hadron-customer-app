@@ -317,6 +317,7 @@
     if (document.getElementById('ct-styles')) return;
     var css = '' +
       '#ct_root{--ct-char:' + PAL.charcoal + ';--ct-teal:' + PAL.teal + ';--ct-gold:' + PAL.gold + ';--ct-ok:' + PAL.ok + ';--ct-watch:' + PAL.watch + ';--ct-act:' + PAL.action + ';}' +
+      'body.dark #ct_root{--ct-char:#e8ecef;}' +   /* charcoal text → light in dark mode (fixes bare var(--ct-char) inline section titles) */
       '#ct_root .ct-lead{font-size:13px;color:#6b7684;margin:0 0 12px;}' +
       '#ct_root .ct-toolbar{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:12px;}' +
       '#ct_root .ct-seg{display:inline-flex;border:1.5px solid var(--ct-teal);border-radius:10px;overflow:hidden;}' +

@@ -1306,6 +1306,72 @@
             color: #e6e6e6;
             border-color: #2a3238;
         }
+        /* ── Dark-mode colour audit (v106) ─────────────────────────────────
+           Neutralise hardcoded inline light backgrounds and dark/grey text left
+           over from the legacy light styling — across the calculators, LIMS,
+           pool, data-manager and field-ops windows (all rendered inside
+           .window-content) — so they read correctly in dark mode. Mirrors the
+           existing [style*=…] override hack above. Scoped to .window-content so
+           the always-light login box is untouched; every rule is body.dark-only
+           so light mode is unaffected. */
+        body.dark .window-content [style*="color:#2e3742"],
+        body.dark .window-content [style*="color: #2e3742"],
+        body.dark .window-content [style*="color:#333"],
+        body.dark .window-content [style*="color: #333"] { color: var(--text) !important; }
+
+        body.dark .window-content [style*="color:#666"],
+        body.dark .window-content [style*="color: #666"],
+        body.dark .window-content [style*="color:#555"],
+        body.dark .window-content [style*="color: #555"],
+        body.dark .window-content [style*="color:#777"],
+        body.dark .window-content [style*="color: #777"],
+        body.dark .window-content [style*="color:#888"],
+        body.dark .window-content [style*="color: #888"],
+        body.dark .window-content [style*="color:#6b7684"],
+        body.dark .window-content [style*="color: #6b7684"],
+        body.dark .window-content [style*="color:#5a6a76"],
+        body.dark .window-content [style*="color: #5a6a76"],
+        body.dark .window-content [style*="color:#4f4f4f"],
+        body.dark .window-content [style*="color: #4f4f4f"],
+        body.dark .window-content [style*="color:#8a97a4"],
+        body.dark .window-content [style*="color: #8a97a4"],
+        body.dark .bo-lead, body.dark .bo-note, body.dark table.bo-t th,
+        body.dark .ct-lead, body.dark .ct-note { color: var(--muted) !important; }
+
+        body.dark .window-content [style*="color:#1a3d9e"],
+        body.dark .window-content [style*="color: #1a3d9e"] { color: var(--accent) !important; }
+        body.dark .window-content [style*="color:#157b3a"],
+        body.dark .window-content [style*="color: #157b3a"] { color: var(--success) !important; }
+        body.dark .window-content [style*="color:#b5852a"],
+        body.dark .window-content [style*="color: #b5852a"] { color: var(--accent-2) !important; }
+
+        body.dark .window-content [style*="background:#f7f7f7"],
+        body.dark .window-content [style*="background: #f7f7f7"],
+        body.dark .window-content [style*="background:#f5f5f5"],
+        body.dark .window-content [style*="background: #f5f5f5"],
+        body.dark .window-content [style*="background:#fff4e8"],
+        body.dark .window-content [style*="background: #fff4e8"],
+        body.dark .window-content [style*="background:#fff5f5"],
+        body.dark .window-content [style*="background: #fff5f5"],
+        body.dark .window-content [style*="background:#e8f7ef"],
+        body.dark .window-content [style*="background: #e8f7ef"],
+        body.dark .window-content [style*="background:#eef;"],
+        body.dark .window-content [style*="background: #eef;"],
+        body.dark .window-content [style*="background:#f7fbfd"],
+        body.dark .window-content [style*="background: #f7fbfd"],
+        body.dark .window-content [style*="background:#fffde7"],
+        body.dark .window-content [style*="background: #fffde7"] { background: var(--bg-soft) !important; }
+
+        body.dark .window-content [style*="background:#888"],
+        body.dark .window-content [style*="background: #888"] { background: var(--bg-soft) !important; color: var(--text) !important; }
+
+        body.dark .window-content select[style*="background:#fff"],
+        body.dark .window-content select[style*="background: #fff"] { background: var(--surface) !important; color: var(--text) !important; border-color: var(--border) !important; }
+
+        body.dark .window-content [style*="solid #eee"],
+        body.dark .window-content [style*="solid #ddd"],
+        body.dark .window-content [style*="solid #e0e0e0"],
+        body.dark .bo-res, body.dark .ct-res { border-color: var(--border) !important; }
         body.dark .history-item-actions button {
             background: #2a3238;
             color: #e6e6e6;
@@ -2678,7 +2744,7 @@
                 <div class="hg-section-title">About</div>
                 <div class="hg-kvgrid">
                     <div class="hg-kv"><div class="k">App</div><div class="v">Hadron Group</div></div>
-                    <div class="hg-kv"><div class="k">Version</div><div class="v">v105</div></div>
+                    <div class="hg-kv"><div class="k">Version</div><div class="v">v106</div></div>
                     <div class="hg-kv"><div class="k">Platform</div><div class="v">PWA</div></div>
                 </div>
             </div>

@@ -1494,7 +1494,7 @@
             <rect x="0" y="0" width="${W}" height="${H}" fill="transparent"/>
             ${zones.map(z=>`<line x1="${pad}" x2="${W-pad}" y1="${y(z.v)}" y2="${y(z.v)}" stroke="${z.c}" stroke-dasharray="${z.c==='#3AAEDB'?'0':'4,4'}" stroke-width="${z.c==='#3AAEDB'?2:1}"/>
               <text x="${W-pad+4}" y="${y(z.v)+4}" font-size="10" fill="${z.c}">${z.l}</text>`).join('')}
-            <polyline points="${pts}" fill="none" stroke="#2e3742" stroke-width="1.5"/>
+            <polyline points="${pts}" fill="none" style="stroke:var(--text)" stroke-width="1.5"/>
             ${vals.map((v,i)=>`<circle cx="${xScale(i)}" cy="${y(v)}" r="3.5" fill="${Math.abs(v-mean)>2*sd?'#e53935':'#3AAEDB'}" stroke="#fff" stroke-width="1"/>`).join('')}
           </svg>
         </div>

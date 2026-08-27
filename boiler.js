@@ -280,6 +280,7 @@
     if (document.getElementById('boiler-styles')) return;
     var css =
       '#bo_root{--bo-char:' + PAL.charcoal + ';--bo-teal:' + PAL.teal + ';--bo-gold:' + PAL.gold + ';--bo-ok:' + PAL.ok + ';--bo-watch:' + PAL.watch + ';--bo-act:' + PAL.action + ';}' +
+      'body.dark #bo_root{--bo-char:#e8ecef;}' +   /* charcoal text → light in dark mode (fixes bare var(--bo-char) e.g. the sampling-validity gate) */
       '#bo_root .bo-lead{font-size:13px;color:#6b7684;margin:0 0 12px;}' +
       '#bo_root .bo-toolbar{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:12px;}' +
       '#bo_root .bo-seg{display:inline-flex;border:1.5px solid var(--bo-teal);border-radius:10px;overflow:hidden;}' +
