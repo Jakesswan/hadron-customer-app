@@ -2398,10 +2398,15 @@
                     <div class="icon">👤</div>
                     <div class="app-name" data-i18n="app.profile">Profile</div>
                 </div>
+                <!-- Messages hidden until it is a real feature. Today it is a static
+                     "No messages yet" placeholder — nothing reads/writes the messages
+                     table. To re-enable, restore this tile (window markup + HG_DB.messages
+                     are still in place):
                 <div class="app-icon" data-app="messages" onclick="openWindow('messages')">
                     <div class="icon">💬</div>
                     <div class="app-name" data-i18n="app.messages">Messages</div>
                 </div>
+                -->
                 <div class="app-icon" data-app="settings" onclick="openWindow('settings')">
                     <div class="icon">⚙️</div>
                     <div class="app-name" data-i18n="app.settings">Settings</div>
@@ -2669,7 +2674,7 @@
                 <div class="hg-section-title">About</div>
                 <div class="hg-kvgrid">
                     <div class="hg-kv"><div class="k">App</div><div class="v">Hadron Group</div></div>
-                    <div class="hg-kv"><div class="k">Version</div><div class="v">v101</div></div>
+                    <div class="hg-kv"><div class="k">Version</div><div class="v">v102</div></div>
                     <div class="hg-kv"><div class="k">Platform</div><div class="v">PWA</div></div>
                 </div>
             </div>
