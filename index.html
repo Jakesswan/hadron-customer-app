@@ -2678,7 +2678,7 @@
                 <div class="hg-section-title">About</div>
                 <div class="hg-kvgrid">
                     <div class="hg-kv"><div class="k">App</div><div class="v">Hadron Group</div></div>
-                    <div class="hg-kv"><div class="k">Version</div><div class="v">v103</div></div>
+                    <div class="hg-kv"><div class="k">Version</div><div class="v">v104</div></div>
                     <div class="hg-kv"><div class="k">Platform</div><div class="v">PWA</div></div>
                 </div>
             </div>
@@ -3615,12 +3615,9 @@
                     <div class="form-group"><label>Date / time</label><input type="datetime-local" id="sr_dt"></div>
                     <div class="form-group"><label>GPS</label><input type="text" id="sr_gps" readonly placeholder="Tap 'Capture' →"> <button type="button" class="calc-btn" style="margin-top:6px;" onclick="captureGps()">📍 Capture GPS</button></div>
 
-                    <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-top:16px;">
-                        <h3 style="margin:0;">Tests</h3>
-                        <button type="button" class="calc-btn" style="margin:0;padding:8px 14px;" onclick="srOpenTestPicker()">＋ Add Test</button>
-                    </div>
-                    <p style="color:#666;font-size:12px;margin:6px 0 4px;">Your ★ favourites load automatically each visit. Tap <b>Add Test</b> to search the full SANS 241 list and add one to today's report. Each test gives an automatic PASS / FAIL against its SANS&nbsp;241 limit, and 📷 reads the value from a photo of the meter.</p>
-                    <div id="sr_tests" style="display:flex;flex-direction:column;gap:8px;margin-top:6px;"></div>
+                    <h3 style="margin:16px 0 2px;">Sample points &amp; tests</h3>
+                    <p style="color:#666;font-size:12px;margin:4px 0;">Add a <b>sample point</b> for each place you sample (Inlet, Cooling Tower, Boiler feed…). Every point loads your ★ favourite tests automatically — tap <b>Add test</b> under a point to add more from the full SANS&nbsp;241 list. Each reading is auto PASS / FAIL vs its limit, and 📷 reads the value from a meter photo.</p>
+                    <div id="sr_tests" style="display:flex;flex-direction:column;gap:12px;margin-top:6px;"></div>
                     <input type="file" id="sr_ocr_file" accept="image/*" capture="environment" style="display:none;" onchange="srOcrCapture(event)">
 
                     <h3 style="margin-top:16px;">Actions</h3>
@@ -5765,7 +5762,7 @@
             document.getElementById('sr_dt').value = new Date().toISOString().slice(0, 16);
             sr_photos = []; document.getElementById('sr_photos').innerHTML = '';
             sr_reportId = uid();   // one stable id for this report across Save + Export PDF
-            srLoadFavTests();
+            srInitPoints();
             initSignaturePad();
             // Populate customer dropdown + reset site dropdown on every open.
             await srPopulateCustomerDropdown();
@@ -5875,8 +5872,7 @@
         // best-effort on-device (offline) OCR that reads a meter/strip photo
         // into the value for the operator to confirm.
         // ───────────────────────────────────────────────────────────────
-        let sr_tests = [];        // rows on the current report
-        let sr_ocrTarget = null;  // test id currently capturing a photo
+        let sr_ocrTarget = null;  // test-row id currently capturing a photo
 
         // Operational field measurements that aren't SANS 241 determinands but
         // operators still record each visit. Shape mirrors the lims catalog rows.
@@ -5904,7 +5900,9 @@
         function srResetLimit(id) { const all = srLimits(); delete all[id]; LS.set('hadron_sr_limits', all); }
         function srNewRow(c) {
             const L = srLimitFor(c.id);
-            return { id:c.id, code:c.code, name:c.name, unit:c.unit, specMin:L.min, specMax:L.max, custom:L.custom, sans241:c.sans241||'', category:c.category||'', value:'', photo:null };
+            // id = unique per row (a parameter can appear at several sample points);
+            // catId = the catalog id, used for limit prefs + per-point de-dupe.
+            return { id:uid(), catId:c.id, code:c.code, name:c.name, unit:c.unit, specMin:L.min, specMax:L.max, custom:L.custom, sans241:c.sans241||'', category:c.category||'', value:'', photo:null };
         }
 
         // Favourites (persisted per device). First run seeds the everyday set
@@ -5945,33 +5943,63 @@
             const lt = srLimitText(t);
             return lt ? '<span style="color:#888;font-size:11px;">' + (t.custom ? 'Own limit ' : 'SANS ') + esc(lt) + '</span>' : '<span style="color:#bbb;font-size:11px;">no limit</span>';
         }
-        function srUpdateChip(id) { const el = document.getElementById('sr_chip_' + id); const t = sr_tests.find(x => x.id === id); if (el && t) el.innerHTML = srChip(t); }
-        // Inline limit editor per test row — persists as this parameter's preferred limit.
-        function srToggleLimitEditor(id) { const el = document.getElementById('sr_lim_' + id); if (el) el.style.display = (el.style.display === 'flex') ? 'none' : 'flex'; }
-        function srEditLimit(id, which, val) {
-            const t = sr_tests.find(x => x.id === id); if (!t) return;
+        function srUpdateChip(rid) { const el = document.getElementById('sr_chip_' + rid); const f = srFindRow(rid); if (el && f) el.innerHTML = srChip(f.t); }
+        // Inline limit editor per test row — persists as this parameter's preferred limit (keyed by catId).
+        function srToggleLimitEditor(rid) { const el = document.getElementById('sr_lim_' + rid); if (el) el.style.display = (el.style.display === 'flex') ? 'none' : 'flex'; }
+        function srEditLimit(rid, which, val) {
+            const f = srFindRow(rid); if (!f) return;
             let v; if (val === '' || val == null) v = null; else { v = parseFloat(val); if (isNaN(v)) return; }
-            if (which === 'min') t.specMin = v; else t.specMax = v;
-            t.custom = true; srSaveLimit(id, t.specMin, t.specMax); srUpdateChip(id);
+            if (which === 'min') f.t.specMin = v; else f.t.specMax = v;
+            f.t.custom = true; srSaveLimit(f.t.catId, f.t.specMin, f.t.specMax); srUpdateChip(rid);
         }
-        function srResetLimitRow(id) {
-            srResetLimit(id);
-            const t = sr_tests.find(x => x.id === id); if (t) { const L = srLimitFor(id); t.specMin = L.min; t.specMax = L.max; t.custom = false; }
-            srRenderTests();
+        function srResetLimitRow(rid) {
+            const f = srFindRow(rid); if (!f) return;
+            srResetLimit(f.t.catId);
+            const L = srLimitFor(f.t.catId); f.t.specMin = L.min; f.t.specMax = L.max; f.t.custom = false;
+            srRenderPoints();
         }
 
-        function srAddTest(id) { if (sr_tests.some(t => t.id === id)) return; const c = srCatItem(id); if (c) { sr_tests.push(srNewRow(c)); srRenderTests(); } }
-        function srRemoveTest(id) { sr_tests = sr_tests.filter(t => t.id !== id); srRenderTests(); }
-        function srSetVal(id, v) { const t = sr_tests.find(x => x.id === id); if (t) { t.value = v; srUpdateChip(id); } }
-        function srLoadFavTests() { sr_tests = []; srFavs().forEach(id => { const c = srCatItem(id); if (c) sr_tests.push(srNewRow(c)); }); srRenderTests(); }
+        // ── Sample points ──────────────────────────────────────────────
+        // A report groups tests under one or more named sample points (Inlet,
+        // Cooling Tower, Boiler feed…). Every new point pre-loads the ★ favourites
+        // so a multi-point sampling round is a few taps. sr_activePoint = the point
+        // the test picker adds to.
+        let sr_points = [];
+        let sr_activePoint = null;
+        function srAllRows() { return sr_points.reduce((a, p) => a.concat(p.tests), []); }
+        function srFindRow(rid) { for (const p of sr_points) { const t = p.tests.find(x => x.id === rid); if (t) return { p, t }; } return null; }
+        function srNewPoint(name, withFavs) {
+            const p = { id: uid(), name: name || '', tests: [] };
+            if (withFavs) srFavs().forEach(fid => { const c = srCatItem(fid); if (c) p.tests.push(srNewRow(c)); });
+            return p;
+        }
+        function srInitPoints() { sr_points = [ srNewPoint('', true) ]; srRenderPoints(); }
+        function srAddPoint() { sr_points.push(srNewPoint('', true)); srRenderPoints(); }
+        function srRemovePoint(pid) {
+            if (sr_points.length <= 1) { showToast('Keep at least one sample point'); return; }
+            const p = sr_points.find(x => x.id === pid);
+            const hasData = p && p.tests.some(t => t.value !== '' && t.value != null);
+            if (hasData && !confirm('Remove this sample point and its readings?')) return;
+            sr_points = sr_points.filter(x => x.id !== pid); srRenderPoints();
+        }
+        function srSetPointName(pid, v) { const p = sr_points.find(x => x.id === pid); if (p) p.name = v; }   // no re-render → keeps input focus
 
-        function srRenderTests() {
-            const host = document.getElementById('sr_tests'); if (!host) return;
-            if (!sr_tests.length) { host.innerHTML = '<p style="color:#888;font-size:13px;margin:4px 0;">No tests yet — ★ some in Add Test to make them your everyday fields.</p>'; return; }
-            host.innerHTML = sr_tests.map(t => `
+        function srAddTest(catId) { const p = sr_points.find(x => x.id === sr_activePoint) || sr_points[0]; if (!p) return; if (p.tests.some(t => t.catId === catId)) return; const c = srCatItem(catId); if (c) { p.tests.push(srNewRow(c)); srRenderPoints(); } }
+        function srRemoveTest(rid) { const f = srFindRow(rid); if (f) { f.p.tests = f.p.tests.filter(x => x.id !== rid); srRenderPoints(); } }
+        function srSetVal(rid, v) { const f = srFindRow(rid); if (f) { f.t.value = v; srUpdateChip(rid); } }
+        function srMapRow(t) {
+            return { id: t.catId, code: t.code, name: t.name, unit: t.unit,
+                value: (t.value === '' || t.value == null) ? null : t.value,
+                specMin: t.specMin, specMax: t.specMax, pass: srEvalPass(t), custom: t.custom || false,
+                sans241: t.sans241, category: t.category, photo: t.photo || null };
+        }
+        function srGatherPoints() { return sr_points.map(p => ({ name: (p.name || '').trim(), tests: p.tests.map(srMapRow) })); }
+
+        function srTestRowHtml(t) {
+            return `
                 <div style="display:grid;grid-template-columns:1fr auto;gap:6px 10px;align-items:center;padding:10px;border:1px solid #e0e0e0;border-radius:10px;background:#fafafa;">
                     <div style="min-width:0;">
-                        <div style="font-weight:600;font-size:14px;">${esc(t.name)} <span style="color:#888;font-weight:400;">${esc(t.unit || '')}</span></div>
+                        <div style="font-weight:600;font-size:14px;color:#2e3742;">${esc(t.name)} <span style="color:#888;font-weight:400;">${esc(t.unit || '')}</span></div>
                         <div style="margin-top:3px;display:flex;align-items:center;gap:10px;">
                             <span id="sr_chip_${esc(t.id)}">${srChip(t)}</span>
                             <button type="button" onclick="srToggleLimitEditor('${esc(t.id)}')" title="Set your own pass/fail limit" style="border:none;background:transparent;color:#3AAEDB;font-size:12px;cursor:pointer;padding:0;">✎ limit</button>
@@ -5984,20 +6012,38 @@
                     </div>
                     <div id="sr_lim_${esc(t.id)}" style="display:none;grid-column:1/-1;margin-top:8px;padding:9px 10px;background:rgba(127,127,127,.07);border-radius:8px;font-size:13px;align-items:center;gap:8px;flex-wrap:wrap;">
                         <span style="color:#777;">Pass range —</span>
-                        <label style="display:flex;align-items:center;gap:5px;">min <input type="number" step="any" inputmode="decimal" value="${esc(t.specMin == null ? '' : t.specMin)}" oninput="srEditLimit('${esc(t.id)}','min',this.value)" placeholder="—" style="width:72px;padding:6px;border:2px solid #e0e0e0;border-radius:6px;font-size:14px;"></label>
-                        <label style="display:flex;align-items:center;gap:5px;">max <input type="number" step="any" inputmode="decimal" value="${esc(t.specMax == null ? '' : t.specMax)}" oninput="srEditLimit('${esc(t.id)}','max',this.value)" placeholder="—" style="width:72px;padding:6px;border:2px solid #e0e0e0;border-radius:6px;font-size:14px;"></label>
+                        <label style="display:flex;align-items:center;gap:5px;color:#2e3742;">min <input type="number" step="any" inputmode="decimal" value="${esc(t.specMin == null ? '' : t.specMin)}" oninput="srEditLimit('${esc(t.id)}','min',this.value)" placeholder="—" style="width:72px;padding:6px;border:2px solid #e0e0e0;border-radius:6px;font-size:14px;"></label>
+                        <label style="display:flex;align-items:center;gap:5px;color:#2e3742;">max <input type="number" step="any" inputmode="decimal" value="${esc(t.specMax == null ? '' : t.specMax)}" oninput="srEditLimit('${esc(t.id)}','max',this.value)" placeholder="—" style="width:72px;padding:6px;border:2px solid #e0e0e0;border-radius:6px;font-size:14px;"></label>
                         <button type="button" onclick="srResetLimitRow('${esc(t.id)}')" style="border:1px solid #d0d0d0;background:#fff;border-radius:6px;padding:6px 11px;cursor:pointer;font-size:12px;">Reset to default</button>
                     </div>
                     ${t.photo ? `<div style="grid-column:1/-1;"><img src="${t.photo}" style="height:50px;border-radius:6px;border:1px solid #e0e0e0;"></div>` : ''}
-                </div>`).join('');
+                </div>`;
+        }
+
+        function srRenderPoints() {
+            const host = document.getElementById('sr_tests'); if (!host) return;
+            host.innerHTML = sr_points.map((p, idx) => `
+                <div style="border:1px solid #d9e6ee;border-radius:12px;background:#fff;overflow:hidden;">
+                    <div style="display:flex;align-items:center;gap:8px;padding:9px 12px;background:#f0f7fb;border-bottom:1px solid #e4eef4;">
+                        <span style="font-size:14px;">📍</span>
+                        <input type="text" value="${esc(p.name || '')}" oninput="srSetPointName('${p.id}', this.value)" placeholder="Sample point ${idx + 1} — e.g. Inlet, Cooling Tower" style="flex:1;min-width:0;padding:7px 9px;border:1px solid #cfe0ea;border-radius:8px;font-size:14px;font-weight:600;background:#fff;color:#2e3742;">
+                        ${sr_points.length > 1 ? `<button type="button" title="Remove sample point" onclick="srRemovePoint('${p.id}')" style="border:none;background:transparent;color:#c0392b;font-size:19px;cursor:pointer;line-height:1;">🗑</button>` : ''}
+                    </div>
+                    <div style="padding:10px 12px;display:flex;flex-direction:column;gap:8px;">
+                        ${p.tests.length ? p.tests.map(srTestRowHtml).join('') : '<p style="color:#999;font-size:13px;margin:2px 0;">No tests yet — tap “Add test”.</p>'}
+                        <button type="button" class="calc-btn" style="margin:2px 0 0;padding:7px 12px;align-self:flex-start;" onclick="srOpenTestPicker('${p.id}')">＋ Add test</button>
+                    </div>
+                </div>`).join('') +
+                `<button type="button" class="hg-btn" style="align-self:flex-start;margin-top:2px;" onclick="srAddPoint()">＋ Add sample point</button>`;
         }
 
         // ── Picker modal ──
-        function srOpenTestPicker() { document.getElementById('sr_test_picker').style.display = 'block'; document.getElementById('sr_test_search').value = ''; srRenderPickerList(); setTimeout(() => { const s = document.getElementById('sr_test_search'); if (s) s.focus(); }, 60); }
+        function srOpenTestPicker(pid) { sr_activePoint = pid || (sr_points[0] && sr_points[0].id) || null; document.getElementById('sr_test_picker').style.display = 'block'; document.getElementById('sr_test_search').value = ''; srRenderPickerList(); setTimeout(() => { const s = document.getElementById('sr_test_search'); if (s) s.focus(); }, 60); }
         function srCloseTestPicker() { document.getElementById('sr_test_picker').style.display = 'none'; }
         function srRenderPickerList() {
             const q = (document.getElementById('sr_test_search').value || '').toLowerCase().trim();
-            const inReport = new Set(sr_tests.map(t => t.id));
+            const _ap = sr_points.find(x => x.id === sr_activePoint);
+            const inReport = new Set(_ap ? _ap.tests.map(t => t.catId) : []);
             const items = srCatalog().filter(c => !q || (c.name + ' ' + c.code + ' ' + (c.category || '') + ' ' + (c.sans241 || '')).toLowerCase().includes(q));
             const host = document.getElementById('sr_picker_list');
             if (!items.length) { host.innerHTML = '<p style="color:#888;padding:16px;">No match for “' + esc(q) + '”.</p>'; return; }
@@ -6111,7 +6157,7 @@
         }
         async function srCropRead() {
             const g = sr_cropGeom, box = document.getElementById('sr_crop_box'), id = sr_ocrTarget;
-            const t = id && sr_tests.find(x => x.id === id);
+            const f = id && srFindRow(id); const t = f && f.t;
             if (!g || !sr_cropImg || !t) { srCropCancel(); return; }
             const r = box._r;
             const sx = (r.x - g.ox) / g.scale, sy = (r.y - g.oy) / g.scale, sw = r.w / g.scale, sh = r.h / g.scale;
@@ -6122,16 +6168,16 @@
             const proc = cv.toDataURL('image/png');
             const full = sr_cropImg.src;
             srCropCancel();
-            t.photo = await srThumb(full); srRenderTests();   // keep the full photo as evidence
+            t.photo = await srThumb(full); srRenderPoints();   // keep the full photo as evidence
             showToast('Reading…');
             try {
                 const w = await srGetWorker();
                 const out = await w.recognize(proc);
                 const num = srExtractNumber(out.data.text), conf = Math.round(out.data.confidence || 0);
-                if (num != null) { t.value = num; srRenderTests(); showToast('Read “' + num + '”' + (conf ? ' · ' + conf + '%' : '') + ' — check it'); }
-                else { srRenderTests(); showToast('No number found — retake tighter, or type it'); }
+                if (num != null) { t.value = num; srRenderPoints(); showToast('Read “' + num + '”' + (conf ? ' · ' + conf + '%' : '') + ' — check it'); }
+                else { srRenderPoints(); showToast('No number found — retake tighter, or type it'); }
             } catch (e) {
-                srRenderTests();
+                srRenderPoints();
                 showToast(navigator.onLine ? 'Couldn’t read it — type the value in' : 'OCR needs one online use first — type it in');
             }
         }
@@ -6154,12 +6200,9 @@
                 site: siteLabel,
                 contact: id('sr_contact'), tech: id('sr_tech'),
                 date: id('sr_dt'), gps: id('sr_gps'),
-                tests: sr_tests.map(t => ({
-                    id: t.id, code: t.code, name: t.name, unit: t.unit,
-                    value: (t.value === '' || t.value == null) ? null : t.value,
-                    specMin: t.specMin, specMax: t.specMax, pass: srEvalPass(t), custom: t.custom || false,
-                    sans241: t.sans241, category: t.category, photo: t.photo || null
-                })),
+                points: srGatherPoints(),
+                tests: srAllRows().map(srMapRow),   // flattened — keeps the saved-list summary + legacy PDF path working
+
                 obs: id('sr_obs'), act: id('sr_act'), chem: id('sr_chem'),
                 photos: sr_photos, sig: document.getElementById('sr_sig').toDataURL('image/png'),
                 savedAt: new Date().toISOString()
@@ -6212,12 +6255,13 @@
             const row = (k, v) => { if (v == null || v === '') return; doc.setFont('helvetica','bold'); doc.text(k, 36, y); doc.setFont('helvetica','normal'); doc.text(String(v), 200, y); y += 16; if (y > PAGE_H - 80) { doc.addPage(); y = 60; }};
             doc.setFontSize(14); doc.setFont('helvetica','bold'); doc.text('Site Details', 36, y); y += 18; doc.setFontSize(10);
             row('Date / time:', r.date); row('Technician:', r.tech); row('Contact:', r.contact); row('GPS:', r.gps);
-            if (r.tests && r.tests.length) {
-                y += 8; doc.setFontSize(14); doc.setFont('helvetica','bold'); doc.text('Test Results', 36, y); y += 16;
+            // Test results — grouped by sample point (new), a flat list (v1), or
+            // the very-old fixed readings (legacy).
+            const renderTestRows = (rows) => {
                 doc.setFontSize(9); doc.setFont('helvetica','bold'); doc.setTextColor.apply(doc, SOFT);
                 doc.text('Parameter', 36, y); doc.text('Result', 250, y); doc.text('Unit', 320, y); doc.text('Limit', 400, y); y += 6;
                 doc.setDrawColor(210,210,210); doc.line(36, y, PAGE_W - 36, y); y += 12; doc.setTextColor(0,0,0);
-                r.tests.forEach(t => {
+                rows.forEach(t => {
                     if (t.value == null || t.value === '') return;
                     if (y > PAGE_H - 90) { doc.addPage(); y = 60; }
                     doc.setFontSize(10); doc.setFont('helvetica','normal');
@@ -6230,6 +6274,23 @@
                     else if (lt) { doc.text(lt, 400, y); }
                     y += 15;
                 });
+            };
+            const srPtsWithData = (r.points || []).filter(p => p.tests && p.tests.some(t => t.value != null && t.value !== ''));
+            if (srPtsWithData.length) {
+                y += 8; doc.setFontSize(14); doc.setFont('helvetica','bold'); doc.text('Test Results', 36, y); y += 16;
+                const labelled = srPtsWithData.length > 1 || !!(srPtsWithData[0].name || '').trim();
+                srPtsWithData.forEach(p => {
+                    if (labelled) {
+                        if (y > PAGE_H - 90) { doc.addPage(); y = 60; }
+                        doc.setFontSize(11); doc.setFont('helvetica','bold'); doc.setTextColor.apply(doc, CYAN);
+                        doc.text((p.name || '').trim() || 'Sample point', 36, y); doc.setTextColor(0,0,0); y += 15;
+                    }
+                    renderTestRows(p.tests);
+                    y += 8;
+                });
+            } else if (r.tests && r.tests.length) {
+                y += 8; doc.setFontSize(14); doc.setFont('helvetica','bold'); doc.text('Test Results', 36, y); y += 16;
+                renderTestRows(r.tests);
             } else {
                 y += 8; doc.setFontSize(14); doc.setFont('helvetica','bold'); doc.text('Readings', 36, y); y += 18; doc.setFontSize(10);
                 row('pH', r.ph); row('Conductivity (µS/cm)', r.cond); row('ORP (mV)', r.orp);
@@ -6262,7 +6323,7 @@
             }
             doc.setFontSize(8); doc.setTextColor.apply(doc, SOFT);
             doc.text('Hadron Group · Customer Interface · hadrongrp.com', PAGE_W / 2, PAGE_H - 24, { align: 'center' });
-            doc.save('hadron-service-' + (r.site || 'site').replace(/\s+/g, '-').toLowerCase() + '-' + r.date.slice(0,10) + '.pdf');
+            doc.save('hadron-service-' + (r.site || 'site').replace(/\s+/g, '-').toLowerCase() + '-' + (r.date || '').slice(0,10) + '.pdf');
         }
 
         /* =========================================================
