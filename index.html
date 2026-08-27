@@ -2678,7 +2678,7 @@
                 <div class="hg-section-title">About</div>
                 <div class="hg-kvgrid">
                     <div class="hg-kv"><div class="k">App</div><div class="v">Hadron Group</div></div>
-                    <div class="hg-kv"><div class="k">Version</div><div class="v">v104</div></div>
+                    <div class="hg-kv"><div class="k">Version</div><div class="v">v105</div></div>
                     <div class="hg-kv"><div class="k">Platform</div><div class="v">PWA</div></div>
                 </div>
             </div>
@@ -3616,7 +3616,7 @@
                     <div class="form-group"><label>GPS</label><input type="text" id="sr_gps" readonly placeholder="Tap 'Capture' →"> <button type="button" class="calc-btn" style="margin-top:6px;" onclick="captureGps()">📍 Capture GPS</button></div>
 
                     <h3 style="margin:16px 0 2px;">Sample points &amp; tests</h3>
-                    <p style="color:#666;font-size:12px;margin:4px 0;">Add a <b>sample point</b> for each place you sample (Inlet, Cooling Tower, Boiler feed…). Every point loads your ★ favourite tests automatically — tap <b>Add test</b> under a point to add more from the full SANS&nbsp;241 list. Each reading is auto PASS / FAIL vs its limit, and 📷 reads the value from a meter photo.</p>
+                    <p style="color:var(--muted);font-size:12px;margin:4px 0;">Add a <b>sample point</b> for each place you sample (Inlet, Cooling Tower, Boiler feed…). Every point loads your ★ favourite tests automatically — tap <b>Add test</b> under a point to add more from the full SANS&nbsp;241 list. Each reading is auto PASS / FAIL vs its limit, and 📷 reads the value from a meter photo.</p>
                     <div id="sr_tests" style="display:flex;flex-direction:column;gap:12px;margin-top:6px;"></div>
                     <input type="file" id="sr_ocr_file" accept="image/*" capture="environment" style="display:none;" onchange="srOcrCapture(event)">
 
@@ -3641,13 +3641,13 @@
 
             <!-- Add-Test picker: searchable SANS 241 catalog + operational params -->
             <div id="sr_test_picker" style="display:none;position:fixed;inset:0;z-index:12000;background:rgba(0,0,0,.45);">
-                <div style="max-width:540px;margin:5vh auto;background:#fff;border-radius:14px;max-height:88vh;display:flex;flex-direction:column;overflow:hidden;box-shadow:0 20px 60px rgba(0,0,0,.4);">
-                    <div style="padding:14px 16px;border-bottom:1px solid #e6e6e6;display:flex;align-items:center;gap:10px;">
-                        <strong style="flex:1;font-size:16px;">Add a test</strong>
-                        <button type="button" class="calc-btn" style="margin:0;padding:5px 14px;background:#888;" onclick="srCloseTestPicker()">Done</button>
+                <div style="max-width:540px;margin:5vh auto;background:var(--surface);color:var(--text);border:1px solid var(--border);border-radius:14px;max-height:88vh;display:flex;flex-direction:column;overflow:hidden;box-shadow:0 20px 60px rgba(0,0,0,.4);">
+                    <div style="padding:14px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px;">
+                        <strong style="flex:1;font-size:16px;color:var(--text);">Add a test</strong>
+                        <button type="button" class="calc-btn" style="margin:0;padding:5px 14px;background:var(--bg-soft);color:var(--text);border:1px solid var(--border);" onclick="srCloseTestPicker()">Done</button>
                     </div>
-                    <input id="sr_test_search" placeholder="Search SANS 241 — name, code, risk class…" oninput="srRenderPickerList()" style="margin:12px 16px 4px;padding:11px;border:2px solid #e0e0e0;border-radius:8px;font-size:15px;">
-                    <p style="margin:2px 16px 8px;color:#888;font-size:11px;">Tap ★ to keep a test in your everyday favourites.</p>
+                    <input id="sr_test_search" placeholder="Search SANS 241 — name, code, risk class…" oninput="srRenderPickerList()" style="margin:12px 16px 4px;padding:11px;border:1px solid var(--border);border-radius:8px;font-size:15px;background:var(--bg-soft);color:var(--text);">
+                    <p style="margin:2px 16px 8px;color:var(--muted);font-size:11px;">Tap ★ to keep a test in your everyday favourites.</p>
                     <div id="sr_picker_list" style="overflow:auto;padding:0 8px 14px;"></div>
                 </div>
             </div>
@@ -5941,7 +5941,7 @@
             if (p === true)  return '<span style="background:#157b3a;color:#fff;font-size:11px;font-weight:700;padding:2px 8px;border-radius:999px;">PASS</span>';
             if (p === false) return '<span style="background:#c0392b;color:#fff;font-size:11px;font-weight:700;padding:2px 8px;border-radius:999px;">FAIL</span>';
             const lt = srLimitText(t);
-            return lt ? '<span style="color:#888;font-size:11px;">' + (t.custom ? 'Own limit ' : 'SANS ') + esc(lt) + '</span>' : '<span style="color:#bbb;font-size:11px;">no limit</span>';
+            return lt ? '<span style="color:var(--muted);font-size:11px;">' + (t.custom ? 'Own limit ' : 'SANS ') + esc(lt) + '</span>' : '<span style="color:var(--muted);font-size:11px;opacity:.65;">no limit</span>';
         }
         function srUpdateChip(rid) { const el = document.getElementById('sr_chip_' + rid); const f = srFindRow(rid); if (el && f) el.innerHTML = srChip(f.t); }
         // Inline limit editor per test row — persists as this parameter's preferred limit (keyed by catId).
@@ -5997,40 +5997,40 @@
 
         function srTestRowHtml(t) {
             return `
-                <div style="display:grid;grid-template-columns:1fr auto;gap:6px 10px;align-items:center;padding:10px;border:1px solid #e0e0e0;border-radius:10px;background:#fafafa;">
+                <div style="display:grid;grid-template-columns:1fr auto;gap:6px 10px;align-items:center;padding:10px;border:1px solid var(--border);border-radius:10px;background:var(--bg-soft);">
                     <div style="min-width:0;">
-                        <div style="font-weight:600;font-size:14px;color:#2e3742;">${esc(t.name)} <span style="color:#888;font-weight:400;">${esc(t.unit || '')}</span></div>
+                        <div style="font-weight:600;font-size:14px;color:var(--text);">${esc(t.name)} <span style="color:var(--muted);font-weight:400;">${esc(t.unit || '')}</span></div>
                         <div style="margin-top:3px;display:flex;align-items:center;gap:10px;">
                             <span id="sr_chip_${esc(t.id)}">${srChip(t)}</span>
-                            <button type="button" onclick="srToggleLimitEditor('${esc(t.id)}')" title="Set your own pass/fail limit" style="border:none;background:transparent;color:#3AAEDB;font-size:12px;cursor:pointer;padding:0;">✎ limit</button>
+                            <button type="button" onclick="srToggleLimitEditor('${esc(t.id)}')" title="Set your own pass/fail limit" style="border:none;background:transparent;color:var(--accent);font-size:12px;cursor:pointer;padding:0;">✎ limit</button>
                         </div>
                     </div>
                     <div style="display:flex;align-items:center;gap:6px;">
-                        <input type="number" step="any" inputmode="decimal" value="${esc(t.value == null ? '' : t.value)}" oninput="srSetVal('${esc(t.id)}', this.value)" placeholder="value" style="width:86px;padding:8px;border:2px solid #e0e0e0;border-radius:8px;font-size:15px;">
-                        <button type="button" title="Read value from a photo" onclick="srOcrPhoto('${esc(t.id)}')" style="border:1px solid #d0d0d0;background:#fff;border-radius:8px;width:38px;height:38px;font-size:16px;cursor:pointer;">📷</button>
-                        <button type="button" title="Remove test" onclick="srRemoveTest('${esc(t.id)}')" style="border:none;background:transparent;color:#c0392b;font-size:20px;cursor:pointer;width:24px;">×</button>
+                        <input type="number" step="any" inputmode="decimal" value="${esc(t.value == null ? '' : t.value)}" oninput="srSetVal('${esc(t.id)}', this.value)" placeholder="value" style="width:86px;padding:8px;border:1px solid var(--border);border-radius:8px;font-size:15px;background:var(--surface);color:var(--text);">
+                        <button type="button" title="Read value from a photo" onclick="srOcrPhoto('${esc(t.id)}')" style="border:1px solid var(--border);background:var(--surface);color:var(--text);border-radius:8px;width:38px;height:38px;font-size:16px;cursor:pointer;">📷</button>
+                        <button type="button" title="Remove test" onclick="srRemoveTest('${esc(t.id)}')" style="border:none;background:transparent;color:var(--danger);font-size:20px;cursor:pointer;width:24px;">×</button>
                     </div>
-                    <div id="sr_lim_${esc(t.id)}" style="display:none;grid-column:1/-1;margin-top:8px;padding:9px 10px;background:rgba(127,127,127,.07);border-radius:8px;font-size:13px;align-items:center;gap:8px;flex-wrap:wrap;">
-                        <span style="color:#777;">Pass range —</span>
-                        <label style="display:flex;align-items:center;gap:5px;color:#2e3742;">min <input type="number" step="any" inputmode="decimal" value="${esc(t.specMin == null ? '' : t.specMin)}" oninput="srEditLimit('${esc(t.id)}','min',this.value)" placeholder="—" style="width:72px;padding:6px;border:2px solid #e0e0e0;border-radius:6px;font-size:14px;"></label>
-                        <label style="display:flex;align-items:center;gap:5px;color:#2e3742;">max <input type="number" step="any" inputmode="decimal" value="${esc(t.specMax == null ? '' : t.specMax)}" oninput="srEditLimit('${esc(t.id)}','max',this.value)" placeholder="—" style="width:72px;padding:6px;border:2px solid #e0e0e0;border-radius:6px;font-size:14px;"></label>
-                        <button type="button" onclick="srResetLimitRow('${esc(t.id)}')" style="border:1px solid #d0d0d0;background:#fff;border-radius:6px;padding:6px 11px;cursor:pointer;font-size:12px;">Reset to default</button>
+                    <div id="sr_lim_${esc(t.id)}" style="display:none;grid-column:1/-1;margin-top:8px;padding:9px 10px;background:var(--surface);border:1px solid var(--border);border-radius:8px;font-size:13px;align-items:center;gap:8px;flex-wrap:wrap;">
+                        <span style="color:var(--muted);">Pass range —</span>
+                        <label style="display:flex;align-items:center;gap:5px;color:var(--text);">min <input type="number" step="any" inputmode="decimal" value="${esc(t.specMin == null ? '' : t.specMin)}" oninput="srEditLimit('${esc(t.id)}','min',this.value)" placeholder="—" style="width:72px;padding:6px;border:1px solid var(--border);border-radius:6px;font-size:14px;background:var(--bg-soft);color:var(--text);"></label>
+                        <label style="display:flex;align-items:center;gap:5px;color:var(--text);">max <input type="number" step="any" inputmode="decimal" value="${esc(t.specMax == null ? '' : t.specMax)}" oninput="srEditLimit('${esc(t.id)}','max',this.value)" placeholder="—" style="width:72px;padding:6px;border:1px solid var(--border);border-radius:6px;font-size:14px;background:var(--bg-soft);color:var(--text);"></label>
+                        <button type="button" onclick="srResetLimitRow('${esc(t.id)}')" style="border:1px solid var(--border);background:var(--bg-soft);color:var(--text);border-radius:6px;padding:6px 11px;cursor:pointer;font-size:12px;">Reset to default</button>
                     </div>
-                    ${t.photo ? `<div style="grid-column:1/-1;"><img src="${t.photo}" style="height:50px;border-radius:6px;border:1px solid #e0e0e0;"></div>` : ''}
+                    ${t.photo ? `<div style="grid-column:1/-1;"><img src="${t.photo}" style="height:50px;border-radius:6px;border:1px solid var(--border);"></div>` : ''}
                 </div>`;
         }
 
         function srRenderPoints() {
             const host = document.getElementById('sr_tests'); if (!host) return;
             host.innerHTML = sr_points.map((p, idx) => `
-                <div style="border:1px solid #d9e6ee;border-radius:12px;background:#fff;overflow:hidden;">
-                    <div style="display:flex;align-items:center;gap:8px;padding:9px 12px;background:#f0f7fb;border-bottom:1px solid #e4eef4;">
-                        <span style="font-size:14px;">📍</span>
-                        <input type="text" value="${esc(p.name || '')}" oninput="srSetPointName('${p.id}', this.value)" placeholder="Sample point ${idx + 1} — e.g. Inlet, Cooling Tower" style="flex:1;min-width:0;padding:7px 9px;border:1px solid #cfe0ea;border-radius:8px;font-size:14px;font-weight:600;background:#fff;color:#2e3742;">
-                        ${sr_points.length > 1 ? `<button type="button" title="Remove sample point" onclick="srRemovePoint('${p.id}')" style="border:none;background:transparent;color:#c0392b;font-size:19px;cursor:pointer;line-height:1;">🗑</button>` : ''}
+                <div style="border:1px solid var(--border);border-radius:12px;background:var(--surface);overflow:hidden;">
+                    <div style="display:flex;align-items:center;gap:8px;padding:9px 12px;background:var(--bg-soft);border-bottom:1px solid var(--border);">
+                        <span style="font-size:14px;color:var(--accent);">📍</span>
+                        <input type="text" value="${esc(p.name || '')}" oninput="srSetPointName('${p.id}', this.value)" placeholder="Sample point ${idx + 1} — e.g. Inlet, Cooling Tower" style="flex:1;min-width:0;padding:7px 9px;border:1px solid var(--border);border-radius:8px;font-size:14px;font-weight:600;background:var(--surface);color:var(--text);">
+                        ${sr_points.length > 1 ? `<button type="button" title="Remove sample point" onclick="srRemovePoint('${p.id}')" style="border:none;background:transparent;color:var(--danger);font-size:19px;cursor:pointer;line-height:1;">🗑</button>` : ''}
                     </div>
                     <div style="padding:10px 12px;display:flex;flex-direction:column;gap:8px;">
-                        ${p.tests.length ? p.tests.map(srTestRowHtml).join('') : '<p style="color:#999;font-size:13px;margin:2px 0;">No tests yet — tap “Add test”.</p>'}
+                        ${p.tests.length ? p.tests.map(srTestRowHtml).join('') : '<p style="color:var(--muted);font-size:13px;margin:2px 0;">No tests yet — tap “Add test”.</p>'}
                         <button type="button" class="calc-btn" style="margin:2px 0 0;padding:7px 12px;align-self:flex-start;" onclick="srOpenTestPicker('${p.id}')">＋ Add test</button>
                     </div>
                 </div>`).join('') +
@@ -6046,19 +6046,19 @@
             const inReport = new Set(_ap ? _ap.tests.map(t => t.catId) : []);
             const items = srCatalog().filter(c => !q || (c.name + ' ' + c.code + ' ' + (c.category || '') + ' ' + (c.sans241 || '')).toLowerCase().includes(q));
             const host = document.getElementById('sr_picker_list');
-            if (!items.length) { host.innerHTML = '<p style="color:#888;padding:16px;">No match for “' + esc(q) + '”.</p>'; return; }
+            if (!items.length) { host.innerHTML = '<p style="color:var(--muted);padding:16px;">No match for “' + esc(q) + '”.</p>'; return; }
             const groups = {}; items.forEach(c => { (groups[c.category || 'Other'] = groups[c.category || 'Other'] || []).push(c); });
             host.innerHTML = Object.keys(groups).map(cat => `
-                <div style="font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:#999;padding:12px 8px 4px;font-weight:700;">${esc(cat)}</div>
+                <div style="font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);padding:12px 8px 4px;font-weight:700;">${esc(cat)}</div>
                 ${groups[cat].map(c => `
                     <div style="display:flex;align-items:center;gap:8px;padding:8px;border-radius:8px;">
-                        <button type="button" onclick="srToggleFav('${esc(c.id)}')" title="Favourite" style="border:none;background:transparent;font-size:19px;line-height:1;cursor:pointer;color:${srIsFav(c.id) ? '#f5a623' : '#cfcfcf'};">${srIsFav(c.id) ? '★' : '☆'}</button>
+                        <button type="button" onclick="srToggleFav('${esc(c.id)}')" title="Favourite" style="border:none;background:transparent;font-size:19px;line-height:1;cursor:pointer;color:${srIsFav(c.id) ? 'var(--accent-2)' : 'var(--muted)'};">${srIsFav(c.id) ? '★' : '☆'}</button>
                         <div style="flex:1;min-width:0;">
-                            <div style="font-weight:600;font-size:14px;">${esc(c.name)} <span style="color:#999;font-weight:400;font-size:12px;">${esc(c.unit || '')}</span></div>
-                            ${(c.sans241 || srLimitText(c)) ? `<div style="font-size:11px;color:#999;">${esc(c.sans241 || '')}${srLimitText(c) ? (c.sans241 ? ' · ' : '') + 'SANS ' + esc(srLimitText(c)) : ''}</div>` : ''}
+                            <div style="font-weight:600;font-size:14px;color:var(--text);">${esc(c.name)} <span style="color:var(--muted);font-weight:400;font-size:12px;">${esc(c.unit || '')}</span></div>
+                            ${(c.sans241 || srLimitText(c)) ? `<div style="font-size:11px;color:var(--muted);">${esc(c.sans241 || '')}${srLimitText(c) ? (c.sans241 ? ' · ' : '') + 'SANS ' + esc(srLimitText(c)) : ''}</div>` : ''}
                         </div>
                         ${inReport.has(c.id)
-                            ? '<span style="color:#157b3a;font-size:12px;font-weight:600;padding-right:6px;">added ✓</span>'
+                            ? '<span style="color:var(--success);font-size:12px;font-weight:600;padding-right:6px;">added ✓</span>'
                             : `<button type="button" class="calc-btn" style="margin:0;padding:5px 14px;" onclick="srAddTest('${esc(c.id)}');srRenderPickerList();">Add</button>`}
                     </div>`).join('')}`).join('');
         }
