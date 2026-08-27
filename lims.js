@@ -2153,6 +2153,17 @@
     S.view = 'hub'; S.stack = []; render();
   };
 
+  // Wipe ALL local LIMS data (no re-seed) — used on sign-out / account switch so
+  // one tenant's clients/samples/results never linger for the next login.
+  window.hgWipeLimsDb = async function() {
+    try { if (S.db) { S.db.close(); S.db = null; } } catch (_) {}
+    await new Promise((res) => {
+      let done = false; const finish = () => { if (!done) { done = true; res(); } };
+      try { const del = indexedDB.deleteDatabase(DB_NAME); del.onsuccess = finish; del.onerror = finish; del.onblocked = finish; } catch (_) { finish(); }
+      setTimeout(finish, 1500);
+    });
+  };
+
   /* ============================================================
      CRUD: Tests / Instruments / Documents / Test Profiles
      Mirrors the client/user pattern — list ➜ form ➜ save / delete,

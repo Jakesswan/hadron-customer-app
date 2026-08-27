@@ -382,6 +382,19 @@
 
     // Stash on window so other modules can use it without a round trip.
     window.HG_PROFILE = profile;
+    // Shared-browser defence: if a DIFFERENT user has signed in since last time on
+    // this browser, wipe the previous tenant's local data before showing anything.
+    try {
+      const uid = profile && profile.id, lastUid = localStorage.getItem('hg-last-uid');
+      if (uid && lastUid && lastUid !== uid) {
+        hgClearTenantData().then(function () {
+          try { localStorage.setItem('hg-last-uid', uid); } catch (_) {}
+          location.reload();
+        });
+        return;
+      }
+      if (uid) localStorage.setItem('hg-last-uid', uid);
+    } catch (_) {}
     document.body.setAttribute('data-role', profile.role || '');
     document.body.setAttribute('data-org-type', profile.organisations?.type || '');
 
@@ -404,13 +417,33 @@
     document.dispatchEvent(new CustomEvent('hg:profile:loaded', { detail: profile }));
   }
 
+  // Wipe every trace of the previous tenant's data from THIS browser (the LIMS
+  // IndexedDB + tenant localStorage), keeping only device prefs (theme/language).
+  // Server-side RLS already isolates tenants; this closes the local-cache gap so
+  // one account's customers/sites/reports never linger for the next sign-in on a
+  // shared browser.
+  async function hgClearTenantData() {
+    try { if (typeof window.hgWipeLimsDb === 'function') await window.hgWipeLimsDb(); } catch (_) {}
+    try {
+      const KEEP = new Set(['hadron_lang', 'hadron_dark']); // prefs (hadron-theme / hg-auth-v1 use hyphens → not matched)
+      Object.keys(localStorage).forEach(function (k) {
+        if (KEEP.has(k)) return;
+        if (k.indexOf('hadron_') === 0 || k.indexOf('hg_') === 0) { try { localStorage.removeItem(k); } catch (_) {} }
+      });
+    } catch (_) {}
+    try { window.__custCache = null; window.__hgCustomerCache = {}; } catch (_) {}
+  }
+  window.hgClearTenantData = hgClearTenantData;
+
   // Sign out helper bound to a global so the profile screen can call it.
   // No confirm() — modal dialogs can be blocked by browsers / cause hangs,
   // and signing out is reversible (just sign back in).
   window.hgSignOut = async function () {
-    if (!window.HG_AUTH) return;
-    if (!window.HG_AUTH.configured) return;
-    await window.HG_AUTH.signOut();
+    if (!window.HG_AUTH || !window.HG_AUTH.configured) return;
+    try { await hgClearTenantData(); } catch (_) {}
+    try { localStorage.removeItem('hg-last-uid'); } catch (_) {}
+    try { await window.HG_AUTH.signOut(); } catch (_) {}
+    try { location.reload(); } catch (_) {}   // hard reset — no tenant state left in memory
   };
 
   // Wait for supabase-client.js to finish initialising. If it's already
