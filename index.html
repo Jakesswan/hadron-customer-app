@@ -2744,7 +2744,7 @@
                 <div class="hg-section-title">About</div>
                 <div class="hg-kvgrid">
                     <div class="hg-kv"><div class="k">App</div><div class="v">Hadron Group</div></div>
-                    <div class="hg-kv"><div class="k">Version</div><div class="v">v106</div></div>
+                    <div class="hg-kv"><div class="k">Version</div><div class="v">v107</div></div>
                     <div class="hg-kv"><div class="k">Platform</div><div class="v">PWA</div></div>
                 </div>
             </div>
@@ -3748,11 +3748,30 @@
         <div class="window-content">
             <h2>Assets &amp; Sites</h2>
             <div class="apps-grid" style="margin:0;">
+                <div class="app-icon" data-app="customers" onclick="openWindow('customers')"><div class="icon">👥</div><div class="app-name">Customers</div></div>
                 <div class="app-icon" data-app="sites" onclick="openWindow('sites')"><div class="icon">🏢</div><div class="app-name">Site Register</div></div>
                 <div class="app-icon" data-app="consumables" onclick="openWindow('consumables')"><div class="icon">📦</div><div class="app-name">Consumables</div></div>
                 <div class="app-icon" data-app="qrscan" onclick="openWindow('qrscan')"><div class="icon">📷</div><div class="app-name">QR Scan</div></div>
                 <div class="app-icon" data-app="qrgen" onclick="openAssetsQR()"><div class="icon">⬛</div><div class="app-name">QR Generator</div></div>
                 <div class="app-icon" data-app="schedule" onclick="openWindow('schedule')"><div class="icon">📅</div><div class="app-name">PM Schedule</div></div>
+            </div>
+        </div>
+    </div>
+
+    <div class="window" id="window-customers">
+        <div class="window-header"><button class="back-button" onclick="closeWindow('customers')">←</button><span class="window-title">Customers</span></div>
+        <div class="window-content">
+            <div class="hg-hero" style="background: linear-gradient(135deg, #3AAEDB 0%, #1a3d9e 100%);">
+                <div>
+                    <h2 class="hg-hero-title">Customers, Sites &amp; Sample Points</h2>
+                    <div class="hg-hero-sub">Set up each customer's standard sites and sampling points</div>
+                </div>
+                <div class="hg-hero-icon">👥</div>
+            </div>
+            <div class="hg-card">
+                <input id="cust_search" placeholder="Search customers…" oninput="renderCustomers()" style="width:100%;box-sizing:border-box;padding:11px;border:1px solid var(--border);border-radius:8px;background:var(--surface);color:var(--text);font-size:15px;">
+                <p style="color:var(--muted);font-size:12px;margin:8px 2px 0;">Customers sync from the ERP (read-only). Tap a customer to add its standard <b>sites</b> and <b>sample points</b> — those points then load automatically into a Service Report when you pick the site.</p>
+                <div id="customers_list" style="margin-top:14px;"></div>
             </div>
         </div>
     </div>
@@ -4177,6 +4196,7 @@
             if (appName === 'jartest') renderJarTests();
             if (appName === 'servicereport') { listServiceReports(); }
             if (appName === 'sites') renderSites();
+            if (appName === 'customers') renderCustomers(true);
             if (appName === 'consumables') renderConsumables();
             if (appName === 'schedule') renderPMs();
             if (appName === 'msds') renderSDS();
@@ -5786,6 +5806,18 @@
             srRefreshSiteDropdown();
         }
 
+        // Load a site's standard sample points (set up in the Customers app) into
+        // the report — each pre-loaded with the ★ favourite tests. Skips if the
+        // operator has already entered readings, so nothing is lost.
+        function srLoadSitePoints(site) {
+            if (!site || !(site.samplePoints && site.samplePoints.length)) return;
+            const touched = sr_points.some(p => p.tests.some(t => t.value !== '' && t.value != null));
+            if (touched) { showToast('This site has standard sample points — start a new report to load them'); return; }
+            sr_points = site.samplePoints.map(sp => srNewPoint(sp.name, true));
+            if (!sr_points.length) sr_points = [srNewPoint('', true)];
+            srRenderPoints();
+            showToast('Loaded ' + site.samplePoints.length + ' sample point' + (site.samplePoints.length === 1 ? '' : 's') + ' from ' + site.name);
+        }
         function srOnSiteChange() {
             const sel = document.getElementById('sr_siteId').value;
             const wrap = document.getElementById('sr_siteManualWrap');
@@ -5814,6 +5846,7 @@
                     }
                 }
                 contact.value = bits.join(' · ');
+                srLoadSitePoints(site);   // auto-load this site's standard sample points
             } else {
                 wrap.style.display = 'none';
                 manualInput.value = '';
@@ -6472,7 +6505,7 @@
         }
 
         // ── New-site modal: add a site + (optionally) several assets at once ──
-        async function newSite() {
+        async function newSite(preCustomerId) {
             __hgAssetIdx = 0;
             const customers = await hgLoadCustomers();
             const html = `
@@ -6539,6 +6572,7 @@
                 </div>`;
             hgModalOpen(html);
             hgAddAssetRow();
+            if (preCustomerId) { const sel = document.getElementById('hgs_customerId'); if (sel) sel.value = preCustomerId; }
             setTimeout(() => { const e = document.getElementById('hgs_name'); if (e) e.focus(); }, 50);
         }
 
@@ -6610,9 +6644,103 @@
                     }).join('') + '</div>' : ''}
                 </div>`;
                 }).join('');
+            // Keep the customer-centric view in sync when it is the open window.
+            const _cw = document.getElementById('window-customers');
+            if (_cw && _cw.classList.contains('active') && typeof renderCustomers === 'function') renderCustomers();
         }
         // Expose for the deep-link handler in qr-app.js
         window.renderSites = renderSites;
+
+        // ── Customers home app: customer → standard sites → standard sample points.
+        // Customers are read-only (mastered in the ERP, synced into LIMS clients);
+        // sites + sample points are App-side and stored on each site in hadron_sites.
+        // Sites/assets reuse the Site Register functions (newSite / renameSite /
+        // deleteSite / addAsset) — renderSites keeps this view in sync. ──
+        async function custEnsureCustomers(force) {
+            if (!force && window.__custCache) return window.__custCache;
+            window.__custCache = await hgLoadCustomers();
+            return window.__custCache;
+        }
+        window.__custOpen = window.__custOpen || {};
+        function custToggle(id) {
+            window.__custOpen[id] = !window.__custOpen[id];
+            const body = document.getElementById('cust-body-' + id), caret = document.getElementById('cust-caret-' + id);
+            if (body) body.style.display = window.__custOpen[id] ? 'block' : 'none';
+            if (caret) caret.textContent = window.__custOpen[id] ? '▾' : '▸';
+        }
+        function custSiteHtml(s) {
+            const pts = s.samplePoints || [], eq = s.equipment || [];
+            return `<div style="border:1px solid var(--border);border-radius:10px;padding:10px 12px;margin-bottom:8px;background:var(--bg-soft);">
+                <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+                    <strong style="font-size:14px;color:var(--text);">📍 ${esc(s.name)}</strong>
+                    <span class="hg-chip neutral">${pts.length} point${pts.length===1?'':'s'}</span>
+                    ${eq.length ? `<span class="hg-chip neutral">${eq.length} asset${eq.length===1?'':'s'}</span>` : ''}
+                    <span style="flex:1;"></span>
+                    <button class="hg-btn ghost" style="padding:4px 9px;font-size:12px;" onclick="renameSite('${s.id}')" title="Rename site">✏️</button>
+                    <button class="hg-btn warn" style="padding:4px 9px;font-size:12px;" onclick="deleteSite('${s.id}')" title="Delete site">🗑</button>
+                </div>
+                <div style="margin-top:8px;font-size:11px;letter-spacing:.05em;text-transform:uppercase;color:var(--muted);font-weight:700;">Sample points</div>
+                ${pts.length ? '<div style="margin-top:5px;display:grid;gap:5px;">' + pts.map(p => `
+                    <div style="display:flex;align-items:center;gap:8px;padding:7px 10px;background:var(--surface);border:1px solid var(--border);border-radius:6px;font-size:13px;">
+                        <span style="flex:1;color:var(--text);">${esc(p.name)}${p.notes ? ` <span style="color:var(--muted);">· ${esc(p.notes)}</span>` : ''}</span>
+                        <button class="hg-btn ghost" style="padding:2px 8px;font-size:12px;" onclick="custEditPoint('${s.id}','${p.id}')">✏️</button>
+                        <button class="hg-btn warn" style="padding:2px 8px;font-size:12px;" onclick="custDeletePoint('${s.id}','${p.id}')">🗑</button>
+                    </div>`).join('') + '</div>' : '<p style="color:var(--muted);font-size:12px;margin:4px 0;">No sample points yet.</p>'}
+                <div style="margin-top:8px;display:flex;gap:6px;flex-wrap:wrap;">
+                    <button class="hg-btn ghost" style="padding:5px 11px;font-size:12px;" onclick="custAddPoint('${s.id}')">＋ Add sample point</button>
+                    <button class="hg-btn ghost" style="padding:5px 11px;font-size:12px;" onclick="addAsset('${s.id}')">＋ Add asset</button>
+                </div>
+            </div>`;
+        }
+        async function renderCustomers(force) {
+            const host = document.getElementById('customers_list'); if (!host) return;
+            const customers = await custEnsureCustomers(force);
+            const searchEl = document.getElementById('cust_search');
+            const q = (searchEl ? searchEl.value : '').toLowerCase().trim();
+            const sites = LS.get('hadron_sites', []);
+            const byCust = {}; sites.forEach(s => { const k = s.customerId || '__none__'; (byCust[k] = byCust[k] || []).push(s); });
+            if (!customers.length) { host.innerHTML = '<p style="color:var(--muted);">No customers found. Open <b>LIMS</b> once to sync your ERP customers (or check the ERP link), then come back.</p>'; return; }
+            const filtered = customers.filter(c => !q || String(c.name || '').toLowerCase().includes(q));
+            if (!filtered.length) { host.innerHTML = '<p style="color:var(--muted);">No customers match “' + esc(q) + '”.</p>'; return; }
+            host.innerHTML = filtered.map(c => {
+                const cs = byCust[c.id] || [];
+                const nPts = cs.reduce((a, s) => a + ((s.samplePoints || []).length), 0);
+                const open = !!window.__custOpen[c.id];
+                return `<div class="hg-card" style="margin-bottom:10px;">
+                    <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;cursor:pointer;" onclick="custToggle('${esc(c.id)}')">
+                        <span id="cust-caret-${esc(c.id)}" style="color:var(--muted);">${open ? '▾' : '▸'}</span>
+                        <strong style="font-size:15px;color:var(--text);">${esc(c.name)}</strong>
+                        <span class="hg-chip neutral">${cs.length} site${cs.length === 1 ? '' : 's'}</span>
+                        ${nPts ? `<span class="hg-chip neutral">${nPts} point${nPts === 1 ? '' : 's'}</span>` : ''}
+                    </div>
+                    <div id="cust-body-${esc(c.id)}" style="display:${open ? 'block' : 'none'};margin-top:10px;">
+                        ${cs.length ? cs.map(custSiteHtml).join('') : '<p style="color:var(--muted);font-size:13px;margin:2px 0;">No sites yet for this customer.</p>'}
+                        <button class="hg-btn primary" style="margin-top:6px;" onclick="newSite('${esc(c.id)}')">＋ Add site</button>
+                    </div>
+                </div>`;
+            }).join('');
+        }
+        window.renderCustomers = renderCustomers;
+
+        function custAddPoint(siteId) {
+            const name = prompt('Sample point name (e.g. Inlet, Cooling Tower, Boiler feed):'); if (name == null) return;
+            const nm = name.trim(); if (!nm) return;
+            const list = LS.get('hadron_sites', []); const s = list.find(x => x.id === siteId); if (!s) return;
+            (s.samplePoints = s.samplePoints || []).push({ id: uid(), name: nm });
+            LS.set('hadron_sites', list); renderCustomers();
+        }
+        function custEditPoint(siteId, pid) {
+            const list = LS.get('hadron_sites', []); const s = list.find(x => x.id === siteId); if (!s) return;
+            const p = (s.samplePoints || []).find(x => x.id === pid); if (!p) return;
+            const name = prompt('Sample point name:', p.name); if (name == null) return;
+            if (name.trim()) { p.name = name.trim(); LS.set('hadron_sites', list); renderCustomers(); }
+        }
+        function custDeletePoint(siteId, pid) {
+            if (!confirm('Delete this sample point?')) return;
+            const list = LS.get('hadron_sites', []); const s = list.find(x => x.id === siteId); if (!s) return;
+            s.samplePoints = (s.samplePoints || []).filter(x => x.id !== pid);
+            LS.set('hadron_sites', list); renderCustomers();
+        }
 
         function renameSite(id) {
             const list = LS.get('hadron_sites', []);

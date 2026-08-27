@@ -382,7 +382,7 @@
     { key:'personnel',  label:'Personnel',    icon:'👥', g:'linear-gradient(135deg, #42a5f5 0%, #1565c0 100%)', sub:'Competency matrix' },
     { key:'documents',  label:'Documents',    icon:'📚', g:'linear-gradient(135deg, #78909c 0%, #37474f 100%)', sub:'SOPs & QMS' },
     { key:'reports',    label:'Reports & COA',icon:'📄', g:'linear-gradient(135deg, #ffa726 0%, #ef6c00 100%)', sub:'Generate & release' },
-    { key:'clients',    label:'Clients',      icon:'🏢', g:'linear-gradient(135deg, #66bb6a 0%, #2e7d32 100%)', sub:'Accounts & quotes' },
+    // Clients (customer controls) moved to the Home-screen "Customers" app; ERP masters customers.
     { key:'admin',      label:'Admin',        icon:'🛠️', g:'linear-gradient(135deg, #ef5350 0%, #c62828 100%)', sub:'Users, audit, settings' }
   ];
 
