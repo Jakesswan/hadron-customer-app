@@ -57,9 +57,17 @@ interface IncomingCustomer {
   deleted?: boolean;
 }
 
+interface IncomingUser {
+  email: string;
+  full_name?: string;
+  role?: string;            // App role: admin | customer_admin | operator | viewer
+  deleted?: boolean;
+}
+
 interface IngestBody {
   erp_tenant_id?: string;
   customers?: IncomingCustomer[];
+  users?: IncomingUser[];
 }
 
 // Constant-time string compare (length is allowed to leak).
@@ -89,7 +97,9 @@ Deno.serve(async (req) => {
   catch { return new Response('Invalid JSON', { status: 400 }); }
 
   if (!body.erp_tenant_id) return new Response('erp_tenant_id is required', { status: 400 });
-  if (!Array.isArray(body.customers)) return new Response('customers[] is required', { status: 400 });
+  if (!Array.isArray(body.customers) && !Array.isArray(body.users)) {
+    return new Response('customers[] or users[] is required', { status: 400 });
+  }
 
   // ── Resolve the linked organisation (never auto-create) ──
   const { data: org, error: orgErr } = await supabase
@@ -111,7 +121,7 @@ Deno.serve(async (req) => {
   const deleteIds: string[] = [];
   let skipped = 0;
 
-  for (const c of body.customers) {
+  for (const c of (body.customers ?? [])) {
     if (!c || typeof c.external_id !== 'string' || !c.external_id) {
       skipped++; errors.push('customer missing external_id'); continue;
     }
@@ -158,5 +168,52 @@ Deno.serve(async (req) => {
     else deleted = deleteIds.length;
   }
 
-  return Response.json({ org_id: org.id, upserted, deleted, skipped, errors });
+  // ── Users → erp_user_directory (email-based tenant linking) ──
+  // A pushed user's email, mapped to THIS org + role, so that when they sign up
+  // on the App with the same email they land in this tenant (handle_new_user).
+  let usersUpserted = 0, usersDeleted = 0;
+  const userUpserts: Record<string, unknown>[] = [];
+  const userDeleteEmails: string[] = [];
+  const ALLOWED_ROLES = new Set(['admin', 'customer_admin', 'operator', 'viewer']);
+
+  for (const u of (body.users ?? [])) {
+    if (!u || typeof u.email !== 'string' || !u.email.trim()) {
+      skipped++; errors.push('user missing email'); continue;
+    }
+    const email = u.email.trim().toLowerCase();
+    if (u.deleted) { userDeleteEmails.push(email); continue; }
+    userUpserts.push({
+      email,
+      organisation_id: org.id,
+      role: (u.role && ALLOWED_ROLES.has(u.role)) ? u.role : 'operator',
+      erp_tenant_id: body.erp_tenant_id,
+      updated_at: new Date().toISOString()
+    });
+  }
+
+  if (userUpserts.length) {
+    const { error } = await supabase
+      .from('erp_user_directory')
+      .upsert(userUpserts, { onConflict: 'email' });
+    if (error) errors.push(`user upsert failed: ${error.message}`);
+    else usersUpserted = userUpserts.length;
+  }
+
+  if (userDeleteEmails.length) {
+    // Scope to THIS org so a stray email can never unlink another tenant's user.
+    const { error } = await supabase
+      .from('erp_user_directory')
+      .delete()
+      .eq('organisation_id', org.id)
+      .in('email', userDeleteEmails);
+    if (error) errors.push(`user delete failed: ${error.message}`);
+    else usersDeleted = userDeleteEmails.length;
+  }
+
+  return Response.json({
+    org_id: org.id,
+    upserted, deleted,
+    users_upserted: usersUpserted, users_deleted: usersDeleted,
+    skipped, errors
+  });
 });
