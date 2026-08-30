@@ -1841,7 +1841,7 @@
     doc.text('HADRON GROUP · LABORATORY', 10, 10);
     doc.setFontSize(9); doc.setFont('helvetica','normal');
     doc.text('ISO/IEC 17025:2017 · SANAS Accredited · T0492', 10, 16);
-    doc.text('hadrongrp.com · lab@hadrongrp.com · +27 12 345 6789', 10, 20);
+    doc.text('hadrongrp.com · lab@hadrongrp.com · +27 82 375 9734', 10, 20);
     doc.setTextColor(0,0,0);
     // Title
     doc.setFontSize(14); doc.setFont('helvetica','bold');
@@ -2127,8 +2127,8 @@
 
       <div class="lims-card">
         <div class="lims-section-title">⚠️ Danger zone</div>
-        <button class="lims-btn warn" onclick="limsResetDB()">Reset LIMS data (re-seed)</button>
-        <p style="font-size:12px;color:#6b7684;margin-top:8px;">Clears the IndexedDB and restores the demo dataset. Useful for client demos.</p>
+        <button class="lims-btn warn" onclick="limsResetDB()">Clear local LIMS data</button>
+        <p style="font-size:12px;color:#6b7684;margin-top:8px;">Removes the LIMS data cached on this device. Your organisation's cloud records are not deleted and reload when you reopen the app.</p>
       </div>
     `;
   }
@@ -2141,7 +2141,7 @@
   };
 
   window.limsResetDB = async function() {
-    if (!confirm('Clear LIMS database and re-seed demo data?')) return;
+    if (!confirm("Clear the LIMS data cached on this device? Your organisation's cloud data is not affected.")) return;
     await new Promise((res, rej) => {
       S.db.close();
       const del = indexedDB.deleteDatabase(DB_NAME);
@@ -2149,7 +2149,7 @@
     });
     await DB.open();
     await SEED.run();
-    toast('LIMS reset — now empty', 'info');
+    toast('Local LIMS data cleared', 'info');
     S.view = 'hub'; S.stack = []; render();
   };
 
