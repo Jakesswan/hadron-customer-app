@@ -2748,7 +2748,7 @@
                 <div class="hg-section-title">About</div>
                 <div class="hg-kvgrid">
                     <div class="hg-kv"><div class="k">App</div><div class="v">Hadron Group</div></div>
-                    <div class="hg-kv"><div class="k">Version</div><div class="v">v111</div></div>
+                    <div class="hg-kv"><div class="k">Version</div><div class="v">v112</div></div>
                     <div class="hg-kv"><div class="k">Platform</div><div class="v">PWA</div></div>
                 </div>
             </div>
@@ -3689,6 +3689,11 @@
                     <p style="color:var(--muted);font-size:12px;margin:4px 0;">Add a <b>sample point</b> for each place you sample (Inlet, Cooling Tower, Boiler feed…). Every point loads your ★ favourite tests automatically — tap <b>Add test</b> under a point to add more from the full SANS&nbsp;241 list. Each reading is auto PASS / FAIL vs its limit, and 📷 reads the value from a meter photo.</p>
                     <div id="sr_tests" style="display:flex;flex-direction:column;gap:12px;margin-top:6px;"></div>
                     <input type="file" id="sr_ocr_file" accept="image/*" capture="environment" style="display:none;" onchange="srOcrCapture(event)">
+
+                    <div style="margin-top:10px;">
+                        <button type="button" class="calc-btn" style="background:#3AAEDB;color:#0f2733;" onclick="srSaveSiteToRegister()">💾 Save site + points to register</button>
+                        <p style="color:var(--muted);font-size:11px;margin:6px 0 0;">Saves this customer's site and its sample-point names to your register, so next time you pick the site the points load automatically. (Separate from "Save report" below.)</p>
+                    </div>
 
                     <h3 style="margin-top:16px;">Actions</h3>
                     <div class="form-group"><label>Observations</label><textarea id="sr_obs" rows="3"></textarea></div>
@@ -5855,6 +5860,51 @@
                 manualInput.value = '';
                 contact.value = '';
             }
+        }
+
+        // Save the current customer + site + sample-point names into the local site
+        // register (hadron_sites) so this site can be re-picked later with its points
+        // auto-loading. Mirrors the Customers-app site model exactly.
+        function srSaveSiteToRegister() {
+            const custId = document.getElementById('sr_customerId').value;
+            if (!custId || custId === '__manual__') { showToast('Pick a customer first — the site is saved under them'); return; }
+            const siteName = (document.getElementById('sr_site').value || '').trim();
+            if (!siteName) { showToast('Enter a site name first (pick "Enter site manually" if it is new)'); return; }
+            // Named, de-duplicated sample points from the open report.
+            const points = []; const seen = new Set();
+            sr_points.forEach(p => {
+                const nm = (p.name || '').trim();
+                if (nm && !seen.has(nm.toLowerCase())) { seen.add(nm.toLowerCase()); points.push({ id: uid(), name: nm }); }
+            });
+            const list = LS.get('hadron_sites', []);
+            const selId = document.getElementById('sr_siteId').value;
+            // Update the selected registered site, else a same-named site for this
+            // customer, else create a new one.
+            let site = (selId && selId !== '__manual__') ? list.find(s => s.id === selId) : null;
+            if (!site) site = list.find(s => s.customerId === custId && String(s.name || '').trim().toLowerCase() === siteName.toLowerCase());
+            const created = !site;
+            if (site) {
+                site.name = siteName; site.customerId = custId;
+                // Merge in newly-named points; never silently drop a site's existing
+                // points from a field save (remove those deliberately in the Customers app).
+                site.samplePoints = site.samplePoints || [];
+                const have = new Set(site.samplePoints.map(p => String(p.name || '').trim().toLowerCase()));
+                points.forEach(p => { const k = p.name.toLowerCase(); if (!have.has(k)) { site.samplePoints.push(p); have.add(k); } });
+            } else {
+                site = { id: uid(), customerId: custId, name: siteName, samplePoints: points, equipment: [], status: 'active', createdAt: new Date().toISOString() };
+                list.push(site);
+            }
+            LS.set('hadron_sites', list);
+            // Re-point the dropdown at the now-registered site without disturbing the
+            // open report (preserve the contact line; hide the manual field).
+            const prevContact = document.getElementById('sr_contact').value;
+            srRefreshSiteDropdown();
+            const siteSel = document.getElementById('sr_siteId'); if (siteSel) siteSel.value = site.id;
+            document.getElementById('sr_siteManualWrap').style.display = 'none';
+            document.getElementById('sr_site').value = siteName;
+            document.getElementById('sr_contact').value = prevContact;
+            const nPts = (site.samplePoints || []).length;
+            showToast((created ? 'Saved "' : 'Updated "') + siteName + '" in the site register · ' + nPts + ' sample point' + (nPts === 1 ? '' : 's'));
         }
 
         async function newServiceReport() {
