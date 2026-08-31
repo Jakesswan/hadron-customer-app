@@ -2749,7 +2749,7 @@
                 <div class="hg-section-title">About</div>
                 <div class="hg-kvgrid">
                     <div class="hg-kv"><div class="k">App</div><div class="v">Hadron Group</div></div>
-                    <div class="hg-kv"><div class="k">Version</div><div class="v">v114</div></div>
+                    <div class="hg-kv"><div class="k">Version</div><div class="v">v115</div></div>
                     <div class="hg-kv"><div class="k">Platform</div><div class="v">PWA</div></div>
                 </div>
             </div>
@@ -3710,6 +3710,7 @@
                     <div style="margin-top:6px;"><button type="button" class="calc-btn" style="background:#888;" onclick="clearSignature()">Clear signature</button></div>
 
                     <button type="button" class="calc-btn" style="margin-top:16px;" onclick="saveServiceReport()">💾 Save report</button>
+                    <button type="button" class="calc-btn" style="background:#2e8b57;color:#fff;" onclick="submitServiceReport()">✅ Submit &amp; lock</button>
                     <button type="button" class="calc-btn" style="background:#c59d2b;" onclick="exportServiceReportPdf()">📄 Save &amp; Export PDF</button>
                 </div>
             </div>
@@ -5761,6 +5762,44 @@
            ========================================================= */
         let sr_photos = [];
         let sr_reportId = null;   // stable id for the open form, so Save + Export are one report, not two
+        let sr_status = 'draft';  // current form's report status: 'draft' | 'submitted'
+        let sr_readOnly = false;  // true when an operator/viewer is VIEWING a saved report (no edits)
+
+        function srEnsureRoStyle() {
+            if (document.getElementById('sr_ro_style')) return;
+            const s = document.createElement('style'); s.id = 'sr_ro_style';
+            s.textContent = '#sr_form.sr-ro input,#sr_form.sr-ro select,#sr_form.sr-ro textarea{pointer-events:none;background:var(--bg-soft);}#sr_form.sr-ro canvas{pointer-events:none;opacity:.9;}#sr_form.sr-ro button{display:none;}';
+            document.head.appendChild(s);
+        }
+        // View-only mode: disable every control in the report form + hide its buttons, so an
+        // operator/viewer can read a saved report on-screen but not change it. RLS blocks their
+        // writes regardless — this is the on-screen half of "view but not edit".
+        function applySrReadOnly(ro) {
+            sr_readOnly = !!ro; srEnsureRoStyle();
+            const form = document.getElementById('sr_form'); if (!form) return;
+            form.classList.toggle('sr-ro', sr_readOnly);
+            let banner = document.getElementById('sr_ro_banner');
+            if (sr_readOnly) {
+                if (!banner) {
+                    banner = document.createElement('div'); banner.id = 'sr_ro_banner';
+                    banner.style.cssText = 'background:var(--accent-soft,rgba(58,174,219,.12));color:var(--text);border:1px solid var(--border);border-radius:10px;padding:11px 13px;margin-bottom:14px;font-size:13px;font-weight:500;';
+                    form.insertBefore(banner, form.firstChild);
+                }
+                banner.textContent = '👁 View only — you can read this report but only the account owner can edit it.';
+            } else if (banner) { banner.remove(); }
+        }
+        // Submit = finalise + lock. After this, operators can no longer change the report
+        // (RLS service_reports_operator_draft_update only allows status='draft'); the owner still can.
+        function submitServiceReport() {
+            if (sr_readOnly) return;
+            const r = gatherSR();
+            if (!r.site) { showToast('Enter site name'); return; }
+            if (!confirm('Submit this report? Once submitted it locks — after this, only the account owner can change it.')) return;
+            sr_status = 'submitted'; r.status = 'submitted';
+            if (srLocalSave(r)) showToast('Report submitted & locked');
+            srCloudPushReport(r);
+            listServiceReports();
+        }
         let sr_sigCtx = null, sr_drawing = false;
 
         // Cache for customer/site dropdowns on the Service Report form.
@@ -5867,6 +5906,7 @@
         // register (hadron_sites) so this site can be re-picked later with its points
         // auto-loading. Mirrors the Customers-app site model exactly.
         function srSaveSiteToRegister() {
+            if (sr_readOnly) return;
             const custId = document.getElementById('sr_customerId').value;
             if (!custId || custId === '__manual__') { showToast('Pick a customer first — the site is saved under them'); return; }
             const siteName = (document.getElementById('sr_site').value || '').trim();
@@ -5911,6 +5951,7 @@
         async function newServiceReport() {
             document.getElementById('sr_form').style.display = 'block';
             document.getElementById('sr_list').style.display = 'none';
+            sr_status = 'draft'; applySrReadOnly(false);
             // Defaults
             document.getElementById('sr_dt').value = new Date().toISOString().slice(0, 16);
             sr_photos = []; document.getElementById('sr_photos').innerHTML = '';
@@ -5926,7 +5967,7 @@
         // Rebuilds every field (customer/site, sample points + test values, photos, signature)
         // and reuses sr_reportId, so a save upserts THIS report rather than creating a new one.
         // Only the owner reaches this (the Edit button is gated); RLS blocks anyone else's write.
-        async function openServiceReport(id) {
+        async function openServiceReport(id, readOnly) {
             let r = LS.get('hadron_sr', []).find(x => x.id === id);
             if (!r) {   // cloud-only report (from another device) — pull its full payload
                 try { const row = window.HG_DB && window.HG_DB.service_reports && await window.HG_DB.service_reports.get(id); r = row && row.payload; } catch (_) {}
@@ -5936,6 +5977,7 @@
             document.getElementById('sr_form').style.display = 'block';
             document.getElementById('sr_list').style.display = 'none';
             sr_reportId = r.id;   // re-save upserts THIS report
+            sr_status = r.status || 'draft';
 
             document.getElementById('sr_tech').value = r.tech || '';
             document.getElementById('sr_dt').value   = r.date || '';
@@ -6001,7 +6043,8 @@
                 img.onload = () => { try { sr_sigCtx.drawImage(img, 0, 0, c.width, c.height); } catch (_) {} };
                 img.src = r.sig;
             }
-            showToast('Editing "' + (r.site || 'report') + '" — Save to update it');
+            applySrReadOnly(!!readOnly);
+            showToast(readOnly ? 'Viewing "' + (r.site || 'report') + '"' : 'Editing "' + (r.site || 'report') + '" — Save to update it');
         }
         // One-line summary for a saved report card — new tests model, or legacy fixed readings.
         function srSummary(r) {
@@ -6019,7 +6062,7 @@
         // ── Cloud sync: reports live in Supabase (service_reports) as well as in
         // localStorage, so they survive the device and reach head office. ──
         let srCloudMeta = [];   // last cloud fetch — metadata only, not full payloads
-        function srToCloudRow(r) { return { id: r.id, site: r.site || null, customer_name: r.customerName || null, technician: r.tech || null, report_date: r.date || null, payload: r }; }
+        function srToCloudRow(r) { return { id: r.id, site: r.site || null, customer_name: r.customerName || null, technician: r.tech || null, report_date: r.date || null, status: r.status || 'draft', payload: r }; }
         function srCloudPushReport(r) {
             try { if (window.HG_DB && window.HG_DB.service_reports && r && r.id) window.HG_DB.service_reports.upsert(srToCloudRow(r)).catch(() => {}); } catch (_) {}
         }
@@ -6028,14 +6071,14 @@
                 const sb = window.HG_SUPA;
                 if (!sb || !((await sb.auth.getSession()).data.session)) return srCloudMeta;
                 const { data, error } = await sb.from('service_reports')
-                    .select('id, site, customer_name, technician, report_date').order('report_date', { ascending: false });
+                    .select('id, site, customer_name, technician, report_date, status').order('report_date', { ascending: false });
                 if (!error && Array.isArray(data)) srCloudMeta = data;
             } catch (_) {}
             return srCloudMeta;
         }
         function srMergedReports() {
             const byId = {};
-            srCloudMeta.forEach(m => { byId[m.id] = { id: m.id, site: m.site, date: m.report_date, tech: m.technician || '', _cloud: true }; });
+            srCloudMeta.forEach(m => { byId[m.id] = { id: m.id, site: m.site, date: m.report_date, tech: m.technician || '', status: m.status, _cloud: true }; });
             LS.get('hadron_sr', []).forEach(r => { if (r && r.id) byId[r.id] = Object.assign({}, r, { _cloud: !!(byId[r.id] && byId[r.id]._cloud) }); });
             return Object.values(byId).sort((a, b) => String(b.date || b.savedAt || '').localeCompare(String(a.date || a.savedAt || '')));
         }
@@ -6050,12 +6093,12 @@
             el.innerHTML = !list.length ? '<p style="color:#888;">No saved reports yet.</p>' :
                 list.map(r => `<div style="border:1px solid #eee;border-radius:6px;padding:10px;margin-bottom:8px;">
                     <strong>${esc(r.site)}</strong> · ${esc(String(r.date || '').replace('T', ' '))}
-                    ${r._cloud ? '<span title="Synced to cloud" style="color:#157b3a;font-size:12px;">☁ synced</span>' : '<span title="On this device only — not yet synced" style="color:#b5852a;font-size:12px;">• local only</span>'}<br>
+                    ${r._cloud ? '<span title="Synced to cloud" style="color:#157b3a;font-size:12px;">☁ synced</span>' : '<span title="On this device only — not yet synced" style="color:#b5852a;font-size:12px;">• local only</span>'}${r.status === 'submitted' ? ' <span title="Submitted — locked to technicians" style="color:#1a3d9e;font-size:12px;">🔒 submitted</span>' : ''}<br>
                     <small>${r.tech ? 'Tech: ' + esc(r.tech) : ''}${srSummary(r) ? (r.tech ? ' · ' : '') + esc(srSummary(r)) : ''}</small>
                     <div style="margin-top:6px;">
                         <button class="pdf-calc-btn" onclick="exportStoredSrPdf('${r.id}')">📄 PDF</button>
                         ${canEdit ? `<button class="pdf-calc-btn" style="background:#3AAEDB;color:#0f2733;" onclick="openServiceReport('${r.id}')">✎ Edit</button>
-                        <button class="save-calc-btn" style="background:#c44;" onclick="deleteSR('${r.id}')">🗑 Delete</button>` : ''}
+                        <button class="save-calc-btn" style="background:#c44;" onclick="deleteSR('${r.id}')">🗑 Delete</button>` : `<button class="pdf-calc-btn" onclick="openServiceReport('${r.id}', true)">👁 View</button>`}
                     </div></div>`).join('');
         }
         function listServiceReports() {
@@ -6436,6 +6479,7 @@
             const siteLabel = (site && site.name) || id('sr_site') || '';
             return {
                 id: sr_reportId || uid(),
+                status: sr_status || 'draft',
                 customerId: (customerSel && customerSel !== '__manual__') ? customerSel : null,
                 customerName: (customer && customer.name) || (customerSel && customerSel !== '__manual__' ? ((document.querySelector('#sr_customerId option:checked') || {}).textContent || '').trim() : '') || '',
                 siteId: (siteSel && siteSel !== '__manual__') ? siteSel : null,
@@ -6455,6 +6499,7 @@
             return LS.set('hadron_sr', list);
         }
         function saveServiceReport() {
+            if (sr_readOnly) return;
             const r = gatherSR();
             if (!r.site) { showToast('Enter site name'); return; }
             if (srLocalSave(r)) showToast('Report saved');   // LS.set warns 'Storage full' itself on failure
@@ -6470,6 +6515,7 @@
             listServiceReports();
         }
         function exportServiceReportPdf() {
+            if (sr_readOnly) return;
             const r = gatherSR();
             if (!r.site) { showToast('Enter site name'); return; }
             srLocalSave(r);   // best-effort local save (upsert by id)
