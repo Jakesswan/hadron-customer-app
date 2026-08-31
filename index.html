@@ -86,6 +86,7 @@
     <script src="lims.js" defer></script>
     <script src="lims-sync.js" defer></script>
     <script src="portal.js" defer></script>
+    <script src="team.js" defer></script>
 
     <!-- Default UI font: Gothic A1 (Google Fonts) -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -2748,7 +2749,7 @@
                 <div class="hg-section-title">About</div>
                 <div class="hg-kvgrid">
                     <div class="hg-kv"><div class="k">App</div><div class="v">Hadron Group</div></div>
-                    <div class="hg-kv"><div class="k">Version</div><div class="v">v112</div></div>
+                    <div class="hg-kv"><div class="k">Version</div><div class="v">v113</div></div>
                     <div class="hg-kv"><div class="k">Platform</div><div class="v">PWA</div></div>
                 </div>
             </div>
@@ -5958,6 +5959,12 @@
         }
         function srRenderReportList(list) {
             const el = document.getElementById('sr_list'); if (!el) return;
+            // Only the account owner (admin / customer_admin) may delete a report; signed-in
+            // techs create + view only (RLS enforces this server-side — this just hides the
+            // button). A local-only / signed-out user (role '') keeps Delete for their own
+            // device-only reports, matching the deleteSR() guard.
+            const _srRole = (window.HG_PROFILE && window.HG_PROFILE.role) || document.body.dataset.role || '';
+            const canEdit = !_srRole || ['admin','customer_admin'].includes(_srRole);
             el.innerHTML = !list.length ? '<p style="color:#888;">No saved reports yet.</p>' :
                 list.map(r => `<div style="border:1px solid #eee;border-radius:6px;padding:10px;margin-bottom:8px;">
                     <strong>${esc(r.site)}</strong> · ${esc(String(r.date || '').replace('T', ' '))}
@@ -5965,7 +5972,7 @@
                     <small>${r.tech ? 'Tech: ' + esc(r.tech) : ''}${srSummary(r) ? (r.tech ? ' · ' : '') + esc(srSummary(r)) : ''}</small>
                     <div style="margin-top:6px;">
                         <button class="pdf-calc-btn" onclick="exportStoredSrPdf('${r.id}')">📄 PDF</button>
-                        <button class="save-calc-btn" style="background:#c44;" onclick="deleteSR('${r.id}')">🗑 Delete</button>
+                        ${canEdit ? `<button class="save-calc-btn" style="background:#c44;" onclick="deleteSR('${r.id}')">🗑 Delete</button>` : ''}
                     </div></div>`).join('');
         }
         function listServiceReports() {
@@ -6371,6 +6378,8 @@
             srCloudPushReport(r);   // best-effort cloud sync (queues if offline / not signed in)
         }
         function deleteSR(id) {
+            const _role = (window.HG_PROFILE && window.HG_PROFILE.role) || document.body.dataset.role || '';
+            if (_role && !['admin','customer_admin'].includes(_role)) { showToast('Only the account owner can delete reports'); return; }
             if (!confirm('Delete this service report? It is removed from this device and the cloud, and cannot be undone.')) return;
             LS.set('hadron_sr', LS.get('hadron_sr', []).filter(r => r.id !== id));
             srCloudMeta = srCloudMeta.filter(m => m.id !== id);

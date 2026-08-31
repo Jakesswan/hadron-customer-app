@@ -12,7 +12,7 @@
  * Bump CACHE_VERSION whenever you ship a change so phones pick it up on next launch.
  */
 
-const CACHE_VERSION = 'hadron-v112';
+const CACHE_VERSION = 'hadron-v113';
 const APP_SHELL = [
   './',
   './index.html',
@@ -30,6 +30,7 @@ const APP_SHELL = [
   './push.js',
   './lims-sync.js',
   './portal.js',
+  './team.js',
   './emoji.js',
   './hadron-icons.js',
   './customize.js',

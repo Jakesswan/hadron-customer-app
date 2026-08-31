@@ -415,6 +415,29 @@
     });
 
     document.dispatchEvent(new CustomEvent('hg:profile:loaded', { detail: profile }));
+
+    // Team invite: if this user has a pending invite to another org, offer to join it.
+    try { maybeOfferInvite(); } catch (_) {}
+  }
+
+  // One-time-per-load consent prompt: my_pending_invite() (SECURITY DEFINER) tells us
+  // if the signed-in email was invited somewhere; redeem_org_invite() moves them on accept.
+  let _inviteOffered = false;
+  async function maybeOfferInvite() {
+    if (_inviteOffered || !window.HG_SUPA) return;
+    _inviteOffered = true;
+    let inv = null;
+    try { const { data } = await window.HG_SUPA.rpc('my_pending_invite'); inv = data; }
+    catch (_) { return; }
+    if (!inv || !inv.organisation) return;
+    const access = inv.role === 'viewer' ? 'with view-only access' : 'to create and view reports';
+    const ok = window.confirm('You have been invited to join "' + inv.organisation + '" ' + access +
+      '.\n\nJoin now? Your account moves into this company.');
+    if (!ok) return;
+    try {
+      const { data } = await window.HG_SUPA.rpc('redeem_org_invite');
+      if (data && data.joined) location.reload();
+    } catch (_) {}
   }
 
   // Wipe every trace of the previous tenant's data from THIS browser (the LIMS
