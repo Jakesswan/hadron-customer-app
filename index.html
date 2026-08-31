@@ -2749,7 +2749,7 @@
                 <div class="hg-section-title">About</div>
                 <div class="hg-kvgrid">
                     <div class="hg-kv"><div class="k">App</div><div class="v">Hadron Group</div></div>
-                    <div class="hg-kv"><div class="k">Version</div><div class="v">v113</div></div>
+                    <div class="hg-kv"><div class="k">Version</div><div class="v">v114</div></div>
                     <div class="hg-kv"><div class="k">Platform</div><div class="v">PWA</div></div>
                 </div>
             </div>
@@ -5921,6 +5921,88 @@
             await srPopulateCustomerDropdown();
             srRefreshSiteDropdown();
         }
+
+        // Reopen a SAVED report into the form for the account owner to edit + re-save.
+        // Rebuilds every field (customer/site, sample points + test values, photos, signature)
+        // and reuses sr_reportId, so a save upserts THIS report rather than creating a new one.
+        // Only the owner reaches this (the Edit button is gated); RLS blocks anyone else's write.
+        async function openServiceReport(id) {
+            let r = LS.get('hadron_sr', []).find(x => x.id === id);
+            if (!r) {   // cloud-only report (from another device) — pull its full payload
+                try { const row = window.HG_DB && window.HG_DB.service_reports && await window.HG_DB.service_reports.get(id); r = row && row.payload; } catch (_) {}
+            }
+            if (!r) { showToast('Report not found'); return; }
+
+            document.getElementById('sr_form').style.display = 'block';
+            document.getElementById('sr_list').style.display = 'none';
+            sr_reportId = r.id;   // re-save upserts THIS report
+
+            document.getElementById('sr_tech').value = r.tech || '';
+            document.getElementById('sr_dt').value   = r.date || '';
+            document.getElementById('sr_gps').value  = r.gps || '';
+            document.getElementById('sr_obs').value  = r.obs || '';
+            document.getElementById('sr_act').value  = r.act || '';
+            document.getElementById('sr_chem').value = r.chem || '';
+
+            // Customer + site dropdowns. If the record's customer/site isn't in this device's
+            // local register (e.g. a cloud report from another device), add a placeholder
+            // option so re-saving preserves the link instead of dropping it.
+            await srPopulateCustomerDropdown();
+            const custSel = document.getElementById('sr_customerId');
+            if (r.customerId) {
+                if (!Array.from(custSel.options).some(o => o.value === r.customerId)) {
+                    const opt = document.createElement('option');
+                    opt.value = r.customerId; opt.textContent = r.customerName || r.customerId;
+                    custSel.insertBefore(opt, custSel.firstChild);
+                }
+                custSel.value = r.customerId;
+            } else { custSel.value = '__manual__'; }
+            srRefreshSiteDropdown();   // rebuilds site list + clears sr_site/sr_contact/manual wrap
+            const siteSel = document.getElementById('sr_siteId');
+            if (r.siteId) {
+                if (!Array.from(siteSel.options).some(o => o.value === r.siteId)) {
+                    const opt = document.createElement('option');
+                    opt.value = r.siteId; opt.textContent = r.site || r.siteId;
+                    siteSel.insertBefore(opt, siteSel.firstChild);
+                }
+                siteSel.value = r.siteId;
+                document.getElementById('sr_siteManualWrap').style.display = 'none';
+            } else {
+                siteSel.value = '__manual__';
+                document.getElementById('sr_siteManualWrap').style.display = '';
+            }
+            document.getElementById('sr_site').value    = r.site || '';
+            document.getElementById('sr_contact').value = r.contact || '';
+
+            // Sample points + tests — reverse of srMapRow() / srGatherPoints().
+            const rebuildRow = st => ({
+                id: uid(), catId: st.id, code: st.code, name: st.name, unit: st.unit,
+                specMin: st.specMin, specMax: st.specMax, custom: st.custom || false,
+                sans241: st.sans241 || '', category: st.category || '',
+                value: (st.value == null ? '' : st.value), photo: st.photo || null });
+            if (r.points && r.points.length) {
+                sr_points = r.points.map(pt => ({ id: uid(), name: pt.name || '', tests: (pt.tests || []).map(rebuildRow) }));
+            } else if (r.tests && r.tests.length) {
+                sr_points = [{ id: uid(), name: '', tests: r.tests.map(rebuildRow) }];
+            } else {
+                sr_points = [srNewPoint('', true)];
+            }
+            if (!sr_points.length) sr_points = [srNewPoint('', true)];
+            sr_activePoint = sr_points[0].id;
+            srRenderPoints();
+
+            sr_photos = Array.isArray(r.photos) ? r.photos.slice() : [];
+            renderSrPhotos();
+
+            initSignaturePad();
+            if (r.sig) {
+                const c = document.getElementById('sr_sig');
+                const img = new Image();
+                img.onload = () => { try { sr_sigCtx.drawImage(img, 0, 0, c.width, c.height); } catch (_) {} };
+                img.src = r.sig;
+            }
+            showToast('Editing "' + (r.site || 'report') + '" — Save to update it');
+        }
         // One-line summary for a saved report card — new tests model, or legacy fixed readings.
         function srSummary(r) {
             if (r.tests && r.tests.length) {
@@ -5972,7 +6054,8 @@
                     <small>${r.tech ? 'Tech: ' + esc(r.tech) : ''}${srSummary(r) ? (r.tech ? ' · ' : '') + esc(srSummary(r)) : ''}</small>
                     <div style="margin-top:6px;">
                         <button class="pdf-calc-btn" onclick="exportStoredSrPdf('${r.id}')">📄 PDF</button>
-                        ${canEdit ? `<button class="save-calc-btn" style="background:#c44;" onclick="deleteSR('${r.id}')">🗑 Delete</button>` : ''}
+                        ${canEdit ? `<button class="pdf-calc-btn" style="background:#3AAEDB;color:#0f2733;" onclick="openServiceReport('${r.id}')">✎ Edit</button>
+                        <button class="save-calc-btn" style="background:#c44;" onclick="deleteSR('${r.id}')">🗑 Delete</button>` : ''}
                     </div></div>`).join('');
         }
         function listServiceReports() {
@@ -6354,7 +6437,7 @@
             return {
                 id: sr_reportId || uid(),
                 customerId: (customerSel && customerSel !== '__manual__') ? customerSel : null,
-                customerName: (customer && customer.name) || '',
+                customerName: (customer && customer.name) || (customerSel && customerSel !== '__manual__' ? ((document.querySelector('#sr_customerId option:checked') || {}).textContent || '').trim() : '') || '',
                 siteId: (siteSel && siteSel !== '__manual__') ? siteSel : null,
                 site: siteLabel,
                 contact: id('sr_contact'), tech: id('sr_tech'),
