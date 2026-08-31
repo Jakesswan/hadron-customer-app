@@ -143,7 +143,10 @@
         const idx = list.findIndex(x => x.id === row.id);
         if (idx >= 0) list[idx] = Object.assign(list[idx], row);
         else list.push(Object.assign({ equipment: [], createdAt: new Date().toISOString() }, row));
+        const saved = idx >= 0 ? list[idx] : list[list.length - 1];
         localStorage.setItem('hadron_sites', JSON.stringify(list));
+        // Keep the org-shared copy in sync (no-op for non-owners; owner-gated inside).
+        if (typeof window.hgSitesPush === 'function') window.hgSitesPush(saved);
         if (typeof window.renderSites === 'function') window.renderSites();
         return row;
       }

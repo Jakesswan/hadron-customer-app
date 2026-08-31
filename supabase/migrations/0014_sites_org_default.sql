@@ -1,0 +1,16 @@
+-- 0014_sites_org_default.sql  (applied to prod flttrqcstzprtxcdvexx 2026-09-01)
+-- The Sites register moves server-side (was local-only in localStorage 'hadron_sites'),
+-- so teammates in the same org see the same sites + sample points in their reports.
+--
+-- The public.sites table + org-scoped RLS already existed and already match the role model:
+--   SELECT  : organisation_id = current_org()                       (everyone in the org)
+--   INSERT  : role in (admin, customer_admin, operator) + own org
+--   UPDATE  : role in (admin, customer_admin)          + own org    (owner-only)
+--   DELETE  : role in (admin, customer_admin)          + own org    (owner-only)
+-- and it already carries a `payload jsonb` column + a nullable customer_id (FK ON DELETE
+-- SET NULL). The app stores the full site object in `payload` and leaves customer_id null
+-- to avoid FK violations against ERP-sourced customers.
+--
+-- This migration only adds the current_org() default so the client can upsert a site
+-- without supplying its org UUID; RLS still re-asserts organisation_id = current_org().
+alter table public.sites alter column organisation_id set default current_org();
