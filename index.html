@@ -2749,7 +2749,7 @@
                 <div class="hg-section-title">About</div>
                 <div class="hg-kvgrid">
                     <div class="hg-kv"><div class="k">App</div><div class="v">Hadron Group</div></div>
-                    <div class="hg-kv"><div class="k">Version</div><div class="v">v115</div></div>
+                    <div class="hg-kv"><div class="k">Version</div><div class="v">v116</div></div>
                     <div class="hg-kv"><div class="k">Platform</div><div class="v">PWA</div></div>
                 </div>
             </div>
@@ -6123,9 +6123,13 @@
                 renderSrPhotos();
             }
         }
+        // Only render a data:image/ URL. Shared reports + incidents can carry a
+        // teammate-supplied photo value, so any other string could break out of the
+        // img src attribute (stored XSS). A real base64 data URL contains no ".
+        function srSafeImg(s) { return (typeof s === 'string' && /^data:image\/[a-z0-9.+-]+;base64,[A-Za-z0-9+/=]+$/i.test(s)) ? s : ''; }
         function renderSrPhotos() {
             document.getElementById('sr_photos').innerHTML = sr_photos.map((p,i) =>
-                `<div style="position:relative;"><img src="${p.src}" style="width:70px;height:70px;object-fit:cover;border-radius:6px;"><button onclick="sr_photos.splice(${i},1);renderSrPhotos()" style="position:absolute;top:-6px;right:-6px;background:#c44;color:#fff;border:none;border-radius:50%;width:20px;height:20px;cursor:pointer;">×</button></div>`).join('');
+                `<div style="position:relative;"><img src="${srSafeImg(p.src)}" style="width:70px;height:70px;object-fit:cover;border-radius:6px;"><button onclick="sr_photos.splice(${i},1);renderSrPhotos()" style="position:absolute;top:-6px;right:-6px;background:#c44;color:#fff;border:none;border-radius:50%;width:20px;height:20px;cursor:pointer;">×</button></div>`).join('');
         }
         function initSignaturePad() {
             const c = document.getElementById('sr_sig');
@@ -6301,7 +6305,7 @@
                         <label style="display:flex;align-items:center;gap:5px;color:var(--text);">max <input type="number" step="any" inputmode="decimal" value="${esc(t.specMax == null ? '' : t.specMax)}" oninput="srEditLimit('${esc(t.id)}','max',this.value)" placeholder="—" style="width:72px;padding:6px;border:1px solid var(--border);border-radius:6px;font-size:14px;background:var(--bg-soft);color:var(--text);"></label>
                         <button type="button" onclick="srResetLimitRow('${esc(t.id)}')" style="border:1px solid var(--border);background:var(--bg-soft);color:var(--text);border-radius:6px;padding:6px 11px;cursor:pointer;font-size:12px;">Reset to default</button>
                     </div>
-                    ${t.photo ? `<div style="grid-column:1/-1;"><img src="${t.photo}" style="height:50px;border-radius:6px;border:1px solid var(--border);"></div>` : ''}
+                    ${srSafeImg(t.photo) ? `<div style="grid-column:1/-1;"><img src="${srSafeImg(t.photo)}" style="height:50px;border-radius:6px;border:1px solid var(--border);"></div>` : ''}
                 </div>`;
         }
 
@@ -7174,7 +7178,7 @@
                 dt: document.getElementById('inc_dt').value, site: document.getElementById('inc_site').value,
                 desc: document.getElementById('inc_desc').value, photo: inc_photoData,
                 savedAt: new Date().toISOString() };
-            LS.push('hadron_incident', e); showToast('Incident logged'); renderIncidents();
+            LS.push('hadron_incident', e); hgIncidentsPush(e); showToast('Incident logged'); renderIncidents();
         }
         function renderIncidents() {
             const list = LS.get('hadron_incident', []);
@@ -7182,9 +7186,33 @@
                 list.map(i => `<div style="border-left:4px solid #e53935;padding:10px;background:#fff5f5;margin-bottom:6px;border-radius:4px;">
                     <strong>${esc(i.sev)}</strong> · ${esc(i.site)} · ${esc(i.dt)}<br>
                     <small>${esc(i.desc)}</small>
-                    ${i.photo ? `<br><img src="${i.photo}" style="max-width:100%;margin-top:6px;border-radius:4px;">` : ''}
+                    ${srSafeImg(i.photo) ? `<br><img src="${srSafeImg(i.photo)}" style="max-width:100%;margin-top:6px;border-radius:4px;">` : ''}
                 </div>`).join('');
         }
+
+        // ── Incidents shared across the org via Supabase (was local-only in hadron_incident).
+        //    Any teammate who can log an incident does so and the whole org sees it;
+        //    localStorage stays the offline cache, the server (RLS org-scoped) is the shared truth. ──
+        function hgIncidentToRow(e) { return { id: e.id, payload: e, updated_at: new Date().toISOString() }; }   // org/user default server-side
+        function hgIncidentsPush(e) {
+            try { if (window.HG_PROFILE && window.HG_DB && window.HG_DB.incidents && e && e.id) window.HG_DB.incidents.upsert(hgIncidentToRow(e)).catch(() => {}); } catch (_) {}
+        }
+        async function hgIncidentsPull() {
+            if (!window.HG_PROFILE || !window.HG_DB || !window.HG_DB.incidents) return;
+            let rows = [];
+            try { rows = await window.HG_DB.incidents.list(); } catch (_) { return; }
+            if (!Array.isArray(rows)) return;
+            const byId = {};
+            rows.forEach(r => { const e = r && r.payload; if (e && e.id) byId[e.id] = e; });       // server = shared source of truth
+            LS.get('hadron_incident', []).forEach(e => {
+                if (e && e.id && !byId[e.id]) { byId[e.id] = e; hgIncidentsPush(e); }               // migrate any local-only incident up
+            });
+            LS.set('hadron_incident', Object.values(byId).sort((a, b) => String(b.savedAt || '').localeCompare(String(a.savedAt || ''))));
+        }
+        window.hgIncidentsPull = hgIncidentsPull;
+        document.addEventListener('hg:profile:loaded', function () {
+            try { hgIncidentsPull().then(() => { if (document.getElementById('inc_list') && typeof renderIncidents === 'function') renderIncidents(); }); } catch (_) {}
+        });
 
         /* =========================================================
            Catalogue & quotes

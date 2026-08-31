@@ -261,6 +261,7 @@
       academy_progress:     tableApi('academy_progress'),
       service_reports:      tableApi('service_reports'),
       org_invites:          tableApi('org_invites'),
+      incidents:            tableApi('incidents'),
       _queueLen: queueLen,
       _flush: flushQueue
     };
