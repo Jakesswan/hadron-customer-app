@@ -2749,7 +2749,7 @@
                 <div class="hg-section-title">About</div>
                 <div class="hg-kvgrid">
                     <div class="hg-kv"><div class="k">App</div><div class="v">Hadron Group</div></div>
-                    <div class="hg-kv"><div class="k">Version</div><div class="v">v117</div></div>
+                    <div class="hg-kv"><div class="k">Version</div><div class="v">v118</div></div>
                     <div class="hg-kv"><div class="k">Platform</div><div class="v">PWA</div></div>
                 </div>
             </div>
@@ -7005,8 +7005,10 @@
         }
         function deleteSite(id) {
             if (!confirm('Delete this site and its assets?')) return;
-            LS.set('hadron_sites', LS.get('hadron_sites', []).filter(s => s.id !== id));
-            hgSitesDelete(id);
+            const list = LS.get('hadron_sites', []);
+            const rec = list.find(s => s.id === id);
+            LS.set('hadron_sites', list.filter(s => s.id !== id));
+            hgSitesDelete(rec || { id: id, name: 'Site' });   // soft-delete tombstone (needs the row for name/payload)
             renderSites();
         }
 
@@ -7196,20 +7198,24 @@
 
         // ── Incidents shared across the org via Supabase (was local-only in hadron_incident).
         //    Any teammate who can log an incident does so and the whole org sees it;
-        //    localStorage stays the offline cache, the server (RLS org-scoped) is the shared truth. ──
+        //    localStorage stays the offline cache, the server (RLS org-scoped) is the shared truth.
+        //    Deletes are soft (deleted_at tombstone, migration 0015) so they propagate + can't be
+        //    resurrected by a stale cache; the pull aborts on a fetch error so a masked read never
+        //    wipes local. hgIncidentToRow omits deleted_at, so a re-push can't clear a tombstone. ──
         function hgIncidentToRow(e) { return { id: e.id, payload: e, updated_at: new Date().toISOString() }; }   // org/user default server-side
         function hgIncidentsPush(e) {
             try { if (window.HG_PROFILE && window.HG_DB && window.HG_DB.incidents && e && e.id) window.HG_DB.incidents.upsert(hgIncidentToRow(e)).catch(() => {}); } catch (_) {}
         }
         async function hgIncidentsPull() {
-            if (!window.HG_PROFILE || !window.HG_DB || !window.HG_DB.incidents) return;
-            let rows = [];
-            try { rows = await window.HG_DB.incidents.list(); } catch (_) { return; }
-            if (!Array.isArray(rows)) return;
-            const byId = {};
-            rows.forEach(r => { const e = r && r.payload; if (e && e.id) byId[e.id] = e; });       // server = shared source of truth
+            if (!window.HG_PROFILE || !window.HG_SUPA) return;
+            let res;
+            try { res = await window.HG_SUPA.from('incidents').select('*'); } catch (_) { return; }
+            if (!res || res.error || !Array.isArray(res.data)) return;                              // abort on a masked fetch error — never wipe local on a bad read
+            const byId = {}, deleted = {};
+            res.data.forEach(r => { const e = r && r.payload; if (!e || !e.id) return; if (r.deleted_at) deleted[e.id] = true; else byId[e.id] = e; });
             LS.get('hadron_incident', []).forEach(e => {
-                if (e && e.id && !byId[e.id]) { byId[e.id] = e; hgIncidentsPush(e); }               // migrate any local-only incident up
+                if (!e || !e.id || deleted[e.id] || byId[e.id]) return;                             // tombstoned -> drop + never resurrect; already on server -> keep server copy
+                byId[e.id] = e; hgIncidentsPush(e);                                                 // genuinely local-only -> migrate up
             });
             LS.set('hadron_incident', Object.values(byId).sort((a, b) => String(b.savedAt || '').localeCompare(String(a.savedAt || ''))));
         }
@@ -7224,7 +7230,10 @@
         //    a doomed write); every teammate PULLS so the same sites + sample points appear when
         //    they build a report. localStorage stays the offline cache; the server (RLS org-scoped)
         //    is the shared truth. The whole site object lives in `payload`; org defaults server-side;
-        //    customer_id is left null (avoids the customers FK against ERP-sourced ids). ──
+        //    customer_id is left null (avoids the customers FK against ERP-sourced ids). Deletes are
+        //    soft (deleted_at tombstone, migration 0015) so they propagate to every device and can't
+        //    be resurrected by a stale local cache; the pull aborts on a fetch error so a masked read
+        //    never wipes local, and hgSiteToRow omits deleted_at so a re-push can't clear a tombstone. ──
         (function ensureOwnerOnlyStyle() {
             if (document.getElementById('hg-owner-only-css')) return;
             const st = document.createElement('style');
@@ -7237,18 +7246,24 @@
         function hgSitesPush(s) {
             try { if (hgSiteIsOwner() && window.HG_PROFILE && window.HG_DB && window.HG_DB.sites && s && s.id) window.HG_DB.sites.upsert(hgSiteToRow(s)).catch(() => {}); } catch (_) {}
         }
-        function hgSitesDelete(id) {
-            try { if (hgSiteIsOwner() && window.HG_PROFILE && window.HG_DB && window.HG_DB.sites && id) window.HG_DB.sites.remove(id).catch(() => {}); } catch (_) {}
+        function hgSitesDelete(rec) {
+            try {
+                if (hgSiteIsOwner() && window.HG_PROFILE && window.HG_DB && window.HG_DB.sites && rec && rec.id) {
+                    const row = hgSiteToRow(rec); row.deleted_at = new Date().toISOString();       // SOFT delete: leave a tombstone (propagates + can't be resurrected)
+                    window.HG_DB.sites.upsert(row).catch(() => {});
+                }
+            } catch (_) {}
         }
         async function hgSitesPull() {
-            if (!window.HG_PROFILE || !window.HG_DB || !window.HG_DB.sites) return;
-            let rows = [];
-            try { rows = await window.HG_DB.sites.list(); } catch (_) { return; }
-            if (!Array.isArray(rows)) return;
-            const byId = {};
-            rows.forEach(r => { const s = r && r.payload; if (s && s.id) byId[s.id] = s; });      // server = shared source of truth
+            if (!window.HG_PROFILE || !window.HG_SUPA) return;
+            let res;
+            try { res = await window.HG_SUPA.from('sites').select('*'); } catch (_) { return; }
+            if (!res || res.error || !Array.isArray(res.data)) return;                              // abort on a masked fetch error — never wipe local on a bad read
+            const byId = {}, deleted = {};
+            res.data.forEach(r => { const s = r && r.payload; if (!s || !s.id) return; if (r.deleted_at) deleted[s.id] = true; else byId[s.id] = s; });
             LS.get('hadron_sites', []).forEach(s => {
-                if (s && s.id && !byId[s.id]) { byId[s.id] = s; hgSitesPush(s); }                 // migrate any local-only site up (owner only)
+                if (!s || !s.id || deleted[s.id] || byId[s.id]) return;                             // tombstoned -> drop + never resurrect; already on server -> keep server copy
+                byId[s.id] = s; hgSitesPush(s);                                                     // genuinely local-only -> migrate up (owner-gated inside)
             });
             LS.set('hadron_sites', Object.values(byId));
         }

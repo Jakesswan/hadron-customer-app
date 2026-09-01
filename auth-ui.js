@@ -436,7 +436,9 @@
     if (!ok) return;
     try {
       const { data } = await window.HG_SUPA.rpc('redeem_org_invite');
-      if (data && data.joined) location.reload();
+      // Moving into a different org: clear THIS org's local cache + sync queue first so no
+      // sites/incidents/reports (or queued writes) from the old org leak into the new one.
+      if (data && data.joined) { try { await hgClearTenantData(); } catch (_) {} location.reload(); }
     } catch (_) {}
   }
 
