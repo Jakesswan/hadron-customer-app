@@ -82,6 +82,8 @@
     <script src="academy-content.js" defer></script>
     <script src="academy.js" defer></script>
 
+    <script src="searchable-select.js" defer></script>
+
     <!-- LIMS module (loaded at end of body via defer) -->
     <script src="lims.js" defer></script>
     <script src="lims-sync.js" defer></script>
@@ -2749,7 +2751,7 @@
                 <div class="hg-section-title">About</div>
                 <div class="hg-kvgrid">
                     <div class="hg-kv"><div class="k">App</div><div class="v">Hadron Group</div></div>
-                    <div class="hg-kv"><div class="k">Version</div><div class="v">v119</div></div>
+                    <div class="hg-kv"><div class="k">Version</div><div class="v">v120</div></div>
                     <div class="hg-kv"><div class="k">Platform</div><div class="v">PWA</div></div>
                 </div>
             </div>
@@ -3779,8 +3781,11 @@
                 <div class="hg-hero-icon">👥</div>
             </div>
             <div class="hg-card">
-                <input id="cust_search" placeholder="Search customers…" oninput="renderCustomers()" style="width:100%;box-sizing:border-box;padding:11px;border:1px solid var(--border);border-radius:8px;background:var(--surface);color:var(--text);font-size:15px;">
-                <p style="color:var(--muted);font-size:12px;margin:8px 2px 0;">Customers sync from the ERP (read-only). Tap a customer to add its standard <b>sites</b> and <b>sample points</b> — those points then load automatically into a Service Report when you pick the site.</p>
+                <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+                    <input id="cust_search" placeholder="Search customers…" oninput="renderCustomers()" style="flex:1;min-width:180px;box-sizing:border-box;padding:11px;border:1px solid var(--border);border-radius:8px;background:var(--surface);color:var(--text);font-size:15px;">
+                    <button class="hg-btn primary owner-only" style="flex:none;white-space:nowrap;" onclick="hgAddCustomer()">＋ Add customer</button>
+                </div>
+                <p style="color:var(--muted);font-size:12px;margin:8px 2px 0;">ERP customers sync in read-only. Use <b>＋ Add customer</b> to add your own, then tap any customer to set up its standard <b>sites</b> and <b>sample points</b> — those points load automatically into a Service Report when you pick the site.</p>
                 <div id="customers_list" style="margin-top:14px;"></div>
             </div>
         </div>
@@ -5825,6 +5830,7 @@
             sel.innerHTML = `<option value="">— select customer${hint} —</option>` +
                 __srCustomers.map(c => `<option value="${esc(c.id)}">${esc(c.name)}</option>`).join('') +
                 `<option value="__manual__">↳ No customer (one-off / not in register)</option>`;
+            if (window.hgMakeSearchable) window.hgMakeSearchable('sr_customerId', { placeholder: 'Search customers…' });
         }
 
         function srLoadSites() {
@@ -5848,6 +5854,7 @@
             sel.innerHTML = `<option value="">${customerId ? '— select site —' : '— pick customer first —'}</option>` +
                 filtered.map(s => `<option value="${esc(s.id)}">${esc(s.name)}</option>`).join('') +
                 `<option value="__manual__">↳ Enter site manually (not in register)</option>`;
+            if (window.hgMakeSearchable) window.hgMakeSearchable('sr_siteId', { placeholder: 'Search sites…' });
             // Reset manual-site visibility + contact field
             document.getElementById('sr_siteManualWrap').style.display = 'none';
             document.getElementById('sr_site').value = '';
@@ -5946,6 +5953,7 @@
             const prevContact = document.getElementById('sr_contact').value;
             srRefreshSiteDropdown();
             const siteSel = document.getElementById('sr_siteId'); if (siteSel) siteSel.value = site.id;
+            if (window.hgSearchableSync) window.hgSearchableSync('sr_siteId');
             document.getElementById('sr_siteManualWrap').style.display = 'none';
             document.getElementById('sr_site').value = siteName;
             document.getElementById('sr_contact').value = prevContact;
@@ -6004,6 +6012,7 @@
                 }
                 custSel.value = r.customerId;
             } else { custSel.value = '__manual__'; }
+            if (window.hgSearchableSync) window.hgSearchableSync('sr_customerId');
             srRefreshSiteDropdown();   // rebuilds site list + clears sr_site/sr_contact/manual wrap
             const siteSel = document.getElementById('sr_siteId');
             if (r.siteId) {
@@ -6018,6 +6027,7 @@
                 siteSel.value = '__manual__';
                 document.getElementById('sr_siteManualWrap').style.display = '';
             }
+            if (window.hgSearchableSync) window.hgSearchableSync('sr_siteId');
             document.getElementById('sr_site').value    = r.site || '';
             document.getElementById('sr_contact').value = r.contact || '';
 
@@ -6772,7 +6782,8 @@
                 </div>`;
             hgModalOpen(html);
             hgAddAssetRow();
-            if (preCustomerId) { const sel = document.getElementById('hgs_customerId'); if (sel) sel.value = preCustomerId; }
+            if (window.hgMakeSearchable) window.hgMakeSearchable('hgs_customerId', { placeholder: 'Search customers…' });
+            if (preCustomerId) { const sel = document.getElementById('hgs_customerId'); if (sel) { sel.value = preCustomerId; if (window.hgSearchableSync) window.hgSearchableSync('hgs_customerId'); } }
             setTimeout(() => { const e = document.getElementById('hgs_name'); if (e) e.focus(); }, 50);
         }
 
@@ -6922,6 +6933,56 @@
             }).join('');
         }
         window.renderCustomers = renderCustomers;
+
+        // ── Add a local customer (own, non-ERP) from the Customers home app. Writes to the LIMS
+        //    clients store via lims.js's hgSaveCustomer (source 'app'), which syncs to the cloud
+        //    customers table under RLS. ERP customers stay read-only (added/edited in the ERP). ──
+        function hgAddCustomer() {
+            const industries = ['Municipal','Petrochemical','Mining','Agriculture','Industrial','Pharmaceutical','Food & Beverage','Hospitality','Healthcare','Other'];
+            const html = `
+                <div class="hg-modal-card" onclick="event.stopPropagation();">
+                    <div class="hg-modal-head">
+                        <h3>🏢 Add customer</h3>
+                        <button class="hg-modal-close" onclick="hgModalClose()" title="Close">✕</button>
+                    </div>
+                    <div class="hg-modal-body">
+                        <p style="color:var(--muted);font-size:13px;margin:0 0 12px;">Your own customer (not from the ERP). It syncs to your team and can be picked in reports.</p>
+                        <div class="form-group"><label>Company name *</label><input id="hgc_name" placeholder="e.g. ACME Industries (Pty) Ltd" autocomplete="off"></div>
+                        <div class="form-group"><label>Industry</label><select id="hgc_industry">${industries.map(i=>`<option value="${i}"${i==='Other'?' selected':''}>${i}</option>`).join('')}</select></div>
+                        <div class="form-group"><label>Contact person</label><input id="hgc_contact" placeholder="e.g. Mr. J. Smith" autocomplete="off"></div>
+                        <div class="form-group"><label>Email</label><input id="hgc_email" type="email" placeholder="contact@company.com" autocomplete="off"></div>
+                        <div class="form-group"><label>Phone</label><input id="hgc_phone" placeholder="012-345-6789" autocomplete="off"></div>
+                        <div class="form-group"><label>Address</label><input id="hgc_address" placeholder="Street, City, Province" autocomplete="off"></div>
+                    </div>
+                    <div class="hg-modal-foot">
+                        <button class="hg-btn ghost" onclick="hgModalClose()">Cancel</button>
+                        <button class="hg-btn primary" onclick="hgAddCustomerSave()">💾 Save customer</button>
+                    </div>
+                </div>`;
+            hgModalOpen(html);
+            setTimeout(() => { const n = document.getElementById('hgc_name'); if (n) n.focus(); }, 50);
+        }
+        window.hgAddCustomer = hgAddCustomer;
+
+        async function hgAddCustomerSave() {
+            if (typeof window.hgSaveCustomer !== 'function') { showToast('Customer module not ready yet — try again in a moment'); return; }
+            const name = (document.getElementById('hgc_name').value || '').trim();
+            if (!name) { showToast('Enter a company name'); return; }
+            try {
+                await window.hgSaveCustomer({
+                    name,
+                    industry: document.getElementById('hgc_industry').value,
+                    contact: document.getElementById('hgc_contact').value,
+                    email: document.getElementById('hgc_email').value,
+                    phone: document.getElementById('hgc_phone').value,
+                    address: document.getElementById('hgc_address').value
+                });
+                hgModalClose();
+                showToast('Customer added: ' + name);
+                await renderCustomers(true);        // force-refresh the customer list + dropdowns' source
+            } catch (e) { showToast('Could not add customer: ' + (e.message || e)); }
+        }
+        window.hgAddCustomerSave = hgAddCustomerSave;
 
         function custAddPoint(siteId) {
             const name = prompt('Sample point name (e.g. Inlet, Cooling Tower, Boiler feed):'); if (name == null) return;

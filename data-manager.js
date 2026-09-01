@@ -71,6 +71,9 @@
       },
       async upsert(row) {
         if (!window.HG_LIMS_DB) throw new Error('LIMS DB not ready');
+        // Never let an import overwrite an ERP-mastered client (read-only contract).
+        try { const ex = row.id && await window.HG_LIMS_DB.get('clients', row.id); if (ex && ex.source === 'erp') return ex; } catch (_) {}
+        if (!row.source) row.source = 'app';               // imported customers are local (never null → passes RLS source<>'erp')
         return window.HG_LIMS_DB.put('clients', row);
       }
     },
