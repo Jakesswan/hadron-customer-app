@@ -300,7 +300,9 @@
 
   document.addEventListener('hg:sync:flushed', (e) => {
     const remaining = e.detail?.remaining ?? 0;
-    showSyncPill(remaining ? `${remaining} change${remaining===1?'':'s'} still pending` : 'All changes synced ✓');
+    const deadNew = e.detail?.deadNew ?? 0;
+    if (deadNew) showSyncPill(`⚠ ${deadNew} change${deadNew===1?'':'s'} couldn't be saved`);
+    else showSyncPill(remaining ? `${remaining} change${remaining===1?'':'s'} still pending` : 'All changes synced ✓');
   });
 
   // ── Boot logic ──────────────────────────────────────────
@@ -465,6 +467,17 @@
   // and signing out is reversible (just sign back in).
   window.hgSignOut = async function () {
     if (!window.HG_AUTH || !window.HG_AUTH.configured) return;
+    // Land any queued offline writes under the still-valid session BEFORE wiping the queue, so a
+    // sign-out doesn't silently drop unsynced work. Bounded (3s) so it can never hang sign-out.
+    // Suppress queue PERSISTENCE first: the flush may still be running when the timeout wins, and
+    // its trailing saveQueue must not re-persist the departing user's ops after the wipe — that
+    // would replay them into the next user's session (a cross-tenant leak). Sends still happen.
+    window.__hgSuppressQueuePersist = true;
+    try {
+      if (window.HG_DB && window.HG_DB._flush) {
+        await Promise.race([window.HG_DB._flush(), new Promise(function (res) { setTimeout(res, 3000); })]);
+      }
+    } catch (_) {}
     try { await hgClearTenantData(); } catch (_) {}
     try { localStorage.removeItem('hg-last-uid'); } catch (_) {}
     try { await window.HG_AUTH.signOut(); } catch (_) {}

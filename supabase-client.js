@@ -43,13 +43,51 @@
   }
 
   // ── Offline queue ───────────────────────────────────────
-  // When the user is offline (or not signed in), writes go to localStorage
-  // and replay on next reconnect.
+  // When the user is offline (or a write errors) ops go to localStorage and replay on next
+  // reconnect / sign-in. Replays are BOUNDED: a transient failure retries up to MAX_ATTEMPTS,
+  // a permanent one (RLS/constraint/4xx — e.g. a demoted user's owner-only write, or a
+  // lost-response-after-commit whose row now exists and can't be re-UPDATEd by that role) is
+  // moved to a dead-letter list instead of looping forever. Enqueue de-dupes per (table,id) so
+  // the latest write for a record wins and the queue can't grow unbounded on repeated pulls.
   const QUEUE_KEY = 'hg_sync_queue_v1';
+  const DEAD_KEY  = 'hg_sync_deadletter_v1';
+  const MAX_ATTEMPTS = 6;
   function loadQueue()   { try { return JSON.parse(localStorage.getItem(QUEUE_KEY) || '[]'); } catch { return []; } }
-  function saveQueue(q)  { localStorage.setItem(QUEUE_KEY, JSON.stringify(q || [])); }
-  function enqueue(op)   { const q = loadQueue(); q.push(op); saveQueue(q); }
+  // While signing out, a raced-out flush must NOT re-persist the queue after hgClearTenantData
+  // wipes it — otherwise the departing user's ops would survive and replay into the NEXT user's
+  // session (cross-tenant leak). hgSignOut sets window.__hgSuppressQueuePersist before wiping;
+  // the reload clears it. Sends still happen (under the still-valid old session); only local
+  // persistence is suppressed.
+  function saveQueue(q)  { if (window.__hgSuppressQueuePersist) return; localStorage.setItem(QUEUE_KEY, JSON.stringify(q || [])); }
+  function loadDead()    { try { return JSON.parse(localStorage.getItem(DEAD_KEY) || '[]'); } catch { return []; } }
+  function saveDead(d)   { if (window.__hgSuppressQueuePersist) return; try { localStorage.setItem(DEAD_KEY, JSON.stringify((d || []).slice(-50))); } catch (_) {} }
+  function opId(op)      { return op.table + ':' + (op.kind === 'delete' ? op.id : (op.row && op.row.id)); }
+  function enqueue(op)   {
+    const key = opId(op);
+    const q = loadQueue().filter(o => opId(o) !== key);   // a newer write for a record supersedes any pending op for it
+    op.attempts = op.attempts || 0;
+    q.push(op);
+    saveQueue(q);
+  }
   function queueLen()    { return loadQueue().length; }
+  function deadLen()     { return loadDead().length; }
+  function deadLetter(op, reason) {
+    const d = loadDead();
+    d.push({ kind: op.kind, table: op.table, id: op.kind === 'delete' ? op.id : (op.row && op.row.id),
+             attempts: op.attempts, reason: String(reason || '').slice(0, 300), deadAt: new Date().toISOString() });
+    saveDead(d);
+  }
+  // Permanent = won't self-heal on retry: RLS/permission (42501, PGRST301), not-found (PGRST116),
+  // any data-exception / integrity-constraint class (22xxx / 23xxx, incl. lettered codes like 22P02
+  // / 23P01), or a 4xx other than timeout (408) / rate-limit (429). NOTE: supabase-js puts the HTTP
+  // status on the RESPONSE envelope (res.status), not on res.error — flushQueue passes it in.
+  function isPermanentError(err, status) {
+    const code = String((err && err.code) || '');
+    if (/^(42501|PGRST301|PGRST116|2[23][0-9A-Z]{3})$/.test(code)) return true;
+    const s = Number(status || (err && (err.status || err.statusCode)) || 0);
+    if (s >= 400 && s < 500 && s !== 408 && s !== 429) return true;
+    return false;
+  }
 
   async function flushQueue() {
     if (!CONFIGURED) return;
@@ -60,17 +98,30 @@
     let q = loadQueue();
     if (!q.length) return;
     const remaining = [];
+    let deadened = 0;
     for (const op of q) {
+      let error = null, status = 0;
       try {
-        if (op.kind === 'upsert') await sb.from(op.table).upsert(op.row);
-        else if (op.kind === 'delete') await sb.from(op.table).delete().eq('id', op.id);
-      } catch (err) {
-        console.warn('[HG_SYNC] replay failed, requeuing', op, err);
-        remaining.push(op);
+        let res;
+        if (op.kind === 'upsert') res = await sb.from(op.table).upsert(op.row);
+        else if (op.kind === 'delete') res = await sb.from(op.table).delete().eq('id', op.id);
+        error = res && res.error;                          // supabase-js returns {error} (no throw) on RLS/constraint
+        status = (res && res.status) || 0;                 // HTTP status lives on the response envelope, not on error
+      } catch (thrown) {
+        error = thrown;                                    // network / transport failure → transient
+      }
+      if (!error) continue;                                // success → drop from the queue
+      op.attempts = (op.attempts || 0) + 1;
+      if (!isPermanentError(error, status) && op.attempts < MAX_ATTEMPTS) {
+        remaining.push(op);                                // transient / unknown → retry, bounded
+      } else {
+        deadLetter(op, (error && (error.message || error.code)) || 'failed');   // permanent or exhausted → set aside
+        deadened++;
       }
     }
     saveQueue(remaining);
-    document.dispatchEvent(new CustomEvent('hg:sync:flushed', { detail: { remaining: remaining.length } }));
+    if (deadened) console.warn('[HG_SYNC] ' + deadened + ' op(s) could not sync and were set aside (localStorage.' + DEAD_KEY + ')');
+    document.dispatchEvent(new CustomEvent('hg:sync:flushed', { detail: { remaining: remaining.length, dead: loadDead().length, deadNew: deadened } }));
   }
 
   // ── Init ────────────────────────────────────────────────
@@ -263,6 +314,7 @@
       org_invites:          tableApi('org_invites'),
       incidents:            tableApi('incidents'),
       _queueLen: queueLen,
+      _deadLen: deadLen,
       _flush: flushQueue
     };
 

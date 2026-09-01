@@ -2749,7 +2749,7 @@
                 <div class="hg-section-title">About</div>
                 <div class="hg-kvgrid">
                     <div class="hg-kv"><div class="k">App</div><div class="v">Hadron Group</div></div>
-                    <div class="hg-kv"><div class="k">Version</div><div class="v">v118</div></div>
+                    <div class="hg-kv"><div class="k">Version</div><div class="v">v119</div></div>
                     <div class="hg-kv"><div class="k">Platform</div><div class="v">PWA</div></div>
                 </div>
             </div>
@@ -5576,6 +5576,10 @@
         };
         const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
         const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+        // Escape a value for use INSIDE a JS string in an inline handler, e.g. onclick="f('${escJs(id)}')".
+        // esc() is wrong there: it emits &#39; which the HTML parser decodes back to ' before JS runs.
+        // Hex-escaping the JS-dangerous chars survives HTML-attribute decoding and cannot break out.
+        const escJs = v => String(v == null ? '' : v).replace(/[\\'"<>&\r\n\t]/g, c => '\\x' + c.charCodeAt(0).toString(16).padStart(2, '0'));
 
         /* ---------- Cooling Tower ----------
            Superseded: the cooling-tower calculator now lives in coolingtower.js
@@ -6316,12 +6320,12 @@
                 <div style="border:1px solid var(--border);border-radius:12px;background:var(--surface);overflow:hidden;">
                     <div style="display:flex;align-items:center;gap:8px;padding:9px 12px;background:var(--bg-soft);border-bottom:1px solid var(--border);">
                         <span style="font-size:14px;color:var(--accent);">📍</span>
-                        <input type="text" value="${esc(p.name || '')}" oninput="srSetPointName('${p.id}', this.value)" placeholder="Sample point ${idx + 1} — e.g. Inlet, Cooling Tower" style="flex:1;min-width:0;padding:7px 9px;border:1px solid var(--border);border-radius:8px;font-size:14px;font-weight:600;background:var(--surface);color:var(--text);">
-                        ${sr_points.length > 1 ? `<button type="button" title="Remove sample point" onclick="srRemovePoint('${p.id}')" style="border:none;background:transparent;color:var(--danger);font-size:19px;cursor:pointer;line-height:1;">🗑</button>` : ''}
+                        <input type="text" value="${esc(p.name || '')}" oninput="srSetPointName('${escJs(p.id)}', this.value)" placeholder="Sample point ${idx + 1} — e.g. Inlet, Cooling Tower" style="flex:1;min-width:0;padding:7px 9px;border:1px solid var(--border);border-radius:8px;font-size:14px;font-weight:600;background:var(--surface);color:var(--text);">
+                        ${sr_points.length > 1 ? `<button type="button" title="Remove sample point" onclick="srRemovePoint('${escJs(p.id)}')" style="border:none;background:transparent;color:var(--danger);font-size:19px;cursor:pointer;line-height:1;">🗑</button>` : ''}
                     </div>
                     <div style="padding:10px 12px;display:flex;flex-direction:column;gap:8px;">
                         ${p.tests.length ? p.tests.map(srTestRowHtml).join('') : '<p style="color:var(--muted);font-size:13px;margin:2px 0;">No tests yet — tap “Add test”.</p>'}
-                        <button type="button" class="calc-btn" style="margin:2px 0 0;padding:7px 12px;align-self:flex-start;" onclick="srOpenTestPicker('${p.id}')">＋ Add test</button>
+                        <button type="button" class="calc-btn" style="margin:2px 0 0;padding:7px 12px;align-self:flex-start;" onclick="srOpenTestPicker('${escJs(p.id)}')">＋ Add test</button>
                     </div>
                 </div>`).join('') +
                 `<button type="button" class="hg-btn" style="align-self:flex-start;margin-top:2px;" onclick="srAddPoint()">＋ Add sample point</button>`;
@@ -6814,29 +6818,29 @@
             document.getElementById('sites_list').innerHTML = list.length === 0 ? '<p style="color:#888;margin-top:12px;">No sites yet — click "+ Add site" to create one.</p>' :
                 list.map(s => {
                     const cName = s.customerId ? (customerCache[s.customerId] || '— customer not found —') : null;
-                    return `<div id="site-${s.id}" class="hg-card" style="margin-bottom:10px;">
+                    return `<div id="site-${escJs(s.id)}" class="hg-card" style="margin-bottom:10px;">
                     <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
                         <strong style="font-size:15px;">${esc(s.name)}</strong>
                         ${cName ? `<span class="hg-chip" style="background:#e8f4ff;color:#1a3d9e;">🏢 ${esc(cName)}</span>` : ''}
                         <span class="hg-chip neutral">${(s.equipment||[]).length} asset${(s.equipment||[]).length===1?'':'s'}</span>
                     </div>
                     <div style="margin-top:10px;display:flex;gap:6px;flex-wrap:wrap;">
-                        <button class="hg-btn owner-only" onclick="addAsset('${s.id}')">+ Add asset</button>
-                        <button class="hg-btn ghost" onclick="qrSite('${s.id}')">⬛ Site QR</button>
-                        <button class="hg-btn ghost owner-only" onclick="renameSite('${s.id}')">✏️ Rename</button>
-                        <button class="hg-btn warn owner-only" onclick="deleteSite('${s.id}')">🗑 Delete site</button>
+                        <button class="hg-btn owner-only" onclick="addAsset('${escJs(s.id)}')">+ Add asset</button>
+                        <button class="hg-btn ghost" onclick="qrSite('${escJs(s.id)}')">⬛ Site QR</button>
+                        <button class="hg-btn ghost owner-only" onclick="renameSite('${escJs(s.id)}')">✏️ Rename</button>
+                        <button class="hg-btn warn owner-only" onclick="deleteSite('${escJs(s.id)}')">🗑 Delete site</button>
                     </div>
                     ${s.equipment.length ? '<div style="margin-top:10px;display:grid;gap:6px;">' + s.equipment.map(a => {
                         const meta = [a.manufacturer, a.model].filter(Boolean).join(' ');
                         const sub = [meta || (a.serial?('Serial '+a.serial):'no serial'), a.installed?('installed '+a.installed):''].filter(Boolean).join(' · ');
                         return `
-                        <div id="site-equip-${s.id}-${a.id}" style="padding:10px 12px;background:#f7fbfd;border-left:3px solid #3AAEDB;border-radius:6px;font-size:13px;display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+                        <div id="site-equip-${escJs(s.id)}-${escJs(a.id)}" style="padding:10px 12px;background:#f7fbfd;border-left:3px solid #3AAEDB;border-radius:6px;font-size:13px;display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
                             <div style="flex:1;min-width:160px;">
                                 <strong>${esc(a.type)}</strong>
                                 <div style="font-size:12px;color:#6b7684;">${esc(sub)}</div>
                             </div>
-                            <button class="hg-btn ghost" style="padding:4px 10px;font-size:12px;" onclick="qrEquip('${s.id}','${a.id}')">⬛ Asset QR</button>
-                            <button class="hg-btn warn owner-only" style="padding:4px 10px;font-size:12px;" onclick="deleteAsset('${s.id}','${a.id}')">🗑</button>
+                            <button class="hg-btn ghost" style="padding:4px 10px;font-size:12px;" onclick="qrEquip('${escJs(s.id)}','${escJs(a.id)}')">⬛ Asset QR</button>
+                            <button class="hg-btn warn owner-only" style="padding:4px 10px;font-size:12px;" onclick="deleteAsset('${escJs(s.id)}','${escJs(a.id)}')">🗑</button>
                         </div>`;
                     }).join('') + '</div>' : ''}
                 </div>`;
@@ -6873,19 +6877,19 @@
                     <span class="hg-chip neutral">${pts.length} point${pts.length===1?'':'s'}</span>
                     ${eq.length ? `<span class="hg-chip neutral">${eq.length} asset${eq.length===1?'':'s'}</span>` : ''}
                     <span style="flex:1;"></span>
-                    <button class="hg-btn ghost owner-only" style="padding:4px 9px;font-size:12px;" onclick="renameSite('${s.id}')" title="Rename site">✏️</button>
-                    <button class="hg-btn warn owner-only" style="padding:4px 9px;font-size:12px;" onclick="deleteSite('${s.id}')" title="Delete site">🗑</button>
+                    <button class="hg-btn ghost owner-only" style="padding:4px 9px;font-size:12px;" onclick="renameSite('${escJs(s.id)}')" title="Rename site">✏️</button>
+                    <button class="hg-btn warn owner-only" style="padding:4px 9px;font-size:12px;" onclick="deleteSite('${escJs(s.id)}')" title="Delete site">🗑</button>
                 </div>
                 <div style="margin-top:8px;font-size:11px;letter-spacing:.05em;text-transform:uppercase;color:var(--muted);font-weight:700;">Sample points</div>
                 ${pts.length ? '<div style="margin-top:5px;display:grid;gap:5px;">' + pts.map(p => `
                     <div style="display:flex;align-items:center;gap:8px;padding:7px 10px;background:var(--surface);border:1px solid var(--border);border-radius:6px;font-size:13px;">
                         <span style="flex:1;color:var(--text);">${esc(p.name)}${p.notes ? ` <span style="color:var(--muted);">· ${esc(p.notes)}</span>` : ''}</span>
-                        <button class="hg-btn ghost owner-only" style="padding:2px 8px;font-size:12px;" onclick="custEditPoint('${s.id}','${p.id}')">✏️</button>
-                        <button class="hg-btn warn owner-only" style="padding:2px 8px;font-size:12px;" onclick="custDeletePoint('${s.id}','${p.id}')">🗑</button>
+                        <button class="hg-btn ghost owner-only" style="padding:2px 8px;font-size:12px;" onclick="custEditPoint('${escJs(s.id)}','${escJs(p.id)}')">✏️</button>
+                        <button class="hg-btn warn owner-only" style="padding:2px 8px;font-size:12px;" onclick="custDeletePoint('${escJs(s.id)}','${escJs(p.id)}')">🗑</button>
                     </div>`).join('') + '</div>' : '<p style="color:var(--muted);font-size:12px;margin:4px 0;">No sample points yet.</p>'}
                 <div style="margin-top:8px;display:flex;gap:6px;flex-wrap:wrap;">
-                    <button class="hg-btn ghost owner-only" style="padding:5px 11px;font-size:12px;" onclick="custAddPoint('${s.id}')">＋ Add sample point</button>
-                    <button class="hg-btn ghost owner-only" style="padding:5px 11px;font-size:12px;" onclick="addAsset('${s.id}')">＋ Add asset</button>
+                    <button class="hg-btn ghost owner-only" style="padding:5px 11px;font-size:12px;" onclick="custAddPoint('${escJs(s.id)}')">＋ Add sample point</button>
+                    <button class="hg-btn ghost owner-only" style="padding:5px 11px;font-size:12px;" onclick="addAsset('${escJs(s.id)}')">＋ Add asset</button>
                 </div>
             </div>`;
         }
@@ -6983,7 +6987,7 @@
                     </div>
                     <div class="hg-modal-foot">
                         <button class="hg-btn ghost" onclick="hgModalClose()">Cancel</button>
-                        <button class="hg-btn primary" onclick="hgSaveAssetsToSite('${siteId}')">💾 Save assets</button>
+                        <button class="hg-btn primary" onclick="hgSaveAssetsToSite('${escJs(siteId)}')">💾 Save assets</button>
                     </div>
                 </div>`;
             hgModalOpen(html);
@@ -7202,17 +7206,35 @@
         //    Deletes are soft (deleted_at tombstone, migration 0015) so they propagate + can't be
         //    resurrected by a stale cache; the pull aborts on a fetch error so a masked read never
         //    wipes local. hgIncidentToRow omits deleted_at, so a re-push can't clear a tombstone. ──
+
+        // Fetch ALL rows of an org-shared table, paging past PostgREST's 1000-row cap (ordered by
+        // id for stable paging). Returns the full array, or null on ANY error so the caller aborts
+        // the pull and never treats a failed or partial read as an authoritative server state.
+        async function hgFetchAllRows(table) {
+            if (!window.HG_SUPA) return null;
+            const PAGE = 1000; let from = 0; const out = [];
+            for (;;) {
+                let res;
+                try { res = await window.HG_SUPA.from(table).select('*').order('id', { ascending: true }).range(from, from + PAGE - 1); }
+                catch (_) { return null; }
+                if (!res || res.error || !Array.isArray(res.data)) return null;
+                for (const r of res.data) out.push(r);
+                if (res.data.length < PAGE) break;
+                from += PAGE;
+            }
+            return out;
+        }
+
         function hgIncidentToRow(e) { return { id: e.id, payload: e, updated_at: new Date().toISOString() }; }   // org/user default server-side
         function hgIncidentsPush(e) {
             try { if (window.HG_PROFILE && window.HG_DB && window.HG_DB.incidents && e && e.id) window.HG_DB.incidents.upsert(hgIncidentToRow(e)).catch(() => {}); } catch (_) {}
         }
         async function hgIncidentsPull() {
             if (!window.HG_PROFILE || !window.HG_SUPA) return;
-            let res;
-            try { res = await window.HG_SUPA.from('incidents').select('*'); } catch (_) { return; }
-            if (!res || res.error || !Array.isArray(res.data)) return;                              // abort on a masked fetch error — never wipe local on a bad read
+            const rows = await hgFetchAllRows('incidents');
+            if (!rows) return;                                                                      // abort on a masked/partial fetch — never wipe local on a bad read
             const byId = {}, deleted = {};
-            res.data.forEach(r => { const e = r && r.payload; if (!e || !e.id) return; if (r.deleted_at) deleted[e.id] = true; else byId[e.id] = e; });
+            rows.forEach(r => { const e = r && r.payload; if (!e || !e.id) return; if (r.deleted_at) deleted[e.id] = true; else byId[e.id] = e; });
             LS.get('hadron_incident', []).forEach(e => {
                 if (!e || !e.id || deleted[e.id] || byId[e.id]) return;                             // tombstoned -> drop + never resurrect; already on server -> keep server copy
                 byId[e.id] = e; hgIncidentsPush(e);                                                 // genuinely local-only -> migrate up
@@ -7256,11 +7278,10 @@
         }
         async function hgSitesPull() {
             if (!window.HG_PROFILE || !window.HG_SUPA) return;
-            let res;
-            try { res = await window.HG_SUPA.from('sites').select('*'); } catch (_) { return; }
-            if (!res || res.error || !Array.isArray(res.data)) return;                              // abort on a masked fetch error — never wipe local on a bad read
+            const rows = await hgFetchAllRows('sites');
+            if (!rows) return;                                                                      // abort on a masked/partial fetch — never wipe local on a bad read
             const byId = {}, deleted = {};
-            res.data.forEach(r => { const s = r && r.payload; if (!s || !s.id) return; if (r.deleted_at) deleted[s.id] = true; else byId[s.id] = s; });
+            rows.forEach(r => { const s = r && r.payload; if (!s || !s.id) return; if (r.deleted_at) deleted[s.id] = true; else byId[s.id] = s; });
             LS.get('hadron_sites', []).forEach(s => {
                 if (!s || !s.id || deleted[s.id] || byId[s.id]) return;                             // tombstoned -> drop + never resurrect; already on server -> keep server copy
                 byId[s.id] = s; hgSitesPush(s);                                                     // genuinely local-only -> migrate up (owner-gated inside)
