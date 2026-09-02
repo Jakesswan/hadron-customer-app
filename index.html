@@ -83,6 +83,7 @@
     <script src="academy.js" defer></script>
 
     <script src="searchable-select.js" defer></script>
+    <script src="trends.js" defer></script>
 
     <!-- LIMS module (loaded at end of body via defer) -->
     <script src="lims.js" defer></script>
@@ -2751,7 +2752,7 @@
                 <div class="hg-section-title">About</div>
                 <div class="hg-kvgrid">
                     <div class="hg-kv"><div class="k">App</div><div class="v">Hadron Group</div></div>
-                    <div class="hg-kv"><div class="k">Version</div><div class="v">v122</div></div>
+                    <div class="hg-kv"><div class="k">Version</div><div class="v">v123</div></div>
                     <div class="hg-kv"><div class="k">Platform</div><div class="v">PWA</div></div>
                 </div>
             </div>
@@ -4005,24 +4006,7 @@
     <!-- ================ TRENDS ================ -->
     <div class="window" id="window-trends">
         <div class="window-header"><button class="back-button" onclick="closeWindow('trends')">←</button><span class="window-title">Trends</span></div>
-        <div class="window-content">
-            <h2>Water-Quality Trends</h2>
-            <div class="form-group"><label>Site</label><select id="tr_site" class="settings-select" onchange="renderTrend()"></select></div>
-            <div class="form-group"><label>Parameter</label>
-                <select id="tr_param" class="settings-select" onchange="renderTrend()">
-                    <option value="ph">pH</option>
-                    <option value="cond">Conductivity</option>
-                    <option value="fcl">Free Cl</option>
-                    <option value="tds">TDS</option>
-                    <option value="orp">ORP</option>
-                    <option value="temp">Temperature</option>
-                </select>
-            </div>
-            <canvas id="tr_chart" height="220"></canvas>
-            <hr style="margin:18px 0;border:none;border-top:1px solid #eee;">
-            <h3>Management KPI</h3>
-            <div id="tr_kpi"></div>
-        </div>
+        <div class="window-content" id="trendsContent"></div>
     </div>
 
     <!-- ================ SOPs ================ -->
@@ -4219,7 +4203,7 @@
             if (appName === 'incident') renderIncidents();
             if (appName === 'catalogue') renderCatalogue();
             if (appName === 'jobs') { renderJobs(); renderTimers(); tickActiveTimer(); }
-            if (appName === 'trends') { renderTrendSites(); renderTrend(); renderKPI(); }
+            if (appName === 'trends') { if (window.hgTrendsOpen) window.hgTrendsOpen(); }
             if (appName === 'sops') renderSOPList();
             if (appName === 'calibration') renderCals();
             if (appName === 'ppe') renderPPE();
@@ -7519,54 +7503,9 @@
                     return `<div style="padding:6px;background:#f7f7f7;border-radius:4px;margin-bottom:4px;font-size:13px;">${esc(t.label)} · ${h} h · ${new Date(t.start).toLocaleString()}</div>`; }).join(''));
         }
 
-        /* =========================================================
-           Trends (uses service-report storage)
-           ========================================================= */
-        function renderTrendSites() {
-            const list = LS.get('hadron_sr', []);
-            const sites = Array.from(new Set(list.map(r => r.site).filter(Boolean))).sort();
-            const sel = document.getElementById('tr_site');
-            sel.innerHTML = sites.length ? sites.map(s => `<option>${esc(s)}</option>`).join('') : '<option value="">— no data —</option>';
-        }
-        function ensureChartLib(cb) {
-            if (window.Chart) return cb();
-            const s = document.createElement('script');
-            s.src = 'https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js';
-            s.onload = cb; s.onerror = () => showToast('Chart lib failed');
-            document.head.appendChild(s);
-        }
-        let trendChart = null;
-        function renderTrend() {
-            ensureChartLib(() => {
-                const site = document.getElementById('tr_site').value;
-                const param = document.getElementById('tr_param').value;
-                const all = LS.get('hadron_sr', []).filter(r => r.site === site).sort((a,b) => new Date(a.date) - new Date(b.date));
-                const labels = all.map(r => (r.date || '').slice(0, 10));
-                const data = all.map(r => +r[param] || null);
-                const ctx = document.getElementById('tr_chart').getContext('2d');
-                if (trendChart) trendChart.destroy();
-                trendChart = new Chart(ctx, {
-                    type: 'line',
-                    data: { labels, datasets: [{ label: param, data, borderColor: '#00a8e0', backgroundColor: 'rgba(0,168,224,0.12)', tension: 0.2 }] },
-                    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } }
-                });
-            });
-        }
-        function renderKPI() {
-            const srs = LS.get('hadron_sr', []);
-            const jobs = LS.get('hadron_jobs', []);
-            const pm = LS.get('hadron_pm', []);
-            const today = new Date();
-            const overdue = pm.filter(p => new Date(p.next) < today).length;
-            const openJ = jobs.filter(j => j.status === 'open').length;
-            const last30 = srs.filter(r => (today - new Date(r.date)) < 30*86400000).length;
-            document.getElementById('tr_kpi').innerHTML =
-                `<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(110px,1fr));gap:8px;">
-                    <div style="background:#00a8e0;color:#fff;padding:12px;border-radius:8px;text-align:center;"><div style="font-size:22px;font-weight:700;">${last30}</div><small>Services (30d)</small></div>
-                    <div style="background:#c59d2b;color:#fff;padding:12px;border-radius:8px;text-align:center;"><div style="font-size:22px;font-weight:700;">${overdue}</div><small>Overdue PMs</small></div>
-                    <div style="background:#2a9d3f;color:#fff;padding:12px;border-radius:8px;text-align:center;"><div style="font-size:22px;font-weight:700;">${openJ}</div><small>Open jobs</small></div>
-                </div>`;
-        }
+        /* Trends & Reports moved to trends.js (window.hgTrendsOpen). The old service-report trend
+           + KPI code was removed: it charted top-level r[param] fields that the current
+           sample-point report model never stores, so it drew empty lines against real data. */
 
         /* =========================================================
            SOPs (embedded library)
