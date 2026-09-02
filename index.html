@@ -2752,7 +2752,7 @@
                 <div class="hg-section-title">About</div>
                 <div class="hg-kvgrid">
                     <div class="hg-kv"><div class="k">App</div><div class="v">Hadron Group</div></div>
-                    <div class="hg-kv"><div class="k">Version</div><div class="v">v131</div></div>
+                    <div class="hg-kv"><div class="k">Version</div><div class="v">v132</div></div>
                     <div class="hg-kv"><div class="k">Platform</div><div class="v">PWA</div></div>
                 </div>
             </div>
@@ -3704,7 +3704,12 @@
                     <h3 style="margin-top:16px;">Actions</h3>
                     <div class="form-group"><label>Observations</label><textarea id="sr_obs" rows="3"></textarea></div>
                     <div class="form-group"><label>Actions taken</label><textarea id="sr_act" rows="3"></textarea></div>
-                    <div class="form-group"><label>Chemicals dosed</label><textarea id="sr_chem" rows="2" placeholder="Product · dose · qty"></textarea></div>
+                    <h3 style="margin-top:16px;">Chemicals dosed</h3>
+                    <p style="color:var(--muted);font-size:12px;margin:4px 0;">Log each product dosed this visit — product, dose rate, quantity added, and stock left. Drives consumption tracking &amp; re-ordering.</p>
+                    <div id="sr_dosing" style="display:flex;flex-direction:column;gap:8px;"></div>
+                    <datalist id="sr_products_list"></datalist>
+                    <button type="button" class="calc-btn" style="margin-top:6px;background:var(--accent);color:#0f2733;" onclick="srAddDose()">＋ Add product</button>
+                    <div class="form-group" style="margin-top:10px;"><label>Dosing notes (optional)</label><textarea id="sr_chem" rows="2" placeholder="Anything else about dosing this visit"></textarea></div>
 
                     <h3 style="margin-top:16px;">Photos</h3>
                     <input type="file" id="sr_photo" accept="image/*" capture="environment" onchange="addServicePhoto(event)" multiple>
@@ -5806,6 +5811,7 @@
             r.submittedAt = new Date().toISOString();
             r.submittedBy = (window.HG_PROFILE && (window.HG_PROFILE.full_name || window.HG_PROFILE.email)) || r.tech || '';
             if (r.tech) LS.set('hadron_sr_lasttech', r.tech);
+            srRememberProducts(r.dosing);
             const saved = srLocalSave(r);
             showToast(saved ? 'Report submitted & locked' : '⚠ Device storage full — submitted to cloud; keeping a recovery draft.');
             srCloudPushReport(r);
@@ -5934,6 +5940,10 @@
             const pts = (_srLastVisit.points && _srLastVisit.points.length) ? _srLastVisit.points : [{ name: '', tests: _srLastVisit.tests || [] }];
             sr_points = pts.map(p => ({ id: uid(), name: p.name || '', tests: (p.tests || []).map(t => srNewRow({ id: t.id, code: t.code, name: t.name, unit: t.unit, specMin: t.specMin, specMax: t.specMax, sans241: t.sans241, category: t.category })) }));
             if (!sr_points.length) sr_points = [srNewPoint('', true)];
+            if (_srLastVisit.dosing && _srLastVisit.dosing.length) {   // same products/dose, fresh qty + stock
+                sr_dosing = _srLastVisit.dosing.map(d => Object.assign(srNewDose(), { product: d.product || '', dose: d.dose || '', unit: d.unit || 'L', batch: d.batch || '' }));
+                srRenderDosing();
+            }
             if (_srLastVisit.chem) document.getElementById('sr_chem').value = _srLastVisit.chem;   // dosing is often similar visit-to-visit
             if (_srLastVisit.act)  document.getElementById('sr_act').value  = _srLastVisit.act;
             srRenderPoints(); srQueueAutosave();
@@ -6015,6 +6025,7 @@
             document.getElementById('sr_tech').value = (window.HG_PROFILE && window.HG_PROFILE.full_name) || LS.get('hadron_sr_lasttech', '') || '';
             _srLastVisit = null; srUpdateCloneBtn();
             sr_photos = []; document.getElementById('sr_photos').innerHTML = '';
+            sr_dosing = []; srRenderDosing(); srRenderDoseProducts();
             sr_reportId = uid();   // one stable id for this report across Save + Export PDF
             sr_reportNo = null;    // minted on first gatherSR
             srInitPoints();
@@ -6062,6 +6073,7 @@
             document.getElementById('sr_obs').value  = r.obs || '';
             document.getElementById('sr_act').value  = r.act || '';
             document.getElementById('sr_chem').value = r.chem || '';
+            sr_dosing = (r.dosing || []).map(d => Object.assign(srNewDose(), d)); srRenderDosing(); srRenderDoseProducts();
             document.getElementById('sr_next_due').value  = r.nextDue || '';
             document.getElementById('sr_sig_name').value  = r.sigName || '';
             document.getElementById('sr_sig_title').value = r.sigTitle || '';
@@ -6612,6 +6624,42 @@
             }
         }
 
+        // ── Structured chemical dosing (product · dose · qty · batch · stock) ──
+        let sr_dosing = [];
+        function srDoseProducts() {
+            const seed = ['Chlorine', 'Chlorine Dioxide', 'Sodium Hypochlorite', 'Calcium Hypochlorite', 'Biocide', 'Corrosion inhibitor', 'Scale inhibitor', 'pH corrector', 'Antiscalant', 'Coagulant', 'Flocculant', 'Sodium bisulphite', 'Sodium sulphite', 'Caustic soda', 'Soda ash', 'Sulphuric acid', 'Hydrochloric acid', 'Oxygen scavenger'];
+            return Array.from(new Set(seed.concat(LS.get('hadron_sr_products', [])))).sort();
+        }
+        function srRenderDoseProducts() { const dl = document.getElementById('sr_products_list'); if (dl) dl.innerHTML = srDoseProducts().map(p => `<option value="${esc(p)}">`).join(''); }
+        function srNewDose() { return { id: uid(), product: '', dose: '', qty: '', unit: 'L', batch: '', stock: '' }; }
+        function srRenderDosing() {
+            const host = document.getElementById('sr_dosing'); if (!host) return;
+            const inp = (id, field, val, ph, extra) => `<input ${extra || ''} value="${esc(val)}" oninput="srSetDose('${escJs(id)}','${field}',this.value)" placeholder="${ph}" style="width:100%;box-sizing:border-box;padding:7px;border:1px solid var(--border);border-radius:6px;background:var(--surface);color:var(--text);font-size:13px;">`;
+            host.innerHTML = sr_dosing.map(d => `
+                <div style="border:1px solid var(--border);border-radius:8px;padding:8px;">
+                    <div style="display:flex;gap:6px;align-items:center;">
+                        <input list="sr_products_list" value="${esc(d.product)}" oninput="srSetDose('${escJs(d.id)}','product',this.value)" placeholder="Product" style="flex:1;box-sizing:border-box;padding:7px;border:1px solid var(--border);border-radius:6px;background:var(--surface);color:var(--text);font-weight:600;">
+                        <button type="button" onclick="srRemoveDose('${escJs(d.id)}')" title="Remove" style="border:none;background:transparent;color:var(--danger);font-size:18px;cursor:pointer;">🗑</button>
+                    </div>
+                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:6px;">
+                        ${inp(d.id, 'dose', d.dose, 'Dose rate (e.g. 5 ppm)')}
+                        <div style="display:flex;gap:4px;">${inp(d.id, 'qty', d.qty, 'Qty added', 'type="number" step="any" inputmode="decimal"')}<select onchange="srSetDose('${escJs(d.id)}','unit',this.value)" style="padding:7px;border:1px solid var(--border);border-radius:6px;background:var(--surface);color:var(--text);">${['L','kg','mL','g'].map(u => `<option${d.unit === u ? ' selected' : ''}>${u}</option>`).join('')}</select></div>
+                        ${inp(d.id, 'batch', d.batch, 'Batch / lot')}
+                        ${inp(d.id, 'stock', d.stock, 'Stock on hand after')}
+                    </div>
+                </div>`).join('');
+        }
+        function srAddDose() { sr_dosing.push(srNewDose()); srRenderDosing(); srQueueAutosave(); }
+        function srRemoveDose(id) { sr_dosing = sr_dosing.filter(d => d.id !== id); srRenderDosing(); srQueueAutosave(); }
+        function srSetDose(id, field, val) { const d = sr_dosing.find(x => x.id === id); if (d) { d[field] = val; srQueueAutosave(); } }
+        function srGatherDosing() { return sr_dosing.filter(d => (d.product || '').trim() || (d.dose || '').toString().trim() || String(d.qty || '').trim()); }
+        function srRememberProducts(dosing) {
+            if (!dosing || !dosing.length) return;
+            const set = new Set(LS.get('hadron_sr_products', []));
+            dosing.forEach(d => { const p = (d.product || '').trim(); if (p) set.add(p); });
+            LS.set('hadron_sr_products', Array.from(set).slice(-200));
+        }
+
         function gatherSR() {
             const id = id_ => document.getElementById(id_).value;
             const customerSel = id('sr_customerId');
@@ -6636,7 +6684,7 @@
                 points: srGatherPoints(),
                 tests: srAllRows().map(srMapRow),   // flattened — keeps the saved-list summary + legacy PDF path working
 
-                obs: id('sr_obs'), act: id('sr_act'), chem: id('sr_chem'),
+                obs: id('sr_obs'), act: id('sr_act'), chem: id('sr_chem'), dosing: srGatherDosing(),
                 photos: sr_photos,
                 sig: sr_sigHasStrokes ? document.getElementById('sr_sig').toDataURL('image/png') : '',   // '' when never signed
                 sigName: id('sr_sig_name'), sigTitle: id('sr_sig_title'),
@@ -6661,6 +6709,7 @@
             if ((r.site || '').trim()) return true;
             if (r.photos && r.photos.length) return true;
             if ((r.obs || '').trim() || (r.act || '').trim() || (r.chem || '').trim()) return true;
+            if (r.dosing && r.dosing.length) return true;
             if (r.points && r.points.some(p => (p.tests || []).some(t => t.value !== '' && t.value != null))) return true;
             return false;
         }
@@ -6689,6 +6738,7 @@
             const r = gatherSR();
             if (!r.site) { showToast('Enter site name'); return; }
             if (r.tech) LS.set('hadron_sr_lasttech', r.tech);   // remember for the next report
+            srRememberProducts(r.dosing);
             const saved = srLocalSave(r);
             srCloudPushReport(r);   // best-effort cloud sync (queues if offline / not signed in)
             if (saved) { showToast('Report saved'); srClearDraft(); }   // persisted — drop the recovery draft
@@ -6708,6 +6758,7 @@
             if (sr_readOnly) return;
             const r = gatherSR();
             if (!r.site) { showToast('Enter site name'); return; }
+            srRememberProducts(r.dosing);
             srLocalSave(r);   // best-effort local save (upsert by id)
             srCloudPushReport(r);
             srClearDraft();   // report is now persisted — drop the recovery draft (no stale resume prompt)
@@ -6837,7 +6888,24 @@
             y += 8; doc.setFontSize(14); doc.setFont('helvetica','bold'); doc.text('Observations', 36, y); y += 18; doc.setFontSize(10);
             const writeBlock = txt => { if (!txt) return; const lines = doc.splitTextToSize(txt, PAGE_W - 72); doc.text(lines, 36, y); y += lines.length * 12 + 6; if (y > PAGE_H - 120) { doc.addPage(); y = 60; }};
             writeBlock(r.obs); doc.setFont('helvetica','bold'); doc.text('Actions taken:', 36, y); y += 14; doc.setFont('helvetica','normal'); writeBlock(r.act);
-            doc.setFont('helvetica','bold'); doc.text('Chemicals dosed:', 36, y); y += 14; doc.setFont('helvetica','normal'); writeBlock(r.chem);
+            // Chemicals dosed — structured table (+ optional notes)
+            if (r.dosing && r.dosing.length) {
+                if (y > PAGE_H - 110) { doc.addPage(); y = 60; }
+                doc.setFont('helvetica','bold'); doc.setFontSize(12); doc.text('Chemicals dosed', 36, y); y += 15;
+                doc.setFontSize(8); doc.setFont('helvetica','bold'); doc.setTextColor.apply(doc, SOFT);
+                doc.text('Product', 36, y); doc.text('Dose rate', 210, y); doc.text('Qty added', 320, y); doc.text('Batch', 410, y); doc.text('Stock', 480, y); y += 4;
+                doc.setDrawColor(210,210,210); doc.line(36, y, PAGE_W - 36, y); y += 12; doc.setTextColor(0,0,0); doc.setFont('helvetica','normal'); doc.setFontSize(9);
+                r.dosing.forEach(d => {
+                    if (y > PAGE_H - 80) { doc.addPage(); y = 60; }
+                    doc.text(String(d.product || '').slice(0, 30), 36, y);
+                    doc.text(String(d.dose || '').slice(0, 18), 210, y);
+                    doc.text(d.qty ? (String(d.qty) + ' ' + (d.unit || '')) : '', 320, y);
+                    doc.text(String(d.batch || '').slice(0, 12), 410, y);
+                    doc.text(String(d.stock || '').slice(0, 12), 480, y); y += 13;
+                });
+                y += 8;
+            }
+            if (r.chem) { doc.setFont('helvetica','bold'); doc.setFontSize(10); doc.text('Dosing notes:', 36, y); y += 14; doc.setFont('helvetica','normal'); writeBlock(r.chem); }
             // Photos
             if (r.photos && r.photos.length) {
                 if (y > PAGE_H - 180) { doc.addPage(); y = 60; }
