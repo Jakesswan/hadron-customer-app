@@ -2752,7 +2752,7 @@
                 <div class="hg-section-title">About</div>
                 <div class="hg-kvgrid">
                     <div class="hg-kv"><div class="k">App</div><div class="v">Hadron Group</div></div>
-                    <div class="hg-kv"><div class="k">Version</div><div class="v">v128</div></div>
+                    <div class="hg-kv"><div class="k">Version</div><div class="v">v129</div></div>
                     <div class="hg-kv"><div class="k">Platform</div><div class="v">PWA</div></div>
                 </div>
             </div>
@@ -5757,8 +5757,14 @@
            ========================================================= */
         let sr_photos = [];
         let sr_reportId = null;   // stable id for the open form, so Save + Export are one report, not two
+        let sr_reportNo = null;   // human-citable reference (SR-YYYYMMDD-SITE-XXXX), minted once per report
         let sr_status = 'draft';  // current form's report status: 'draft' | 'submitted'
         let sr_readOnly = false;  // true when an operator/viewer is VIEWING a saved report (no edits)
+        function srMakeReportNo(site) {
+            const d = String((document.getElementById('sr_dt') || {}).value || new Date().toISOString()).slice(0, 10).replace(/-/g, '');
+            const slug = (String(site || '').replace(/[^a-z0-9]/gi, '').slice(0, 4).toUpperCase()) || 'SITE';
+            return 'SR-' + d + '-' + slug + '-' + String(sr_reportId || uid()).slice(-4).toUpperCase();
+        }
 
         function srEnsureRoStyle() {
             if (document.getElementById('sr_ro_style')) return;
@@ -5978,6 +5984,7 @@
             document.getElementById('sr_gps').value = '';
             sr_photos = []; document.getElementById('sr_photos').innerHTML = '';
             sr_reportId = uid();   // one stable id for this report across Save + Export PDF
+            sr_reportNo = null;    // minted on first gatherSR
             srInitPoints();
             initSignaturePad();
             captureGps(true);      // auto-capture location silently (fails quietly if denied/unavailable)
@@ -6014,6 +6021,7 @@
             document.getElementById('sr_form').style.display = 'block';
             document.getElementById('sr_list').style.display = 'none';
             sr_reportId = r.id;   // re-save upserts THIS report
+            sr_reportNo = r.reportNo || null;
             sr_status = r.status || 'draft';
 
             document.getElementById('sr_tech').value = r.tech || '';
@@ -6578,8 +6586,10 @@
             // whatever is in the manual input. Persisted as `site` for backward
             // compatibility with existing PDF / list rendering.
             const siteLabel = (site && site.name) || id('sr_site') || '';
+            if (!sr_reportNo && siteLabel) sr_reportNo = srMakeReportNo(siteLabel);   // mint once a real site exists (so the slug is never the fallback)
             return {
                 id: sr_reportId || uid(),
+                reportNo: sr_reportNo,
                 status: sr_status || 'draft',
                 customerId: (customerSel && customerSel !== '__manual__') ? customerSel : null,
                 customerName: (customer && customer.name) || (customerSel && customerSel !== '__manual__' ? ((document.querySelector('#sr_customerId option:checked') || {}).textContent || '').trim() : '') || '',
@@ -6673,7 +6683,17 @@
             }
             if (r) generateSrPdf(r); else showToast('Report not found');
         }
-        function generateSrPdf(r) {
+        let _srLogoData = null, _srLogoTried = false;
+        async function srLoadLogo() {
+            if (_srLogoData || _srLogoTried) return _srLogoData;
+            _srLogoTried = true;
+            try {
+                const res = await fetch('./Hadron_Logo.png'); const blob = await res.blob();
+                _srLogoData = await new Promise((resolve) => { const rd = new FileReader(); rd.onload = e => resolve(e.target.result); rd.onerror = () => resolve(null); rd.readAsDataURL(blob); });
+            } catch (_) {}
+            return _srLogoData;
+        }
+        async function generateSrPdf(r) {
             if (!window.jspdf) { showToast('PDF lib still loading'); return; }
             const { jsPDF } = window.jspdf;
             const doc = new jsPDF({ unit: 'pt', format: 'a4' });
@@ -6681,14 +6701,55 @@
             const CYAN = [0,168,224], GOLD = [197,157,43], SOFT = [120,120,120];
             doc.setFillColor.apply(doc, CYAN); doc.rect(0, 0, PAGE_W, 80, 'F');
             doc.setFillColor.apply(doc, GOLD); doc.rect(0, 80, PAGE_W, 4, 'F');
+            const logo = await srLoadLogo();
+            if (logo) { try { doc.addImage(logo, 'PNG', 34, 18, 46, 46); } catch (_) {} }
+            const hx = logo ? 92 : 36;
             doc.setTextColor(255,255,255); doc.setFontSize(18); doc.setFont('helvetica','bold');
-            doc.text('Hadron Group', 36, 38);
+            doc.text('Hadron Group', hx, 38);
             doc.setFontSize(11); doc.setFont('helvetica','normal');
-            doc.text('Service Report · ' + (r.site || ''), 36, 58);
-            doc.setTextColor(0,0,0); let y = 110;
+            doc.text('Service Report · ' + (r.site || ''), hx, 58);
+            if (r.reportNo) {   // human-citable reference + draft/final, top-right
+                doc.setFontSize(10); doc.setFont('helvetica','bold'); doc.text(String(r.reportNo), PAGE_W - 36, 34, { align: 'right' });
+                doc.setFontSize(9); doc.setFont('helvetica','normal'); doc.text(r.status === 'submitted' ? 'FINAL' : 'DRAFT', PAGE_W - 36, 50, { align: 'right' });
+            }
+            doc.setTextColor(0,0,0); let y = 110; let anyCustom = false;
             const row = (k, v) => { if (v == null || v === '') return; doc.setFont('helvetica','bold'); doc.text(k, 36, y); doc.setFont('helvetica','normal'); doc.text(String(v), 200, y); y += 16; if (y > PAGE_H - 80) { doc.addPage(); y = 60; }};
             doc.setFontSize(14); doc.setFont('helvetica','bold'); doc.text('Site Details', 36, y); y += 18; doc.setFontSize(10);
-            row('Date / time:', r.date); row('Technician:', r.tech); row('Contact:', r.contact); row('GPS:', r.gps);
+            row('Date / time:', srIsoToLocalDt(r.date).replace('T', ' ') || r.date); row('Technician:', r.tech); row('Contact:', r.contact); row('GPS:', r.gps);
+
+            // ── SANS 241 compliance summary + exceedances ──
+            const _pts = (r.points || []).filter(p => p.tests && p.tests.some(t => t.value != null && t.value !== ''));
+            const _flat = _pts.length ? _pts : [{ name: '', tests: (r.tests || []) }];
+            const _judged = [], _fails = [];
+            _flat.forEach(p => (p.tests || []).forEach(t => {
+                if (t.value == null || t.value === '' || (t.specMin == null && t.specMax == null)) return;
+                _judged.push(t); if (t.pass === false) _fails.push({ point: p.name, t });
+            }));
+            if (_judged.length) {
+                y += 10; if (y > PAGE_H - 90) { doc.addPage(); y = 60; }
+                const ok = _fails.length === 0;
+                doc.setFillColor.apply(doc, ok ? [231,245,236] : [250,232,232]); doc.setDrawColor.apply(doc, ok ? [21,123,58] : [192,57,43]);
+                doc.roundedRect(36, y, PAGE_W - 72, 28, 4, 4, 'FD');
+                doc.setTextColor.apply(doc, ok ? [21,123,58] : [192,57,43]); doc.setFont('helvetica','bold'); doc.setFontSize(11);
+                doc.text('SANS 241 compliance:  ' + (_judged.length - _fails.length) + ' of ' + _judged.length + ' within limits' + (_fails.length ? '  ·  ' + _fails.length + ' exceedance' + (_fails.length === 1 ? '' : 's') : '  ·  all within limits'), 48, y + 18);
+                doc.setTextColor(0,0,0); doc.setFont('helvetica','normal'); y += 40;
+            }
+            if (_fails.length) {
+                if (y > PAGE_H - 100) { doc.addPage(); y = 60; }
+                doc.setFontSize(12); doc.setFont('helvetica','bold'); doc.setTextColor(192,57,43); doc.text('Exceedances', 36, y); doc.setTextColor(0,0,0); y += 15;
+                doc.setFontSize(8); doc.setFont('helvetica','bold'); doc.setTextColor.apply(doc, SOFT);
+                doc.text('Sample point', 36, y); doc.text('Parameter', 180, y); doc.text('Result', 340, y); doc.text('Limit', 430, y); y += 4;
+                doc.setDrawColor(210,210,210); doc.line(36, y, PAGE_W - 36, y); y += 12; doc.setTextColor(0,0,0); doc.setFont('helvetica','normal'); doc.setFontSize(9);
+                _fails.forEach(f => {
+                    if (y > PAGE_H - 80) { doc.addPage(); y = 60; }
+                    const t = f.t, lt = (t.specMin != null && t.specMax != null) ? (t.specMin + '–' + t.specMax) : (t.specMax != null ? '≤ ' + t.specMax : (t.specMin != null ? '≥ ' + t.specMin : ''));
+                    doc.text(String(f.point || '(unnamed)').slice(0, 24), 36, y);
+                    doc.text(String(t.name || '').slice(0, 26), 180, y);
+                    doc.setTextColor(192,57,43); doc.setFont('helvetica','bold'); doc.text(String(t.value) + ' ' + (t.unit || ''), 340, y); doc.setTextColor(0,0,0); doc.setFont('helvetica','normal');
+                    doc.text(lt, 430, y); y += 14;
+                });
+                y += 8;
+            }
             // Test results — grouped by sample point (new), a flat list (v1), or
             // the very-old fixed readings (legacy).
             const renderTestRows = (rows) => {
@@ -6702,7 +6763,9 @@
                     doc.text(String(t.name || '').slice(0,44), 36, y);
                     doc.setFont('helvetica','bold'); doc.text(String(t.value), 250, y); doc.setFont('helvetica','normal');
                     doc.text(String(t.unit || ''), 320, y);
-                    const lt = (t.specMin != null && t.specMax != null) ? (t.specMin + '–' + t.specMax) : (t.specMax != null ? '≤ ' + t.specMax : (t.specMin != null ? '≥ ' + t.specMin : ''));
+                    if (t.custom) anyCustom = true;
+                    const lt0 = (t.specMin != null && t.specMax != null) ? (t.specMin + '–' + t.specMax) : (t.specMax != null ? '≤ ' + t.specMax : (t.specMin != null ? '≥ ' + t.specMin : ''));
+                    const lt = lt0 ? lt0 + (t.custom ? '*' : '') : '';
                     if (t.pass === false) { doc.setTextColor(192,57,43); doc.setFont('helvetica','bold'); doc.text((lt ? lt + '  ' : '') + 'FAIL', 400, y); doc.setFont('helvetica','normal'); doc.setTextColor(0,0,0); }
                     else if (t.pass === true) { doc.setTextColor(21,123,58); doc.setFont('helvetica','bold'); doc.text((lt ? lt + '  ' : '') + 'PASS', 400, y); doc.setFont('helvetica','normal'); doc.setTextColor(0,0,0); }
                     else if (lt) { doc.text(lt, 400, y); }
@@ -6732,6 +6795,7 @@
                 row('Temperature (°C)', r.temp); row('Hardness (mg/L)', r.hard); row('Alkalinity (mg/L)', r.alk);
                 row('Iron (mg/L)', r.fe); row('Phosphate (mg/L)', r.po4);
             }
+            if (anyCustom) { if (y > PAGE_H - 80) { doc.addPage(); y = 60; } doc.setFontSize(8); doc.setFont('helvetica','italic'); doc.setTextColor.apply(doc, SOFT); doc.text('* Own limit — differs from the SANS 241 value.', 36, y); doc.setTextColor(0,0,0); doc.setFont('helvetica','normal'); y += 14; }
             y += 8; doc.setFontSize(14); doc.setFont('helvetica','bold'); doc.text('Observations', 36, y); y += 18; doc.setFontSize(10);
             const writeBlock = txt => { if (!txt) return; const lines = doc.splitTextToSize(txt, PAGE_W - 72); doc.text(lines, 36, y); y += lines.length * 12 + 6; if (y > PAGE_H - 120) { doc.addPage(); y = 60; }};
             writeBlock(r.obs); doc.setFont('helvetica','bold'); doc.text('Actions taken:', 36, y); y += 14; doc.setFont('helvetica','normal'); writeBlock(r.act);
@@ -6765,9 +6829,15 @@
                 doc.setFontSize(10); doc.setFont('helvetica','italic'); doc.setTextColor(150,150,150);
                 doc.text('Not signed on site.', 36, y + 4); doc.setTextColor(30,38,45); y += 22;
             }
-            doc.setFontSize(8); doc.setTextColor.apply(doc, SOFT);
-            doc.text('Hadron Group · Customer Interface · hadrongrp.com', PAGE_W / 2, PAGE_H - 24, { align: 'center' });
-            doc.save('hadron-service-' + (r.site || 'site').replace(/\s+/g, '-').toLowerCase() + '-' + (r.date || '').slice(0,10) + '.pdf');
+            // Traceability footer on every page + page numbers (final pass, once all pages exist).
+            const _pages = doc.internal.getNumberOfPages();
+            const _trace = 'Hadron Group · hadrongrp.com' + (r.reportNo ? '  ·  ' + r.reportNo : '') + '  ·  Generated ' + (srIsoToLocalDt(new Date().toISOString()).replace('T', ' ')) + (r.tech ? '  ·  ' + r.tech : '') + (r.status === 'submitted' && r.submittedBy ? '  ·  Submitted by ' + r.submittedBy : '');
+            for (let i = 1; i <= _pages; i++) {
+                doc.setPage(i); doc.setFontSize(7); doc.setTextColor.apply(doc, SOFT);
+                doc.text(String(_trace).slice(0, 130), 36, PAGE_H - 20);
+                doc.text('Page ' + i + ' of ' + _pages, PAGE_W - 36, PAGE_H - 20, { align: 'right' });
+            }
+            doc.save('hadron-service-' + (r.reportNo || (r.site || 'site').replace(/\s+/g, '-').toLowerCase() + '-' + (r.date || '').slice(0,10)) + '.pdf');
         }
 
         /* =========================================================
