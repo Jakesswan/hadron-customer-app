@@ -2752,7 +2752,7 @@
                 <div class="hg-section-title">About</div>
                 <div class="hg-kvgrid">
                     <div class="hg-kv"><div class="k">App</div><div class="v">Hadron Group</div></div>
-                    <div class="hg-kv"><div class="k">Version</div><div class="v">v132</div></div>
+                    <div class="hg-kv"><div class="k">Version</div><div class="v">v133</div></div>
                     <div class="hg-kv"><div class="k">Platform</div><div class="v">PWA</div></div>
                 </div>
             </div>
@@ -6293,8 +6293,34 @@
             { id:'x-orp',  code:'ORP',  name:'ORP (Redox)',        unit:'mV',   specMin:null, specMax:null, category:'Field / operational', sans241:'' },
             { id:'x-tcl',  code:'TCL',  name:'Total Chlorine',     unit:'mg/L', specMin:null, specMax:null, category:'Field / operational', sans241:'' },
             { id:'x-temp', code:'TEMP', name:'Temperature',        unit:'°C',   specMin:null, specMax:null, category:'Field / operational', sans241:'' },
-            { id:'x-po4',  code:'PO4',  name:'Phosphate (as PO₄)', unit:'mg/L', specMin:null, specMax:null, category:'Field / operational', sans241:'' }
+            { id:'x-po4',  code:'PO4',  name:'Phosphate (as PO₄)', unit:'mg/L', specMin:null, specMax:null, category:'Field / operational', sans241:'' },
+            // Cooling-tower control set
+            { id:'x-syscond', code:'SCOND', name:'System conductivity',        unit:'µS/cm', specMin:null, specMax:null, category:'Cooling tower', sans241:'' },
+            { id:'x-mucond',  code:'MCOND', name:'Make-up conductivity',       unit:'µS/cm', specMin:null, specMax:null, category:'Cooling tower', sans241:'' },
+            { id:'x-bio',     code:'BIO',   name:'Biocide / oxidant residual', unit:'mg/L',  specMin:null, specMax:null, category:'Cooling tower', sans241:'' },
+            { id:'x-inhib',   code:'INHIB', name:'Inhibitor residual',         unit:'mg/L',  specMin:null, specMax:null, category:'Cooling tower', sans241:'' },
+            // Boiler control set
+            { id:'x-btds',   code:'BTDS',  name:'Boiler water TDS',      unit:'mg/L', specMin:null, specMax:null, category:'Boiler', sans241:'' },
+            { id:'x-ftds',   code:'FTDS',  name:'Feedwater TDS',         unit:'mg/L', specMin:null, specMax:null, category:'Boiler', sans241:'' },
+            { id:'x-sulph',  code:'SULPH', name:'Sulphite reserve',      unit:'mg/L', specMin:null, specMax:null, category:'Boiler', sans241:'' },
+            { id:'x-bphos',  code:'BPHOS', name:'Phosphate reserve',     unit:'mg/L', specMin:null, specMax:null, category:'Boiler', sans241:'' },
+            { id:'x-condph', code:'CPH',   name:'Condensate pH',         unit:'pH',   specMin:null, specMax:null, category:'Boiler', sans241:'' },
+            { id:'x-oxsc',   code:'OXSC',  name:'Oxygen scavenger',      unit:'mg/L', specMin:null, specMax:null, category:'Boiler', sans241:'' },
+            // Reverse-osmosis control set
+            { id:'x-feedc',  code:'FEEDC', name:'RO feed conductivity',     unit:'µS/cm', specMin:null, specMax:null, category:'Reverse osmosis', sans241:'' },
+            { id:'x-permc',  code:'PERMC', name:'RO permeate conductivity', unit:'µS/cm', specMin:null, specMax:null, category:'Reverse osmosis', sans241:'' },
+            { id:'x-rejc',   code:'REJC',  name:'RO reject conductivity',   unit:'µS/cm', specMin:null, specMax:null, category:'Reverse osmosis', sans241:'' },
+            { id:'x-sdi',    code:'SDI',   name:'Silt Density Index (SDI)', unit:'',      specMin:null, specMax:null, category:'Reverse osmosis', sans241:'' },
+            { id:'x-dp',     code:'DP',    name:'Differential pressure',    unit:'bar',   specMin:null, specMax:null, category:'Reverse osmosis', sans241:'' },
+            { id:'x-antisc', code:'ANTI',  name:'Antiscalant dose',         unit:'mg/L',  specMin:null, specMax:null, category:'Reverse osmosis', sans241:'' }
         ];
+        // Curated test packs per water system — loaded into a sample point in one tap.
+        const SR_SYSTEM_PACKS = {
+            'Cooling Tower':      ['x-syscond','x-mucond','t-ph','x-bio','x-inhib','x-orp','x-temp','t-fcl'],
+            'Boiler':            ['x-btds','x-ftds','t-ph','x-sulph','x-bphos','t-alk','x-condph','x-oxsc'],
+            'Reverse Osmosis':   ['x-feedc','x-permc','x-rejc','t-ph','x-sdi','x-dp','x-antisc','x-temp'],
+            'Potable / SANS 241':['t-ph','t-fcl','x-tcl','t-cond','t-tds','t-turb','t-ec','t-colif']
+        };
         function srCatalog() { return SR_EXTRA_PARAMS.concat(window.HG_SANS241_TESTS || []); }
         function srCatItem(id) { return srCatalog().find(t => t.id === id); }
         // Custom pass/fail limits (persisted per device). An entry here OVERRIDES the
@@ -6358,7 +6384,11 @@
             const R = {
                 't-ph': [0, 14], 'x-temp': [-5, 120], 't-fcl': [0, 100], 'x-tcl': [0, 100], 't-cl2': [0, 100],
                 'x-orp': [-1200, 1500], 't-cond': [0, 200000], 't-tds': [0, 200000], 't-turb': [0, 4000],
-                't-hard': [0, 100000], 't-alk': [0, 100000], 'x-po4': [0, 10000]
+                't-hard': [0, 100000], 't-alk': [0, 100000], 'x-po4': [0, 10000],
+                'x-syscond': [0, 200000], 'x-mucond': [0, 200000], 'x-feedc': [0, 200000],
+                'x-permc': [0, 200000], 'x-rejc': [0, 200000], 'x-btds': [0, 200000], 'x-ftds': [0, 200000],
+                'x-bio': [0, 10000], 'x-inhib': [0, 10000], 'x-sulph': [0, 10000], 'x-bphos': [0, 10000],
+                'x-oxsc': [0, 10000], 'x-antisc': [0, 10000], 'x-condph': [0, 14], 'x-sdi': [0, 6.7], 'x-dp': [0, 50]
             }[t.catId || t.id];
             if (R) return v >= R[0] && v <= R[1];
             if (/mg\/L|cfu|NTU|pfu|µg|mS\/m/i.test(t.unit || '') && v < 0) return false;   // most water params are non-negative
@@ -6428,7 +6458,40 @@
 
         function srAddTest(catId) { const p = sr_points.find(x => x.id === sr_activePoint) || sr_points[0]; if (!p) return; if (p.tests.some(t => t.catId === catId)) return; const c = srCatItem(catId); if (c) { p.tests.push(srNewRow(c)); srRenderPoints(); } }
         function srRemoveTest(rid) { const f = srFindRow(rid); if (f) { f.p.tests = f.p.tests.filter(x => x.id !== rid); srRenderPoints(); } }
-        function srSetVal(rid, v) { const f = srFindRow(rid); if (f) { f.t.value = v; srUpdateChip(rid); } }
+        function srSetVal(rid, v) { const f = srFindRow(rid); if (f) { f.t.value = v; srUpdateChip(rid); srRefreshDerived(f.p.id); } }
+
+        // ── System packs & derived control metrics ──
+        // Load a curated test set for a water system (tower / boiler / RO / potable)
+        // into a sample point in one tap. Skips params already present; never clobbers.
+        function srLoadPack(pid, packName) {
+            const p = sr_points.find(x => x.id === pid); if (!p || !packName) return;
+            const ids = SR_SYSTEM_PACKS[packName]; if (!ids) return;
+            let added = 0;
+            ids.forEach(id => {
+                if (p.tests.some(t => t.catId === id)) return;
+                const c = srCatItem(id); if (c) { p.tests.push(srNewRow(c)); added++; }
+            });
+            if (!p.name || !p.name.trim()) p.name = packName;   // name an unnamed point after its system
+            srRenderPoints(); srQueueAutosave();
+            showToast(added ? (packName + ' pack loaded — ' + added + ' test' + (added === 1 ? '' : 's')) : (packName + ' tests already present'));
+        }
+        // Derived metrics computed live from the readings at a point (not stored as
+        // rows — recomputed on render and on every value edit). Cycles of concentration
+        // for towers, salt rejection for RO — the numbers operators actually steer by.
+        function srPtVal(p, catId) { const t = (p.tests || []).find(x => (x.catId || x.id) === catId); if (!t) return null; const v = parseFloat(t.value); return isNaN(v) ? null : v; }   // live rows key on catId; stored rows on id
+        function srDerived(p) {
+            const out = [];
+            const sys = srPtVal(p, 'x-syscond'), mu = srPtVal(p, 'x-mucond');
+            if (sys != null && mu > 0) out.push(['Cycles of concentration', (sys / mu).toFixed(2), 'system ÷ make-up conductivity']);
+            const feed = srPtVal(p, 'x-feedc'), perm = srPtVal(p, 'x-permc');
+            if (feed > 0 && perm != null) out.push(['Salt rejection', ((1 - perm / feed) * 100).toFixed(1) + '%', '1 − permeate ÷ feed conductivity']);
+            return out;
+        }
+        function srDerivedChips(p) {
+            return srDerived(p).map(x =>
+                `<span style="display:inline-flex;align-items:baseline;gap:5px;background:var(--bg-soft);border:1px solid var(--border);border-radius:999px;padding:3px 11px;font-size:12px;color:var(--text);" title="${esc(x[2])}"><span style="color:var(--muted);">${esc(x[0])}</span><strong style="font-variant-numeric:tabular-nums;color:var(--accent);">${esc(x[1])}</strong></span>`).join('');
+        }
+        function srRefreshDerived(pid) { const el = document.getElementById('sr_deriv_' + pid); const p = sr_points.find(x => x.id === pid); if (el && p) el.innerHTML = srDerivedChips(p); }
         function srMapRow(t) {
             return { id: t.catId, code: t.code, name: t.name, unit: t.unit,
                 value: (t.value === '' || t.value == null) ? null : t.value,
@@ -6472,8 +6535,15 @@
                         ${sr_points.length > 1 ? `<button type="button" title="Remove sample point" onclick="srRemovePoint('${escJs(p.id)}')" style="border:none;background:transparent;color:var(--danger);font-size:19px;cursor:pointer;line-height:1;">🗑</button>` : ''}
                     </div>
                     <div style="padding:10px 12px;display:flex;flex-direction:column;gap:8px;">
-                        ${p.tests.length ? p.tests.map(srTestRowHtml).join('') : '<p style="color:var(--muted);font-size:13px;margin:2px 0;">No tests yet — tap “Add test”.</p>'}
-                        <button type="button" class="calc-btn" style="margin:2px 0 0;padding:7px 12px;align-self:flex-start;" onclick="srOpenTestPicker('${escJs(p.id)}')">＋ Add test</button>
+                        ${p.tests.length ? p.tests.map(srTestRowHtml).join('') : '<p style="color:var(--muted);font-size:13px;margin:2px 0;">No tests yet — load a system pack or tap “Add test”.</p>'}
+                        <div id="sr_deriv_${esc(p.id)}" style="display:flex;flex-wrap:wrap;gap:8px;">${srDerivedChips(p)}</div>
+                        <div style="display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:2px 0 0;">
+                            <button type="button" class="calc-btn" style="margin:0;padding:7px 12px;" onclick="srOpenTestPicker('${escJs(p.id)}')">＋ Add test</button>
+                            <select onchange="srLoadPack('${escJs(p.id)}', this.value); this.selectedIndex=0;" style="padding:7px 9px;border:1px solid var(--border);border-radius:8px;font-size:13px;background:var(--surface);color:var(--text);cursor:pointer;">
+                                <option value="">＋ Load system pack…</option>
+                                ${Object.keys(SR_SYSTEM_PACKS).map(n => `<option value="${esc(n)}">${esc(n)}</option>`).join('')}
+                            </select>
+                        </div>
                     </div>
                 </div>`).join('') +
                 `<button type="button" class="hg-btn" style="align-self:flex-start;margin-top:2px;" onclick="srAddPoint()">＋ Add sample point</button>`;
@@ -6872,6 +6942,13 @@
                         doc.text((p.name || '').trim() || 'Sample point', 36, y); doc.setTextColor(0,0,0); y += 15;
                     }
                     renderTestRows(p.tests);
+                    const _der = srDerived(p);
+                    if (_der.length) {
+                        if (y > PAGE_H - 70) { doc.addPage(); y = 60; }
+                        doc.setFontSize(9); doc.setFont('helvetica','italic'); doc.setTextColor.apply(doc, SOFT);
+                        _der.forEach(d => { doc.text(d[0] + ':  ' + d[1], 44, y); y += 12; });
+                        doc.setTextColor(0,0,0); doc.setFont('helvetica','normal');
+                    }
                     y += 8;
                 });
             } else if (r.tests && r.tests.length) {
