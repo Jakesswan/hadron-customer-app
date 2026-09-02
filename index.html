@@ -2752,7 +2752,7 @@
                 <div class="hg-section-title">About</div>
                 <div class="hg-kvgrid">
                     <div class="hg-kv"><div class="k">App</div><div class="v">Hadron Group</div></div>
-                    <div class="hg-kv"><div class="k">Version</div><div class="v">v125</div></div>
+                    <div class="hg-kv"><div class="k">Version</div><div class="v">v126</div></div>
                     <div class="hg-kv"><div class="k">Platform</div><div class="v">PWA</div></div>
                 </div>
             </div>
@@ -5984,6 +5984,18 @@
             srEnsureAutosaveWired();
             let r = LS.get('hadron_sr', []).find(x => x.id === id)
                  || (window._srResumeDraft && window._srResumeDraft.id === id ? window._srResumeDraft : null);   // resume path
+            // Cross-device freshness: if another device saved a newer version of THIS report, load
+            // that cloud copy instead of editing a stale local one (which would overwrite the newer
+            // version on save). Skip the resume-draft path — the draft is the freshest in-progress work.
+            if (r && r.savedAt && !window._srResumeDraft && window.HG_DB && window.HG_DB.service_reports) {
+                try {
+                    const meta = srCloudMeta.find(m => m.id === id);
+                    if (meta && meta.updated_at && new Date(meta.updated_at) > new Date(r.savedAt)) {
+                        const row = await window.HG_DB.service_reports.get(id);
+                        if (row && row.payload) r = row.payload;
+                    }
+                } catch (_) {}
+            }
             if (!r) {   // cloud-only report (from another device) — pull its full payload
                 try { const row = window.HG_DB && window.HG_DB.service_reports && await window.HG_DB.service_reports.get(id); r = row && row.payload; } catch (_) {}
             }
@@ -6088,15 +6100,21 @@
                 const sb = window.HG_SUPA;
                 if (!sb || !((await sb.auth.getSession()).data.session)) return srCloudMeta;
                 const { data, error } = await sb.from('service_reports')
-                    .select('id, site, customer_name, technician, report_date, status').order('report_date', { ascending: false });
+                    .select('id, site, customer_name, technician, report_date, status, updated_at').order('report_date', { ascending: false });
                 if (!error && Array.isArray(data)) srCloudMeta = data;
             } catch (_) {}
             return srCloudMeta;
         }
         function srMergedReports() {
             const byId = {};
-            srCloudMeta.forEach(m => { byId[m.id] = { id: m.id, site: m.site, date: m.report_date, tech: m.technician || '', status: m.status, _cloud: true }; });
-            LS.get('hadron_sr', []).forEach(r => { if (r && r.id) byId[r.id] = Object.assign({}, r, { _cloud: !!(byId[r.id] && byId[r.id]._cloud) }); });
+            srCloudMeta.forEach(m => { byId[m.id] = { id: m.id, site: m.site, date: m.report_date, tech: m.technician || '', status: m.status, updated_at: m.updated_at, _cloud: true }; });
+            LS.get('hadron_sr', []).forEach(r => {
+                if (!r || !r.id) return;
+                const meta = byId[r.id];
+                // _local = saved on this device (operator owns it); _cloudUpdatedAt = the cloud copy's
+                // updated_at, so the list can flag when another device holds a newer version.
+                byId[r.id] = Object.assign({}, r, { _cloud: !!(meta && meta._cloud), _local: true, _cloudUpdatedAt: meta && meta.updated_at });
+            });
             return Object.values(byId).sort((a, b) => String(b.date || b.savedAt || '').localeCompare(String(a.date || a.savedAt || '')));
         }
         function srRenderReportList(list) {
@@ -6106,17 +6124,24 @@
             // button). A local-only / signed-out user (role '') keeps Delete for their own
             // device-only reports, matching the deleteSR() guard.
             const _srRole = (window.HG_PROFILE && window.HG_PROFILE.role) || document.body.dataset.role || '';
-            const canEdit = !_srRole || ['admin','customer_admin'].includes(_srRole);
+            const canManage = !_srRole || ['admin','customer_admin'].includes(_srRole);   // Edit any + Delete
             el.innerHTML = !list.length ? '<p style="color:#888;">No saved reports yet.</p>' :
-                list.map(r => `<div style="border:1px solid #eee;border-radius:6px;padding:10px;margin-bottom:8px;">
+                list.map(r => {
+                    // Operators may edit their OWN draft (saved on this device, not yet submitted) —
+                    // mirrors migration 0012's operator_draft_update policy; RLS is the real backstop.
+                    const canEdit = canManage || (_srRole === 'operator' && r._local && r.status !== 'submitted');
+                    // Another device holds a newer version of a report we also have locally.
+                    const cloudNewer = r._local && r._cloudUpdatedAt && r.savedAt && new Date(r._cloudUpdatedAt) > new Date(r.savedAt);
+                    return `<div style="border:1px solid #eee;border-radius:6px;padding:10px;margin-bottom:8px;">
                     <strong>${esc(r.site)}</strong> · ${esc(String(r.date || '').replace('T', ' '))}
-                    ${r._cloud ? '<span title="Synced to cloud" style="color:#157b3a;font-size:12px;">☁ synced</span>' : '<span title="On this device only — not yet synced" style="color:#b5852a;font-size:12px;">• local only</span>'}${r.status === 'submitted' ? ' <span title="Submitted — locked to technicians" style="color:#1a3d9e;font-size:12px;">🔒 submitted</span>' : ''}<br>
+                    ${r._cloud ? '<span title="Synced to cloud" style="color:#157b3a;font-size:12px;">☁ synced</span>' : '<span title="On this device only — not yet synced" style="color:#b5852a;font-size:12px;">• local only</span>'}${r.status === 'submitted' ? ' <span title="Submitted — locked to technicians" style="color:#1a3d9e;font-size:12px;">🔒 submitted</span>' : ''}${cloudNewer ? ' <span title="A newer version exists on another device — opening will load it" style="color:#b5852a;font-size:12px;">⟳ newer on cloud</span>' : ''}<br>
                     <small>${r.tech ? 'Tech: ' + esc(r.tech) : ''}${srSummary(r) ? (r.tech ? ' · ' : '') + esc(srSummary(r)) : ''}</small>
                     <div style="margin-top:6px;">
                         <button class="pdf-calc-btn" onclick="exportStoredSrPdf('${r.id}')">📄 PDF</button>
-                        ${canEdit ? `<button class="pdf-calc-btn" style="background:#3AAEDB;color:#0f2733;" onclick="openServiceReport('${r.id}')">✎ Edit</button>
-                        <button class="save-calc-btn" style="background:#c44;" onclick="deleteSR('${r.id}')">🗑 Delete</button>` : `<button class="pdf-calc-btn" onclick="openServiceReport('${r.id}', true)">👁 View</button>`}
-                    </div></div>`).join('');
+                        ${canEdit ? `<button class="pdf-calc-btn" style="background:#3AAEDB;color:#0f2733;" onclick="openServiceReport('${r.id}')">✎ Edit</button>` : `<button class="pdf-calc-btn" onclick="openServiceReport('${r.id}', true)">👁 View</button>`}
+                        ${canManage ? `<button class="save-calc-btn" style="background:#c44;" onclick="deleteSR('${r.id}')">🗑 Delete</button>` : ''}
+                    </div></div>`;
+                }).join('');
         }
         function listServiceReports() {
             document.getElementById('sr_form').style.display = 'none';
