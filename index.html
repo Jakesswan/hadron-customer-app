@@ -2752,7 +2752,7 @@
                 <div class="hg-section-title">About</div>
                 <div class="hg-kvgrid">
                     <div class="hg-kv"><div class="k">App</div><div class="v">Hadron Group</div></div>
-                    <div class="hg-kv"><div class="k">Version</div><div class="v">v124</div></div>
+                    <div class="hg-kv"><div class="k">Version</div><div class="v">v125</div></div>
                     <div class="hg-kv"><div class="k">Platform</div><div class="v">PWA</div></div>
                 </div>
             </div>
@@ -5791,6 +5791,7 @@
             sr_status = 'submitted'; r.status = 'submitted';
             if (srLocalSave(r)) showToast('Report submitted & locked');
             srCloudPushReport(r);
+            srClearDraft();
             listServiceReports();
         }
         let sr_sigCtx = null, sr_drawing = false;
@@ -5946,6 +5947,21 @@
         }
 
         async function newServiceReport() {
+            srEnsureAutosaveWired();
+            // Recover an unfinished report from a crash / reload / accidental close before starting fresh.
+            try {
+                const draft = JSON.parse(localStorage.getItem(SR_DRAFT_KEY) || 'null');
+                if (draft && srDraftHasContent(draft) && (draft.status || 'draft') !== 'submitted') {
+                    const when = draft._draftAt ? new Date(draft._draftAt).toLocaleString() : 'earlier';
+                    if (confirm('Resume your unfinished report for "' + (draft.site || 'a site') + '"?\n(last edited ' + when + ')\n\nCancel to start a new blank report.')) {
+                        window._srResumeDraft = draft;
+                        await openServiceReport(draft.id, false);
+                        window._srResumeDraft = null;
+                        return;
+                    }
+                    srClearDraft();   // starting fresh — discard the old draft
+                }
+            } catch (_) {}
             document.getElementById('sr_form').style.display = 'block';
             document.getElementById('sr_list').style.display = 'none';
             sr_status = 'draft'; applySrReadOnly(false);
@@ -5965,7 +5981,9 @@
         // and reuses sr_reportId, so a save upserts THIS report rather than creating a new one.
         // Only the owner reaches this (the Edit button is gated); RLS blocks anyone else's write.
         async function openServiceReport(id, readOnly) {
-            let r = LS.get('hadron_sr', []).find(x => x.id === id);
+            srEnsureAutosaveWired();
+            let r = LS.get('hadron_sr', []).find(x => x.id === id)
+                 || (window._srResumeDraft && window._srResumeDraft.id === id ? window._srResumeDraft : null);   // resume path
             if (!r) {   // cloud-only report (from another device) — pull its full payload
                 try { const row = window.HG_DB && window.HG_DB.service_reports && await window.HG_DB.service_reports.get(id); r = row && row.payload; } catch (_) {}
             }
@@ -6121,6 +6139,7 @@
                 sr_photos.push({ src: await srThumb(full, 1000, 0.7), ts: new Date().toISOString() });
                 renderSrPhotos();
             }
+            srQueueAutosave();
         }
         // Only render a data:image/ URL. Shared reports + incidents can carry a
         // teammate-supplied photo value, so any other string could break out of the
@@ -6128,7 +6147,7 @@
         function srSafeImg(s) { return (typeof s === 'string' && /^data:image\/[a-z0-9.+-]+;base64,[A-Za-z0-9+/=]+$/i.test(s)) ? s : ''; }
         function renderSrPhotos() {
             document.getElementById('sr_photos').innerHTML = sr_photos.map((p,i) =>
-                `<div style="position:relative;"><img src="${srSafeImg(p.src)}" style="width:70px;height:70px;object-fit:cover;border-radius:6px;"><button onclick="sr_photos.splice(${i},1);renderSrPhotos()" style="position:absolute;top:-6px;right:-6px;background:#c44;color:#fff;border:none;border-radius:50%;width:20px;height:20px;cursor:pointer;">×</button></div>`).join('');
+                `<div style="position:relative;"><img src="${srSafeImg(p.src)}" style="width:70px;height:70px;object-fit:cover;border-radius:6px;"><button onclick="sr_photos.splice(${i},1);renderSrPhotos();srQueueAutosave()" style="position:absolute;top:-6px;right:-6px;background:#c44;color:#fff;border:none;border-radius:50%;width:20px;height:20px;cursor:pointer;">×</button></div>`).join('');
         }
         function initSignaturePad() {
             const c = document.getElementById('sr_sig');
@@ -6149,8 +6168,8 @@
             // once, so it can't clobber (or be clobbered by) the OCR crop overlay's
             // release handler the way the old window.onmouseup assignment did.
             if (!window._srSigUpWired) { window._srSigUpWired = true;
-                document.addEventListener('mouseup', () => { sr_drawing = false; });
-                document.addEventListener('touchend', () => { sr_drawing = false; }); }
+                document.addEventListener('mouseup', () => { if (sr_drawing) { sr_drawing = false; srQueueAutosave(); } });
+                document.addEventListener('touchend', () => { if (sr_drawing) { sr_drawing = false; srQueueAutosave(); } }); }
         }
         function clearSignature() { if (sr_sigCtx) { const c = document.getElementById('sr_sig'); sr_sigCtx.clearRect(0,0,c.width,c.height); } }
 
@@ -6262,13 +6281,13 @@
             return p;
         }
         function srInitPoints() { sr_points = [ srNewPoint('', true) ]; srRenderPoints(); }
-        function srAddPoint() { sr_points.push(srNewPoint('', true)); srRenderPoints(); }
+        function srAddPoint() { sr_points.push(srNewPoint('', true)); srRenderPoints(); srQueueAutosave(); }
         function srRemovePoint(pid) {
             if (sr_points.length <= 1) { showToast('Keep at least one sample point'); return; }
             const p = sr_points.find(x => x.id === pid);
             const hasData = p && p.tests.some(t => t.value !== '' && t.value != null);
             if (hasData && !confirm('Remove this sample point and its readings?')) return;
-            sr_points = sr_points.filter(x => x.id !== pid); srRenderPoints();
+            sr_points = sr_points.filter(x => x.id !== pid); srRenderPoints(); srQueueAutosave();
         }
         function srSetPointName(pid, v) { const p = sr_points.find(x => x.id === pid); if (p) p.name = v; }   // no re-render → keeps input focus
 
@@ -6501,12 +6520,49 @@
             const list = LS.get('hadron_sr', []).filter(x => x.id !== r.id); list.unshift(r);
             return LS.set('hadron_sr', list);
         }
+
+        // ── Draft autosave + crash/close recovery ──────────────────────────
+        // The open report lives only in the DOM until an explicit Save; a phone lock, PWA reload,
+        // back-tap or crash would lose a long field report. So debounce-persist the in-progress
+        // form to a single 'hadron_sr_draft' slot on every change, flush it on page-hide/unload,
+        // and offer to resume it the next time a report is started. Cleared on Save/Submit.
+        const SR_DRAFT_KEY = 'hadron_sr_draft';
+        let _srDraftTimer = null, _srAutosaveWired = false;
+        function srDraftHasContent(r) {
+            if (!r) return false;
+            if ((r.site || '').trim()) return true;
+            if (r.photos && r.photos.length) return true;
+            if ((r.obs || '').trim() || (r.act || '').trim() || (r.chem || '').trim()) return true;
+            if (r.points && r.points.some(p => (p.tests || []).some(t => t.value !== '' && t.value != null))) return true;
+            return false;
+        }
+        function srAutosaveDraft() {
+            try {
+                const form = document.getElementById('sr_form');
+                if (!form || form.style.display === 'none' || sr_readOnly) return;
+                const r = gatherSR();
+                if (!srDraftHasContent(r)) { localStorage.removeItem(SR_DRAFT_KEY); return; }
+                r._draftAt = new Date().toISOString();
+                localStorage.setItem(SR_DRAFT_KEY, JSON.stringify(r));
+            } catch (_) { /* quota / serialise failure — best-effort, never block the form */ }
+        }
+        function srQueueAutosave() { if (_srDraftTimer) clearTimeout(_srDraftTimer); _srDraftTimer = setTimeout(srAutosaveDraft, 1200); }
+        function srClearDraft() { try { localStorage.removeItem(SR_DRAFT_KEY); } catch (_) {} }
+        function srEnsureAutosaveWired() {
+            if (_srAutosaveWired) return; _srAutosaveWired = true;
+            const form = document.getElementById('sr_form');
+            if (form) { form.addEventListener('input', srQueueAutosave); form.addEventListener('change', srQueueAutosave); }
+            window.addEventListener('beforeunload', srAutosaveDraft);
+            document.addEventListener('visibilitychange', function () { if (document.hidden) srAutosaveDraft(); });
+        }
+
         function saveServiceReport() {
             if (sr_readOnly) return;
             const r = gatherSR();
             if (!r.site) { showToast('Enter site name'); return; }
             if (srLocalSave(r)) showToast('Report saved');   // LS.set warns 'Storage full' itself on failure
             srCloudPushReport(r);   // best-effort cloud sync (queues if offline / not signed in)
+            srClearDraft();         // this state is now persisted — drop the recovery draft
         }
         function deleteSR(id) {
             const _role = (window.HG_PROFILE && window.HG_PROFILE.role) || document.body.dataset.role || '';
@@ -6523,6 +6579,7 @@
             if (!r.site) { showToast('Enter site name'); return; }
             srLocalSave(r);   // best-effort local save (upsert by id)
             srCloudPushReport(r);
+            srClearDraft();   // report is now persisted — drop the recovery draft (no stale resume prompt)
             generateSrPdf(r);
         }
         async function exportStoredSrPdf(id) {
