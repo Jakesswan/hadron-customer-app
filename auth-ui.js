@@ -351,8 +351,14 @@
       const session = await window.HG_AUTH.getSession();
       if (session) {
         teardown();
+        // Resolve the profile (role) BEFORE revealing the desktop, so role-gated UI (data-roles
+        // tiles like the admin-only Data Manager, plus owner-only controls) is correct on first
+        // paint instead of flashing for a beat while the profile loads. Bounded by a timeout so a
+        // slow/stalled profile fetch can NEVER block the reveal — on timeout the desktop shows and
+        // refreshProfileCard applies role visibility the moment it lands. On a token-refresh
+        // reconcile the desktop is already visible, so showDesktop(true) below just re-asserts it.
+        try { await Promise.race([refreshProfileCard(), new Promise(res => setTimeout(res, 2000))]); } catch (_) {}
         showDesktop(true);
-        await refreshProfileCard();
       } else {
         // Hide desktop and demo gate; auth overlay covers everything.
         showDesktop(false);
