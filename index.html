@@ -2752,7 +2752,7 @@
                 <div class="hg-section-title">About</div>
                 <div class="hg-kvgrid">
                     <div class="hg-kv"><div class="k">App</div><div class="v">Hadron Group</div></div>
-                    <div class="hg-kv"><div class="k">Version</div><div class="v">v135</div></div>
+                    <div class="hg-kv"><div class="k">Version</div><div class="v">v136</div></div>
                     <div class="hg-kv"><div class="k">Platform</div><div class="v">PWA</div></div>
                 </div>
             </div>
@@ -5929,6 +5929,7 @@
                 _srLastVisit = srLastReportForSite(sel); srUpdateCloneBtn();   // offer to copy the previous visit
                 srMaybeCarryRecs();   // pull forward any still-open actions from the last visit
                 srMaybeCarryMicro();  // and any dip-slides / lab samples still awaiting a result
+                srRenderPoints();     // refresh per-parameter mini-trends now the site (history) is known
             } else {
                 wrap.style.display = 'none';
                 manualInput.value = '';
@@ -6516,7 +6517,46 @@
         }
         function srGatherPoints() { return sr_points.map(p => ({ name: (p.name || '').trim(), tests: p.tests.map(srMapRow) })); }
 
-        function srTestRowHtml(t) {
+        // ── Per-parameter mini-trend ──
+        // History of THIS parameter at THIS sample point, from prior saved reports for the
+        // site. Gives the tech immediate context ("chlorine down 3 visits running") at the
+        // point of entry. Reports are passed in (read once per render), not re-fetched here.
+        function srParamHistory(reports, siteId, pointName, catId, excludeId, limit) {
+            if (!reports || !siteId || !catId) return [];
+            const key = (pointName || '').trim().toLowerCase();
+            const out = [];
+            reports.forEach(r => {
+                if (!r || r.siteId !== siteId || r.id === excludeId) return;
+                const pts = (r.points && r.points.length) ? r.points : (r.tests ? [{ name: '', tests: r.tests }] : []);
+                let pt = pts.find(p => (p.name || '').trim().toLowerCase() === key);
+                if (!pt && pts.length === 1 && !key) pt = pts[0];   // single unnamed point ↔ unnamed current point
+                if (!pt) return;
+                const tt = (pt.tests || []).find(z => z.id === catId);
+                if (!tt || tt.value == null || tt.value === '') return;
+                const v = parseFloat(tt.value); if (!isFinite(v)) return;   // drop NaN and ±Infinity (a stray 1e999 would give NaN sparkline coords)
+                out.push({ date: r.date || r.savedAt || null, value: v });
+            });
+            out.sort((a, b) => new Date(a.date || 0) - new Date(b.date || 0));
+            return out.slice(-(limit || 6));
+        }
+        function srSparkline(hist) {
+            if (!hist || hist.length < 2) return '';
+            const vals = hist.map(h => h.value), n = vals.length;
+            const min = Math.min.apply(null, vals), max = Math.max.apply(null, vals), range = (max - min) || 1;
+            const W = 66, H = 16;
+            const pts = vals.map((v, i) => {
+                const x = (i / (n - 1)) * (W - 4) + 2;
+                const yv = H - 3 - ((v - min) / range) * (H - 6);
+                return x.toFixed(1) + ',' + yv.toFixed(1);
+            }).join(' ');
+            const last = vals[n - 1], prev = vals[n - 2];
+            const dir = last > prev ? '▲' : (last < prev ? '▼' : '▬');
+            return `<span title="Last ${n} readings at this point: ${esc(vals.join(', '))}" style="display:inline-flex;align-items:center;gap:3px;">`
+                + `<svg width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" style="overflow:visible;"><polyline points="${pts}" fill="none" stroke="var(--accent)" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round"/></svg>`
+                + `<span style="font-size:10px;color:var(--muted);">${dir}</span></span>`;
+        }
+        function srTestRowHtml(t, p, sid, reports) {
+            const spark = srSparkline(srParamHistory(reports, sid, p ? p.name : '', t.catId, sr_reportId, 6));
             return `
                 <div style="display:grid;grid-template-columns:1fr auto;gap:6px 10px;align-items:center;padding:10px;border:1px solid var(--border);border-radius:10px;background:var(--bg-soft);">
                     <div style="min-width:0;">
@@ -6524,6 +6564,7 @@
                         <div style="margin-top:3px;display:flex;align-items:center;gap:10px;">
                             <span id="sr_chip_${esc(t.id)}">${srChip(t)}</span>
                             <button type="button" onclick="srToggleLimitEditor('${esc(t.id)}')" title="Set your own pass/fail limit" style="border:none;background:transparent;color:var(--accent);font-size:12px;cursor:pointer;padding:0;">✎ limit</button>
+                            ${spark}
                         </div>
                     </div>
                     <div style="display:flex;align-items:center;gap:6px;">
@@ -6543,6 +6584,9 @@
 
         function srRenderPoints() {
             const host = document.getElementById('sr_tests'); if (!host) return;
+            const _sidRaw = (document.getElementById('sr_siteId') || {}).value;
+            const _sid = (_sidRaw && _sidRaw !== '__manual__') ? _sidRaw : null;   // history only for a registered site
+            const _reports = _sid ? LS.get('hadron_sr', []) : null;                // read once per render, not per test
             host.innerHTML = sr_points.map((p, idx) => `
                 <div style="border:1px solid var(--border);border-radius:12px;background:var(--surface);overflow:hidden;">
                     <div style="display:flex;align-items:center;gap:8px;padding:9px 12px;background:var(--bg-soft);border-bottom:1px solid var(--border);">
@@ -6551,7 +6595,7 @@
                         ${sr_points.length > 1 ? `<button type="button" title="Remove sample point" onclick="srRemovePoint('${escJs(p.id)}')" style="border:none;background:transparent;color:var(--danger);font-size:19px;cursor:pointer;line-height:1;">🗑</button>` : ''}
                     </div>
                     <div style="padding:10px 12px;display:flex;flex-direction:column;gap:8px;">
-                        ${p.tests.length ? p.tests.map(srTestRowHtml).join('') : '<p style="color:var(--muted);font-size:13px;margin:2px 0;">No tests yet — load a system pack or tap “Add test”.</p>'}
+                        ${p.tests.length ? p.tests.map(t => srTestRowHtml(t, p, _sid, _reports)).join('') : '<p style="color:var(--muted);font-size:13px;margin:2px 0;">No tests yet — load a system pack or tap “Add test”.</p>'}
                         <div id="sr_deriv_${esc(p.id)}" style="display:flex;flex-wrap:wrap;gap:8px;">${srDerivedChips(p)}</div>
                         <div style="display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:2px 0 0;">
                             <button type="button" class="calc-btn" style="margin:0;padding:7px 12px;" onclick="srOpenTestPicker('${escJs(p.id)}')">＋ Add test</button>
