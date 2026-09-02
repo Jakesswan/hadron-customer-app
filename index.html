@@ -2752,7 +2752,7 @@
                 <div class="hg-section-title">About</div>
                 <div class="hg-kvgrid">
                     <div class="hg-kv"><div class="k">App</div><div class="v">Hadron Group</div></div>
-                    <div class="hg-kv"><div class="k">Version</div><div class="v">v134</div></div>
+                    <div class="hg-kv"><div class="k">Version</div><div class="v">v135</div></div>
                     <div class="hg-kv"><div class="k">Platform</div><div class="v">PWA</div></div>
                 </div>
             </div>
@@ -3710,6 +3710,11 @@
                     <datalist id="sr_products_list"></datalist>
                     <button type="button" class="calc-btn" style="margin-top:6px;background:var(--accent);color:#0f2733;" onclick="srAddDose()">＋ Add product</button>
                     <div class="form-group" style="margin-top:10px;"><label>Dosing notes (optional)</label><textarea id="sr_chem" rows="2" placeholder="Anything else about dosing this visit"></textarea></div>
+
+                    <h3 style="margin-top:16px;">Microbiology &amp; dip-slides</h3>
+                    <p style="color:var(--muted);font-size:12px;margin:4px 0;">Dip-slides incubate and lab samples take days — log what you <strong>set / sampled</strong> this visit, then read the result. Anything still <strong>awaiting a result</strong> is carried forward to the next visit at this site until you enter it.</p>
+                    <div id="sr_micro" style="display:flex;flex-direction:column;gap:8px;"></div>
+                    <button type="button" class="calc-btn" style="margin-top:6px;background:var(--accent);color:#0f2733;" onclick="srAddMicro()">＋ Add dip-slide / sample</button>
 
                     <h3 style="margin-top:16px;">Recommendations &amp; follow-up</h3>
                     <p style="color:var(--muted);font-size:12px;margin:4px 0;">Corrective / preventive actions. Anything left <strong>Open</strong> or <strong>In progress</strong> is carried forward to the next visit at this site until it is closed.</p>
@@ -5923,6 +5928,7 @@
                 srLoadSitePoints(site);   // auto-load this site's standard sample points
                 _srLastVisit = srLastReportForSite(sel); srUpdateCloneBtn();   // offer to copy the previous visit
                 srMaybeCarryRecs();   // pull forward any still-open actions from the last visit
+                srMaybeCarryMicro();  // and any dip-slides / lab samples still awaiting a result
             } else {
                 wrap.style.display = 'none';
                 manualInput.value = '';
@@ -6033,6 +6039,7 @@
             sr_photos = []; document.getElementById('sr_photos').innerHTML = '';
             sr_dosing = []; srRenderDosing(); srRenderDoseProducts();
             sr_recs = []; srRenderRecs();
+            sr_micro = []; srRenderMicro();
             sr_reportId = uid();   // one stable id for this report across Save + Export PDF
             sr_reportNo = null;    // minted on first gatherSR
             srInitPoints();
@@ -6082,6 +6089,7 @@
             document.getElementById('sr_chem').value = r.chem || '';
             sr_dosing = (r.dosing || []).map(d => Object.assign(srNewDose(), d)); srRenderDosing(); srRenderDoseProducts();
             sr_recs = (r.recs || []).map(x => Object.assign(srNewRec(), x)); srRenderRecs();
+            sr_micro = (r.micro || []).map(x => Object.assign(srNewMicro(), x)); srRenderMicro();
             document.getElementById('sr_next_due').value  = r.nextDue || '';
             document.getElementById('sr_sig_name').value  = r.sigName || '';
             document.getElementById('sr_sig_title').value = r.sigTitle || '';
@@ -6797,6 +6805,81 @@
             if (open.length) showToast(open.length + ' open action' + (open.length === 1 ? '' : 's') + ' carried forward — review & update status');
         }
 
+        // ── Microbiology / dip-slide register (deferred "read next visit" lifecycle) ──
+        // Dip-slides incubate 24-48h and lab samples take days, so the result isn't known
+        // at the visit it's set. Each item has a stable microId + setAt; anything still
+        // 'pending' (awaiting a result) is carried forward to the next visit until read.
+        let sr_micro = [];
+        const SR_MICRO_TYPES = [['dip-tvc','Dip-slide — TVC / aerobic'],['dip-ym','Dip-slide — yeast & mould'],['dip-srb','Dip-slide — SRB'],['legionella','Legionella (lab)'],['pseudomonas','Pseudomonas (lab)'],['ecoli','E. coli / coliforms (lab)'],['other','Other micro']];
+        const SR_MICRO_BANDS = ['','<10³','10³','10⁴','10⁵','10⁶','≥10⁷'];   // dip-slide CFU/mL reading bands
+        function srMicroTypeLabel(t) { const f = SR_MICRO_TYPES.find(x => x[0] === t); return f ? f[1] : 'Micro'; }
+        function srMicroIsDip(t) { return (t || '').slice(0, 3) === 'dip'; }
+        function srNewMicro() { return { id: uid(), microId: uid(), type: 'dip-tvc', location: '', lot: '', setAt: new Date().toISOString(), status: 'pending', result: '', readAt: '', carried: false, _touched: false }; }
+        function srRenderMicro() {
+            const host = document.getElementById('sr_micro'); if (!host) return;
+            const ctl = 'padding:6px 7px;border:1px solid var(--border);border-radius:6px;background:var(--surface);color:var(--text);font-size:12px;';
+            const inp = (id, field, val, ph) => `<input value="${esc(val)}" oninput="srSetMicro('${escJs(id)}','${field}',this.value)" placeholder="${ph}" style="flex:1;min-width:90px;box-sizing:border-box;${ctl}">`;
+            host.innerHTML = sr_micro.map(x => {
+                const pending = x.status !== 'read';
+                const badge = x.carried && x.setAt
+                    ? '<span style="font-size:11px;font-weight:700;color:var(--accent);white-space:nowrap;" title="Set at a previous visit — awaiting result">◷ set ' + esc(srShortDate(x.setAt)) + ' — enter result</span>'
+                    : '';
+                const resultCtl = srMicroIsDip(x.type)
+                    ? `<select onchange="srSetMicro('${escJs(x.id)}','result',this.value)" style="${ctl}">${SR_MICRO_BANDS.map(b => `<option value="${esc(b)}"${x.result === b ? ' selected' : ''}>${b ? esc(b) + ' CFU/mL' : 'Result…'}</option>`).join('')}</select>`
+                    : `<input value="${esc(x.result)}" oninput="srSetMicro('${escJs(x.id)}','result',this.value)" placeholder="Result (e.g. Not detected / 50 CFU/L)" style="flex:1;min-width:120px;box-sizing:border-box;${ctl}">`;
+                return `<div style="border:1px solid var(--border);border-radius:8px;padding:8px;${x.carried && pending ? 'border-left:3px solid var(--accent);' : ''}">
+                    <div style="display:flex;gap:6px;align-items:center;">
+                        <select onchange="srSetMicro('${escJs(x.id)}','type',this.value)" style="flex:1;${ctl}">${SR_MICRO_TYPES.map(t => `<option value="${t[0]}"${x.type === t[0] ? ' selected' : ''}>${esc(t[1])}</option>`).join('')}</select>
+                        <button type="button" onclick="srRemoveMicro('${escJs(x.id)}')" title="Remove" style="border:none;background:transparent;color:var(--danger);font-size:18px;cursor:pointer;">🗑</button>
+                    </div>
+                    <div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin-top:6px;">
+                        ${inp(x.id, 'location', x.location, 'Location / point')}
+                        ${inp(x.id, 'lot', x.lot, 'Lot / ref')}
+                    </div>
+                    <div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin-top:6px;">
+                        <select onchange="srSetMicro('${escJs(x.id)}','status',this.value)" style="${ctl}"><option value="pending"${pending ? ' selected' : ''}>Awaiting result</option><option value="read"${!pending ? ' selected' : ''}>Result in</option></select>
+                        ${resultCtl}
+                        ${badge}
+                    </div>
+                </div>`;
+            }).join('');
+        }
+        function srAddMicro() { sr_micro.push(Object.assign(srNewMicro(), { _touched: true })); srRenderMicro(); srQueueAutosave(); }
+        function srRemoveMicro(id) { sr_micro = sr_micro.filter(x => x.id !== id); srRenderMicro(); srQueueAutosave(); }
+        function srSetMicro(id, field, val) {
+            const x = sr_micro.find(r => r.id === id); if (!x) return;
+            if (field === 'type' && srMicroIsDip(x.type) !== srMicroIsDip(val)) x.result = '';   // band<->free-text control swap — drop the now-mismatched value
+            x[field] = val; x._touched = true;
+            let rerender = (field === 'type' || field === 'status');   // type toggles the result control; status toggles the highlight
+            if (field === 'result' && val && x.status !== 'read') { x.status = 'read'; if (srMicroIsDip(x.type)) rerender = true; }   // a result marks it read; dip result is a <select> so re-render is safe (a lab text input must keep focus)
+            if (rerender) srRenderMicro();
+            srQueueAutosave();
+        }
+        function srGatherMicro() {
+            return sr_micro.filter(x => (x.location || '').trim() || (x.result || '').trim() || (x.lot || '').trim()).map(x => ({
+                id: x.id, microId: x.microId || x.id, type: x.type || 'other', location: (x.location || '').trim(),
+                lot: (x.lot || '').trim(), setAt: x.setAt || null, status: x.status === 'read' ? 'read' : 'pending',
+                result: (x.result || '').toString().trim(), readAt: x.status === 'read' ? (x.readAt || new Date().toISOString()) : '',
+                carried: !!x.carried
+            }));
+        }
+        // Carry any still-pending micro samples from the last visit into this report so
+        // the tech reads them. Same de-dupe + touched-preservation rules as CAPA carry.
+        function srMaybeCarryMicro() {
+            if (sr_readOnly) return;
+            sr_micro = sr_micro.filter(x => !(x.carried && !x._touched));
+            const last = _srLastVisit;
+            const have = new Set(sr_micro.map(r => r.microId).filter(Boolean));
+            const pend = (last && Array.isArray(last.micro)) ? last.micro.filter(x => x && x.status !== 'read' && ((x.location || '').trim() || (x.lot || '').trim()) && !have.has(x.microId)) : [];
+            pend.forEach(x => sr_micro.push({
+                id: uid(), microId: x.microId || uid(), type: x.type || 'other', location: x.location || '',
+                lot: x.lot || '', setAt: x.setAt || last.date || last.savedAt || null, status: 'pending',
+                result: '', readAt: '', carried: true, _touched: false
+            }));
+            srRenderMicro(); srQueueAutosave();
+            if (pend.length) showToast(pend.length + ' dip-slide/sample' + (pend.length === 1 ? '' : 's') + ' awaiting result carried forward — enter the reading');
+        }
+
         function gatherSR() {
             const id = id_ => document.getElementById(id_).value;
             const customerSel = id('sr_customerId');
@@ -6821,7 +6904,7 @@
                 points: srGatherPoints(),
                 tests: srAllRows().map(srMapRow),   // flattened — keeps the saved-list summary + legacy PDF path working
 
-                obs: id('sr_obs'), act: id('sr_act'), chem: id('sr_chem'), dosing: srGatherDosing(), recs: srGatherRecs(),
+                obs: id('sr_obs'), act: id('sr_act'), chem: id('sr_chem'), dosing: srGatherDosing(), recs: srGatherRecs(), micro: srGatherMicro(),
                 photos: sr_photos,
                 sig: sr_sigHasStrokes ? document.getElementById('sr_sig').toDataURL('image/png') : '',   // '' when never signed
                 sigName: id('sr_sig_name'), sigTitle: id('sr_sig_title'),
@@ -6848,6 +6931,7 @@
             if ((r.obs || '').trim() || (r.act || '').trim() || (r.chem || '').trim()) return true;
             if (r.dosing && r.dosing.length) return true;
             if (r.recs && r.recs.length) return true;
+            if (r.micro && r.micro.length) return true;
             if (r.points && r.points.some(p => (p.tests || []).some(t => t.value !== '' && t.value != null))) return true;
             return false;
         }
@@ -7051,6 +7135,24 @@
                 y += 8;
             }
             if (r.chem) { doc.setFont('helvetica','bold'); doc.setFontSize(10); doc.text('Dosing notes:', 36, y); y += 14; doc.setFont('helvetica','normal'); writeBlock(r.chem); }
+            // Microbiology / dip-slides
+            if (r.micro && r.micro.length) {
+                if (y > PAGE_H - 110) { doc.addPage(); y = 60; }
+                doc.setFontSize(14); doc.setFont('helvetica','bold'); doc.setTextColor(0, 0, 0); doc.text('Microbiology & Dip-slides', 36, y); y += 15;
+                doc.setFontSize(8); doc.setFont('helvetica','bold'); doc.setTextColor.apply(doc, SOFT);
+                doc.text('Type', 36, y); doc.text('Location', 200, y); doc.text('Status', 320, y); doc.text('Result', 470, y); y += 4;
+                doc.setDrawColor(210, 210, 210); doc.line(36, y, PAGE_W - 36, y); y += 12; doc.setTextColor(0, 0, 0); doc.setFont('helvetica','normal'); doc.setFontSize(9);
+                r.micro.forEach(x => {
+                    if (y > PAGE_H - 80) { doc.addPage(); y = 60; }
+                    const pend = x.status !== 'read';
+                    doc.text(srMicroTypeLabel(x.type).slice(0, 26), 36, y);
+                    doc.text(String(x.location || '').slice(0, 20), 200, y);
+                    if (pend) { doc.setTextColor.apply(doc, SOFT); doc.text(('awaiting' + (x.setAt ? ' (set ' + srShortDate(x.setAt) + ')' : '')).slice(0, 26), 320, y); doc.setTextColor(0, 0, 0); }
+                    else doc.text('read', 320, y);
+                    doc.text(String(x.result || (pend ? '—' : '')).slice(0, 18), 470, y); y += 13;
+                });
+                y += 8;
+            }
             // Recommendations / follow-up actions
             if (r.recs && r.recs.length) {
                 if (y > PAGE_H - 110) { doc.addPage(); y = 60; }
