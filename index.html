@@ -2752,7 +2752,7 @@
                 <div class="hg-section-title">About</div>
                 <div class="hg-kvgrid">
                     <div class="hg-kv"><div class="k">App</div><div class="v">Hadron Group</div></div>
-                    <div class="hg-kv"><div class="k">Version</div><div class="v">v133</div></div>
+                    <div class="hg-kv"><div class="k">Version</div><div class="v">v134</div></div>
                     <div class="hg-kv"><div class="k">Platform</div><div class="v">PWA</div></div>
                 </div>
             </div>
@@ -3710,6 +3710,11 @@
                     <datalist id="sr_products_list"></datalist>
                     <button type="button" class="calc-btn" style="margin-top:6px;background:var(--accent);color:#0f2733;" onclick="srAddDose()">＋ Add product</button>
                     <div class="form-group" style="margin-top:10px;"><label>Dosing notes (optional)</label><textarea id="sr_chem" rows="2" placeholder="Anything else about dosing this visit"></textarea></div>
+
+                    <h3 style="margin-top:16px;">Recommendations &amp; follow-up</h3>
+                    <p style="color:var(--muted);font-size:12px;margin:4px 0;">Corrective / preventive actions. Anything left <strong>Open</strong> or <strong>In progress</strong> is carried forward to the next visit at this site until it is closed.</p>
+                    <div id="sr_recs" style="display:flex;flex-direction:column;gap:8px;"></div>
+                    <button type="button" class="calc-btn" style="margin-top:6px;background:var(--accent);color:#0f2733;" onclick="srAddRec()">＋ Add recommendation</button>
 
                     <h3 style="margin-top:16px;">Photos</h3>
                     <input type="file" id="sr_photo" accept="image/*" capture="environment" onchange="addServicePhoto(event)" multiple>
@@ -5917,6 +5922,7 @@
                 contact.value = bits.join(' · ');
                 srLoadSitePoints(site);   // auto-load this site's standard sample points
                 _srLastVisit = srLastReportForSite(sel); srUpdateCloneBtn();   // offer to copy the previous visit
+                srMaybeCarryRecs();   // pull forward any still-open actions from the last visit
             } else {
                 wrap.style.display = 'none';
                 manualInput.value = '';
@@ -6026,6 +6032,7 @@
             _srLastVisit = null; srUpdateCloneBtn();
             sr_photos = []; document.getElementById('sr_photos').innerHTML = '';
             sr_dosing = []; srRenderDosing(); srRenderDoseProducts();
+            sr_recs = []; srRenderRecs();
             sr_reportId = uid();   // one stable id for this report across Save + Export PDF
             sr_reportNo = null;    // minted on first gatherSR
             srInitPoints();
@@ -6074,6 +6081,7 @@
             document.getElementById('sr_act').value  = r.act || '';
             document.getElementById('sr_chem').value = r.chem || '';
             sr_dosing = (r.dosing || []).map(d => Object.assign(srNewDose(), d)); srRenderDosing(); srRenderDoseProducts();
+            sr_recs = (r.recs || []).map(x => Object.assign(srNewRec(), x)); srRenderRecs();
             document.getElementById('sr_next_due').value  = r.nextDue || '';
             document.getElementById('sr_sig_name').value  = r.sigName || '';
             document.getElementById('sr_sig_title').value = r.sigTitle || '';
@@ -6730,6 +6738,65 @@
             LS.set('hadron_sr_products', Array.from(set).slice(-200));
         }
 
+        // ── Recommendations / CAPA register (carry-forward across visits) ──
+        // Each item has a stable capaId + raisedAt so an action still Open at the next
+        // visit is carried forward (keeping its age) until someone marks it Done.
+        let sr_recs = [];
+        const SR_PRIO = [['low','Low'],['med','Medium'],['high','High'],['crit','Critical']];
+        const SR_RSTAT = [['open','Open'],['progress','In progress'],['done','Done']];
+        function srPrioLabel(p) { const f = SR_PRIO.find(x => x[0] === p); return f ? f[1] : 'Medium'; }
+        function srShortDate(d) { const t = new Date(d); return isNaN(t.getTime()) ? '' : t.toLocaleDateString(undefined, { day: '2-digit', month: 'short', year: 'numeric' }); }
+        function srNewRec() { return { id: uid(), capaId: uid(), text: '', priority: 'med', status: 'open', due: '', raisedAt: new Date().toISOString(), carried: false, _touched: false }; }
+        function srRecOverdue(x) { if (!x.due || x.status === 'done') return false; const d = new Date(x.due + 'T23:59:59'); return !isNaN(d.getTime()) && d.getTime() < Date.now(); }
+        function srRenderRecs() {
+            const host = document.getElementById('sr_recs'); if (!host) return;
+            const ctl = 'padding:6px 7px;border:1px solid var(--border);border-radius:6px;background:var(--surface);color:var(--text);font-size:12px;';
+            host.innerHTML = sr_recs.map(x => {
+                const badges = [];
+                if (x.carried && x.raisedAt) badges.push('<span style="font-size:11px;color:var(--accent);white-space:nowrap;" title="Carried forward from a previous visit">↩ open since ' + esc(srShortDate(x.raisedAt)) + '</span>');
+                if (srRecOverdue(x)) badges.push('<span style="font-size:11px;font-weight:700;color:var(--danger);white-space:nowrap;">⚠ overdue</span>');
+                return `<div style="border:1px solid var(--border);border-radius:8px;padding:8px;${x.carried ? 'border-left:3px solid var(--accent);' : ''}">
+                    <div style="display:flex;gap:6px;align-items:flex-start;">
+                        <textarea rows="2" oninput="srSetRec('${escJs(x.id)}','text',this.value)" placeholder="Recommended action / finding" style="flex:1;box-sizing:border-box;padding:7px;border:1px solid var(--border);border-radius:6px;background:var(--surface);color:var(--text);font-size:13px;resize:vertical;">${esc(x.text)}</textarea>
+                        <button type="button" onclick="srRemoveRec('${escJs(x.id)}')" title="Remove" style="border:none;background:transparent;color:var(--danger);font-size:18px;cursor:pointer;">🗑</button>
+                    </div>
+                    <div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin-top:6px;">
+                        <select onchange="srSetRec('${escJs(x.id)}','priority',this.value)" style="${ctl}">${SR_PRIO.map(p => `<option value="${p[0]}"${x.priority === p[0] ? ' selected' : ''}>${p[1]}</option>`).join('')}</select>
+                        <select onchange="srSetRec('${escJs(x.id)}','status',this.value)" style="${ctl}">${SR_RSTAT.map(s => `<option value="${s[0]}"${x.status === s[0] ? ' selected' : ''}>${s[1]}</option>`).join('')}</select>
+                        <label style="font-size:12px;color:var(--muted);display:flex;align-items:center;gap:4px;">Due <input type="date" value="${esc(x.due || '')}" onchange="srSetRec('${escJs(x.id)}','due',this.value)" style="${ctl}"></label>
+                        ${badges.join('')}
+                    </div>
+                </div>`;
+            }).join('');
+        }
+        function srAddRec() { sr_recs.push(Object.assign(srNewRec(), { _touched: true })); srRenderRecs(); srQueueAutosave(); }
+        function srRemoveRec(id) { sr_recs = sr_recs.filter(x => x.id !== id); srRenderRecs(); srQueueAutosave(); }
+        function srSetRec(id, field, val) { const x = sr_recs.find(r => r.id === id); if (x) { x[field] = val; x._touched = true; if (field === 'status' || field === 'priority') srRenderRecs(); srQueueAutosave(); } }
+        function srGatherRecs() {
+            return sr_recs.filter(x => (x.text || '').trim()).map(x => ({
+                id: x.id, capaId: x.capaId || x.id, text: (x.text || '').trim(),
+                priority: x.priority || 'med', status: x.status || 'open',
+                due: x.due || '', raisedAt: x.raisedAt || null, carried: !!x.carried
+            }));
+        }
+        // Pull the last visit's still-open actions into this new report. Called on site
+        // select (new reports only). Drops previously-carried, un-edited rows first so
+        // switching site re-syncs; never removes actions the tech has actually touched.
+        function srMaybeCarryRecs() {
+            if (sr_readOnly) return;
+            sr_recs = sr_recs.filter(x => !(x.carried && !x._touched));
+            const last = _srLastVisit;
+            const have = new Set(sr_recs.map(r => r.capaId).filter(Boolean));   // never re-add an action already on this report (a re-selected site, or one the tech has edited) — would duplicate + compound across visits
+            const open = (last && Array.isArray(last.recs)) ? last.recs.filter(x => x && (x.text || '').trim() && x.status !== 'done' && !have.has(x.capaId)) : [];
+            open.forEach(x => sr_recs.push({
+                id: uid(), capaId: x.capaId || uid(), text: x.text, priority: x.priority || 'med',
+                status: x.status || 'open', due: x.due || '', raisedAt: x.raisedAt || last.date || last.savedAt || null,
+                carried: true, _touched: false
+            }));
+            srRenderRecs(); srQueueAutosave();
+            if (open.length) showToast(open.length + ' open action' + (open.length === 1 ? '' : 's') + ' carried forward — review & update status');
+        }
+
         function gatherSR() {
             const id = id_ => document.getElementById(id_).value;
             const customerSel = id('sr_customerId');
@@ -6754,7 +6821,7 @@
                 points: srGatherPoints(),
                 tests: srAllRows().map(srMapRow),   // flattened — keeps the saved-list summary + legacy PDF path working
 
-                obs: id('sr_obs'), act: id('sr_act'), chem: id('sr_chem'), dosing: srGatherDosing(),
+                obs: id('sr_obs'), act: id('sr_act'), chem: id('sr_chem'), dosing: srGatherDosing(), recs: srGatherRecs(),
                 photos: sr_photos,
                 sig: sr_sigHasStrokes ? document.getElementById('sr_sig').toDataURL('image/png') : '',   // '' when never signed
                 sigName: id('sr_sig_name'), sigTitle: id('sr_sig_title'),
@@ -6780,6 +6847,7 @@
             if (r.photos && r.photos.length) return true;
             if ((r.obs || '').trim() || (r.act || '').trim() || (r.chem || '').trim()) return true;
             if (r.dosing && r.dosing.length) return true;
+            if (r.recs && r.recs.length) return true;
             if (r.points && r.points.some(p => (p.tests || []).some(t => t.value !== '' && t.value != null))) return true;
             return false;
         }
@@ -6983,6 +7051,30 @@
                 y += 8;
             }
             if (r.chem) { doc.setFont('helvetica','bold'); doc.setFontSize(10); doc.text('Dosing notes:', 36, y); y += 14; doc.setFont('helvetica','normal'); writeBlock(r.chem); }
+            // Recommendations / follow-up actions
+            if (r.recs && r.recs.length) {
+                if (y > PAGE_H - 110) { doc.addPage(); y = 60; }
+                doc.setFontSize(14); doc.setFont('helvetica','bold'); doc.setTextColor(0,0,0); doc.text('Recommendations & Follow-up', 36, y); y += 16;
+                const PRIO = { low:'Low', med:'Medium', high:'High', crit:'Critical' }, RST = { open:'Open', progress:'In progress', done:'Done' };
+                r.recs.forEach(x => {
+                    if (y > PAGE_H - 70) { doc.addPage(); y = 60; }
+                    const overdue = x.due && x.status !== 'done' && (new Date(x.due + 'T23:59:59').getTime() < Date.now());
+                    doc.setFontSize(9); doc.setFont('helvetica','bold');
+                    if (x.status === 'done') doc.setTextColor(21, 123, 58);
+                    else if (x.priority === 'crit' || overdue) doc.setTextColor(192, 57, 43);
+                    else if (x.priority === 'high') doc.setTextColor(180, 120, 0);
+                    else doc.setTextColor(90, 90, 90);
+                    let tag = (PRIO[x.priority] || 'Medium') + ' · ' + (RST[x.status] || 'Open');
+                    if (x.due) tag += ' · due ' + srShortDate(x.due);
+                    if (overdue) tag += '  (OVERDUE)';
+                    if (x.carried && x.raisedAt) tag += '  · open since ' + srShortDate(x.raisedAt);
+                    doc.text(tag, 36, y); y += 12;
+                    doc.setTextColor(0, 0, 0); doc.setFont('helvetica','normal'); doc.setFontSize(10);
+                    const lines = doc.splitTextToSize(String(x.text || ''), PAGE_W - 80);
+                    doc.text(lines, 44, y); y += lines.length * 12 + 8;
+                });
+                y += 4;
+            }
             // Photos
             if (r.photos && r.photos.length) {
                 if (y > PAGE_H - 180) { doc.addPage(); y = 60; }
