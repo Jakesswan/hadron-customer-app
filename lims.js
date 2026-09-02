@@ -198,7 +198,7 @@
   // Bump this when the test catalogue / profile bundles change so existing
   // devices pick up the new reference data without wiping their samples,
   // clients, results or audit trail.
-  const CATALOGUE_VERSION = 2; // v2 = SANS 241:2015 full library, prices removed
+  const CATALOGUE_VERSION = 3; // v3 = + Food & Beverage microbiology panel (faecal coliforms, enterococci, TPC 22°C, Pseudomonas, yeasts & moulds, C. perfringens, Legionella, Salmonella)
 
   /* ---------- SANS 241:2015 Drinking-Water Reference Catalogue ----------
      Specs are the SANS 241 health / aesthetic / operational maximum allowable
@@ -215,6 +215,15 @@
     { id:'t-crypto', code:'CRYPT',  name:'Cryptosporidium',              method:'SANS / EPA 1623',       methodVer:'v1.0', unit:'oocysts/10L',lod:1,    loq:1,    range:'0–>100',   tat:5, specMin:0, specMax:0,     category:'Microbiological', accredited:false, sans241:'Acute health' },
     { id:'t-giardia',code:'GIARD',  name:'Giardia',                      method:'SANS / EPA 1623',       methodVer:'v1.0', unit:'cysts/10L',  lod:1,    loq:1,    range:'0–>100',   tat:5, specMin:0, specMax:0,     category:'Microbiological', accredited:false, sans241:'Acute health' },
     { id:'t-somph',  code:'SOMPH',  name:'Somatic Coliphages',           method:'ISO 10705-2',           methodVer:'v1.0', unit:'pfu/10mL',   lod:1,    loq:1,    range:'0–>1000',  tat:3, specMin:0, specMax:1,     category:'Microbiological', accredited:false, sans241:'Operational' },
+    // ── Food & Beverage microbiology (indicator organisms + plate/hygiene counts) ──
+    { id:'t-fcolif', code:'FC',     name:'Faecal Coliforms (Thermotolerant)',      method:'SANS 5221 / APHA 9222-D', methodVer:'v2.0', unit:'cfu/100mL',  lod:1,    loq:1,    range:'0–>2000',        tat:3,  specMin:0, specMax:0,    category:'Microbiological', accredited:true,  sans241:'Acute health' },
+    { id:'t-entero', code:'ENT',    name:'Intestinal Enterococci',                 method:'ISO 7899-2',            methodVer:'v1.0', unit:'cfu/100mL',  lod:1,    loq:1,    range:'0–>2000',        tat:3,  specMin:0, specMax:0,    category:'Microbiological', accredited:true,  sans241:'Operational' },
+    { id:'t-tpc22',  code:'TPC22',  name:'Total Plate Count (22 °C)',              method:'SANS 6222 / APHA 9215', methodVer:'v1.0', unit:'cfu/mL',     lod:1,    loq:1,    range:'0–>100000',      tat:3,  specMin:0, specMax:100,  category:'Microbiological', accredited:true,  sans241:'Operational' },
+    { id:'t-pseudo', code:'PSA',    name:'Pseudomonas aeruginosa',                 method:'ISO 16266',             methodVer:'v1.0', unit:'cfu/250mL',  lod:1,    loq:1,    range:'0–>1000',        tat:3,  specMin:0, specMax:0,    category:'Microbiological', accredited:false, sans241:'Operational' },
+    { id:'t-yeast',  code:'YM',     name:'Yeasts & Moulds',                        method:'ISO 21527',             methodVer:'v1.0', unit:'cfu/mL',     lod:1,    loq:1,    range:'0–>100000',      tat:5,  specMin:0, specMax:100,  category:'Microbiological', accredited:false, sans241:'Aesthetic' },
+    { id:'t-clostp', code:'CLP',    name:'Clostridium perfringens (incl. spores)', method:'ISO 14189',             methodVer:'v1.0', unit:'cfu/100mL',  lod:1,    loq:1,    range:'0–>1000',        tat:3,  specMin:0, specMax:0,    category:'Microbiological', accredited:false, sans241:'Operational' },
+    { id:'t-legion', code:'LEG',    name:'Legionella spp.',                        method:'ISO 11731',             methodVer:'v1.0', unit:'cfu/L',      lod:10,   loq:10,   range:'0–>100000',      tat:10, specMin:0, specMax:100,  category:'Microbiological', accredited:false, sans241:'Operational' },
+    { id:'t-salm',   code:'SALM',   name:'Salmonella spp. (per 1 L)',              method:'ISO 19250',             methodVer:'v1.0', unit:'per 1L',     lod:1,    loq:1,    range:'Absent/Present', tat:5,  specMin:0, specMax:0,    category:'Microbiological', accredited:false, sans241:'Acute health' },
 
     // ── Physical / Aesthetic ────────────────────────────────────────────
     { id:'t-ph',     code:'PH',     name:'pH',                           method:'SANS 5667 / APHA 4500-H+', methodVer:'v3.0', unit:'pH units',   lod:0.1,  loq:0.1,  range:'0–14',     tat:1, specMin:5.0, specMax:9.7,   category:'Physico-chemical', accredited:true,  sans241:'Operational' },
@@ -277,6 +286,7 @@
   const _SANS241_PROFILES = [
     { id:'p-sans241-acute',     name:'SANS 241 — Acute Health Suite',         tests:['t-ec','t-no3','t-no2','t-cn','t-mcyst'] },
     { id:'p-sans241-micro',     name:'SANS 241 — Microbiological',            tests:['t-ec','t-colif','t-hpc','t-somph'] },
+    { id:'p-fb-micro',          name:'Food & Beverage — Microbiology',       tests:['t-ec','t-colif','t-fcolif','t-entero','t-hpc','t-tpc22','t-pseudo','t-yeast','t-clostp','t-legion','t-salm'] },
     { id:'p-sans241-physical',  name:'SANS 241 — Physical / Aesthetic',       tests:['t-ph','t-cond','t-tds','t-turb','t-colour','t-taste','t-odour'] },
     { id:'p-sans241-disinf',    name:'SANS 241 — Disinfectants / By-products',tests:['t-fcl','t-mchla','t-thm'] },
     { id:'p-sans241-macro',     name:'SANS 241 — Macro-determinands',         tests:['t-nh4','t-no3','t-no2','t-cl','t-so4','t-f','t-cn','t-hard','t-alk'] },
