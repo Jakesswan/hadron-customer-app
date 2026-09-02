@@ -2752,7 +2752,7 @@
                 <div class="hg-section-title">About</div>
                 <div class="hg-kvgrid">
                     <div class="hg-kv"><div class="k">App</div><div class="v">Hadron Group</div></div>
-                    <div class="hg-kv"><div class="k">Version</div><div class="v">v126</div></div>
+                    <div class="hg-kv"><div class="k">Version</div><div class="v">v127</div></div>
                     <div class="hg-kv"><div class="k">Platform</div><div class="v">PWA</div></div>
                 </div>
             </div>
@@ -5786,8 +5786,11 @@
         function submitServiceReport() {
             if (sr_readOnly) return;
             const r = gatherSR();
-            if (!r.site) { showToast('Enter site name'); return; }
-            if (!confirm('Submit this report? Once submitted it locks — after this, only the account owner can change it.')) return;
+            const pf = srPreflight(r);
+            if (pf.issues.length) { showToast('Add ' + pf.issues.join(', ') + ' before submitting'); return; }
+            let msg = 'Submit this report? Once submitted it locks — after this, only the account owner can change it.';
+            if (pf.warns.length) msg = '⚠ ' + pf.warns.join('\n⚠ ') + '\n\n' + msg;
+            if (!confirm(msg)) return;
             sr_status = 'submitted'; r.status = 'submitted';
             if (srLocalSave(r)) showToast('Report submitted & locked');
             srCloudPushReport(r);
@@ -5966,11 +5969,13 @@
             document.getElementById('sr_list').style.display = 'none';
             sr_status = 'draft'; applySrReadOnly(false);
             // Defaults
-            document.getElementById('sr_dt').value = new Date().toISOString().slice(0, 16);
+            document.getElementById('sr_dt').value = srLocalDtValue();
+            document.getElementById('sr_gps').value = '';
             sr_photos = []; document.getElementById('sr_photos').innerHTML = '';
             sr_reportId = uid();   // one stable id for this report across Save + Export PDF
             srInitPoints();
             initSignaturePad();
+            captureGps(true);      // auto-capture location silently (fails quietly if denied/unavailable)
             // Populate customer dropdown + reset site dropdown on every open.
             await srPopulateCustomerDropdown();
             srRefreshSiteDropdown();
@@ -6091,7 +6096,14 @@
         // ── Cloud sync: reports live in Supabase (service_reports) as well as in
         // localStorage, so they survive the device and reach head office. ──
         let srCloudMeta = [];   // last cloud fetch — metadata only, not full payloads
-        function srToCloudRow(r) { return { id: r.id, site: r.site || null, customer_name: r.customerName || null, technician: r.tech || null, report_date: r.date || null, status: r.status || 'draft', payload: r }; }
+        // The visit date is a zoneless datetime-local wall-clock; convert to a real UTC instant for
+        // the timestamptz column so cloud-only viewers + the list sort don't drift by the tz offset.
+        function srDateIso(d) { if (!d) return null; const x = new Date(d); return isNaN(x.getTime()) ? null : x.toISOString(); }
+        // Inverse for display: a stored UTC instant (report_date, timestamptz) back to a local
+        // wall-clock 'YYYY-MM-DDTHH:mm', so a cloud-only report's list row shows the tech's actual
+        // local visit time instead of the raw UTC string (2h early in SAST).
+        function srIsoToLocalDt(iso) { if (!iso) return ''; const x = new Date(iso); if (isNaN(x.getTime())) return String(iso).slice(0, 16); x.setMinutes(x.getMinutes() - x.getTimezoneOffset()); return x.toISOString().slice(0, 16); }
+        function srToCloudRow(r) { return { id: r.id, site: r.site || null, customer_name: r.customerName || null, technician: r.tech || null, report_date: srDateIso(r.date), status: r.status || 'draft', payload: r }; }
         function srCloudPushReport(r) {
             try { if (window.HG_DB && window.HG_DB.service_reports && r && r.id) window.HG_DB.service_reports.upsert(srToCloudRow(r)).catch(() => {}); } catch (_) {}
         }
@@ -6107,7 +6119,7 @@
         }
         function srMergedReports() {
             const byId = {};
-            srCloudMeta.forEach(m => { byId[m.id] = { id: m.id, site: m.site, date: m.report_date, tech: m.technician || '', status: m.status, updated_at: m.updated_at, _cloud: true }; });
+            srCloudMeta.forEach(m => { byId[m.id] = { id: m.id, site: m.site, date: srIsoToLocalDt(m.report_date), tech: m.technician || '', status: m.status, updated_at: m.updated_at, _cloud: true }; });
             LS.get('hadron_sr', []).forEach(r => {
                 if (!r || !r.id) return;
                 const meta = byId[r.id];
@@ -6149,13 +6161,16 @@
             srRenderReportList(srMergedReports());                            // instant: local (+ any cached cloud)
             srCloudList().then(() => srRenderReportList(srMergedReports()));   // then refresh from cloud
         }
-        function captureGps() {
-            if (!navigator.geolocation) { showToast('GPS not available'); return; }
-            showToast('Locating…');
+        function captureGps(silent) {
+            if (!navigator.geolocation) { if (!silent) showToast('GPS not available'); return; }
+            if (!silent) showToast('Locating…');
             navigator.geolocation.getCurrentPosition(p => {
-                document.getElementById('sr_gps').value = p.coords.latitude.toFixed(5) + ', ' + p.coords.longitude.toFixed(5) + ' (±' + Math.round(p.coords.accuracy) + 'm)';
-            }, e => showToast('GPS: ' + e.message), { enableHighAccuracy: true, timeout: 8000 });
+                const el = document.getElementById('sr_gps'); if (el) el.value = p.coords.latitude.toFixed(5) + ', ' + p.coords.longitude.toFixed(5) + ' (±' + Math.round(p.coords.accuracy) + 'm)';
+            }, e => { if (!silent) showToast('GPS: ' + e.message); }, { enableHighAccuracy: true, timeout: 8000 });
         }
+        // datetime-local wants LOCAL wall-clock; toISOString() is UTC, so a naive slice is off by the
+        // timezone offset (2h in SAST). Shift by the offset so the prefilled visit time is correct.
+        function srLocalDtValue() { const d = new Date(); d.setMinutes(d.getMinutes() - d.getTimezoneOffset()); return d.toISOString().slice(0, 16); }
         async function addServicePhoto(ev) {
             const files = [...ev.target.files]; ev.target.value = '';
             for (const f of files) {
@@ -6264,9 +6279,38 @@
             return true;
         }
         function srLimitText(t) {
-            if (t.specMin != null && t.specMax != null && t.specMin > 0) return t.specMin + '–' + t.specMax;
+            if (t.specMin != null && t.specMax != null) return t.specMin + '–' + t.specMax;
             if (t.specMax != null) return '≤ ' + t.specMax;
+            if (t.specMin != null) return '≥ ' + t.specMin;   // e.g. a residual with a minimum only
             return '';
+        }
+        // Physical plausibility (NOT pass/fail) — catch obvious typos / OCR misreads (pH 74 for 7.4,
+        // temp 600) before they save and poison the trend series. false only for impossible values.
+        function srPlausible(t) {
+            if (t.value === '' || t.value == null) return true;
+            const v = parseFloat(t.value); if (isNaN(v)) return true;   // non-numeric caught separately
+            const R = {
+                't-ph': [0, 14], 'x-temp': [-5, 120], 't-fcl': [0, 100], 'x-tcl': [0, 100], 't-cl2': [0, 100],
+                'x-orp': [-1200, 1500], 't-cond': [0, 200000], 't-tds': [0, 200000], 't-turb': [0, 4000],
+                't-hard': [0, 100000], 't-alk': [0, 100000], 'x-po4': [0, 10000]
+            }[t.catId || t.id];
+            if (R) return v >= R[0] && v <= R[1];
+            if (/mg\/L|cfu|NTU|pfu|µg|mS\/m/i.test(t.unit || '') && v < 0) return false;   // most water params are non-negative
+            return true;
+        }
+        // Pre-submit checks. `issues` block Submit (finalising an empty/incomplete report);
+        // `warns` are soft confirms (future date, implausible reading). Save stays lenient.
+        function srPreflight(r) {
+            const issues = [], warns = [];
+            if (!r.site || !r.site.trim()) issues.push('a site');
+            if (!(r.points || []).some(p => (p.tests || []).some(t => t.value !== '' && t.value != null))) issues.push('at least one reading');
+            if (!r.tech || !r.tech.trim()) issues.push('a technician name');
+            if (!r.date) issues.push('a date');
+            else if (new Date(r.date).getTime() > Date.now() + 3600000) warns.push('the visit date is in the future');
+            (r.points || []).forEach(p => (p.tests || []).forEach(t => {
+                if (t.value !== '' && t.value != null && !srPlausible(t)) warns.push((t.name || t.code || 'A reading') + ' = ' + t.value + ' looks out of range');
+            }));
+            return { issues, warns };
         }
         function srChip(t) {
             const p = srEvalPass(t);
@@ -6588,6 +6632,7 @@
             if (srLocalSave(r)) showToast('Report saved');   // LS.set warns 'Storage full' itself on failure
             srCloudPushReport(r);   // best-effort cloud sync (queues if offline / not signed in)
             srClearDraft();         // this state is now persisted — drop the recovery draft
+            const pf = srPreflight(r); if (pf.warns.length) setTimeout(() => showToast('⚠ Check: ' + pf.warns[0]), 900);   // non-blocking heads-up
         }
         function deleteSR(id) {
             const _role = (window.HG_PROFILE && window.HG_PROFILE.role) || document.body.dataset.role || '';
@@ -6643,7 +6688,7 @@
                     doc.text(String(t.name || '').slice(0,44), 36, y);
                     doc.setFont('helvetica','bold'); doc.text(String(t.value), 250, y); doc.setFont('helvetica','normal');
                     doc.text(String(t.unit || ''), 320, y);
-                    const lt = (t.specMin != null && t.specMax != null && t.specMin > 0) ? (t.specMin + '–' + t.specMax) : (t.specMax != null ? '≤ ' + t.specMax : '');
+                    const lt = (t.specMin != null && t.specMax != null) ? (t.specMin + '–' + t.specMax) : (t.specMax != null ? '≤ ' + t.specMax : (t.specMin != null ? '≥ ' + t.specMin : ''));
                     if (t.pass === false) { doc.setTextColor(192,57,43); doc.setFont('helvetica','bold'); doc.text((lt ? lt + '  ' : '') + 'FAIL', 400, y); doc.setFont('helvetica','normal'); doc.setTextColor(0,0,0); }
                     else if (t.pass === true) { doc.setTextColor(21,123,58); doc.setFont('helvetica','bold'); doc.text((lt ? lt + '  ' : '') + 'PASS', 400, y); doc.setFont('helvetica','normal'); doc.setTextColor(0,0,0); }
                     else if (lt) { doc.text(lt, 400, y); }
