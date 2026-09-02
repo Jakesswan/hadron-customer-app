@@ -58,7 +58,7 @@
   // session (cross-tenant leak). hgSignOut sets window.__hgSuppressQueuePersist before wiping;
   // the reload clears it. Sends still happen (under the still-valid old session); only local
   // persistence is suppressed.
-  function saveQueue(q)  { if (window.__hgSuppressQueuePersist) return; localStorage.setItem(QUEUE_KEY, JSON.stringify(q || [])); }
+  function saveQueue(q)  { if (window.__hgSuppressQueuePersist) return; try { localStorage.setItem(QUEUE_KEY, JSON.stringify(q || [])); } catch (e) { console.warn('[HG_SYNC] queue persist failed (storage full?)', e); } }
   function loadDead()    { try { return JSON.parse(localStorage.getItem(DEAD_KEY) || '[]'); } catch { return []; } }
   function saveDead(d)   { if (window.__hgSuppressQueuePersist) return; try { localStorage.setItem(DEAD_KEY, JSON.stringify((d || []).slice(-50))); } catch (_) {} }
   function opId(op)      { return op.table + ':' + (op.kind === 'delete' ? op.id : (op.row && op.row.id)); }

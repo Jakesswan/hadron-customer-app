@@ -2752,7 +2752,7 @@
                 <div class="hg-section-title">About</div>
                 <div class="hg-kvgrid">
                     <div class="hg-kv"><div class="k">App</div><div class="v">Hadron Group</div></div>
-                    <div class="hg-kv"><div class="k">Version</div><div class="v">v127</div></div>
+                    <div class="hg-kv"><div class="k">Version</div><div class="v">v128</div></div>
                     <div class="hg-kv"><div class="k">Platform</div><div class="v">PWA</div></div>
                 </div>
             </div>
@@ -3709,6 +3709,8 @@
                     <div id="sr_photos" style="display:flex;flex-wrap:wrap;gap:6px;margin-top:8px;"></div>
 
                     <h3 style="margin-top:16px;">Client sign-off</h3>
+                    <div class="form-group"><label>Signed by (name)</label><input type="text" id="sr_sig_name" placeholder="Client representative's name"></div>
+                    <div class="form-group"><label>Title / company</label><input type="text" id="sr_sig_title" placeholder="e.g. Plant Manager, ACME (Pty) Ltd"></div>
                     <canvas id="sr_sig" width="320" height="120" style="border:1px solid #ccc;border-radius:6px;background:#fff;display:block;max-width:100%;"></canvas>
                     <div style="margin-top:6px;"><button type="button" class="calc-btn" style="background:#888;" onclick="clearSignature()">Clear signature</button></div>
 
@@ -5792,12 +5794,15 @@
             if (pf.warns.length) msg = '⚠ ' + pf.warns.join('\n⚠ ') + '\n\n' + msg;
             if (!confirm(msg)) return;
             sr_status = 'submitted'; r.status = 'submitted';
-            if (srLocalSave(r)) showToast('Report submitted & locked');
+            r.submittedAt = new Date().toISOString();
+            r.submittedBy = (window.HG_PROFILE && (window.HG_PROFILE.full_name || window.HG_PROFILE.email)) || r.tech || '';
+            const saved = srLocalSave(r);
+            showToast(saved ? 'Report submitted & locked' : '⚠ Device storage full — submitted to cloud; keeping a recovery draft.');
             srCloudPushReport(r);
-            srClearDraft();
+            if (saved) srClearDraft();   // keep the recovery draft if the device save failed
             listServiceReports();
         }
-        let sr_sigCtx = null, sr_drawing = false;
+        let sr_sigCtx = null, sr_drawing = false, sr_sigHasStrokes = false, sr_signedAt = null;
 
         // Cache for customer/site dropdowns on the Service Report form.
         let __srCustomers = [];
@@ -6017,6 +6022,8 @@
             document.getElementById('sr_obs').value  = r.obs || '';
             document.getElementById('sr_act').value  = r.act || '';
             document.getElementById('sr_chem').value = r.chem || '';
+            document.getElementById('sr_sig_name').value  = r.sigName || '';
+            document.getElementById('sr_sig_title').value = r.sigTitle || '';
 
             // Customer + site dropdowns. If the record's customer/site isn't in this device's
             // local register (e.g. a cloud report from another device), add a placeholder
@@ -6076,6 +6083,7 @@
                 const img = new Image();
                 img.onload = () => { try { sr_sigCtx.drawImage(img, 0, 0, c.width, c.height); } catch (_) {} };
                 img.src = r.sig;
+                sr_sigHasStrokes = true; sr_signedAt = r.signedAt || null;   // restore the signed state
             }
             applySrReadOnly(!!readOnly);
             showToast(readOnly ? 'Viewing "' + (r.site || 'report') + '"' : 'Editing "' + (r.site || 'report') + '" — Save to update it');
@@ -6171,9 +6179,11 @@
         // datetime-local wants LOCAL wall-clock; toISOString() is UTC, so a naive slice is off by the
         // timezone offset (2h in SAST). Shift by the offset so the prefilled visit time is correct.
         function srLocalDtValue() { const d = new Date(); d.setMinutes(d.getMinutes() - d.getTimezoneOffset()); return d.toISOString().slice(0, 16); }
+        const SR_MAX_PHOTOS = 8;   // cap per report — base64 photos are the main localStorage pressure
         async function addServicePhoto(ev) {
             const files = [...ev.target.files]; ev.target.value = '';
             for (const f of files) {
+                if (sr_photos.length >= SR_MAX_PHOTOS) { showToast('Max ' + SR_MAX_PHOTOS + ' photos per report'); break; }
                 const full = await new Promise(r => { const rd = new FileReader(); rd.onload = e => r(e.target.result); rd.readAsDataURL(f); });
                 // Downscale for storage — full-res photos overflow localStorage fast.
                 sr_photos.push({ src: await srThumb(full, 1000, 0.7), ts: new Date().toISOString() });
@@ -6193,14 +6203,14 @@
             const c = document.getElementById('sr_sig');
             const ctx = c.getContext('2d');
             ctx.clearRect(0,0,c.width,c.height); ctx.lineWidth = 2; ctx.strokeStyle = '#000'; ctx.lineCap = 'round';
-            sr_sigCtx = ctx;
+            sr_sigCtx = ctx; sr_sigHasStrokes = false; sr_signedAt = null;   // fresh pad = not yet signed
             const pos = e => {
                 const r = c.getBoundingClientRect();
                 const x = (e.touches ? e.touches[0].clientX : e.clientX) - r.left;
                 const y = (e.touches ? e.touches[0].clientY : e.clientY) - r.top;
                 return { x: x * (c.width / r.width), y: y * (c.height / r.height) };
             };
-            const start = e => { sr_drawing = true; const p = pos(e); ctx.beginPath(); ctx.moveTo(p.x, p.y); e.preventDefault(); };
+            const start = e => { sr_drawing = true; sr_sigHasStrokes = true; if (!sr_signedAt) sr_signedAt = new Date().toISOString(); const p = pos(e); ctx.beginPath(); ctx.moveTo(p.x, p.y); e.preventDefault(); };
             const move  = e => { if (!sr_drawing) return; const p = pos(e); ctx.lineTo(p.x, p.y); ctx.stroke(); e.preventDefault(); };
             c.onmousedown = start; c.onmousemove = move;
             c.ontouchstart = start; c.ontouchmove = move;
@@ -6211,7 +6221,7 @@
                 document.addEventListener('mouseup', () => { if (sr_drawing) { sr_drawing = false; srQueueAutosave(); } });
                 document.addEventListener('touchend', () => { if (sr_drawing) { sr_drawing = false; srQueueAutosave(); } }); }
         }
-        function clearSignature() { if (sr_sigCtx) { const c = document.getElementById('sr_sig'); sr_sigCtx.clearRect(0,0,c.width,c.height); } }
+        function clearSignature() { if (sr_sigCtx) { const c = document.getElementById('sr_sig'); sr_sigCtx.clearRect(0,0,c.width,c.height); } sr_sigHasStrokes = false; sr_signedAt = null; srQueueAutosave(); }
 
         // ───────────────────────────────────────────────────────────────
         // Service-Report tests — favourite-driven everyday fields + a
@@ -6581,7 +6591,10 @@
                 tests: srAllRows().map(srMapRow),   // flattened — keeps the saved-list summary + legacy PDF path working
 
                 obs: id('sr_obs'), act: id('sr_act'), chem: id('sr_chem'),
-                photos: sr_photos, sig: document.getElementById('sr_sig').toDataURL('image/png'),
+                photos: sr_photos,
+                sig: sr_sigHasStrokes ? document.getElementById('sr_sig').toDataURL('image/png') : '',   // '' when never signed
+                sigName: id('sr_sig_name'), sigTitle: id('sr_sig_title'),
+                signedAt: sr_sigHasStrokes ? (sr_signedAt || new Date().toISOString()) : null,
                 savedAt: new Date().toISOString()
             };
         }
@@ -6629,9 +6642,10 @@
             if (sr_readOnly) return;
             const r = gatherSR();
             if (!r.site) { showToast('Enter site name'); return; }
-            if (srLocalSave(r)) showToast('Report saved');   // LS.set warns 'Storage full' itself on failure
+            const saved = srLocalSave(r);
             srCloudPushReport(r);   // best-effort cloud sync (queues if offline / not signed in)
-            srClearDraft();         // this state is now persisted — drop the recovery draft
+            if (saved) { showToast('Report saved'); srClearDraft(); }   // persisted — drop the recovery draft
+            else showToast('⚠ Device storage full — pushed to cloud; keeping a recovery draft. Free space soon.');
             const pf = srPreflight(r); if (pf.warns.length) setTimeout(() => showToast('⚠ Check: ' + pf.warns[0]), 900);   // non-blocking heads-up
         }
         function deleteSR(id) {
@@ -6735,11 +6749,21 @@
                 });
                 y += 170;
             }
-            // Signature
-            if (r.sig && y < PAGE_H - 140) {
-                doc.setFontSize(14); doc.setFont('helvetica','bold'); doc.text('Client sign-off', 36, y); y += 18;
+            // Signature — render identity + signed-at when signed; state plainly when NOT signed
+            // (an unsigned report no longer prints a misleading blank sign-off block).
+            if (y > PAGE_H - 150) { doc.addPage(); y = 40; }
+            doc.setFontSize(14); doc.setFont('helvetica','bold'); doc.setTextColor(30,38,45); doc.text('Client sign-off', 36, y); y += 18;
+            if (r.sig) {
                 try { doc.addImage(r.sig, 'PNG', 36, y, 200, 70); } catch (e) {}
                 doc.line(240, y + 70, PAGE_W - 36, y + 70);
+                doc.setFontSize(9); doc.setFont('helvetica','normal'); doc.setTextColor(30,38,45);
+                const who = [r.sigName, r.sigTitle].filter(Boolean).join(' · ');
+                if (who) doc.text(who, 36, y + 84);
+                if (r.signedAt) doc.text('Signed: ' + srIsoToLocalDt(r.signedAt).replace('T', ' '), 36, y + (who ? 96 : 84));
+                y += 108;
+            } else {
+                doc.setFontSize(10); doc.setFont('helvetica','italic'); doc.setTextColor(150,150,150);
+                doc.text('Not signed on site.', 36, y + 4); doc.setTextColor(30,38,45); y += 22;
             }
             doc.setFontSize(8); doc.setTextColor.apply(doc, SOFT);
             doc.text('Hadron Group · Customer Interface · hadrongrp.com', PAGE_W / 2, PAGE_H - 24, { align: 'center' });
