@@ -2752,7 +2752,7 @@
                 <div class="hg-section-title">About</div>
                 <div class="hg-kvgrid">
                     <div class="hg-kv"><div class="k">App</div><div class="v">Hadron Group</div></div>
-                    <div class="hg-kv"><div class="k">Version</div><div class="v">v129</div></div>
+                    <div class="hg-kv"><div class="k">Version</div><div class="v">v130</div></div>
                     <div class="hg-kv"><div class="k">Platform</div><div class="v">PWA</div></div>
                 </div>
             </div>
@@ -3688,8 +3688,10 @@
                     <div class="form-group"><label>Technician</label><input type="text" id="sr_tech"></div>
                     <div class="form-group"><label>Date / time</label><input type="datetime-local" id="sr_dt"></div>
                     <div class="form-group"><label>GPS</label><input type="text" id="sr_gps" readonly placeholder="Tap 'Capture' →"> <button type="button" class="calc-btn" style="margin-top:6px;" onclick="captureGps()">📍 Capture GPS</button></div>
+                    <div class="form-group"><label>Next service due</label><input type="date" id="sr_next_due"></div>
 
                     <h3 style="margin:16px 0 2px;">Sample points &amp; tests</h3>
+                    <button type="button" class="calc-btn" id="sr_clone_btn" style="display:none;background:var(--success);color:#0f2733;margin:0 0 8px;" onclick="srCopyLastVisit()">↻ Copy last visit's tests &amp; dosing</button>
                     <p style="color:var(--muted);font-size:12px;margin:4px 0;">Add a <b>sample point</b> for each place you sample (Inlet, Cooling Tower, Boiler feed…). Every point loads your ★ favourite tests automatically — tap <b>Add test</b> under a point to add more from the full SANS&nbsp;241 list. Each reading is auto PASS / FAIL vs its limit, and 📷 reads the value from a meter photo.</p>
                     <div id="sr_tests" style="display:flex;flex-direction:column;gap:12px;margin-top:6px;"></div>
                     <input type="file" id="sr_ocr_file" accept="image/*" capture="environment" style="display:none;" onchange="srOcrCapture(event)">
@@ -5802,6 +5804,7 @@
             sr_status = 'submitted'; r.status = 'submitted';
             r.submittedAt = new Date().toISOString();
             r.submittedBy = (window.HG_PROFILE && (window.HG_PROFILE.full_name || window.HG_PROFILE.email)) || r.tech || '';
+            if (r.tech) LS.set('hadron_sr_lasttech', r.tech);
             const saved = srLocalSave(r);
             showToast(saved ? 'Report submitted & locked' : '⚠ Device storage full — submitted to cloud; keeping a recovery draft.');
             srCloudPushReport(r);
@@ -5886,6 +5889,7 @@
                 manualInput.value = '';
                 contact.value = '';
                 manualInput.focus();
+                _srLastVisit = null; srUpdateCloneBtn();
             } else if (sel) {
                 wrap.style.display = 'none';
                 const site = __srSites.find(s => s.id === sel);
@@ -5905,11 +5909,34 @@
                 }
                 contact.value = bits.join(' · ');
                 srLoadSitePoints(site);   // auto-load this site's standard sample points
+                _srLastVisit = srLastReportForSite(sel); srUpdateCloneBtn();   // offer to copy the previous visit
             } else {
                 wrap.style.display = 'none';
                 manualInput.value = '';
                 contact.value = '';
+                _srLastVisit = null; srUpdateCloneBtn();
             }
+        }
+
+        // ── Recurring-visit speedups: clone the previous visit's test setup + dosing ──
+        let _srLastVisit = null;
+        function srLastReportForSite(siteId) {
+            if (!siteId) return null;
+            return LS.get('hadron_sr', []).filter(r => r && r.siteId === siteId && (r.points || r.tests))
+                .sort((a, b) => new Date(b.date || b.savedAt || 0) - new Date(a.date || a.savedAt || 0))[0] || null;
+        }
+        function srUpdateCloneBtn() { const btn = document.getElementById('sr_clone_btn'); if (btn) btn.style.display = (_srLastVisit && !sr_readOnly) ? 'inline-block' : 'none'; }
+        function srCopyLastVisit() {
+            if (!_srLastVisit) return;
+            const touched = sr_points.some(p => p.tests.some(t => t.value !== '' && t.value != null));
+            if (touched && !confirm('Replace the current tests with the last visit\'s setup? Your entered readings will be cleared.')) return;
+            const pts = (_srLastVisit.points && _srLastVisit.points.length) ? _srLastVisit.points : [{ name: '', tests: _srLastVisit.tests || [] }];
+            sr_points = pts.map(p => ({ id: uid(), name: p.name || '', tests: (p.tests || []).map(t => srNewRow({ id: t.id, code: t.code, name: t.name, unit: t.unit, specMin: t.specMin, specMax: t.specMax, sans241: t.sans241, category: t.category })) }));
+            if (!sr_points.length) sr_points = [srNewPoint('', true)];
+            if (_srLastVisit.chem) document.getElementById('sr_chem').value = _srLastVisit.chem;   // dosing is often similar visit-to-visit
+            if (_srLastVisit.act)  document.getElementById('sr_act').value  = _srLastVisit.act;
+            srRenderPoints(); srQueueAutosave();
+            showToast('Copied ' + sr_points.length + ' sample point' + (sr_points.length === 1 ? '' : 's') + ' from the last visit — enter fresh readings');
         }
 
         // Save the current customer + site + sample-point names into the local site
@@ -5982,6 +6009,9 @@
             // Defaults
             document.getElementById('sr_dt').value = srLocalDtValue();
             document.getElementById('sr_gps').value = '';
+            document.getElementById('sr_next_due').value = '';
+            document.getElementById('sr_tech').value = (window.HG_PROFILE && window.HG_PROFILE.full_name) || LS.get('hadron_sr_lasttech', '') || '';
+            _srLastVisit = null; srUpdateCloneBtn();
             sr_photos = []; document.getElementById('sr_photos').innerHTML = '';
             sr_reportId = uid();   // one stable id for this report across Save + Export PDF
             sr_reportNo = null;    // minted on first gatherSR
@@ -6030,8 +6060,10 @@
             document.getElementById('sr_obs').value  = r.obs || '';
             document.getElementById('sr_act').value  = r.act || '';
             document.getElementById('sr_chem').value = r.chem || '';
+            document.getElementById('sr_next_due').value  = r.nextDue || '';
             document.getElementById('sr_sig_name').value  = r.sigName || '';
             document.getElementById('sr_sig_title').value = r.sigTitle || '';
+            _srLastVisit = null;   // editing an existing report — no "copy last visit" here
 
             // Customer + site dropdowns. If the record's customer/site isn't in this device's
             // local register (e.g. a cloud report from another device), add a placeholder
@@ -6094,6 +6126,7 @@
                 sr_sigHasStrokes = true; sr_signedAt = r.signedAt || null;   // restore the signed state
             }
             applySrReadOnly(!!readOnly);
+            srUpdateCloneBtn();   // hidden (editing an existing report)
             showToast(readOnly ? 'Viewing "' + (r.site || 'report') + '"' : 'Editing "' + (r.site || 'report') + '" — Save to update it');
         }
         // One-line summary for a saved report card — new tests model, or legacy fixed readings.
@@ -6596,7 +6629,7 @@
                 siteId: (siteSel && siteSel !== '__manual__') ? siteSel : null,
                 site: siteLabel,
                 contact: id('sr_contact'), tech: id('sr_tech'),
-                date: id('sr_dt'), gps: id('sr_gps'),
+                date: id('sr_dt'), gps: id('sr_gps'), nextDue: id('sr_next_due'),
                 points: srGatherPoints(),
                 tests: srAllRows().map(srMapRow),   // flattened — keeps the saved-list summary + legacy PDF path working
 
@@ -6652,6 +6685,7 @@
             if (sr_readOnly) return;
             const r = gatherSR();
             if (!r.site) { showToast('Enter site name'); return; }
+            if (r.tech) LS.set('hadron_sr_lasttech', r.tech);   // remember for the next report
             const saved = srLocalSave(r);
             srCloudPushReport(r);   // best-effort cloud sync (queues if offline / not signed in)
             if (saved) { showToast('Report saved'); srClearDraft(); }   // persisted — drop the recovery draft
@@ -6715,7 +6749,7 @@
             doc.setTextColor(0,0,0); let y = 110; let anyCustom = false;
             const row = (k, v) => { if (v == null || v === '') return; doc.setFont('helvetica','bold'); doc.text(k, 36, y); doc.setFont('helvetica','normal'); doc.text(String(v), 200, y); y += 16; if (y > PAGE_H - 80) { doc.addPage(); y = 60; }};
             doc.setFontSize(14); doc.setFont('helvetica','bold'); doc.text('Site Details', 36, y); y += 18; doc.setFontSize(10);
-            row('Date / time:', srIsoToLocalDt(r.date).replace('T', ' ') || r.date); row('Technician:', r.tech); row('Contact:', r.contact); row('GPS:', r.gps);
+            row('Date / time:', srIsoToLocalDt(r.date).replace('T', ' ') || r.date); row('Technician:', r.tech); row('Contact:', r.contact); row('GPS:', r.gps); row('Next service due:', r.nextDue);
 
             // ── SANS 241 compliance summary + exceedances ──
             const _pts = (r.points || []).filter(p => p.tests && p.tests.some(t => t.value != null && t.value !== ''));
