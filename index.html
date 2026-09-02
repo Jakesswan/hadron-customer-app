@@ -2752,7 +2752,7 @@
                 <div class="hg-section-title">About</div>
                 <div class="hg-kvgrid">
                     <div class="hg-kv"><div class="k">App</div><div class="v">Hadron Group</div></div>
-                    <div class="hg-kv"><div class="k">Version</div><div class="v">v130</div></div>
+                    <div class="hg-kv"><div class="k">Version</div><div class="v">v131</div></div>
                     <div class="hg-kv"><div class="k">Platform</div><div class="v">PWA</div></div>
                 </div>
             </div>
@@ -3719,6 +3719,7 @@
                     <button type="button" class="calc-btn" style="margin-top:16px;" onclick="saveServiceReport()">💾 Save report</button>
                     <button type="button" class="calc-btn" style="background:#2e8b57;color:#fff;" onclick="submitServiceReport()">✅ Submit &amp; lock</button>
                     <button type="button" class="calc-btn" style="background:#c59d2b;" onclick="exportServiceReportPdf()">📄 Save &amp; Export PDF</button>
+                    <button type="button" class="calc-btn" style="background:#3AAEDB;color:#0f2733;" onclick="shareServiceReportPdf()">📤 Share / send report</button>
                 </div>
             </div>
             <div id="sr_list" style="display:none;"></div>
@@ -5989,6 +5990,7 @@
 
         async function newServiceReport() {
             srEnsureAutosaveWired();
+            try { srLoadLogo(); } catch (_) {}   // warm the PDF logo cache so Share doesn't await a fetch (keeps the tap gesture valid)
             // Recover an unfinished report from a crash / reload / accidental close before starting fresh.
             try {
                 const draft = JSON.parse(localStorage.getItem(SR_DRAFT_KEY) || 'null');
@@ -6199,6 +6201,7 @@
                     <small>${r.tech ? 'Tech: ' + esc(r.tech) : ''}${srSummary(r) ? (r.tech ? ' · ' : '') + esc(srSummary(r)) : ''}</small>
                     <div style="margin-top:6px;">
                         <button class="pdf-calc-btn" onclick="exportStoredSrPdf('${r.id}')">📄 PDF</button>
+                        <button class="pdf-calc-btn" onclick="exportStoredSrPdf('${r.id}', true)">📤 Share</button>
                         ${canEdit ? `<button class="pdf-calc-btn" style="background:#3AAEDB;color:#0f2733;" onclick="openServiceReport('${r.id}')">✎ Edit</button>` : `<button class="pdf-calc-btn" onclick="openServiceReport('${r.id}', true)">👁 View</button>`}
                         ${canManage ? `<button class="save-calc-btn" style="background:#c44;" onclick="deleteSR('${r.id}')">🗑 Delete</button>` : ''}
                     </div></div>`;
@@ -6701,21 +6704,22 @@
             try { if (window.HG_DB && window.HG_DB.service_reports) window.HG_DB.service_reports.remove(id).catch(() => {}); } catch (_) {}
             listServiceReports();
         }
-        function exportServiceReportPdf() {
+        function exportServiceReportPdf(share) {
             if (sr_readOnly) return;
             const r = gatherSR();
             if (!r.site) { showToast('Enter site name'); return; }
             srLocalSave(r);   // best-effort local save (upsert by id)
             srCloudPushReport(r);
             srClearDraft();   // report is now persisted — drop the recovery draft (no stale resume prompt)
-            generateSrPdf(r);
+            generateSrPdf(r, share);
         }
-        async function exportStoredSrPdf(id) {
+        function shareServiceReportPdf() { exportServiceReportPdf(true); }
+        async function exportStoredSrPdf(id, share) {
             let r = LS.get('hadron_sr', []).find(x => x.id === id);
             if (!r) {   // cloud-only report (from another device) — fetch its full payload
                 try { const row = window.HG_DB && window.HG_DB.service_reports && await window.HG_DB.service_reports.get(id); r = row && row.payload; } catch (_) {}
             }
-            if (r) generateSrPdf(r); else showToast('Report not found');
+            if (r) generateSrPdf(r, share); else showToast('Report not found');
         }
         let _srLogoData = null, _srLogoTried = false;
         async function srLoadLogo() {
@@ -6727,7 +6731,7 @@
             } catch (_) {}
             return _srLogoData;
         }
-        async function generateSrPdf(r) {
+        async function generateSrPdf(r, share) {
             if (!window.jspdf) { showToast('PDF lib still loading'); return; }
             const { jsPDF } = window.jspdf;
             const doc = new jsPDF({ unit: 'pt', format: 'a4' });
@@ -6871,7 +6875,18 @@
                 doc.text(String(_trace).slice(0, 130), 36, PAGE_H - 20);
                 doc.text('Page ' + i + ' of ' + _pages, PAGE_W - 36, PAGE_H - 20, { align: 'right' });
             }
-            doc.save('hadron-service-' + (r.reportNo || (r.site || 'site').replace(/\s+/g, '-').toLowerCase() + '-' + (r.date || '').slice(0,10)) + '.pdf');
+            const fname = 'hadron-service-' + (r.reportNo || (r.site || 'site').replace(/\s+/g, '-').toLowerCase() + '-' + (r.date || '').slice(0,10)) + '.pdf';
+            if (share) {   // mobile share sheet (email / WhatsApp / …) with a download fallback
+                try {
+                    const file = new File([doc.output('blob')], fname, { type: 'application/pdf' });
+                    if (navigator.canShare && navigator.canShare({ files: [file] })) {
+                        await navigator.share({ files: [file], title: 'Service Report' + (r.reportNo ? ' ' + r.reportNo : ''), text: 'Water service report — ' + (r.site || '') });
+                        return;
+                    }
+                } catch (e) { if (e && e.name === 'AbortError') return; }   // user cancelled the share sheet
+                showToast('Sharing not available on this device — downloaded instead');
+            }
+            doc.save(fname);
         }
 
         /* =========================================================
