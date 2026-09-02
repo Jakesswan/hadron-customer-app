@@ -133,6 +133,23 @@
     } catch (_) { return false; }
   }
 
+  // Customer management (add/edit/delete) is owner-only, matching the "master manages, operators
+  // do reports" model and the customers RLS (UPDATE/DELETE are admin/customer_admin only).
+  // Operators/viewers see the client list read-only. Empty-role handling: in CLOUD mode the role
+  // always resolves shortly after sign-in (and the desktop can briefly show before the profile
+  // lands), so treat an unresolved role as NON-owner — matching the home-screen .owner-only gate
+  // and closing that reveal-before-profile race; in local/dev mode (no cloud, profile never loads)
+  // stay permissive so the sole local user isn't locked out.
+  function limsCanManageClients() {
+    try {
+      const r = (window.HG_PROFILE && window.HG_PROFILE.role)
+             || (document.body && document.body.dataset && document.body.dataset.role) || '';
+      if (r) return r === 'admin' || r === 'customer_admin';
+      return !(window.HG_AUTH && window.HG_AUTH.configured);   // cloud + unresolved role → strict; local → permissive
+    } catch (_) { return true; }
+  }
+  window.limsCanManageClients = limsCanManageClients;
+
   function breadcrumb(path) {
     // path: array of {label, view, params}
     const items = path.map((p,i) => {
@@ -1935,7 +1952,7 @@
       ${breadcrumb([{label:'LIMS',view:'hub'},{label:'Clients',view:'clients'}])}
       <div class="lims-toolbar">
         <h2 class="lims-title">Clients <span class="lims-count">${clients.length}</span></h2>
-        <button class="lims-btn primary" onclick="limsGo('client-form',{})">➕ Add client</button>
+        ${limsCanManageClients() ? '<button class="lims-btn primary" onclick="limsGo(\'client-form\',{})">➕ Add client</button>' : ''}
         ${erpLinked() ? '<span class="lims-chip neutral" title="ERP customers are synced here and stay read-only; the clients you add here are your own">🔗 ERP customers are read-only</span>' : ''}
       </div>
       <table class="lims-table">
@@ -1946,8 +1963,10 @@
           // ERP-sourced clients are read-only: show a badge instead of edit/delete.
           const actions = (c.source === 'erp')
             ? '<span class="lims-chip neutral" title="Synced from the ERP — read-only">🔗 ERP</span>'
-            : `<button class="lims-btn ghost" onclick="event.stopPropagation();limsGo('client-form',{id:'${c.id}'})">✏️</button>
-               <button class="lims-btn ghost" onclick="event.stopPropagation();limsDeleteClient('${c.id}')">🗑️</button>`;
+            : (limsCanManageClients()
+                ? `<button class="lims-btn ghost" onclick="event.stopPropagation();limsGo('client-form',{id:'${c.id}'})">✏️</button>
+                   <button class="lims-btn ghost" onclick="event.stopPropagation();limsDeleteClient('${c.id}')">🗑️</button>`
+                : '');
           return `<tr>
             <td onclick="limsGo('client',{id:'${c.id}'})"><strong>${esc(c.name)}</strong></td>
             <td onclick="limsGo('client',{id:'${c.id}'})">${chip(c.industry,'neutral')}</td>
@@ -1966,6 +1985,10 @@
   async function renderClientForm(root) {
     const id = S.params.id || null;
     const c = id ? (await DB.get('clients', id)) : { id:'', name:'', industry:'Municipal', contact:'', email:'', phone:'', address:'' };
+    if (!limsCanManageClients()) {
+      toast('Only the account owner can manage customers', 'warn');
+      return limsGo('clients');
+    }
     // ERP-sourced clients are read-only (mastered in the ERP); local clients are editable
     // even for ERP-linked tenants (they add their own customers alongside the ERP ones).
     if (c && c.source === 'erp') {
@@ -2000,6 +2023,7 @@
   }
 
   window.limsSaveClient = async function(existingId) {
+    if (!limsCanManageClients()) { toast('Only the account owner can manage customers', 'warn'); return; }
     const ex = existingId ? await DB.get('clients', existingId) : null;
     if (ex && ex.source === 'erp') { toast('This client is synced from the ERP — read-only', 'warn'); return; }
     const name = document.getElementById('cf_name').value.trim();
@@ -2026,6 +2050,7 @@
   // client (source 'app') straight to the LIMS store; DB.put fires lims-sync so it lands in
   // the cloud customers table under RLS. Never creates an ERP-sourced client. Returns the row.
   window.hgSaveCustomer = async function(obj) {
+    if (!limsCanManageClients()) throw new Error('Only the account owner can add customers');
     if (!S.db) await DB.open();                            // works even if LIMS was never opened this session
     obj = obj || {};
     const name = String(obj.name || '').trim();
@@ -2047,6 +2072,7 @@
   };
 
   window.limsDeleteClient = async function(id) {
+    if (!limsCanManageClients()) { toast('Only the account owner can manage customers', 'warn'); return; }
     const ex = await DB.get('clients', id);
     if (ex && ex.source === 'erp') { toast('This client is synced from the ERP — read-only', 'warn'); return; }
     if (!confirm('Delete this client? Samples linked to it will keep the reference.')) return;
@@ -2064,7 +2090,9 @@
     const profMap = Object.fromEntries(profiles.map(p=>[p.id,p]));
     const editBtn = (c.source === 'erp')
       ? '<span class="lims-chip neutral" title="Synced from the ERP — read-only">🔗 Managed in ERP</span>'
-      : `<button class="lims-btn primary" onclick="limsGo('client-form',{id:'${c.id}'})">✏️ Edit</button>`;
+      : (limsCanManageClients()
+          ? `<button class="lims-btn primary" onclick="limsGo('client-form',{id:'${c.id}'})">✏️ Edit</button>`
+          : '');
     root.innerHTML = `
       ${breadcrumb([{label:'LIMS',view:'hub'},{label:'Clients',view:'clients'},{label:c.name,view:'client',params:{id:c.id}}])}
       <div class="lims-toolbar">
