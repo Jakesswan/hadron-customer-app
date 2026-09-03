@@ -2752,7 +2752,7 @@
                 <div class="hg-section-title">About</div>
                 <div class="hg-kvgrid">
                     <div class="hg-kv"><div class="k">App</div><div class="v">Hadron Group</div></div>
-                    <div class="hg-kv"><div class="k">Version</div><div class="v">v139</div></div>
+                    <div class="hg-kv"><div class="k">Version</div><div class="v">v140</div></div>
                     <div class="hg-kv"><div class="k">Platform</div><div class="v">PWA</div></div>
                 </div>
             </div>
@@ -5951,6 +5951,14 @@
             return LS.get('hadron_sr', []).filter(r => r && r.siteId === siteId && (r.points || r.tests))
                 .sort((a, b) => new Date(b.date || b.savedAt || 0) - new Date(a.date || a.savedAt || 0))[0] || null;
         }
+        // The report immediately BEFORE a given one for a site (by date) — used at PDF time
+        // to show a stored report's opening stock (its predecessor's closing stock).
+        function srPrevReportForSite(siteId, beforeIso, excludeId) {
+            if (!siteId) return null;
+            const before = beforeIso ? new Date(beforeIso).getTime() : Infinity;
+            return LS.get('hadron_sr', []).filter(r => r && r.siteId === siteId && r.id !== excludeId && (r.points || r.tests) && new Date(r.date || r.savedAt || 0).getTime() < before)
+                .sort((a, b) => new Date(b.date || b.savedAt || 0) - new Date(a.date || a.savedAt || 0))[0] || null;
+        }
         function srUpdateCloneBtn() { const btn = document.getElementById('sr_clone_btn'); if (btn) btn.style.display = (_srLastVisit && !sr_readOnly) ? 'inline-block' : 'none'; }
         function srCopyLastVisit() {
             if (!_srLastVisit) return;
@@ -6801,11 +6809,38 @@
                         ${inp(d.id, 'batch', d.batch, 'Batch / lot')}
                         ${inp(d.id, 'stock', d.stock, 'Stock on hand after')}
                     </div>
+                    <div id="sr_dose_badge_${esc(d.id)}" style="margin-top:4px;">${srDoseBadgeHtml(d)}</div>
                 </div>`).join('');
         }
+        // Consumables context: this product's closing stock at the LAST visit becomes this
+        // visit's opening stock; with the entered closing we can show usage. Read-only,
+        // best-effort (product matched by normalised name), degrades to nothing when unmatched
+        // or when stock is free text that isn't numeric.
+        function srClosingStockOf(dosing, product) {
+            if (!Array.isArray(dosing)) return null;
+            const key = (product || '').trim().toLowerCase(); if (!key) return null;
+            let last = null;
+            dosing.forEach(d => { const k = (d.product || '').trim().toLowerCase(); const s = (d.stock == null ? '' : String(d.stock)).trim(); if (k === key && s) last = s; });
+            return last;
+        }
+        function srDoseBadgeHtml(d) {
+            const opening = srClosingStockOf(_srLastVisit && _srLastVisit.dosing, d.product);
+            if (opening == null) return '';
+            const when = _srLastVisit ? (_srLastVisit.date || _srLastVisit.savedAt) : null;
+            const parts = ['opening ~' + esc(opening) + (when ? ' · last visit ' + esc(srShortDate(when)) : '')];
+            const on = parseFloat(opening), cl = parseFloat(d.stock);
+            if (isFinite(on) && isFinite(cl)) {
+                const delta = Math.round((on - cl) * 100) / 100;
+                if (delta > 0) parts.push('used ≈ ' + esc(String(delta)));
+                else if (delta < 0) parts.push('restocked ≈ +' + esc(String(-delta)));
+                else parts.push('no change');
+            }
+            return '<span style="font-size:11px;color:var(--muted);">' + parts.join(' · ') + '</span>';
+        }
+        function srRefreshDoseBadge(id) { const el = document.getElementById('sr_dose_badge_' + id); const d = sr_dosing.find(x => x.id === id); if (el && d) el.innerHTML = srDoseBadgeHtml(d); }
         function srAddDose() { sr_dosing.push(srNewDose()); srRenderDosing(); srQueueAutosave(); }
         function srRemoveDose(id) { sr_dosing = sr_dosing.filter(d => d.id !== id); srRenderDosing(); srQueueAutosave(); }
-        function srSetDose(id, field, val) { const d = sr_dosing.find(x => x.id === id); if (d) { d[field] = val; srQueueAutosave(); } }
+        function srSetDose(id, field, val) { const d = sr_dosing.find(x => x.id === id); if (d) { d[field] = val; if (field === 'product' || field === 'stock') srRefreshDoseBadge(id); srQueueAutosave(); } }
         function srGatherDosing() { return sr_dosing.filter(d => (d.product || '').trim() || (d.dose || '').toString().trim() || String(d.qty || '').trim()); }
         function srRememberProducts(dosing) {
             if (!dosing || !dosing.length) return;
@@ -7239,13 +7274,17 @@
                 doc.setFontSize(8); doc.setFont('helvetica','bold'); doc.setTextColor.apply(doc, SOFT);
                 doc.text('Product', 36, y); doc.text('Dose rate', 210, y); doc.text('Qty added', 320, y); doc.text('Batch', 410, y); doc.text('Stock', 480, y); y += 4;
                 doc.setDrawColor(210,210,210); doc.line(36, y, PAGE_W - 36, y); y += 12; doc.setTextColor(0,0,0); doc.setFont('helvetica','normal'); doc.setFontSize(9);
+                const _prevDose = (srPrevReportForSite(r.siteId, r.date, r.id) || {}).dosing || [];   // predecessor's closing stock = this visit's opening
                 r.dosing.forEach(d => {
                     if (y > PAGE_H - 80) { doc.addPage(); y = 60; }
                     doc.text(String(d.product || '').slice(0, 30), 36, y);
                     doc.text(String(d.dose || '').slice(0, 18), 210, y);
                     doc.text(d.qty ? (String(d.qty) + ' ' + (d.unit || '')) : '', 320, y);
                     doc.text(String(d.batch || '').slice(0, 12), 410, y);
-                    doc.text(String(d.stock || '').slice(0, 12), 480, y); y += 13;
+                    const _open = srClosingStockOf(_prevDose, d.product);
+                    let _stockCell = String(d.stock || '');
+                    if (_open != null) _stockCell = (_stockCell || '—') + ' (was ' + String(_open).slice(0, 6) + ')';
+                    doc.text(_stockCell.slice(0, 14), 480, y); y += 13;   // 14 keeps 'closing (was N)' inside the A4 right margin from x=480
                 });
                 y += 8;
             }
