@@ -2752,7 +2752,7 @@
                 <div class="hg-section-title">About</div>
                 <div class="hg-kvgrid">
                     <div class="hg-kv"><div class="k">App</div><div class="v">Hadron Group</div></div>
-                    <div class="hg-kv"><div class="k">Version</div><div class="v">v141</div></div>
+                    <div class="hg-kv"><div class="k">Version</div><div class="v">v142</div></div>
                     <div class="hg-kv"><div class="k">Platform</div><div class="v">PWA</div></div>
                 </div>
             </div>
@@ -7913,10 +7913,10 @@
         let qrScanner = null;
         function ensureQrLib(cb) {
             if (window.Html5Qrcode) return cb();
-            const s = document.createElement('script');
-            s.src = 'https://cdnjs.cloudflare.com/ajax/libs/html5-qrcode/2.3.8/html5-qrcode.min.js';
-            s.onload = cb; s.onerror = () => showToast('QR lib failed — check internet');
-            document.head.appendChild(s);
+            const load = (src, onerr) => { const s = document.createElement('script'); s.src = src; s.onload = cb; s.onerror = onerr; document.head.appendChild(s); };
+            // Local copy first — it is precached by the service worker (APP_SHELL), so scanning
+            // works fully offline in the field. Fall back to the CDN only if the local load fails.
+            load('./html5-qrcode.min.js', () => load('https://cdnjs.cloudflare.com/ajax/libs/html5-qrcode/2.3.8/html5-qrcode.min.js', () => showToast('QR lib failed — check internet')));
         }
         function startQrScan() {
             ensureQrLib(() => {

@@ -12,7 +12,7 @@
  * Bump CACHE_VERSION whenever you ship a change so phones pick it up on next launch.
  */
 
-const CACHE_VERSION = 'hadron-v141';
+const CACHE_VERSION = 'hadron-v142';
 const APP_SHELL = [
   './',
   './index.html',
@@ -50,9 +50,20 @@ const APP_SHELL = [
   './icons/favicon-16.png'
 ];
 
+// Optional enhancement libs — precached BEST-EFFORT (allSettled), separate from the
+// atomic APP_SHELL, so a single missing/failed one can never fail the whole app-shell
+// install. Each of these has a CDN fallback at runtime, so a miss only costs offline use.
+const OPTIONAL_CACHE = [
+  './html5-qrcode.min.js'   // offline QR scanning (falls back to cdnjs when not cached)
+];
+
 self.addEventListener('install', (event) => {
   event.waitUntil(
-    caches.open(CACHE_VERSION).then((cache) => cache.addAll(APP_SHELL))
+    caches.open(CACHE_VERSION).then((cache) =>
+      cache.addAll(APP_SHELL).then(() =>
+        Promise.allSettled(OPTIONAL_CACHE.map((u) => cache.add(u)))
+      )
+    )
   );
   self.skipWaiting();
 });
