@@ -2752,7 +2752,7 @@
                 <div class="hg-section-title">About</div>
                 <div class="hg-kvgrid">
                     <div class="hg-kv"><div class="k">App</div><div class="v">Hadron Group</div></div>
-                    <div class="hg-kv"><div class="k">Version</div><div class="v">v140</div></div>
+                    <div class="hg-kv"><div class="k">Version</div><div class="v">v141</div></div>
                     <div class="hg-kv"><div class="k">Platform</div><div class="v">PWA</div></div>
                 </div>
             </div>
@@ -3679,6 +3679,17 @@
                             <option value="">— select site —</option>
                             <option value="__manual__">↳ Enter site manually (not in register)</option>
                         </select>
+                        <button type="button" class="calc-btn" style="margin-top:6px;" onclick="srScanSite()">📷 Scan site QR</button>
+                    </div>
+                    <div id="sr_qr_modal" style="display:none;position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,.78);align-items:center;justify-content:center;padding:16px;">
+                        <div style="background:var(--surface);border-radius:14px;padding:16px;max-width:420px;width:100%;box-sizing:border-box;">
+                            <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:8px;">
+                                <strong style="color:var(--text);">Scan site QR</strong>
+                                <button type="button" onclick="srCloseSiteScan()" title="Close" style="border:none;background:transparent;color:var(--text);font-size:24px;cursor:pointer;line-height:1;">×</button>
+                            </div>
+                            <div id="sr_qr_reader" style="width:100%;"></div>
+                            <p id="sr_qr_status" style="color:var(--muted);font-size:13px;margin:10px 0 0;">Point the camera at the site's QR sticker.</p>
+                        </div>
                     </div>
                     <div class="form-group" id="sr_siteManualWrap" style="display:none;">
                         <label>Site name (manual)</label>
@@ -7920,6 +7931,75 @@
         function stopQrScan() {
             if (!qrScanner) return;
             qrScanner.stop().then(() => { document.getElementById('qr_start').style.display = ''; document.getElementById('qr_stop').style.display = 'none'; qrScanner.clear(); }).catch(()=>{});
+        }
+
+        // ── Scan a site QR to pick the site in a Service Report ──
+        // Reuses the html5-qrcode lib. Site stickers encode the qr-app.js format
+        // (#asset/site/<id>, or #asset/equip/<siteId|equipId>); a bare id also works.
+        // The dropdown stays the primary path — scanning is an accelerator that degrades
+        // gracefully (clear message, no state change) when the camera/lib is unavailable.
+        let srQrScanner = null, srClosing = false;
+        function srScanSite() {
+            const modal = document.getElementById('sr_qr_modal'); if (!modal) return;
+            srClosing = false;
+            modal.style.display = 'flex';
+            const status = document.getElementById('sr_qr_status'); if (status) status.textContent = 'Starting camera…';
+            ensureQrLib(() => {
+                try {
+                    const sc = new Html5Qrcode('sr_qr_reader'); srQrScanner = sc;
+                    sc.start({ facingMode: 'environment' }, { fps: 10, qrbox: 220 },
+                        (decoded) => { srHandleSiteScan(decoded); },
+                        () => {}
+                    ).then(() => {
+                        // If the modal was closed (srClosing) OR superseded by a reopen (srQrScanner !== sc)
+                        // while this camera was still coming up, stop the now-live-but-orphaned camera.
+                        if (srClosing || srQrScanner !== sc) { try { sc.stop().then(() => { try { sc.clear(); } catch (_) {} }).catch(() => {}); } catch (_) {} return; }
+                        if (status) status.textContent = 'Point the camera at the site QR sticker.';
+                    }).catch(e => { if (status) status.textContent = 'Camera unavailable — use the dropdown instead.'; showToast('Camera error: ' + e); });
+                } catch (e) { showToast('Scanner failed to start — use the dropdown'); srCloseSiteScan(); }
+            });
+        }
+        function srCloseSiteScan() {
+            srClosing = true;
+            const modal = document.getElementById('sr_qr_modal');
+            const done = () => { if (modal) modal.style.display = 'none'; };
+            if (srQrScanner) {
+                const sc = srQrScanner; srQrScanner = null;
+                // html5-qrcode 2.3.8 stop() THROWS SYNCHRONOUSLY when not yet scanning (camera denied / mid-start) — wrap it so the modal always closes on the first tap.
+                try { sc.stop().then(() => { try { sc.clear(); } catch (_) {} done(); }).catch(() => done()); }
+                catch (_) { try { sc.clear(); } catch (_) {} done(); }
+            } else done();
+        }
+        function srParseSiteId(text) {
+            const t = String(text || '').trim();
+            const m = t.match(/#asset\/(?:site|equip)\/([^/|?#]+)/i);   // equip URL is #asset/equip/<siteId|equipId> → capture the siteId before '|'
+            if (m) { try { return decodeURIComponent(m[1]).split('|')[0]; } catch (_) { return m[1].split('%7C')[0]; } }   // equip URL encodes the '|' as %7C — decode first, then take the siteId
+            try { return decodeURIComponent(t.split('|')[0].trim()); } catch (_) { return t.split('|')[0].trim(); }   // bare id fallback
+        }
+        function srHandleSiteScan(text) {
+            const id = srParseSiteId(text);
+            const site = (__srSites || []).find(s => s && s.id === id);
+            srCloseSiteScan();
+            if (!site) { showToast('Site not recognised — sync sites or pick it from the list'); return; }
+            const custSel = document.getElementById('sr_customerId');
+            if (custSel && site.customerId) {
+                if (!Array.from(custSel.options).some(o => o.value === site.customerId)) {
+                    const opt = document.createElement('option'); opt.value = site.customerId; opt.textContent = site.customerName || site.customerId; custSel.insertBefore(opt, custSel.firstChild);
+                }
+                custSel.value = site.customerId;
+                if (window.hgSearchableSync) window.hgSearchableSync('sr_customerId');
+            }
+            srRefreshSiteDropdown();   // rebuild the site list for the chosen customer
+            const siteSel = document.getElementById('sr_siteId');
+            if (siteSel) {
+                if (!Array.from(siteSel.options).some(o => o.value === site.id)) {
+                    const opt = document.createElement('option'); opt.value = site.id; opt.textContent = site.name || site.id; siteSel.insertBefore(opt, siteSel.firstChild);
+                }
+                siteSel.value = site.id;
+                if (window.hgSearchableSync) window.hgSearchableSync('sr_siteId');
+            }
+            srOnSiteChange();   // auto-loads points + contact, runs the carry-forwards
+            showToast('Site: ' + (site.name || site.id));
         }
 
         /* PM Schedule */
