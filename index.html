@@ -2752,7 +2752,7 @@
                 <div class="hg-section-title">About</div>
                 <div class="hg-kvgrid">
                     <div class="hg-kv"><div class="k">App</div><div class="v">Hadron Group</div></div>
-                    <div class="hg-kv"><div class="k">Version</div><div class="v">v137</div></div>
+                    <div class="hg-kv"><div class="k">Version</div><div class="v">v138</div></div>
                     <div class="hg-kv"><div class="k">Platform</div><div class="v">PWA</div></div>
                 </div>
             </div>
@@ -7321,6 +7321,31 @@
             } else {
                 doc.setFontSize(10); doc.setFont('helvetica','italic'); doc.setTextColor(150,150,150);
                 doc.text('Not signed on site.', 36, y + 4); doc.setTextColor(30,38,45); y += 22;
+            }
+            // Methods & basis of assessment — a conservative, non-over-claiming statement
+            // (field/indicative vs accredited-lab) plus a methods list DERIVED from the
+            // determinands actually present. Field/operational params carry no catalog
+            // method and are silently omitted. Live-derived (a documented limitation vs the
+            // per-report snapshot principle) — acceptable for v1.
+            {
+                if (y > PAGE_H - 150) { doc.addPage(); y = 60; }
+                // Only determinands actually MEASURED (non-blank), deduped, that carry a catalog method.
+                const _mSeen = {}, _mIds = [];
+                (r.points && r.points.length ? r.points : [{ tests: r.tests || [] }]).forEach(p => (p.tests || []).forEach(tt => { if (tt && tt.id && tt.value != null && tt.value !== '' && !_mSeen[tt.id]) { _mSeen[tt.id] = 1; _mIds.push(tt.id); } }));
+                const _mList = _mIds.map(id => srCatItem(id)).filter(c => c && c.method).map(c => c.name + ' — ' + c.method);   // no internal methodVer on a customer document
+                doc.setFontSize(11); doc.setFont('helvetica','bold'); doc.setTextColor(30, 38, 45); doc.text('Methods & basis of assessment', 36, y); y += 13;
+                doc.setFontSize(8); doc.setFont('helvetica','normal'); doc.setTextColor.apply(doc, SOFT);
+                const _mStmt = 'On-site results in this report are indicative field measurements taken with portable instruments. Where a limit applies, results are assessed against SANS 241:2015 (South African National Standard for Drinking Water).' + (anyCustom ? ' Values marked * use a site-specific limit set by The Hadron Group, not the SANS 241 value.' : '') + ' Formal confirmation of SANS 241 compliance requires sampling and analysis by a laboratory accredited to ISO/IEC 17025; field results are not a substitute for accredited laboratory analysis.';
+                const _mS = doc.splitTextToSize(_mStmt, PAGE_W - 72); doc.text(_mS, 36, y); y += _mS.length * 10 + 5;
+                if (_mList.length) {
+                    if (y > PAGE_H - 90) { doc.addPage(); y = 60; doc.setFontSize(8); doc.setFont('helvetica','normal'); doc.setTextColor.apply(doc, SOFT); }
+                    doc.setFont('helvetica','bold'); doc.text('Applicable laboratory reference methods for these determinands (not performed on-site):', 36, y); y += 10; doc.setFont('helvetica','normal');
+                    const _mM = doc.splitTextToSize(_mList.join('   ·   '), PAGE_W - 72); doc.text(_mM, 36, y); y += _mM.length * 10 + 3;
+                }
+                if (y > PAGE_H - 60) { doc.addPage(); y = 60; }
+                doc.setFontSize(8); doc.setFont('helvetica','italic'); doc.setTextColor.apply(doc, SOFT);
+                const _mR = doc.splitTextToSize('Reference methods per APHA Standard Methods (24th ed.), US EPA 200-series, and the SANS 5667 / 5221 / 6222 series.', PAGE_W - 72); doc.text(_mR, 36, y); y += _mR.length * 10 + 8;
+                doc.setTextColor(30, 38, 45); doc.setFont('helvetica','normal');
             }
             // Traceability footer on every page + page numbers (final pass, once all pages exist).
             const _pages = doc.internal.getNumberOfPages();
