@@ -2752,7 +2752,7 @@
                 <div class="hg-section-title">About</div>
                 <div class="hg-kvgrid">
                     <div class="hg-kv"><div class="k">App</div><div class="v">Hadron Group</div></div>
-                    <div class="hg-kv"><div class="k">Version</div><div class="v">v138</div></div>
+                    <div class="hg-kv"><div class="k">Version</div><div class="v">v139</div></div>
                     <div class="hg-kv"><div class="k">Platform</div><div class="v">PWA</div></div>
                 </div>
             </div>
@@ -6267,7 +6267,7 @@
                 if (sr_photos.length >= SR_MAX_PHOTOS) { showToast('Max ' + SR_MAX_PHOTOS + ' photos per report'); break; }
                 const full = await new Promise(r => { const rd = new FileReader(); rd.onload = e => r(e.target.result); rd.readAsDataURL(f); });
                 // Downscale for storage — full-res photos overflow localStorage fast.
-                sr_photos.push({ src: await srThumb(full, 1000, 0.7), ts: new Date().toISOString() });
+                sr_photos.push({ src: await srThumb(full, 1000, 0.7), ts: new Date().toISOString(), caption: '', pointName: '' });
                 renderSrPhotos();
             }
             srQueueAutosave();
@@ -6277,9 +6277,25 @@
         // img src attribute (stored XSS). A real base64 data URL contains no ".
         function srSafeImg(s) { return (typeof s === 'string' && /^data:image\/[a-z0-9.+-]+;base64,[A-Za-z0-9+/=]+$/i.test(s)) ? s : ''; }
         function renderSrPhotos() {
-            document.getElementById('sr_photos').innerHTML = sr_photos.map((p,i) =>
-                `<div style="position:relative;"><img src="${srSafeImg(p.src)}" style="width:70px;height:70px;object-fit:cover;border-radius:6px;"><button onclick="sr_photos.splice(${i},1);renderSrPhotos();srQueueAutosave()" style="position:absolute;top:-6px;right:-6px;background:#c44;color:#fff;border:none;border-radius:50%;width:20px;height:20px;cursor:pointer;">×</button></div>`).join('');
+            const host = document.getElementById('sr_photos'); if (!host) return;
+            const names = sr_points.map(pt => (pt.name || '').trim()).filter(Boolean);
+            host.innerHTML = sr_photos.map((p, i) => {
+                const opts = names.slice();
+                if (p.pointName && opts.indexOf(p.pointName) === -1) opts.unshift(p.pointName);   // keep an orphaned association (renamed/removed point) visible, not silently dropped
+                const ctl = 'width:100%;box-sizing:border-box;padding:5px;border:1px solid var(--border);border-radius:5px;font-size:12px;background:var(--bg-soft);color:var(--text);';
+                return `<div style="width:150px;border:1px solid var(--border);border-radius:8px;padding:6px;background:var(--surface);display:flex;flex-direction:column;gap:5px;">
+                    <div style="position:relative;align-self:flex-start;">
+                        <img src="${srSafeImg(p.src)}" style="width:70px;height:70px;object-fit:cover;border-radius:6px;">
+                        <button type="button" onclick="srRemovePhoto(${i})" title="Remove" style="position:absolute;top:-6px;right:-6px;background:#c44;color:#fff;border:none;border-radius:50%;width:20px;height:20px;cursor:pointer;">×</button>
+                    </div>
+                    <input value="${esc(p.caption || '')}" oninput="srSetPhotoCaption(${i}, this.value)" placeholder="Caption" style="${ctl}">
+                    <select onchange="srSetPhotoPoint(${i}, this.value)" style="${ctl}"><option value="">Unassigned</option>${opts.map(nm => `<option value="${esc(nm)}"${p.pointName === nm ? ' selected' : ''}>${esc(nm)}</option>`).join('')}</select>
+                </div>`;
+            }).join('');
         }
+        function srRemovePhoto(i) { sr_photos.splice(i, 1); renderSrPhotos(); srQueueAutosave(); }
+        function srSetPhotoCaption(i, val) { if (sr_photos[i]) { sr_photos[i].caption = val; srQueueAutosave(); } }
+        function srSetPhotoPoint(i, val) { if (sr_photos[i]) { sr_photos[i].pointName = val; srQueueAutosave(); } }
         function initSignaturePad() {
             const c = document.getElementById('sr_sig');
             const ctx = c.getContext('2d');
@@ -7293,18 +7309,26 @@
                 });
                 y += 4;
             }
-            // Photos
+            // Photos — 2-up grid, each with an optional caption + sample-point label
             if (r.photos && r.photos.length) {
-                if (y > PAGE_H - 180) { doc.addPage(); y = 60; }
-                doc.setFontSize(14); doc.setFont('helvetica','bold'); doc.text('Photos', 36, y); y += 18;
+                if (y > PAGE_H - 200) { doc.addPage(); y = 60; }
+                doc.setFontSize(14); doc.setFont('helvetica','bold'); doc.setTextColor(0, 0, 0); doc.text('Photos', 36, y); y += 18;
+                const IMG_W = 240, IMG_H = 150, ROW_H = IMG_H + 26 + 10;   // image + 2-line caption band + gap
                 r.photos.forEach((p, i) => {
-                    try {
-                        if (y > PAGE_H - 160) { doc.addPage(); y = 60; }
-                        doc.addImage(p.src, 'JPEG', 36 + (i % 2) * 260, y, 240, 150);
-                        if (i % 2 === 1) y += 160;
-                    } catch (e) { /* skip bad image */ }
+                    const col = i % 2;
+                    if (col === 0 && y > PAGE_H - (ROW_H + 20)) { doc.addPage(); y = 60; }   // keep an image+caption row together
+                    const x = 36 + col * 260;
+                    try { doc.addImage(p.src, 'JPEG', x, y, IMG_W, IMG_H); } catch (e) { /* skip bad image */ }
+                    const pt = String(p.pointName || '').trim(), cap = String(p.caption || '').trim();
+                    const label = (pt ? '[' + pt + '] ' : '') + cap;
+                    if (label) {
+                        doc.setFontSize(8); doc.setFont('helvetica','normal'); doc.setTextColor.apply(doc, SOFT);
+                        doc.text(doc.splitTextToSize(label, IMG_W).slice(0, 2), x, y + IMG_H + 11); doc.setTextColor(0, 0, 0);
+                    }
+                    if (col === 1) y += ROW_H;
                 });
-                y += 170;
+                if (r.photos.length % 2 === 1) y += ROW_H;   // advance past a trailing single image
+                y += 10;
             }
             // Signature — render identity + signed-at when signed; state plainly when NOT signed
             // (an unsigned report no longer prints a misleading blank sign-off block).
