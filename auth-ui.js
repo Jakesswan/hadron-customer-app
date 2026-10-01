@@ -2,9 +2,8 @@
  * Hadron Group — Auth UI
  *
  * Renders the login / signup gate and the session-aware profile card.
- * Activates only once supabase-client.js fires hg:supa:ready and only if
- * the cloud is configured. Otherwise the app boots in legacy local-only
- * mode (useful for dev and for users who haven't migrated yet).
+ * Activates once supabase-client.js fires hg:supa:ready. Without a configured cloud (a development
+ * build) the app runs on this device only; if the sign-in library failed to load, it says so.
  */
 
 (function () {
@@ -258,7 +257,7 @@
         setInfo('Reset link sent. Check your inbox.');
       }
     } catch (err) {
-      setError(err.message || String(err));
+      setError(accountErrorText(err, String(err)));   // e.g. offline: "Couldn't reach the server…"
     } finally {
       busy = false; render();
     }
@@ -271,7 +270,7 @@
       await window.HG_AUTH.signInGoogle();
       // Redirect happens; on return we'll hit the auth state listener.
     } catch (err) {
-      setError(err.message || String(err));
+      setError(accountErrorText(err, String(err)));
       busy = false; render();
     }
   }
@@ -325,43 +324,74 @@
     set('profileMemberSince', '—');
   }
 
+  // Until the signed-in user is known, nothing behind the sign-in screen can be seen or tapped: the
+  // desktop and any window opened early (a deep link) stay hidden (CSS on .visible / .hg-app-ready).
   function showDesktop(visible) {
-    // Always hide the legacy "demo / password" screen when cloud is configured.
-    // We use an inline style so nothing — not the legacy logout(), not a stray
-    // classList toggle — can accidentally re-reveal it.
-    const legacy = document.getElementById('loginScreen');
     const desktop = document.getElementById('desktop');
-    if (legacy) {
-      legacy.classList.add('hidden');
-      legacy.style.display = 'none';
-      legacy.setAttribute('aria-hidden', 'true');
-    }
     if (desktop) desktop.classList[visible ? 'add' : 'remove']('visible');
+    document.body.classList[visible ? 'add' : 'remove']('hg-app-ready');
   }
 
-  function boot() {
+  // The sign-in library is served by the app itself (and precached), so failing to load it means a
+  // broken install or cache. Say so, with a way out; never fall back to the app without an account.
+  function showStartupError() {
+    if (!overlay) {
+      overlay = document.createElement('div');
+      overlay.className = 'hg-auth-overlay';
+      overlay.id = 'hgAuthOverlay';
+      document.body.appendChild(overlay);
+    }
+    overlay.innerHTML =
+      '<div class="hg-auth-card" role="alert">' +
+        '<img class="hg-auth-logo light" src="Hadron_Logo_dark.png" alt="Hadron Group" />' +
+        '<img class="hg-auth-logo dark" src="Hadron_Logo.png" alt="Hadron Group" />' +
+        '<h1 class="hg-auth-title">The app couldn’t start</h1>' +
+        '<div class="hg-auth-sub">Part of the app didn’t load. Check your connection, then reload. If it keeps happening, contact Hadron support.</div>' +
+        '<button type="button" class="hg-auth-btn" id="hgStartupReload">Reload</button>' +
+      '</div>';
+    const reload = overlay.querySelector('#hgStartupReload');
+    reload.addEventListener('click', function () { location.reload(); });
+    try { reload.focus(); } catch (_) {}
+  }
+
+  // The user of the session supabase-js keeps in localStorage (hg-auth-v1), even when its token has
+  // expired and can't be refreshed right now (offline): that person never signed out.
+  function storedSessionUid() {
+    try {
+      const raw = localStorage.getItem('hg-auth-v1');
+      if (!raw) return null;
+      const s = JSON.parse(raw);
+      const u = (s && (s.user || (s.currentSession && s.currentSession.user))) || null;
+      return (u && typeof u.id === 'string' && u.id) || null;
+    } catch (_) { return null; }
+  }
+
+  function boot(e) {
     if (!window.HG_AUTH || !window.HG_AUTH.configured) {
-      // Cloud not configured — leave the legacy demo gate in place so
-      // local-only users can still get into the app.
+      if (e && e.detail && e.detail.sdk === false) { showStartupError(); return; }
+      // Cloud not configured at all (a development build): run on this device only, no sign-in.
       console.info('[HG_AUTH_UI] Cloud not configured; running locally.');
       paintLocalProfile();
+      showDesktop(true);
       return;
     }
 
-    // An expired / already-used e-mail link: remember the message, take the error out of the URL.
-    if (/(^|[#&])error(_code|_description)?=/.test(location.hash || '')) {
-      pendingLinkError = 'That link has expired or was already used. Sign in, or use “Forgot password?” to get a new link.';
-      try { history.replaceState(history.state, '', location.pathname + location.search); } catch (_) {}
-    }
-
-    // Cloud configured — desktop is gated by Supabase session, not demo password.
-    // Permanently retire the legacy demo gate.
-    const legacy = document.getElementById('loginScreen');
-    if (legacy) {
-      legacy.classList.add('hidden');
-      legacy.style.display = 'none';
-      legacy.setAttribute('aria-hidden', 'true');
-    }
+    // A sign-in that came back with an error (an expired / already-used e-mail link, often opened
+    // first by a mail scanner, or a cancelled Google sign-in): supabase-js leaves error=… in the URL
+    // and signs nobody in. Remember a message for it and take the error out of the URL.
+    (function () {
+      const h = new URLSearchParams((location.hash || '').replace(/^#/, ''));
+      const q = new URLSearchParams(location.search || '');
+      const has = function (p) { return p.has('error') || p.has('error_code') || p.has('error_description'); };
+      if (!has(h) && !has(q)) return;
+      const code = (h.get('error_code') || q.get('error_code') || '') + ' ' + (h.get('error_description') || q.get('error_description') || '');
+      pendingLinkError = /otp_expired|email link is invalid or has expired/i.test(code)
+        ? 'That link has expired or was already used. Sign in, or use “Forgot password?” to get a new link.'
+        : 'Sign-in didn’t finish. Please try again.';
+      ['error', 'error_code', 'error_description'].forEach(function (k) { q.delete(k); });
+      const rest = q.toString();
+      try { history.replaceState(history.state, '', location.pathname + (rest ? '?' + rest : '')); } catch (_) {}
+    })();
 
     // The user whose data this page holds in memory (open forms, caches, autosave timers).
     let pageUid = null;
@@ -372,37 +402,90 @@
       try { location.reload(); } catch (_) {}
     }
 
+    // Signed in on this phone but not (yet) confirmed by the server: say so once. Offline at once; when
+    // the phone has a connection, a profile that is merely slow gets a few more seconds first.
+    let offlineNoted = false;
+    function noteUnconfirmed() {
+      if (offlineNoted || window.HG_PROFILE || !pageUid || window.__hgTenantFrozen) return;
+      offlineNoted = true;
+      const note = navigator.onLine === false
+        ? 'You’re offline. Keep working: your changes are saved on this phone and sync when you’re back online.'
+        : 'Can’t reach the server right now. Keep working: your changes are saved on this phone and sync once the connection is back.';
+      if (typeof window.showToast === 'function') window.showToast(note, 6000);
+    }
+    // ...and keep trying while the app is in view: a connection can come back without an 'online'
+    // event (weak signal, a Wi-Fi login page, the server down), and a still-valid token isn't
+    // refreshed (with the event that would retry) for up to an hour.
+    let confirmTimer = 0;
+    function retryConfirmLater() {
+      if (confirmTimer) return;
+      confirmTimer = setTimeout(function () {
+        confirmTimer = 0;
+        if (window.HG_PROFILE || !pageUid || window.__hgTenantFrozen) return;
+        if (document.visibilityState === 'hidden') { retryConfirmLater(); return; }
+        reconcile().catch(function () {}).then(function () { if (!window.HG_PROFILE) retryConfirmLater(); });
+      }, 30000);
+    }
+
     async function reconcile() {
-      const session = await window.HG_AUTH.getSession();
-      const uid = (session && session.user && session.user.id) || null;
+      // Offline with an expired token (or a refresh that failed on a bad connection), getSession()
+      // answers null, but the session is still stored: that person never signed out. Keep them
+      // signed in on this phone with its data; the session refreshes once the connection is back
+      // (the 'online' listener below, or supabase-js's own refresh, which reports back through
+      // hg:auth:changed). A session the server rejected is removed by supabase-js, so it can't be
+      // used this way. getSession() itself can spend ~25 s retrying that refresh on a dead
+      // connection, so with a stored session: offline, don't wait for it; online, wait 4 s at most.
+      const stored = storedSessionUid();
+      const sessionP = window.HG_AUTH.getSession();
+      let session = null;
+      if (stored && navigator.onLine === false) sessionP.catch(function () {});
+      else session = await (stored ? Promise.race([sessionP, new Promise(function (res) { setTimeout(res, 4000, null); })]) : sessionP);
+      let uid = (session && session.user && session.user.id) || null;
+      let offline = false;
+      // Read again: while getSession() ran, supabase-js may have removed a session the server rejected.
+      if (!uid) { const still = storedSessionUid(); if (still) { uid = still; offline = true; } }
       // Signed out or switched user in ANOTHER tab: this page still holds the previous user's data
       // in memory, so reload instead of carrying it into the next session.
       if (pageUid && uid !== pageUid) {
-        // Offline with an expired token, getSession() answers null but the session is still stored
-        // (it refreshes once back online): nobody signed out, so keep the page and what's being typed.
-        if (!uid && hasStoredSession()) return;
         reloadFrozen();
         if (!uid) showDesktop(false);
         return;
       }
-      if (session) {
+      if (uid) {
         teardown();
         // Make sure THIS user's data is what's live before anything is shown. Keyed on the session's
         // user id, so it holds even when the profile fetch fails (offline). True = reloading.
         if (await hgEnsureUser(uid)) return;
         pageUid = uid;
+        // The organisation this phone's data belongs to, until the profile confirms it: another tab
+        // that finds the account in a different organisation then reloads this one too.
+        if (!pageOrg) pageOrg = lastOrg();
         // Resolve the profile (role) BEFORE revealing the desktop, so role-gated UI (data-roles
         // tiles like the admin-only Data Manager, plus owner-only controls) is correct on first
         // paint instead of flashing for a beat while the profile loads. Bounded by a timeout so a
         // slow/stalled profile fetch can NEVER block the reveal — on timeout the desktop shows and
         // refreshProfileCard applies role visibility the moment it lands. On a token-refresh
         // reconcile the desktop is already visible, so showDesktop(true) below just re-asserts it.
-        try { await Promise.race([refreshProfileCard(), new Promise(res => setTimeout(res, 2000))]); } catch (_) {}
+        if (!offline) { try { await Promise.race([refreshProfileCard(), new Promise(res => setTimeout(res, 2000))]); } catch (_) {} }
+        if (!window.HG_PROFILE) {
+          // Not confirmed by the server (offline, or the profile didn't load in time): show what the last
+          // confirmed role may see (none known → what everyone sees), and queue every change under this
+          // phone's organisation instead of trying the network first (__hgOfflineSession: supabase-client,
+          // lims-sync, index.html). refreshProfileCard clears it once the server confirms the user.
+          window.__hgOfflineSession = true;
+          let role = '';
+          try { role = localStorage.getItem('hg-last-role') || ''; } catch (_) {}
+          applyRole(role);
+        }
         showDesktop(true);
+        if (!window.HG_PROFILE) {
+          if (offline) noteUnconfirmed(); else setTimeout(noteUnconfirmed, 4000);
+          retryConfirmLater();
+        }
         // Unsynced changes are sent from refreshProfileCard, once the profile has confirmed the user
         // and organisation they belong to (a session alone isn't enough: see mayFlushAs).
       } else {
-        // Hide desktop and demo gate; auth overlay covers everything.
+        // Signed out: hide the desktop; the sign-in screen covers everything.
         showDesktop(false);
         window.HG_AUTH_UI.show();
       }
@@ -415,16 +498,24 @@
       if (e.key !== null && e.key !== 'hg-last-uid' && e.key !== 'hg-last-org') return;
       if ((pageUid && lastUid() !== pageUid) || (pageOrg && lastOrg() !== pageOrg)) reloadFrozen();
     });
-    // Signed in but the profile couldn't load (offline): try again when the connection returns, so
-    // the organisation is confirmed and unsynced changes can be sent.
+    // Signed in but offline (or the profile couldn't load): try again when the connection returns, so
+    // the session refreshes, the organisation is confirmed and unsynced changes can be sent.
     window.addEventListener('online', function () { if (pageUid && !window.HG_PROFILE) reconcile(); });
     reconcile();
   }
 
-  // The organisation of the data this page holds in memory (set once the profile confirms it).
+  // The organisation of the data this page holds in memory: this phone's record of it (hg-last-org)
+  // from sign-in, then whatever the profile confirms.
   let pageOrg = null;
-  function hasStoredSession() {
-    try { return Object.keys(localStorage).some(function (k) { return k === 'hg-auth-v1'; }); } catch (_) { return false; }
+
+  // What this role may see: body[data-role] (role-gated screens read it) and the home tiles tagged
+  // data-roles="admin,…" (shown only for those roles; untagged tiles show for everyone).
+  function applyRole(role) {
+    document.body.setAttribute('data-role', role || '');
+    document.querySelectorAll('[data-roles]').forEach(function (el) {
+      const allowed = (el.getAttribute('data-roles') || '').split(',').map(function (s) { return s.trim(); }).filter(Boolean);
+      el.style.display = allowed.includes(role) ? '' : 'none';
+    });
   }
 
   // ── Profile card binding ────────────────────────────────
@@ -454,7 +545,10 @@
     if (await hgEnsureOrg(profile)) return;        // reloading without the other organisation's data
     pageOrg = lastOrg();                           // the organisation this page's data belongs to
     if (await hgRestorePending(profile)) return;   // reloading with the restored data
-    document.body.setAttribute('data-role', profile.role || '');
+    window.__hgOfflineSession = false;             // the server has confirmed who this is
+    // The role, also kept on this phone (with hg-last-org) so the right screens show when signed in offline.
+    try { if (profile.role) localStorage.setItem('hg-last-role', profile.role); else localStorage.removeItem('hg-last-role'); } catch (_) {}
+    applyRole(profile.role || '');
     document.body.setAttribute('data-org-type', profile.organisations?.type || '');
 
     // Top-right user chip on the desktop
@@ -464,14 +558,6 @@
     const userAvatarEl = document.getElementById('userAvatar');
     if (userNameEl)   userNameEl.textContent = displayName;
     if (userAvatarEl) userAvatarEl.textContent = initial;
-
-    // Phase 3 seed — role-based home tile visibility.
-    // Tiles tagged with `data-roles="admin"` show only for that role; tiles
-    // without the attribute show for everyone.
-    document.querySelectorAll('[data-roles]').forEach(el => {
-      const allowed = (el.getAttribute('data-roles') || '').split(',').map(s => s.trim()).filter(Boolean);
-      el.style.display = allowed.includes(profile.role) ? '' : 'none';
-    });
 
     document.dispatchEvent(new CustomEvent('hg:profile:loaded', { detail: profile }));
 
@@ -520,7 +606,12 @@
     if (/session missing|not signed in|signed out|jwt/i.test(m) || code === 'session_not_found') return 'You’re signed out. Sign in again, then try once more.';
     if (/reauthenticat|current password|nonce/i.test(m) || code === 'reauthentication_needed') return 'For security, set your new password with “Forgot password?” on the sign-in screen. It e-mails you a link.';
     if (/should be different|same password/i.test(m) || code === 'same_password') return 'That is your current password. Choose a different one.';
+    if (code === '42501' || /row-level security|permission denied/i.test(m)) return 'Your account isn’t allowed to change this. Ask your organisation’s admin.';
     return m || fallback;
+  }
+  function isSamePasswordError(e) {
+    const m = String((e && e.message) || ''), code = String((e && e.code) || '');
+    return code === 'same_password' || /should be different|same password/i.test(m);
   }
 
   const PW_MIN = 6;   // Supabase Auth's minimum (the sign-up form uses the same)
@@ -529,6 +620,7 @@
     if (!cloudReady()) { notAvailable(); return; }
     window.__hgPwSheetOpen = true;
     const p = window.HG_PROFILE || {};
+    let timedOut = false;   // an earlier attempt in this sheet ran out of time
     const done = function () {
       window.__hgPwSheetOpen = false;
       try { sessionStorage.removeItem('hg-pw-recovery'); } catch (_) {}
@@ -551,8 +643,13 @@
       try {
         await withLimit(window.HG_AUTH.updatePassword(p1.value));
       } catch (e) {
-        c.setBusy(false);
-        return say(accountErrorText(e, 'The password couldn’t be changed. Try again.'));
+        // A save that timed out can still have gone through: then the retry is told this is already
+        // the current password, which means it worked.
+        if (!(timedOut && isSamePasswordError(e))) {
+          if (e && e.code === 'timeout') timedOut = true;
+          c.setBusy(false);
+          return say(accountErrorText(e, 'The password couldn’t be changed. Try again.'));
+        }
       }
       done();
       c.close();
@@ -649,6 +746,7 @@
       try { await stashDel(uid); } catch (_) {}
       try {
         if (org) localStorage.setItem('hg-last-org', org); else localStorage.removeItem('hg-last-org');
+        localStorage.removeItem('hg-last-role');   // the role in the new organisation comes with its profile
         localStorage.removeItem('hg-restore-pending');
       } catch (_) {}
       try { location.reload(); } catch (_) {}
@@ -1004,6 +1102,7 @@
       try {
         localStorage.setItem('hg-last-uid', uid);
         localStorage.removeItem('hg-last-org');
+        localStorage.removeItem('hg-last-role');
         localStorage.setItem('hg-restore-pending', uid);
       } catch (_) {}
       if (purge) { try { location.reload(); } catch (_) {} return true; }   // modules may still hold the old data in memory
@@ -1114,7 +1213,7 @@
       // 6. Only now drop the per-device markers: other tabs reload when hg-last-uid changes, and must
       //    find the session already gone (else they'd boot as this user again and re-fill the phone).
       //    If the app dies before this line, hgEnsureUser finds the user's stash and marks it for restore.
-      try { ['hg-last-uid', 'hg-last-org', 'hg-restore-pending'].forEach(function (k) { localStorage.removeItem(k); }); } catch (_) {}
+      try { ['hg-last-uid', 'hg-last-org', 'hg-last-role', 'hg-restore-pending'].forEach(function (k) { localStorage.removeItem(k); }); } catch (_) {}
     });
     try { location.reload(); } catch (_) {}   // no tenant state left in memory
   };

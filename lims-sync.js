@@ -157,18 +157,30 @@
     try { return fn(); } finally { state.paused = false; }
   }
 
+  // The organisation local changes are sent for. Normally the loaded profile's (state.orgId). Signed
+  // in but not yet confirmed by the server (auth-ui __hgOfflineSession: offline, or the server isn't
+  // answering; no profile yet) it is the organisation this phone's data belongs to (hg-last-org): the
+  // change is queued, stamped with it, and only ever sent for that same user and organisation (the
+  // queue checks both).
+  function changeOrg() {
+    if (state.ready && state.orgId) return state.orgId;
+    if (!window.__hgOfflineSession) return null;
+    try { return localStorage.getItem('hg-last-org'); } catch (_) { return null; }
+  }
+
   // ── Hook called by lims.js on every local DB.put / DB.del ──
   function onLocalChange(op, store, payload) {
     if (state.paused) return;
     const cloudTable = TABLE_MAP[store];
     if (!cloudTable) return;
-    if (!state.ready || !state.orgId) return;
+    const orgId = changeOrg();
+    if (!orgId) return;
     if (!window.HG_DB || !window.HG_DB[cloudTable]) return;
 
     if (op === 'put') {
       // One-way bridge: never push an ERP-owned client back to the cloud.
       if (store === 'clients' && payload && payload.source === 'erp') return;
-      const cloudRow = mapOut(store, payload, state.orgId);
+      const cloudRow = mapOut(store, payload, orgId);
       // fire-and-forget — HG_DB queues offline writes itself
       window.HG_DB[cloudTable].upsert(cloudRow).catch(() => {});
     } else if (op === 'del') {
@@ -183,11 +195,20 @@
     const stores = Object.keys(TABLE_MAP);
     let pulled = 0, erpClients = 0;
     const byStore = {};
+    // A record changed on this phone whose change hasn't reached the server yet (e.g. edited offline)
+    // keeps its local copy: overwriting it with the server's older copy would lose the change. Checked
+    // before each read (a change sent while the read is out may land after the server answered it)
+    // and after it (a change made while the read was out).
+    const pendingNow = function () {
+      try { return window.HG_DB._pendingKeys ? window.HG_DB._pendingKeys() : new Set(); } catch (_) { return new Set(); }
+    };
     for (const store of stores) {
       const cloudTable = TABLE_MAP[store];
       try {
+        const pending = pendingNow();
         const rows = await window.HG_DB[cloudTable].list({ organisation_id: state.orgId });
         if (!rows.length) continue;
+        pendingNow().forEach(function (k) { pending.add(k); });
         await pause(async () => {
           for (const r of rows) {
             // Defence-in-depth: never write another org's row locally. RLS already
@@ -196,6 +217,7 @@
               console.error('[HG_LIMS_SYNC] dropped cross-org row on pull', store, r.id);
               continue;
             }
+            if (pending.has(cloudTable + ':' + r.id)) continue;   // local change still on its way up
             const local = mapIn(store, r);
             await window.HG_LIMS_DB.putLocal(store, local);
             pulled++;

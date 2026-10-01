@@ -26,16 +26,17 @@
   const CONFIGURED = !SUPABASE_URL.includes('YOUR-PROJECT')
                   && !SUPABASE_ANON_KEY.includes('YOUR-');
 
-  // Wait for supabase-js (loaded via CDN in index.html) before initialising.
-  // Always defers the callback so listeners registered by deferred scripts
-  // have a chance to attach before we fire hg:supa:ready.
+  // supabase-js is served by the app itself (supabase-js-<version>.js, a blocking script tag before
+  // this one), so it is normally there at once. Always defers the callback so listeners registered by
+  // deferred scripts can attach before we fire hg:supa:ready. Missing after a short grace period
+  // means a broken install or cache: auth-ui then shows "The app couldn't start".
   function waitForSdk(cb, attempts) {
     attempts = attempts || 0;
     if (window.supabase && typeof window.supabase.createClient === 'function') {
       return setTimeout(cb, 0);
     }
-    if (attempts > 50) {
-      console.error('[HG_SUPA] supabase-js never loaded — check the CDN script tag. Falling back to local-only mode.');
+    if (attempts > 5) {
+      console.error('[HG_SUPA] supabase-js did not load (supabase-js-*.js script tag / offline cache).');
       setTimeout(() => document.dispatchEvent(new CustomEvent('hg:supa:ready', { detail: { configured: false, sdk: false } })), 0);
       return;
     }
@@ -74,6 +75,9 @@
   // (unique within a queue because enqueue de-dupes per record).
   function opTok(op)     { return op.qid ? 'q:' + op.qid : 'k:' + opId(op); }
   function queueLen()    { return loadQueue().length; }
+  // Records with a change still waiting to be sent, as 'table:id'. A pull from the server must not
+  // overwrite those local copies (the change would be lost): the queue sends them first.
+  function pendingKeys() { return new Set(loadQueue().map(opId)); }
   function deadLen()     { return loadDead().length; }
   function deadLetter(op, reason) {
     const d = loadDead();
@@ -242,13 +246,23 @@
         if (!client) return null;
         const session = await this.getSession();
         if (!session) return null;
-        const { data, error } = await client
-          .from('profiles')
-          .select('id, email, full_name, phone, organisation_id, role, language, preferences, created_at, organisations(name,slug,type,erp_tenant_id)')
-          .eq('id', session.user.id)
-          .maybeSingle();
-        if (error) { console.warn('[HG_AUTH] getProfile error', error); return null; }
-        return data;
+        // Given up after 20 s: on a connection that never answers (a Wi-Fi login page, the server down)
+        // the app keeps retrying while the user isn't confirmed, and must not pile up hung requests.
+        const ctrl = typeof AbortController !== 'undefined' ? new AbortController() : null;
+        const timer = ctrl ? setTimeout(() => ctrl.abort(), 20000) : 0;
+        try {
+          let q = client
+            .from('profiles')
+            .select('id, email, full_name, phone, organisation_id, role, language, preferences, created_at, organisations(name,slug,type,erp_tenant_id)')
+            .eq('id', session.user.id);
+          if (ctrl && typeof q.abortSignal === 'function') q = q.abortSignal(ctrl.signal);
+          const { data, error } = await q.maybeSingle();
+          if (error) { console.warn('[HG_AUTH] getProfile error', error); return null; }
+          return data;
+        } catch (e) {
+          console.warn('[HG_AUTH] getProfile failed', e);
+          return null;
+        } finally { clearTimeout(timer); }
       },
 
       async signUpEmail(email, password, fullName) {
@@ -354,8 +368,13 @@
           if (error) { console.warn('[HG_DB]', table, 'get error', error); return null; }
           return data;
         },
+        // Queued at once, instead of trying the network first, when offline or while the signed-in user
+        // isn't confirmed by the server yet (auth-ui __hgOfflineSession: offline, or the server isn't
+        // answering). Trying first would wait on supabase-js's token refresh (~25 s of retries, or for
+        // ever on a hung connection) before the write failed into the queue: an app closed meanwhile
+        // lost the change. The queue only sends once the profile confirms the user and organisation.
         async upsert(row) {
-          if (!client || !navigator.onLine) {
+          if (!client || !navigator.onLine || window.__hgOfflineSession) {
             enqueue({ kind: 'upsert', table, row });
             return row;
           }
@@ -368,7 +387,7 @@
           return data;
         },
         async remove(id) {
-          if (!client || !navigator.onLine) {
+          if (!client || !navigator.onLine || window.__hgOfflineSession) {   // as upsert
             enqueue({ kind: 'delete', table, id });
             return true;
           }
@@ -419,6 +438,7 @@
       incidents:            tableApi('incidents'),
       _queueLen: queueLen,
       _deadLen: deadLen,
+      _pendingKeys: pendingKeys,
       _flush: flushQueue
     };
 

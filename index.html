@@ -40,60 +40,62 @@
     <!-- jsPDF for branded PDF export of calculator results -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js" defer></script>
 
-    <!-- Supabase JS SDK (auth + cloud sync) -->
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+    <!-- Supabase JS SDK (auth + cloud sync), pinned 2.117.2 and served by the app itself so sign-in
+         works offline from the precache (it used to be the floating @2 from a CDN). See
+         THIRD_PARTY_NOTICES.md. To upgrade: replace the file, rename it, update this tag + sw.js. -->
+    <script src="supabase-js-2.117.2.js?v=149"></script>
 
     <!-- Hadron Supabase bridge -->
-    <script src="supabase-client.js?v=148"></script>
+    <script src="supabase-client.js?v=149"></script>
 
     <!-- Shared UI primitives (in-app sheets) — loaded before auth-ui, which uses them -->
-    <script src="hg-ui.js?v=148" defer></script>
+    <script src="hg-ui.js?v=149" defer></script>
     <!-- Auth UI (login/signup gate, profile binding) -->
-    <script src="auth-ui.js?v=148" defer></script>
+    <script src="auth-ui.js?v=149" defer></script>
 
     <!-- Push notifications -->
-    <script src="push.js?v=148" defer></script>
+    <script src="push.js?v=149" defer></script>
 
     <!-- Translation bundle -->
-    <script src="i18n.js?v=148"></script>
+    <script src="i18n.js?v=149"></script>
 
     <!-- Hadron Tristroke icon system (matches the ERP) -->
-    <script src="hadron-icons.js?v=148" defer></script>
+    <script src="hadron-icons.js?v=149" defer></script>
 
     <!-- Cross-platform emoji rendering (Twemoji) -->
-    <script src="emoji.js?v=148" defer></script>
+    <script src="emoji.js?v=149" defer></script>
 
     <!-- Customizable home grid (drag-to-reorder) -->
-    <script src="customize.js?v=148" defer></script>
+    <script src="customize.js?v=149" defer></script>
 
     <!-- Data Manager (Excel import/export) -->
-    <script src="data-manager.js?v=148" defer></script>
+    <script src="data-manager.js?v=149" defer></script>
 
     <!-- QR encoder (MIT, Kazuhiko Arase) -->
-    <script src="qr.js?v=148"></script>
+    <script src="qr.js?v=149"></script>
 
     <!-- QR Builder app -->
-    <script src="qr-app.js?v=148" defer></script>
+    <script src="qr-app.js?v=149" defer></script>
 
     <!-- Pool Water module -->
-    <script src="pool.js?v=148" defer></script>
+    <script src="pool.js?v=149" defer></script>
     <!-- Cooling Tower field calculator -->
-    <script src="coolingtower.js?v=148" defer></script>
+    <script src="coolingtower.js?v=149" defer></script>
     <!-- Boiler / Steam field calculator -->
-    <script src="boiler.js?v=148" defer></script>
+    <script src="boiler.js?v=149" defer></script>
     <!-- Water softener sizing calculator -->
-    <script src="softener.js?v=148" defer></script>
-    <script src="academy-content.js?v=148" defer></script>
-    <script src="academy.js?v=148" defer></script>
+    <script src="softener.js?v=149" defer></script>
+    <script src="academy-content.js?v=149" defer></script>
+    <script src="academy.js?v=149" defer></script>
 
-    <script src="searchable-select.js?v=148" defer></script>
-    <script src="trends.js?v=148" defer></script>
+    <script src="searchable-select.js?v=149" defer></script>
+    <script src="trends.js?v=149" defer></script>
 
     <!-- LIMS module (loaded at end of body via defer) -->
-    <script src="lims.js?v=148" defer></script>
-    <script src="lims-sync.js?v=148" defer></script>
-    <script src="portal.js?v=148" defer></script>
-    <script src="team.js?v=148" defer></script>
+    <script src="lims.js?v=149" defer></script>
+    <script src="lims-sync.js?v=149" defer></script>
+    <script src="portal.js?v=149" defer></script>
+    <script src="team.js?v=149" defer></script>
 
     <!-- Default UI font: Gothic A1 (Google Fonts) -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -241,110 +243,6 @@
             overscroll-behavior: none;
         }
 
-        /* Login Screen */
-        .login-screen {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: linear-gradient(135deg, #3AAEDB 0%, #F5B82E 100%);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            z-index: 1000;
-            transition: opacity 0.5s, visibility 0.5s;
-        }
-
-        .login-screen.hidden {
-            opacity: 0;
-            visibility: hidden;
-        }
-
-        .login-box {
-            background: rgba(255, 255, 255, 0.95);
-            padding: 40px;
-            border-radius: 20px;
-            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
-            width: 400px;
-            max-width: 90%;
-        }
-
-        .login-box h1 {
-            text-align: center;
-            margin-bottom: 10px;
-            color: #333;
-            font-size: 28px;
-        }
-
-        .login-box p {
-            text-align: center;
-            color: #666;
-            margin-bottom: 30px;
-            font-size: 14px;
-        }
-
-        .input-group {
-            margin-bottom: 20px;
-        }
-
-        .input-group label {
-            display: block;
-            margin-bottom: 8px;
-            color: #333;
-            font-weight: 500;
-            font-size: 14px;
-        }
-
-        .input-group input {
-            width: 100%;
-            padding: 12px 16px;
-            border: 2px solid #e0e0e0;
-            border-radius: 10px;
-            font-size: 14px;
-            transition: border-color 0.3s;
-        }
-
-        .input-group input:focus {
-            outline: none;
-            border-color: #3AAEDB;
-        }
-
-        .login-btn {
-            width: 100%;
-            padding: 14px;
-            background: linear-gradient(135deg, #3AAEDB 0%, #F5B82E 100%);
-            color: white;
-            border: none;
-            border-radius: 10px;
-            font-size: 16px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: transform 0.2s, box-shadow 0.2s;
-        }
-
-        .login-btn:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 5px 20px rgba(0, 177, 202, 0.4);
-        }
-
-        .login-btn:active {
-            transform: translateY(0);
-        }
-
-        .demo-credentials {
-            margin-top: 20px;
-            padding: 15px;
-            background: #f5f5f5;
-            border-radius: 10px;
-            font-size: 12px;
-            color: #666;
-        }
-
-        .demo-credentials strong {
-            color: #333;
-        }
-
         /* Desktop Environment — clean white in light, Hadron grey in dark */
         .desktop {
             height: 100vh;
@@ -361,6 +259,11 @@
         .desktop.visible {
             opacity: 1;
         }
+        /* Until sign-in has decided who is using the phone (auth-ui showDesktop), the desktop and any
+           window are not just transparent but untouchable: no tapping an invisible tile, no window
+           (e.g. from a link) showing this phone's data before the user is confirmed. */
+        .desktop:not(.visible) { visibility: hidden; }
+        body:not(.hg-app-ready) .window { visibility: hidden; }
 
         /* Top Bar — Hadron yellow with dark navy text for proper contrast */
         .top-bar {
@@ -1299,7 +1202,6 @@
             background: #0F172A;
             color: #e6e6e6;
         }
-        body.dark .login-box,
         body.dark .window,
         body.dark .desktop {
             background: #161c21;
@@ -1340,10 +1242,6 @@
         }
         body.dark .app-icon .app-name {
             color: #e6e6e6;
-        }
-        body.dark .demo-credentials {
-            background: #0F172A;
-            color: #b5b5b5;
         }
         body.dark .history-item,
         body.dark .settings-row,
@@ -2455,34 +2353,7 @@
       // existing dark-mode rules paint with no flash before initDarkMode() runs.
       try { if (document.documentElement.getAttribute('data-theme') === 'dark') document.body.classList.add('dark'); } catch (e) {}
     </script>
-    <!-- Login Screen -->
-    <div class="login-screen" id="loginScreen">
-        <div class="login-box">
-            <div style="text-align: center; margin-bottom: 20px;">
-                <img src="Hadron_Logo_dark.png" alt="Hadron Group" style="height: 72px; width: auto; max-width: 100%;">
-            </div>
-            <h1 data-i18n="login.welcome">Welcome Back</h1>
-            <p data-i18n="login.subtitle">Sign in to access your workspace</p>
-            <form id="loginForm">
-                <div class="input-group">
-                    <label for="username" data-i18n="login.username">Username</label>
-                    <input type="text" id="username" data-i18n-attr="placeholder" data-i18n="login.username.placeholder" placeholder="Enter your username" required>
-                </div>
-                <div class="input-group">
-                    <label for="password" data-i18n="login.password">Password</label>
-                    <input type="password" id="password" data-i18n-attr="placeholder" data-i18n="login.password.placeholder" placeholder="Enter your password" required>
-                </div>
-                <button type="submit" class="login-btn" data-i18n="login.signin">Sign In</button>
-            </form>
-            <div style="text-align: center; margin-top: 18px; font-size: 12px; color: #888;">
-                <a href="privacy.html" style="color: #3AAEDB; text-decoration: none;" data-i18n="login.privacyPolicy">Privacy Policy</a>
-                <span style="margin: 0 6px;">&middot;</span>
-                <a href="https://hadrongrp.com" target="_blank" rel="noopener" style="color: #3AAEDB; text-decoration: none;">hadrongrp.com</a>
-            </div>
-        </div>
-    </div>
-
-    <!-- Desktop Environment -->
+    <!-- Desktop Environment (the sign-in screen is drawn by auth-ui.js) -->
     <div class="desktop" id="desktop">
         <!-- Top Bar -->
         <div class="top-bar">
@@ -2805,7 +2676,7 @@
                 <div class="hg-section-title">About</div>
                 <div class="hg-kvgrid">
                     <div class="hg-kv"><div class="k">App</div><div class="v">Hadron Group</div></div>
-                    <div class="hg-kv"><div class="k">Version</div><div class="v">v148</div></div>
+                    <div class="hg-kv"><div class="k">Version</div><div class="v">v149</div></div>
                     <div class="hg-kv"><div class="k">Platform</div><div class="v">PWA</div></div>
                 </div>
             </div>
@@ -4213,30 +4084,6 @@
     </div>
 
     <script>
-        // Login functionality
-        document.getElementById('loginForm').addEventListener('submit', function(e) {
-            e.preventDefault();
-            const username = document.getElementById('username').value;
-            const password = document.getElementById('password').value;
-
-            if (username === 'demo' && password === 'password') {
-                login(username);
-            } else {
-                alert('Invalid credentials! Try username: demo, password: password');
-            }
-        });
-
-        function login(username) {
-            document.getElementById('loginScreen').classList.add('hidden');
-            document.getElementById('desktop').classList.add('visible');
-            document.getElementById('userName').textContent = username;
-            document.getElementById('profileName').textContent = username.charAt(0).toUpperCase() + username.slice(1) + ' User';
-            document.getElementById('userAvatar').textContent = username.charAt(0).toUpperCase();
-
-            // Show onboarding tour on first successful login
-            setTimeout(function () { startOnboarding(false); }, 400);
-        }
-
         function logout() {
             // Cloud-aware: when Supabase auth is wired up, route through it so
             // the session is properly ended and the new sign-in/sign-up overlay
@@ -4253,11 +4100,7 @@
                 }
                 return;
             }
-            // Legacy local-only fallback (demo / password gate)
-            document.getElementById('loginScreen').classList.remove('hidden');
-            document.getElementById('desktop').classList.remove('visible');
-            document.getElementById('username').value = '';
-            document.getElementById('password').value = '';
+            // Local-only mode (no cloud sign-in): there is no account to sign out of.
             closeAllWindows();
         }
 
@@ -5805,7 +5648,7 @@
 
         /* -------- Toast -------- */
         let toastTimer = null;
-        function showToast(message) {
+        function showToast(message, ms) {   // ms: how long it stays (default 2.2 s; longer for longer messages)
             const el = document.getElementById('toast');
             if (!el) return;
             el.textContent = message;
@@ -5813,7 +5656,7 @@
             clearTimeout(toastTimer);
             toastTimer = setTimeout(function () {
                 el.classList.remove('visible');
-            }, 2200);
+            }, ms || 2200);
         }
 
         /* =========================================================
@@ -6478,15 +6321,17 @@
             const el = document.getElementById('sr_list'); if (!el) return;
             // Only the account owner (admin / customer_admin) may delete a report; signed-in
             // techs create + view only (RLS enforces this server-side — this just hides the
-            // button). A local-only / signed-out user (role '') keeps Delete for their own
-            // device-only reports, matching the deleteSR() guard.
+            // button). Without a role: local-only mode (no cloud) keeps Edit + Delete for the
+            // device's own reports; signed in with the role not known yet (offline before it was
+            // ever confirmed) is treated like a technician, as in deleteSR() and limsCanManageClients().
             const _srRole = (window.HG_PROFILE && window.HG_PROFILE.role) || document.body.dataset.role || '';
-            const canManage = !_srRole || ['admin','customer_admin'].includes(_srRole);   // Edit any + Delete
+            const _srLocalOnly = !(window.HG_AUTH && window.HG_AUTH.configured);
+            const canManage = _srRole ? ['admin','customer_admin'].includes(_srRole) : _srLocalOnly;   // Edit any + Delete
             el.innerHTML = !list.length ? '<p style="color:#888;">No saved reports yet.</p>' :
                 list.map(r => {
                     // Operators may edit their OWN draft (saved on this device, not yet submitted) —
                     // mirrors migration 0012's operator_draft_update policy; RLS is the real backstop.
-                    const canEdit = canManage || (_srRole === 'operator' && r._local && r.status !== 'submitted');
+                    const canEdit = canManage || ((_srRole === 'operator' || (!_srRole && !_srLocalOnly)) && r._local && r.status !== 'submitted');
                     // Another device holds a newer version of a report we also have locally.
                     const cloudNewer = r._local && r._cloudUpdatedAt && r.savedAt && new Date(r._cloudUpdatedAt) > new Date(r.savedAt);
                     return `<div style="border:1px solid #eee;border-radius:6px;padding:10px;margin-bottom:8px;">
@@ -7370,7 +7215,8 @@
         }
         function deleteSR(id) {
             const _role = (window.HG_PROFILE && window.HG_PROFILE.role) || document.body.dataset.role || '';
-            if (_role && !['admin','customer_admin'].includes(_role)) { showToast('Only the account owner can delete reports'); return; }
+            const _isOwner = _role ? ['admin','customer_admin'].includes(_role) : !(window.HG_AUTH && window.HG_AUTH.configured);   // no role: owner only in local mode (see srRenderReportList)
+            if (!_isOwner) { showToast('Only the account owner can delete reports'); return; }
             if (!confirm('Delete this service report? It is removed from this device and the cloud, and cannot be undone.')) return;
             LS.set('hadron_sr', LS.get('hadron_sr', []).filter(r => r.id !== id));
             srCloudMeta = srCloudMeta.filter(m => m.id !== id);
@@ -8468,18 +8314,29 @@
             return out;
         }
 
+        // Signed in, with the profile loaded, or with the session kept on this phone while the server hasn't
+        // confirmed it yet (auth-ui __hgOfflineSession: offline, or the server isn't answering): changes are
+        // sent, or queued until it has (the queue only sends them for the same user and organisation).
+        function hgSignedIn() { return !!(window.HG_PROFILE || window.__hgOfflineSession); }
+        // 'table:id' of records whose change hasn't reached the server yet: a pull keeps those local
+        // copies (the server's would be older), and doesn't bring back what was deleted here.
+        function hgPendingKeys() { try { return (window.HG_DB && window.HG_DB._pendingKeys) ? window.HG_DB._pendingKeys() : new Set(); } catch (_) { return new Set(); } }
         function hgIncidentToRow(e) { return hgStampOrg({ id: e.id, payload: e, updated_at: new Date().toISOString() }); }   // user defaults server-side; org stamped (see hgRowOrg)
         function hgIncidentsPush(e) {
-            try { if (window.HG_PROFILE && window.HG_DB && window.HG_DB.incidents && e && e.id) window.HG_DB.incidents.upsert(hgIncidentToRow(e)).catch(() => {}); } catch (_) {}
+            try { if (hgSignedIn() && window.HG_DB && window.HG_DB.incidents && e && e.id) window.HG_DB.incidents.upsert(hgIncidentToRow(e)).catch(() => {}); } catch (_) {}
         }
         async function hgIncidentsPull() {
             if (!window.HG_PROFILE || !window.HG_SUPA) return;
+            const pending = hgPendingKeys();                                                        // before the read too: a change sent meanwhile may land after the server answered
             const rows = await hgFetchAllRows('incidents');
             if (!rows) return;                                                                      // abort on a masked/partial fetch — never wipe local on a bad read
+            hgPendingKeys().forEach(k => pending.add(k));
             const byId = {}, deleted = {};
-            rows.forEach(r => { const e = r && r.payload; if (!e || !e.id) return; if (r.deleted_at) deleted[e.id] = true; else byId[e.id] = e; });
+            rows.forEach(r => { const e = r && r.payload; if (!e || !e.id) return; if (r.deleted_at) deleted[e.id] = true; else if (!pending.has('incidents:' + e.id)) byId[e.id] = e; });
             LS.get('hadron_incident', []).forEach(e => {
-                if (!e || !e.id || deleted[e.id] || byId[e.id]) return;                             // tombstoned -> drop + never resurrect; already on server -> keep server copy
+                if (!e || !e.id || deleted[e.id]) return;                                           // tombstoned -> drop + never resurrect
+                if (pending.has('incidents:' + e.id)) { byId[e.id] = e; return; }                   // changed here, change still on its way up -> keep it
+                if (byId[e.id]) return;                                                             // already on server -> keep server copy
                 byId[e.id] = e; hgIncidentsPush(e);                                                 // genuinely local-only -> migrate up
             });
             LS.set('hadron_incident', Object.values(byId).sort((a, b) => String(b.savedAt || '').localeCompare(String(a.savedAt || ''))));
@@ -8509,11 +8366,11 @@
         function hgSiteIsOwner() { const r = (window.HG_PROFILE && window.HG_PROFILE.role) || document.body.dataset.role || ''; return r === 'admin' || r === 'customer_admin'; }
         function hgSiteToRow(s) { return hgStampOrg({ id: s.id, name: (s.name || 'Site'), payload: s, updated_at: new Date().toISOString() }); }
         function hgSitesPush(s) {
-            try { if (hgSiteIsOwner() && window.HG_PROFILE && window.HG_DB && window.HG_DB.sites && s && s.id) window.HG_DB.sites.upsert(hgSiteToRow(s)).catch(() => {}); } catch (_) {}
+            try { if (hgSiteIsOwner() && hgSignedIn() && window.HG_DB && window.HG_DB.sites && s && s.id) window.HG_DB.sites.upsert(hgSiteToRow(s)).catch(() => {}); } catch (_) {}
         }
         function hgSitesDelete(rec) {
             try {
-                if (hgSiteIsOwner() && window.HG_PROFILE && window.HG_DB && window.HG_DB.sites && rec && rec.id) {
+                if (hgSiteIsOwner() && hgSignedIn() && window.HG_DB && window.HG_DB.sites && rec && rec.id) {
                     const row = hgSiteToRow(rec); row.deleted_at = new Date().toISOString();       // SOFT delete: leave a tombstone (propagates + can't be resurrected)
                     window.HG_DB.sites.upsert(row).catch(() => {});
                 }
@@ -8521,12 +8378,16 @@
         }
         async function hgSitesPull() {
             if (!window.HG_PROFILE || !window.HG_SUPA) return;
+            const pending = hgPendingKeys();                                                        // before the read too: a change sent meanwhile may land after the server answered
             const rows = await hgFetchAllRows('sites');
             if (!rows) return;                                                                      // abort on a masked/partial fetch — never wipe local on a bad read
+            hgPendingKeys().forEach(k => pending.add(k));
             const byId = {}, deleted = {};
-            rows.forEach(r => { const s = r && r.payload; if (!s || !s.id) return; if (r.deleted_at) deleted[s.id] = true; else byId[s.id] = s; });
+            rows.forEach(r => { const s = r && r.payload; if (!s || !s.id) return; if (r.deleted_at) deleted[s.id] = true; else if (!pending.has('sites:' + s.id)) byId[s.id] = s; });
             LS.get('hadron_sites', []).forEach(s => {
-                if (!s || !s.id || deleted[s.id] || byId[s.id]) return;                             // tombstoned -> drop + never resurrect; already on server -> keep server copy
+                if (!s || !s.id || deleted[s.id]) return;                                           // tombstoned -> drop + never resurrect
+                if (pending.has('sites:' + s.id)) { byId[s.id] = s; return; }                       // changed here, change still on its way up -> keep it
+                if (byId[s.id]) return;                                                             // already on server -> keep server copy
                 byId[s.id] = s; hgSitesPush(s);                                                     // genuinely local-only -> migrate up (owner-gated inside)
             });
             LS.set('hadron_sites', Object.values(byId));
