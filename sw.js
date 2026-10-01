@@ -12,33 +12,33 @@
  * Bump CACHE_VERSION whenever you ship a change so phones pick it up on next launch.
  */
 
-const CACHE_VERSION = 'hadron-v146';
+const CACHE_VERSION = 'hadron-v147';
 const APP_SHELL = [
   './',
   './index.html',
-  './i18n.js',
-  './lims.js',
-  './qr.js',
-  './qr-app.js',
-  './pool.js',
-  './coolingtower.js',
-  './boiler.js',
-  './softener.js',
-  './academy.js',
-  './academy-content.js',
-  './supabase-client.js',
-  './hg-ui.js',
-  './auth-ui.js',
-  './push.js',
-  './lims-sync.js',
-  './portal.js',
-  './team.js',
-  './searchable-select.js',
-  './trends.js',
-  './emoji.js',
-  './hadron-icons.js',
-  './customize.js',
-  './data-manager.js',
+  './i18n.js?v=147',
+  './lims.js?v=147',
+  './qr.js?v=147',
+  './qr-app.js?v=147',
+  './pool.js?v=147',
+  './coolingtower.js?v=147',
+  './boiler.js?v=147',
+  './softener.js?v=147',
+  './academy.js?v=147',
+  './academy-content.js?v=147',
+  './supabase-client.js?v=147',
+  './hg-ui.js?v=147',
+  './auth-ui.js?v=147',
+  './push.js?v=147',
+  './lims-sync.js?v=147',
+  './portal.js?v=147',
+  './team.js?v=147',
+  './searchable-select.js?v=147',
+  './trends.js?v=147',
+  './emoji.js?v=147',
+  './hadron-icons.js?v=147',
+  './customize.js?v=147',
+  './data-manager.js?v=147',
   './jar-test.html',
   './Hadron_Logo.png',
   './Hadron_Logo_dark.png',
@@ -52,6 +52,9 @@ const APP_SHELL = [
   './icons/favicon-16.png'
 ];
 
+// A page load that takes longer than this opens the app from the cache instead (see fetch below).
+const NAV_TIMEOUT_MS = 4000;
+
 // Optional enhancement libs — precached BEST-EFFORT (allSettled), separate from the
 // atomic APP_SHELL, so a single missing/failed one can never fail the whole app-shell
 // install. Each of these has a CDN fallback at runtime, so a miss only costs offline use.
@@ -62,13 +65,25 @@ const OPTIONAL_CACHE = [
 // cache: 'reload' bypasses the browser's HTTP cache (GitHub Pages serves max-age=600), so a new
 // version can't precache a stale copy of a file fetched in the last ten minutes.
 const fresh = (u) => new Request(u, { cache: 'reload' });
+// The precached page IS the offline copy, so it must be THIS version's page: a CDN edge still serving
+// the previous page, or a deploy landing mid-install, would leave a page asking for ?v= scripts this
+// cache doesn't have (dead offline). Then the install is refused and its cache removed; the current
+// version keeps working and the next launch tries again.
+const VERSION_TAG = '.js?v=' + CACHE_VERSION.replace('hadron-v', '') + '"';
+const pageIsThisVersion = (cache, u) =>
+  cache.match(u).then((r) => r.text()).then((t) => {
+    if (!t.includes(VERSION_TAG)) throw new Error('precached ' + u + ' is not ' + CACHE_VERSION);
+  });
 self.addEventListener('install', (event) => {
   event.waitUntil(
-    caches.open(CACHE_VERSION).then((cache) =>
-      cache.addAll(APP_SHELL.map(fresh)).then(() =>
-        Promise.allSettled(OPTIONAL_CACHE.map((u) => cache.add(fresh(u))))
-      )
-    )
+    // Only a cache THIS install created is removed on failure: if a same-version worker is being
+    // re-installed (sw.js changed without a version bump), its cache is the live offline copy.
+    caches.has(CACHE_VERSION).then((existed) => caches.open(CACHE_VERSION).then((cache) =>
+      cache.addAll(APP_SHELL.map(fresh))
+        .then(() => Promise.all(['./', './index.html'].map((u) => pageIsThisVersion(cache, u))))
+        .catch((e) => (existed ? Promise.resolve() : caches.delete(CACHE_VERSION)).then(() => { throw e; }))
+        .then(() => Promise.allSettled(OPTIONAL_CACHE.map((u) => cache.add(fresh(u)))))
+    ))
   );
   self.skipWaiting();
 });
@@ -94,23 +109,38 @@ self.addEventListener('fetch', (event) => {
   // Never intercept cross-origin requests (Supabase, Chatbase, analytics, etc.)
   if (url.origin !== self.location.origin) return;
 
-  // Navigations: network-first, fall back to cached index.html so the app launches offline
+  // Navigations: network-first so a new version shows up straight away. A navigation response is
+  // NEVER cached: the offline copy is the page precached with THIS version's scripts. (A newer
+  // version's page cached here would ask for ?v= scripts this version doesn't have, and the app
+  // would be dead offline until the next connection.) Also:
+  //  - on a barely-working connection the app opens from the cache after NAV_TIMEOUT_MS;
+  //  - offline, on a server error, or on a 404 for the app itself (mid-deploy) the cached page is
+  //    used; an embedded page such as jar-test.html?embed=1 finds its own precached copy;
+  //  - only the app's own URL falls back to the app (another page, e.g. privacy.html, never does).
   if (req.mode === 'navigate') {
-    event.respondWith(
-      fetch(req)
-        .then((res) => {
-          const copy = res.clone();
-          caches.open(CACHE_VERSION).then((cache) => cache.put(req, copy));
-          return res;
-        })
-        .catch(() => caches.match('./index.html'))
-    );
+    const scope = new URL(self.registration.scope).pathname;
+    const isApp = url.pathname === scope || url.pathname === scope + 'index.html';
+    const fromCache = () => caches.match(req, { ignoreSearch: true })
+      .then((r) => r || (isApp ? caches.match('./index.html') : undefined))
+      .catch(() => undefined);
+    event.respondWith(new Promise((resolve) => {
+      let done = false, timer = 0;
+      const finish = (r) => { if (!done && r) { done = true; clearTimeout(timer); resolve(r); } };
+      fetch(req).then(
+        (res) => ((res.status >= 500 || (isApp && res.status === 404)) ? fromCache().then((c) => finish(c || res)) : finish(res)),
+        () => fromCache().then((c) => finish(c || Response.error()))
+      );
+      timer = setTimeout(() => { fromCache().then(finish); }, NAV_TIMEOUT_MS);   // nothing cached: keep waiting
+    }));
     return;
   }
 
   // Static assets: cache-first with background refresh
   event.respondWith(
     caches.match(req).then((cached) => {
+      // A versioned file (name.js?v=NN) never changes: serve the cached copy as it is. The server
+      // ignores ?v, so refreshing it could store the NEXT version's code under this version's URL.
+      if (cached && url.searchParams.has('v')) return cached;
       const network = fetch(req)
         .then((res) => {
           if (res && res.status === 200 && res.type === 'basic') {

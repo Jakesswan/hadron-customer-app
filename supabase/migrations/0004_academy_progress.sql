@@ -8,12 +8,18 @@
 --   Foundation for training records / certificates / the future paywall.
 --
 --   Payload shape: { courseId: { startedAt, completed:[moduleId], lastViewed, scores:{moduleId:pct} } }
+--
+--   APPLIED to prod (Customer App project flttrqcstzprtxcdvexx) on 2026-10-01 via the
+--   Supabase MCP (apply_migration "0004_academy_progress"), with Jaco's approval. It had
+--   never been applied before, so Academy progress had not been syncing until then.
+--   Verified: RLS on, select + own-row write policies, in supabase_realtime; a learner
+--   can write only their own record in their own organisation.
 -- ============================================================
 
 begin;
 
 create table if not exists public.academy_progress (
-  id              text primary key,                          -- = the learner's auth user id
+  id              text primary key,                          -- '<user_id>:<organisation_id>' since v147 (was the user id)
   organisation_id uuid not null references public.organisations (id) on delete cascade,
   user_id         uuid not null references auth.users (id)   on delete cascade,
   payload         jsonb not null,

@@ -312,7 +312,7 @@ create table if not exists public.lims_quotes (
 create index if not exists lims_quotes_org_idx on public.lims_quotes (organisation_id);
 
 create table if not exists public.academy_progress (
-  id              text primary key,                          -- = the learner's auth user id
+  id              text primary key,                          -- '<user_id>:<organisation_id>' (one record per learner per org; the app keys it so since v147)
   organisation_id uuid not null references public.organisations (id) on delete cascade,
   user_id         uuid not null references auth.users (id)   on delete cascade,
   payload         jsonb not null,

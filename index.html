@@ -44,56 +44,56 @@
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 
     <!-- Hadron Supabase bridge -->
-    <script src="supabase-client.js"></script>
+    <script src="supabase-client.js?v=147"></script>
 
     <!-- Shared UI primitives (in-app sheets) — loaded before auth-ui, which uses them -->
-    <script src="hg-ui.js" defer></script>
+    <script src="hg-ui.js?v=147" defer></script>
     <!-- Auth UI (login/signup gate, profile binding) -->
-    <script src="auth-ui.js" defer></script>
+    <script src="auth-ui.js?v=147" defer></script>
 
     <!-- Push notifications -->
-    <script src="push.js" defer></script>
+    <script src="push.js?v=147" defer></script>
 
     <!-- Translation bundle -->
-    <script src="i18n.js"></script>
+    <script src="i18n.js?v=147"></script>
 
     <!-- Hadron Tristroke icon system (matches the ERP) -->
-    <script src="hadron-icons.js" defer></script>
+    <script src="hadron-icons.js?v=147" defer></script>
 
     <!-- Cross-platform emoji rendering (Twemoji) -->
-    <script src="emoji.js" defer></script>
+    <script src="emoji.js?v=147" defer></script>
 
     <!-- Customizable home grid (drag-to-reorder) -->
-    <script src="customize.js" defer></script>
+    <script src="customize.js?v=147" defer></script>
 
     <!-- Data Manager (Excel import/export) -->
-    <script src="data-manager.js" defer></script>
+    <script src="data-manager.js?v=147" defer></script>
 
     <!-- QR encoder (MIT, Kazuhiko Arase) -->
-    <script src="qr.js"></script>
+    <script src="qr.js?v=147"></script>
 
     <!-- QR Builder app -->
-    <script src="qr-app.js" defer></script>
+    <script src="qr-app.js?v=147" defer></script>
 
     <!-- Pool Water module -->
-    <script src="pool.js" defer></script>
+    <script src="pool.js?v=147" defer></script>
     <!-- Cooling Tower field calculator -->
-    <script src="coolingtower.js" defer></script>
+    <script src="coolingtower.js?v=147" defer></script>
     <!-- Boiler / Steam field calculator -->
-    <script src="boiler.js" defer></script>
+    <script src="boiler.js?v=147" defer></script>
     <!-- Water softener sizing calculator -->
-    <script src="softener.js" defer></script>
-    <script src="academy-content.js" defer></script>
-    <script src="academy.js" defer></script>
+    <script src="softener.js?v=147" defer></script>
+    <script src="academy-content.js?v=147" defer></script>
+    <script src="academy.js?v=147" defer></script>
 
-    <script src="searchable-select.js" defer></script>
-    <script src="trends.js" defer></script>
+    <script src="searchable-select.js?v=147" defer></script>
+    <script src="trends.js?v=147" defer></script>
 
     <!-- LIMS module (loaded at end of body via defer) -->
-    <script src="lims.js" defer></script>
-    <script src="lims-sync.js" defer></script>
-    <script src="portal.js" defer></script>
-    <script src="team.js" defer></script>
+    <script src="lims.js?v=147" defer></script>
+    <script src="lims-sync.js?v=147" defer></script>
+    <script src="portal.js?v=147" defer></script>
+    <script src="team.js?v=147" defer></script>
 
     <!-- Default UI font: Gothic A1 (Google Fonts) -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -487,6 +487,43 @@
             touch-action: manipulation;
         }
         .hg-account-btn:focus-visible { outline: 3px solid currentColor; outline-offset: 2px; }
+
+        /* "A new version is ready" bar (shown when an update takes over an open app). Below sheets. */
+        .hg-update-bar {
+            position: fixed;
+            left: 50%;
+            bottom: calc(16px + env(safe-area-inset-bottom, 0px));
+            transform: translateX(-50%);
+            z-index: 9500;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            width: max-content;
+            max-width: calc(100vw - 32px);
+            box-sizing: border-box;
+            padding: 8px 8px 8px 16px;
+            border-radius: 14px;
+            background: var(--surface, #1A222F);
+            color: var(--text, #F1F5F9);
+            border: 1px solid var(--border, #2D3B4F);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.35);
+            font-size: 14px;
+            font-weight: 600;
+        }
+        .hg-update-bar span { flex: 1; min-width: 0; }
+        .hg-update-bar button {
+            min-height: 40px;
+            padding: 0 14px;
+            border-radius: 10px;
+            border: 0;
+            font: inherit;
+            font-weight: 800;
+            cursor: pointer;
+            touch-action: manipulation;
+        }
+        .hg-update-bar .hg-update-reload { background: var(--accent-ink, #1B77A0); color: var(--on-accent, #FFFFFF); }
+        .hg-update-bar .hg-update-later { background: transparent; color: var(--accent-ink, #1B77A0); }
+        .hg-update-bar button:focus-visible { outline: 3px solid var(--accent-ink, #1B77A0); outline-offset: 2px; }
 
         /* A field the user must fix (set aria-invalid="true" on it; cleared when they type). */
         .form-group input[aria-invalid="true"],
@@ -2763,7 +2800,7 @@
                 <div class="hg-section-title">About</div>
                 <div class="hg-kvgrid">
                     <div class="hg-kv"><div class="k">App</div><div class="v">Hadron Group</div></div>
-                    <div class="hg-kv"><div class="k">Version</div><div class="v">v146</div></div>
+                    <div class="hg-kv"><div class="k">Version</div><div class="v">v147</div></div>
                     <div class="hg-kv"><div class="k">Platform</div><div class="v">PWA</div></div>
                 </div>
             </div>
@@ -4852,11 +4889,49 @@
 
         // PWA service worker registration
         if ('serviceWorker' in navigator) {
+            // A new version installs in the background and takes over this open page. Offer a reload only
+            // when that version is NEWER than this page (the user picks the moment: nothing is lost
+            // mid-form). Usually the page is already new (pages load network-first) and nothing shows.
+            // The page's version is the ?v= on its scripts; the new worker's is its cache (hadron-vNN),
+            // which is complete before it takes over. Never on the very first install.
+            const hadController = !!navigator.serviceWorker.controller;
+            const hgPageVer = (function () {
+                const s = document.querySelector('script[src*=".js?v="]');
+                const m = s && /[?&]v=(\d+)/.exec(s.getAttribute('src'));
+                return m ? +m[1] : 0;
+            })();
+            // A newer version counts only once its cache is complete (it holds its page): an empty cache
+            // left by a failed install must not show the bar.
+            const hgNewerReady = function () {
+                return caches.keys().then(function (keys) {
+                    const newer = keys.filter(function (k) { const m = /^hadron-v(\d+)$/.exec(k); return m && +m[1] > hgPageVer; });
+                    return Promise.all(newer.map(function (k) { return caches.open(k).then(function (c) { return c.match('./index.html'); }); }));
+                }).then(function (hits) { return hits.some(Boolean); });
+            };
+            const hgCheckNewer = function () {
+                if (!hadController || !window.caches) return;
+                hgNewerReady().then(function (yes) { if (yes) hgShowUpdateBar(); }).catch(function () {});
+            };
+            navigator.serviceWorker.addEventListener('controllerchange', hgCheckNewer);
+            hgCheckNewer();   // the takeover can happen while this page is still loading, before this listener exists
             window.addEventListener('load', function () {
                 navigator.serviceWorker.register('sw.js').catch(function (err) {
                     console.warn('SW registration failed:', err);
                 });
             });
+        }
+        function hgShowUpdateBar() {
+            if (document.getElementById('hgUpdateBar')) return;
+            const bar = document.createElement('div');
+            bar.id = 'hgUpdateBar';
+            bar.className = 'hg-update-bar';
+            bar.setAttribute('role', 'status');
+            bar.innerHTML = '<span>A new version of the app is ready.</span>' +
+                '<button type="button" class="hg-update-reload">Reload</button>' +
+                '<button type="button" class="hg-update-later">Later</button>';
+            bar.querySelector('.hg-update-reload').addEventListener('click', function () { location.reload(); });
+            bar.querySelector('.hg-update-later').addEventListener('click', function () { bar.remove(); });
+            document.body.appendChild(bar);
         }
 
         // Optional: "Add to Home Screen" prompt handling for supported browsers

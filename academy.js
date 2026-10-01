@@ -15,6 +15,7 @@
     try { return JSON.parse(localStorage.getItem(PROGRESS_KEY) || '{}'); } catch (e) { return {}; }
   }
   function saveProgress(p) {
+    if (window.__hgTenantFrozen) return;   // signing out / switching user: this phone's data is being cleared
     try { localStorage.setItem(PROGRESS_KEY, JSON.stringify(p)); } catch (e) {}
     academySyncPush();   // mirror to the cloud (debounced; no-ops if not signed in)
   }
@@ -183,11 +184,15 @@
   window._academyCertHtml = academyCertHtml;
 
   /* ---------- Cloud sync (per-user training record) ----------
-     The progress blob (completed modules + quiz scores) syncs per user, scoped to
-     the org, into the academy_progress table. Pull-merge when the profile loads,
-     debounced push on every change. No-ops gracefully until the user is signed in
-     and migration 0004 has created the table. Mirrors lims-sync's lifecycle. */
-  const SYNC = { orgId: null, userId: null, pushTimer: null };
+     The progress blob (completed modules + quiz scores) syncs per user AND organisation
+     into the academy_progress table (one record per learner per org: id "<user>:<org>").
+     Pull-merge when the profile loads, debounced push on every change. Nothing is pushed
+     until a pull has SUCCEEDED for this user (pushes send the whole blob, so pushing a
+     phone's partial progress before seeing the cloud's would overwrite another device's
+     record); a failed pull is retried when the connection returns or before the next push.
+     No pushes while sign-out / a user switch is clearing the phone. */
+  const SYNC = { orgId: null, userId: null, pushTimer: null, pulled: false, pulling: false };
+  function syncId() { return SYNC.userId + ':' + SYNC.orgId; }
 
   function mergeProgress(localP, cloudP) {
     Object.keys(cloudP || {}).forEach(function (cid) {
@@ -207,21 +212,36 @@
   }
 
   function academySyncPull() {
-    if (!SYNC.userId || !window.HG_DB || !window.HG_DB.academy_progress) return;
-    window.HG_DB.academy_progress.get(SYNC.userId).then(function (row) {
-      if (row && row.payload) {
-        saveProgress(mergeProgress(loadProgress(), row.payload));          // merge cloud → local (and push the union back)
+    if (!SYNC.userId || !SYNC.orgId || !window.HG_SUPA || SYNC.pulling) return;
+    const id = syncId();
+    SYNC.pulling = true;
+    // A direct read: unlike HG_DB.get() (which answers null on a failed read too) it tells
+    // "no record yet" apart from "couldn't read".
+    window.HG_SUPA.from('academy_progress').select('payload').eq('id', id).maybeSingle().then(function (res) {
+      SYNC.pulling = false;
+      if (id !== syncId()) { academySyncPull(); return; }   // the user changed meanwhile: pull theirs instead
+      if (!res || res.error) return;                        // couldn't read: no pushes yet (retried later)
+      SYNC.pulled = true;
+      if (res.data && res.data.payload) {
+        saveProgress(mergeProgress(loadProgress(), res.data.payload));   // merge cloud → local (and push the union back)
         if (typeof window.academyRerender === 'function') window.academyRerender();
+      } else if (Object.keys(loadProgress()).length) {
+        academySyncPushNow();   // no record in the cloud yet: send this phone's progress up
       }
-    }).catch(function () {});   // table may not exist yet (pre-migration)
+    }, function () { SYNC.pulling = false; });
   }
 
   function academySyncPushNow() {
-    if (!SYNC.userId || !SYNC.orgId || !window.HG_DB || !window.HG_DB.academy_progress) return;
-    window.HG_DB.academy_progress.upsert({
-      id: SYNC.userId, organisation_id: SYNC.orgId, user_id: SYNC.userId,
+    if (window.__hgTenantFrozen) return;   // signing out: the phone's data is being cleared, never send that
+    if (!SYNC.userId || !SYNC.orgId || !window.HG_SUPA) return;
+    if (!SYNC.pulled) { academySyncPull(); return; }   // pull first; it pushes the merged result
+    // Straight to the cloud, not through the offline queue: a queued snapshot could replay later over
+    // another device's newer record. If it fails (offline…) the progress simply stays on the phone,
+    // and the next attempt pulls and merges first.
+    window.HG_SUPA.from('academy_progress').upsert({
+      id: syncId(), organisation_id: SYNC.orgId, user_id: SYNC.userId,
       payload: loadProgress(), updated_at: new Date().toISOString()
-    }).catch(function () {});
+    }).then(function (res) { if (res && res.error) SYNC.pulled = false; }, function () { SYNC.pulled = false; });
   }
   function academySyncPush() {
     if (SYNC.pushTimer) clearTimeout(SYNC.pushTimer);
@@ -231,6 +251,7 @@
   function academySyncActivate() {
     const prof = window.HG_PROFILE;
     if (!prof || !prof.organisation_id || !prof.id) return;
+    if (SYNC.userId !== prof.id || SYNC.orgId !== prof.organisation_id) SYNC.pulled = false;
     SYNC.orgId = prof.organisation_id;
     SYNC.userId = prof.id;
     academySyncPull();
@@ -238,8 +259,12 @@
   if (window.HG_PROFILE) academySyncActivate();
   document.addEventListener('hg:profile:loaded', academySyncActivate);
   document.addEventListener('hg:auth:changed', function (e) {
-    if (!e.detail || !e.detail.session) { SYNC.orgId = null; SYNC.userId = null; }   // signed out
+    if (!e.detail || !e.detail.session) {   // signed out
+      if (SYNC.pushTimer) { clearTimeout(SYNC.pushTimer); SYNC.pushTimer = null; }
+      SYNC.orgId = null; SYNC.userId = null; SYNC.pulled = false;
+    }
   });
+  window.addEventListener('online', function () { if (SYNC.userId && !SYNC.pulled) academySyncPull(); });
 
   /* ---------- Linked calc tools metadata ---------- */
   // Map app-window IDs to friendly labels so lessons can deep-link cleanly.

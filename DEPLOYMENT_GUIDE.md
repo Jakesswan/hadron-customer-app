@@ -141,7 +141,9 @@ To host at e.g. `app.hadrongrp.com`:
 
 ## Updating the PWA after changes
 
-The service worker caches the app shell, so users may need to relaunch the installed app twice to see updates. To force a faster update, bump `CACHE_VERSION` in `sw.js` (e.g. `'hadron-v2'`) whenever you ship a meaningful change.
+The service worker precaches the app shell for offline use. Every release must be bumped with `./bump-version.sh` (Git Bash on Windows). It updates, in lockstep: `CACHE_VERSION` in `sw.js`, the version in the About panel, and the `?v=NN` on every local `<script src="name.js?v=NN">` in `index.html` together with the matching `APP_SHELL` entries in `sw.js` (it refuses to run, changing nothing, if a script tag has no `APP_SHELL` entry). Never edit these by hand.
+
+Pages load network-first, so phones get the new version on the next launch. If a new version takes over an app that is already open and the page on screen is older, users see "A new version of the app is ready · Reload / Later".
 
 ---
 
