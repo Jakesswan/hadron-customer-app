@@ -317,7 +317,9 @@ create table if not exists public.academy_progress (
   user_id         uuid not null references auth.users (id)   on delete cascade,
   payload         jsonb not null,
   created_at      timestamptz default now(),
-  updated_at      timestamptz default now()
+  updated_at      timestamptz default now(),
+  -- 0017: the id IS "<user_id>:<organisation_id>" (with the write policy: only ever the learner's own record)
+  constraint academy_progress_id_is_user_org check (id = user_id::text || ':' || organisation_id::text)
 );
 create index if not exists academy_progress_org_idx  on public.academy_progress (organisation_id);
 create index if not exists academy_progress_user_idx on public.academy_progress (user_id);

@@ -56,6 +56,11 @@
     '.hg-sheet-check{display:flex;gap:12px;align-items:flex-start;padding:4px 0;cursor:pointer;font-size:15px;color:var(--text,#F1F5F9)}',
     '.hg-sheet-check input{width:22px;height:22px;flex:none;margin:1px 0 0;accent-color:var(--danger,#C0392B)}',
     '.hg-sheet-check small{display:block;color:var(--muted,#CBD5E1);font-size:14px}',
+    '.hg-sheet-field{display:grid;gap:6px;font-size:14px;font-weight:700;color:var(--text,#F1F5F9)}',
+    '.hg-sheet-field input{min-height:48px;box-sizing:border-box;width:100%;padding:0 14px;border-radius:12px;border:1px solid var(--border,#2D3B4F);background:var(--bg,#0F172A);color:var(--text,#F1F5F9);font:inherit;font-weight:500;font-size:16px}',
+    '.hg-sheet-field input:focus-visible{outline:3px solid var(--accent-ink,#1B77A0);outline-offset:1px}',
+    '.hg-sheet-field input[aria-invalid="true"]{border-color:var(--danger-ink,#C0392B)}',
+    '.hg-sheet-hint{margin:0;font-size:13px;color:var(--muted,#CBD5E1)}',
     '@keyframes hgSheetIn{from{transform:translateY(24px);opacity:0}to{transform:none;opacity:1}}',
     '@media (prefers-reduced-motion:reduce){.hg-sheet{animation:none}}'
   ].join('');

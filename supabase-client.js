@@ -290,6 +290,27 @@
         await client.auth.signOut();
       },
 
+      // Set a new password for the signed-in user (after a reset link, or from Profile).
+      async updatePassword(password) {
+        if (!client) throw new Error('Cloud not configured.');
+        const { error } = await client.auth.updateUser({ password });
+        if (error) throw error;
+      },
+
+      // The user's own name / phone (RLS profiles_self_update: own row; role and organisation can't change).
+      async updateMyProfile(fields) {
+        if (!client) throw new Error('Cloud not configured.');
+        const session = await this.getSession();
+        if (!session) throw new Error('You are signed out. Sign in and try again.');
+        const patch = {};
+        ['full_name', 'phone'].forEach((k) => { if (fields && k in fields) patch[k] = fields[k]; });
+        const { data, error } = await client.from('profiles').update(patch).eq('id', session.user.id)
+          .select('full_name, phone').maybeSingle();
+        if (error) throw error;
+        if (!data) throw new Error('Your profile could not be updated.');
+        return data;
+      },
+
       // Patch a single key into profiles.preferences (jsonb merge).
       async setPreference(key, value) {
         if (!client) return null;
@@ -310,7 +331,7 @@
 
       onChange(handler) {
         if (!client) return () => {};
-        const { data: { subscription } } = client.auth.onAuthStateChange((_evt, session) => handler(session));
+        const { data: { subscription } } = client.auth.onAuthStateChange((evt, session) => handler(session, evt));
         return () => subscription.unsubscribe();
       }
     };
@@ -403,8 +424,15 @@
 
     // Auto-flush queue when we come back online or sign in
     window.addEventListener('online', flushQueue);
-    HG_AUTH.onChange((session) => {
-      document.dispatchEvent(new CustomEvent('hg:auth:changed', { detail: { session } }));
+    HG_AUTH.onChange((session, event) => {
+      // Signed in through a password-reset link: auth-ui asks for a new password once the profile has
+      // loaded. Kept in sessionStorage, so it survives a start-up reload (e.g. a user switch).
+      if (event === 'PASSWORD_RECOVERY' && session && session.user) {
+        // Whose reset it is: only that user is asked (never the next person on this tab).
+        try { sessionStorage.setItem('hg-pw-recovery', session.user.id); } catch (_) {}
+        document.dispatchEvent(new CustomEvent('hg:auth:recovery'));
+      }
+      document.dispatchEvent(new CustomEvent('hg:auth:changed', { detail: { session, event } }));
       if (session) flushQueue();
     });
 

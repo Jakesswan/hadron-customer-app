@@ -119,6 +119,9 @@
   let lastError = '';
   let lastInfo  = '';
   let overlay   = null;
+  // An e-mail link that had expired or was already used (often opened first by a mail scanner):
+  // supabase-js leaves #error=…&error_code=… in the URL and signs nobody in. Shown once (boot).
+  let pendingLinkError = null;
 
   function setError(msg) { lastError = msg || ''; lastInfo = ''; render(); }
   function setInfo(msg)  { lastInfo  = msg || ''; lastError = ''; render(); }
@@ -182,8 +185,8 @@
         </button>
       ` : ''}
 
-      ${lastError ? `<div class="hg-auth-error">${lastError}</div>` : ''}
-      ${lastInfo  ? `<div class="hg-auth-info">${lastInfo}</div>`   : ''}
+      ${lastError ? `<div class="hg-auth-error">${escH(lastError)}</div>` : ''}
+      ${lastInfo  ? `<div class="hg-auth-info">${escH(lastInfo)}</div>`   : ''}
 
       <div class="hg-auth-switch">
         ${mode === 'signin' ? `
@@ -279,7 +282,12 @@
 
   // ── Public API ──────────────────────────────────────────
   window.HG_AUTH_UI = {
-    show()  { mode = 'signin'; clear(); render(); },
+    show()  {
+      if (overlay) return;   // already showing: keep what it says (e.g. the expired-link message)
+      mode = 'signin'; clear();
+      if (pendingLinkError) { lastError = pendingLinkError; pendingLinkError = null; }
+      render();
+    },
     hide()  { teardown(); },
     isOpen() { return !!overlay; }
   };
@@ -308,6 +316,8 @@
   // ── Boot logic ──────────────────────────────────────────
   function paintLocalProfile() {
     const set = (id, value) => { const el = document.getElementById(id); if (el) el.textContent = value; };
+    const selfService = document.getElementById('profileSelfService');   // account changes need the cloud
+    if (selfService) selfService.style.display = 'none';
     set('profileName', 'Local user');
     set('profileEmail', 'local@hadrongrp.com');
     set('profileCompany', 'Hadron Group (local mode)');
@@ -336,6 +346,12 @@
       console.info('[HG_AUTH_UI] Cloud not configured; running locally.');
       paintLocalProfile();
       return;
+    }
+
+    // An expired / already-used e-mail link: remember the message, take the error out of the URL.
+    if (/(^|[#&])error(_code|_description)?=/.test(location.hash || '')) {
+      pendingLinkError = 'That link has expired or was already used. Sign in, or use “Forgot password?” to get a new link.';
+      try { history.replaceState(history.state, '', location.pathname + location.search); } catch (_) {}
     }
 
     // Cloud configured — desktop is gated by Supabase session, not demo password.
@@ -420,6 +436,7 @@
     const emailEl = document.getElementById('profileEmail');
     if (emailEl) emailEl.textContent = profile.email;
     set('profileCompany', profile.organisations?.name || 'Unassigned');
+    set('profilePhone', profile.phone);
     set('profileRole',
       profile.role === 'admin' ? 'Hadron staff (admin)' :
       profile.role === 'customer_admin' ? 'Customer admin' :
@@ -461,9 +478,159 @@
     // User and organisation confirmed: send anything waiting in the write queue.
     try { if (window.HG_DB && window.HG_DB._flush) window.HG_DB._flush(); } catch (_) {}
 
-    // Team invite: if this user has a pending invite to another org, offer to join it.
-    try { maybeOfferInvite(); } catch (_) {}
+    // Signed in through a password-reset link: ask for the new password now; the team invite (if
+    // any) is offered after that sheet closes. One sheet at a time.
+    if (!maybeAskNewPassword()) { try { maybeOfferInvite(); } catch (_) {} }
+    // An expired / already-used e-mail link while signed in: say so once.
+    if (pendingLinkError) { const m = pendingLinkError; pendingLinkError = null; if (typeof window.showToast === 'function') window.showToast(m); }
   }
+
+  // ── Password reset link + own account details ───────────
+  // A reset e-mail link signs the user in (supabase-client records that user's id in sessionStorage);
+  // they still have to choose the new password, so ask once the profile is loaded. Pending = true
+  // (also while the sheet is already open), so nothing else opens on top of it.
+  function maybeAskNewPassword() {
+    let pending = null;
+    try { pending = sessionStorage.getItem('hg-pw-recovery'); } catch (_) {}
+    if (!pending || !window.hgSheet) return false;
+    const me = window.HG_PROFILE && window.HG_PROFILE.id;
+    if (!me || pending !== me) {   // someone else's (signed out since): never ask the next person
+      try { sessionStorage.removeItem('hg-pw-recovery'); } catch (_) {}
+      return false;
+    }
+    if (!window.__hgPwSheetOpen) openPasswordSheet(true);
+    return true;
+  }
+  document.addEventListener('hg:auth:recovery', function () { if (window.HG_PROFILE) maybeAskNewPassword(); });
+
+  // Account changes need the cloud (local-only mode or a missing SDK can't make them).
+  function cloudReady() { return !!(window.HG_AUTH && window.HG_AUTH.configured && typeof window.HG_AUTH.updatePassword === 'function'); }
+  function notAvailable() { if (typeof window.showToast === 'function') window.showToast('Account changes need a connection to the Hadron servers. Sign in first.'); }
+  // A server call that can't hang the sheet ("Saving…" can't be dismissed while busy).
+  function withLimit(p, ms) {
+    return Promise.race([p, new Promise(function (_, rej) { setTimeout(function () { rej({ code: 'timeout', message: 'timeout' }); }, ms || 20000); })]);
+  }
+  // Server / network errors in words a user can act on (other messages, e.g. a password-policy
+  // rule from the server, are already readable and pass through).
+  function accountErrorText(e, fallback) {
+    const m = String((e && (e.message || e.error_description)) || '');
+    const code = String((e && (e.code || e.name)) || '');
+    if (code === 'timeout') return 'That took too long. Check your connection and try again.';
+    if (/failed to fetch|load failed|networkerror|network request/i.test(m) || code === 'AuthRetryableFetchError') return 'Couldn’t reach the server. Check your connection and try again.';
+    if (/session missing|not signed in|signed out|jwt/i.test(m) || code === 'session_not_found') return 'You’re signed out. Sign in again, then try once more.';
+    if (/reauthenticat|current password|nonce/i.test(m) || code === 'reauthentication_needed') return 'For security, set your new password with “Forgot password?” on the sign-in screen. It e-mails you a link.';
+    if (/should be different|same password/i.test(m) || code === 'same_password') return 'That is your current password. Choose a different one.';
+    return m || fallback;
+  }
+
+  const PW_MIN = 6;   // Supabase Auth's minimum (the sign-up form uses the same)
+  function openPasswordSheet(recovery) {
+    if (!window.hgSheet) return;
+    if (!cloudReady()) { notAvailable(); return; }
+    window.__hgPwSheetOpen = true;
+    const p = window.HG_PROFILE || {};
+    const done = function () {
+      window.__hgPwSheetOpen = false;
+      try { sessionStorage.removeItem('hg-pw-recovery'); } catch (_) {}
+    };
+    async function save(c) {
+      const p1 = c.el.querySelector('#hgPw1'), p2 = c.el.querySelector('#hgPw2'), err = c.el.querySelector('#hgPwErr');   // (values are never logged or stored)
+      const say = function (msg, field) {
+        err.textContent = msg; err.hidden = !msg;
+        [p1, p2].forEach(function (f) { f.removeAttribute('aria-invalid'); });
+        if (field) { field.setAttribute('aria-invalid', 'true'); field.focus(); }
+      };
+      // The sign-in form trims the password, so a space at either end would make this password one
+      // that can never be typed in again.
+      if (p1.value !== p1.value.trim()) return say('Remove the space at the start or end of the password.', p1);
+      if (p1.value.length < PW_MIN) return say('Use at least ' + PW_MIN + ' characters.', p1);
+      if (p1.value !== p2.value) return say('The two passwords don’t match.', p2);
+      if (navigator.onLine === false) return say('You’re offline. Connect to the internet and try again.');
+      say('');
+      c.setBusy(true, 'Saving…');
+      try {
+        await withLimit(window.HG_AUTH.updatePassword(p1.value));
+      } catch (e) {
+        c.setBusy(false);
+        return say(accountErrorText(e, 'The password couldn’t be changed. Try again.'));
+      }
+      done();
+      c.close();
+      if (typeof window.showToast === 'function') window.showToast('Password changed');
+    }
+    const ctx = window.hgSheet.open({
+      title: recovery ? 'Choose a new password' : 'Change password',
+      body: (recovery ? '<p>You opened a password reset link' + (p.email ? ' for <b>' + escH(p.email) + '</b>' : '') + '. Choose your new password to finish.</p>' : '') +
+            '<label class="hg-sheet-field"><span>New password</span><input type="password" id="hgPw1" autocomplete="new-password" minlength="' + PW_MIN + '"></label>' +
+            '<label class="hg-sheet-field"><span>Repeat the new password</span><input type="password" id="hgPw2" autocomplete="new-password"></label>' +
+            '<div class="hg-sheet-note danger" id="hgPwErr" role="alert" hidden></div>',
+      actions: [{ label: 'Save password', kind: 'primary', keepOpen: true, onClick: save }, { label: recovery ? 'Later' : 'Cancel', kind: 'plain' }],
+      onClose: function () {
+        window.__hgPwSheetOpen = false;
+        if (recovery) { done(); setTimeout(function () { try { maybeOfferInvite(); } catch (_) {} }, 0); }
+      }
+    });
+    enterSubmits(ctx);
+    setTimeout(function () { const f = document.getElementById('hgPw1'); if (f) f.focus(); }, 60);
+  }
+  // Enter in a field of a form sheet presses its main button.
+  function enterSubmits(ctx) {
+    ctx.el.querySelectorAll('input').forEach(function (i) {
+      i.addEventListener('keydown', function (e) {
+        if (e.key !== 'Enter') return;
+        e.preventDefault();
+        const main = ctx.el.querySelector('.hg-sheet-actions button');
+        if (main && !main.disabled) main.click();
+      });
+    });
+  }
+  window.hgChangePassword = function () { openPasswordSheet(false); };
+
+  // Own name and phone (role, company and e-mail are managed by the organisation / Hadron).
+  window.hgEditProfile = function () {
+    if (!window.hgSheet) return;
+    if (!cloudReady()) { notAvailable(); return; }
+    const p = window.HG_PROFILE || {};
+    async function save(c) {
+      const nameEl = c.el.querySelector('#hgPfName'), phoneEl = c.el.querySelector('#hgPfPhone'), err = c.el.querySelector('#hgPfErr');
+      const say = function (msg, field) {
+        err.textContent = msg; err.hidden = !msg;
+        [nameEl, phoneEl].forEach(function (f) { f.removeAttribute('aria-invalid'); });
+        if (field) { field.setAttribute('aria-invalid', 'true'); field.focus(); }
+      };
+      const name = nameEl.value.trim().replace(/\s+/g, ' ');
+      const phone = phoneEl.value.trim();
+      if (!name) return say('Enter your name.', nameEl);
+      if (name.length > 120) return say('That name is too long (120 characters at most).', nameEl);
+      if (phone && !/^[0-9+()\-.\s]+$/.test(phone)) return say('Use digits, spaces and + ( ) - only.', phoneEl);
+      const digits = phone.replace(/\D/g, '').length;
+      if (phone && (digits < 6 || digits > 15)) return say('Enter the full number (6 to 15 digits).', phoneEl);
+      if (navigator.onLine === false) return say('You’re offline. Connect to the internet and try again.');
+      say('');
+      c.setBusy(true, 'Saving…');
+      let data;
+      try { data = await withLimit(window.HG_AUTH.updateMyProfile({ full_name: name, phone: phone || null })); }
+      catch (e) { c.setBusy(false); return say(accountErrorText(e, 'Your details couldn’t be saved. Try again.')); }
+      if (window.HG_PROFILE) { window.HG_PROFILE.full_name = data.full_name; window.HG_PROFILE.phone = data.phone; }
+      const set = function (id, v) { const el = document.getElementById(id); if (el) el.textContent = v || '—'; };
+      set('profileName', data.full_name || p.email);
+      set('profilePhone', data.phone);
+      set('userName', data.full_name || (p.email ? p.email.split('@')[0] : 'User'));
+      set('userAvatar', (data.full_name || p.email || 'U').trim().charAt(0).toUpperCase());
+      c.close();
+      if (typeof window.showToast === 'function') window.showToast('Your details are saved');
+    }
+    const ctx = window.hgSheet.open({
+      title: 'Your details',
+      body: '<label class="hg-sheet-field"><span>Name</span><input type="text" id="hgPfName" autocomplete="name" maxlength="120" value="' + escH(p.full_name || '') + '"></label>' +
+            '<label class="hg-sheet-field"><span>Phone</span><input type="tel" id="hgPfPhone" autocomplete="tel" maxlength="30" value="' + escH(p.phone || '') + '"></label>' +
+            '<p class="hg-sheet-hint">To change your e-mail address, company or role, ask your organisation’s admin or Hadron support.</p>' +
+            '<div class="hg-sheet-note danger" id="hgPfErr" role="alert" hidden></div>',
+      actions: [{ label: 'Save', kind: 'primary', keepOpen: true, onClick: save }, { label: 'Cancel', kind: 'plain' }]
+    });
+    enterSubmits(ctx);
+    setTimeout(function () { const f = document.getElementById('hgPfName'); if (f) f.focus(); }, 60);
+  };
 
   // The organisation the data on this phone belongs to is recorded in hg-last-org (stashes are
   // tagged with it too). If the same user now belongs to a different organisation (invite accepted
