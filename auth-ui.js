@@ -777,6 +777,8 @@
     const seen = new Set(first.map(idOf));
     return JSON.stringify(first.concat(second.filter(function (x) { const id = idOf(x); if (seen.has(id)) return false; seen.add(id); return true; })));
   }
+  // Returns how many keys it wrote (0 = the live store already had everything), or -1 if storage
+  // filled part-way (everything written is rolled back).
   function restoreTenantData(data) {
     const written = [];
     try {
@@ -791,10 +793,10 @@
         localStorage.setItem(k, val);
         written.push([k, cur]);
       });
-      return true;
+      return written.length;
     } catch (e) {
       written.forEach(function (w) { try { if (w[1] === null) localStorage.removeItem(w[0]); else localStorage.setItem(w[0], w[1]); } catch (_) {} });
-      return false;
+      return -1;
     }
   }
   function lastUid() { try { return localStorage.getItem('hg-last-uid'); } catch (_) { return null; } }
@@ -818,7 +820,10 @@
       if (prev === uid) {
         // Same user. If their data is set aside (a sign-out that didn't finish, so the markers were
         // never dropped), mark it for restore: the restore merges and never clobbers, so this is safe.
-        try { if (stashIndex()[uid] && !localStorage.getItem('hg-restore-pending')) localStorage.setItem('hg-restore-pending', uid); } catch (_) {}
+        // Not while a sign-out is running in another tab (it has set the data aside on purpose).
+        try {
+          if (stashIndex()[uid] && !localStorage.getItem('hg-restore-pending') && !(await signOutInProgress())) localStorage.setItem('hg-restore-pending', uid);
+        } catch (_) {}
         return false;
       }
       window.__hgTenantFrozen = true;            // late tenant writers (report autosave…) must not write now
@@ -852,6 +857,7 @@
       try { pending = localStorage.getItem('hg-restore-pending'); } catch (_) {}
       const uid = profile && profile.id;
       if (!pending || !uid || pending !== uid) return false;
+      if (await signOutInProgress()) return false;   // another tab is signing this user out right now
       const clearPending = function () { try { localStorage.removeItem('hg-restore-pending'); } catch (_) {} };
       let st;
       try { st = await stashGet(uid); } catch (_) { return false; }   // storage unavailable now: retry on a later load
@@ -871,7 +877,8 @@
       // A stash with no organisation recorded (signed out offline on the first launch of this
       // version) is restored into the current one: its queued rows carry their own organisation_id
       // where it was known, so the server rejects any that belong elsewhere.
-      if (!restoreTenantData(st.data)) {   // storage full: keep stash + marker, retried next load
+      const wrote = restoreTenantData(st.data);
+      if (wrote < 0) {   // storage full: keep stash + marker, retried next load
         if (!_restoreWarned) {
           _restoreWarned = true;
           setTimeout(function () {
@@ -885,8 +892,10 @@
       setRestoreDone(uid, st.savedAt);   // same task as the restore
       try { await stashDel(uid); } catch (_) {}
       clearPending();
-      try { location.reload(); } catch (_) {}
-      return true;
+      // Reload only if something was put back (modules read their data at start-up). Nothing new
+      // (already live) means no reload, so a stash that can't be deleted can never cause a loop.
+      if (wrote > 0) { try { location.reload(); } catch (_) {} return true; }
+      return false;
     })().finally(function () { _restoreRun = null; });
     return _restoreRun;
   }
@@ -908,36 +917,58 @@
         await Promise.race([window.HG_DB._flush(), new Promise(function (res) { setTimeout(res, wait); })]);
       }
     } catch (_) {}
-    // 2. Freeze: the queue stops sending/persisting, and late tenant writers (e.g. the report draft
-    //    autosave that fires on unload) must not write the departing user's data back.
-    window.__hgSuppressQueuePersist = true;
-    window.__hgTenantFrozen = true;
-    // 3. Keep this user's device data for them, unless they asked to remove it.
-    if (opts.removeData) {
-      if (uid) { try { await stashDel(uid); } catch (_) {} }
-    } else {
-      const data = collectTenantData();
-      let ok = false;
-      if (!Object.keys(data).length) ok = true;   // nothing to keep
-      else { try { ok = !!uid && await stashPut(uid, data, org); } catch (_) { ok = false; } }
-      if (!ok) {
-        window.__hgSuppressQueuePersist = false;
-        window.__hgTenantFrozen = false;
-        throw new Error('stash-failed');
+    // Steps 2–6 hold the sign-out lock, so another tab can't put this user's data back half-way
+    // through (between setting it aside and the session ending).
+    await withSignOutLock(async function () {
+      // 2. Freeze: the queue stops sending/persisting, and late tenant writers (e.g. the report draft
+      //    autosave that fires on unload) must not write the departing user's data back.
+      window.__hgSuppressQueuePersist = true;
+      window.__hgTenantFrozen = true;
+      // 3. Keep this user's device data for them, unless they asked to remove it.
+      if (opts.removeData) {
+        if (uid) { try { await stashDel(uid); } catch (_) {} }
+      } else {
+        const data = collectTenantData();
+        let ok = false;
+        if (!Object.keys(data).length) ok = true;   // nothing to keep
+        else { try { ok = !!uid && await stashPut(uid, data, org); } catch (_) { ok = false; } }
+        if (!ok) {
+          window.__hgSuppressQueuePersist = false;
+          window.__hgTenantFrozen = false;
+          throw new Error('stash-failed');
+        }
       }
-    }
-    // 4. Clear the live store (isolation).
-    try { await hgClearTenantData(); } catch (_) {}
-    // 5. End the session. Bounded: a hung request must not freeze the sheet, and supabase-js can
-    //    return early offline WITHOUT removing the stored session, so always remove it locally too.
-    try { await Promise.race([window.HG_AUTH.signOut(), new Promise(function (res) { setTimeout(res, 3000); })]); } catch (_) {}
-    try { Object.keys(localStorage).forEach(function (k) { if (k.indexOf('hg-auth-v1') === 0) localStorage.removeItem(k); }); } catch (_) {}
-    // 6. Only now drop the per-device markers: other tabs reload when hg-last-uid changes, and must
-    //    find the session already gone (else they'd boot as this user again and re-fill the phone).
-    //    If the app dies before this line, hgEnsureUser finds the user's stash and marks it for restore.
-    try { ['hg-last-uid', 'hg-last-org', 'hg-restore-pending'].forEach(function (k) { localStorage.removeItem(k); }); } catch (_) {}
+      // 4. Clear the live store (isolation).
+      try { await hgClearTenantData(); } catch (_) {}
+      // 5. End the session. Bounded: a hung request must not freeze the sheet, and supabase-js can
+      //    return early offline WITHOUT removing the stored session, so always remove it locally too.
+      try { await Promise.race([window.HG_AUTH.signOut(), new Promise(function (res) { setTimeout(res, 3000); })]); } catch (_) {}
+      try { Object.keys(localStorage).forEach(function (k) { if (k.indexOf('hg-auth-v1') === 0) localStorage.removeItem(k); }); } catch (_) {}
+      // 6. Only now drop the per-device markers: other tabs reload when hg-last-uid changes, and must
+      //    find the session already gone (else they'd boot as this user again and re-fill the phone).
+      //    If the app dies before this line, hgEnsureUser finds the user's stash and marks it for restore.
+      try { ['hg-last-uid', 'hg-last-org', 'hg-restore-pending'].forEach(function (k) { localStorage.removeItem(k); }); } catch (_) {}
+    });
     try { location.reload(); } catch (_) {}   // no tenant state left in memory
   };
+
+  // A sign-out in progress, in this tab or another one. Web Locks are released automatically if the
+  // tab dies; where they aren't available, a 15-second marker does the same job.
+  const SIGNOUT_LOCK = 'hg-signout', SIGNOUT_MARK = 'hg-signing-out';
+  function withSignOutLock(fn) {
+    if (navigator.locks && typeof navigator.locks.request === 'function') return navigator.locks.request(SIGNOUT_LOCK, fn);
+    try { localStorage.setItem(SIGNOUT_MARK, String(Date.now())); } catch (_) {}
+    return Promise.resolve().then(fn).finally(function () { try { localStorage.removeItem(SIGNOUT_MARK); } catch (_) {} });
+  }
+  async function signOutInProgress() {
+    try {
+      if (navigator.locks && typeof navigator.locks.query === 'function') {
+        const s = await navigator.locks.query();
+        return (s.held || []).some(function (l) { return l.name === SIGNOUT_LOCK; });
+      }
+    } catch (_) {}
+    try { const t = +localStorage.getItem(SIGNOUT_MARK) || 0; return t > 0 && Date.now() - t < 15000; } catch (_) { return false; }
+  }
 
   // ── Account menu + sign-out confirmation (in-app sheets, not browser pop-ups) ──
   function escH(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }

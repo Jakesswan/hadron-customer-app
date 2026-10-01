@@ -19,6 +19,7 @@
  *
  *   window.hgSheet.closeTop() → 'closed' | 'blocked' | false
  *     Closes the newest open sheet (for the Back button). 'blocked' = it is busy or not dismissible.
+ *   Opening / closing a sheet dispatches 'hg:sheet' on document ({ open, count }).
  *
  * Sheets can stack; only the newest one handles keys. Accessibility: role="dialog" + aria-modal,
  * labelled by its title, focus moves in and is trapped while open, and returns to the opener on
@@ -103,6 +104,7 @@
         document.removeEventListener('keydown', onKey, true);
         const i = stack.indexOf(me); if (i >= 0) stack.splice(i, 1);
         root.remove();
+        announce(false);
         try { if (opener && typeof opener.focus === 'function' && document.contains(opener)) opener.focus(); } catch (_) {}
         try { if (typeof o.onClose === 'function') o.onClose(); } catch (_) {}
       },
@@ -178,7 +180,13 @@
     stack.push(me);
     document.body.appendChild(root);
     focusFirst();
+    announce(true);
     return ctx;
+  }
+
+  // Lets the app keep the Back button in step (index.html arms a history entry while one is open).
+  function announce(opened) {
+    try { document.dispatchEvent(new CustomEvent('hg:sheet', { detail: { open: opened, count: stack.length } })); } catch (_) {}
   }
 
   function closeTop() {

@@ -488,6 +488,14 @@
         }
         .hg-account-btn:focus-visible { outline: 3px solid currentColor; outline-offset: 2px; }
 
+        /* A field the user must fix (set aria-invalid="true" on it; cleared when they type). */
+        .form-group input[aria-invalid="true"],
+        .form-group textarea[aria-invalid="true"],
+        .form-group select[aria-invalid="true"] {
+            border-color: var(--danger-ink, #C0392B) !important;
+            box-shadow: 0 0 0 2px rgba(192, 57, 43, 0.25);
+        }
+
         .user-avatar {
             width: 32px;
             height: 32px;
@@ -2755,7 +2763,7 @@
                 <div class="hg-section-title">About</div>
                 <div class="hg-kvgrid">
                     <div class="hg-kv"><div class="k">App</div><div class="v">Hadron Group</div></div>
-                    <div class="hg-kv"><div class="k">Version</div><div class="v">v145</div></div>
+                    <div class="hg-kv"><div class="k">Version</div><div class="v">v146</div></div>
                     <div class="hg-kv"><div class="k">Platform</div><div class="v">PWA</div></div>
                 </div>
             </div>
@@ -3993,9 +4001,9 @@
                 <div class="form-group"><label>Severity</label>
                     <select id="inc_sev" class="settings-select"><option>Near-miss</option><option>First-aid</option><option>Medical</option><option>Lost-time</option><option>Environmental</option></select>
                 </div>
-                <div class="form-group"><label>Date / time</label><input type="datetime-local" id="inc_dt"></div>
+                <div class="form-group"><label for="inc_dt">Date / time</label><input type="datetime-local" id="inc_dt" oninput="this.dataset.auto=''" onchange="this.dataset.auto=''"></div>
                 <div class="form-group"><label>Site</label><input type="text" id="inc_site"></div>
-                <div class="form-group"><label>Description</label><textarea id="inc_desc" rows="4"></textarea></div>
+                <div class="form-group"><label for="inc_desc">What happened</label><textarea id="inc_desc" rows="4" required oninput="this.removeAttribute('aria-invalid')"></textarea></div>
                 <div class="form-group"><label>Photo</label><input type="file" id="inc_photo" accept="image/*" capture="environment" onchange="incPhoto(event)"></div>
                 <img id="inc_photo_preview" style="max-width:100%;margin-top:6px;display:none;">
                 <button class="calc-btn" onclick="saveIncident()">🚨 Submit</button>
@@ -4231,12 +4239,127 @@
         // Window management
         const openWindows = new Set();
 
+        // ── Back button (Android, browser): close what's open instead of leaving the app ──
+        // While anything is open (a window, an in-app sheet, a full-screen layer such as the add-site
+        // form, the site QR scanner, the test picker or the photo crop screen) ONE extra history entry
+        // is kept ("armed"). Back pops it and closes the TOPMOST layer, in stacking order: crop screen,
+        // test picker, scanner, sheets (a busy one stays), add-site form, then the top window the same
+        // way as its own ← (LIMS, Academy and Dosage step back inside first). The entry is put back while
+        // anything is still open. When the last layer closes some other way the entry is removed again:
+        // deferred, so a sheet that opens the next sheet keeps it, and only ever our own entries, so Back
+        // on the home screen leaves the app in one press. A followed #route link (portal, notification)
+        // is navigation, not Back. Decisions use the app's state, not event.state.
+        let hgBackArmed = false, hgBackSkip = 0, hgDisarmTimer = 0;
+        function hgSheetsOpen() { return (window.hgSheet && typeof window.hgSheet.count === 'function') ? window.hgSheet.count() : 0; }
+        function hgShown(id) { const el = document.getElementById(id); return !!(el && el.style.display && el.style.display !== 'none'); }
+        // Full-screen layers ABOVE sheets (z 12500 / 12000 / 9999), topmost first.
+        function hgOverlayOpen() {
+            if (hgShown('sr_crop_overlay')) return 'crop';
+            if (hgShown('sr_test_picker')) return 'picker';
+            if (hgShown('sr_qr_modal')) return 'scan';
+            return null;
+        }
+        function hgFormOpen() { return !!document.getElementById('hgModalOverlay'); }   // add-site / add-assets form (z 9100, below sheets)
+        function hgAnythingOpen() { return openWindows.size > 0 || hgSheetsOpen() > 0 || !!hgOverlayOpen() || hgFormOpen(); }
+        // A #route the app opens: following one is navigation, not Back. Anything else in the hash (e.g.
+        // an expired e-mail link's #error=…, which supabase-js leaves in place) is not.
+        // Keep in step with handleHash in qr-app.js.
+        function hgIsRouteHash(h) { return /^#(lims\/[^/]+\/[^/]|qr(\/|$)|asset\/[^/]+\/[^/])/.test(h || ''); }
+        // The app was opened by a #route link (a notification, a QR sticker): take the route out of this
+        // first entry's URL NOW, before anything opens and adds an entry (which would copy the URL with
+        // the route), and let qr-app.js open it from sessionStorage, which also survives the start-up
+        // reloads of a user switch or restore.
+        if (hgIsRouteHash(location.hash)) {
+            try { sessionStorage.setItem('hg-launch-route', location.hash); history.replaceState(history.state, '', location.pathname + location.search); } catch (_) {}
+        }
+        // First launch after an update can still run the previous qr-app.js from the offline cache (it
+        // reads the route from the URL and has no hgOpenRoute): hand the route back to it that way. Only
+        // after load (every deferred script has run, and a hash change now ADDS an entry instead of
+        // replacing the first one), and on every load (a route stored before a start-up reload).
+        window.addEventListener('load', function () {
+            setTimeout(function () {
+                try {
+                    const r = sessionStorage.getItem('hg-launch-route');
+                    if (r && typeof window.hgOpenRoute !== 'function') { sessionStorage.removeItem('hg-launch-route'); location.hash = r; }
+                } catch (_) {}
+            }, 1000);
+        });
+        function hgArmBack() {
+            if (hgDisarmTimer) { clearTimeout(hgDisarmTimer); hgDisarmTimer = 0; }
+            if (hgBackArmed) return;
+            try { history.pushState({ hgBack: 1 }, ''); hgBackArmed = true; } catch (_) {}
+        }
+        function hgStepOffOurEntry() {
+            const s = history.state;
+            if (!(s && s.hgBack) || s.hgBase) return;   // never step out of the app, nor off its first entry
+            hgBackSkip++; try { history.back(); } catch (_) { hgBackSkip--; }
+        }
+        function hgDisarmBack() {
+            if (!hgBackArmed || hgDisarmTimer || hgAnythingOpen()) return;
+            hgDisarmTimer = setTimeout(function () {
+                hgDisarmTimer = 0;
+                if (!hgBackArmed || hgAnythingOpen()) return;
+                hgBackArmed = false;
+                hgStepOffOurEntry();
+            }, 80);
+        }
+        function hgTopWindow() {
+            let top = null, z = -Infinity;
+            openWindows.forEach(n => { const el = document.getElementById('window-' + n); const zi = el ? (+el.style.zIndex || 0) : 0; if (zi >= z) { z = zi; top = n; } });
+            return top;
+        }
+        function hgCloseNewest() {   // the topmost layer, in stacking order
+            const ov = hgOverlayOpen();
+            if (ov === 'crop') { srCropCancel(); return; }
+            if (ov === 'picker') { srCloseTestPicker(); return; }
+            if (ov === 'scan') { srCloseSiteScan(); return; }
+            if (hgSheetsOpen()) { window.hgSheet.closeTop(); return; }   // 'blocked' while busy: it stays open
+            if (hgFormOpen()) { hgModalClose(); return; }
+            const top = hgTopWindow(); if (!top) return;
+            const back = document.querySelector('#window-' + top + ' .window-header .back-button');
+            if (back) back.click(); else closeWindow(top);
+        }
+        window.addEventListener('popstate', function () {
+            const onOurEntry = !!(history.state && history.state.hgBack);
+            if (hgBackSkip > 0) {                           // our own history.back()
+                hgBackSkip--;
+                if (hgAnythingOpen()) {
+                    // Something opened while that step back was in flight (its new entry was dropped):
+                    // make sure an entry of ours is on top again.
+                    if (onOurEntry) hgBackArmed = true; else { hgBackArmed = false; hgArmBack(); }
+                } else if (!hgBackArmed && onOurEntry) {
+                    hgStepOffOurEntry();                    // landed on another entry of ours: step off it too
+                }
+                return;
+            }
+            if (hgIsRouteHash(location.hash)) {             // a #route link was followed: navigation, not Back
+                // The link's new entry stands in for ours, so leaving its window later steps off it too
+                // (never the app's first entry: it keeps hgBase).
+                try { history.replaceState(Object.assign({}, history.state || {}, { hgBack: 1 }), ''); } catch (_) {}
+                return;
+            }
+            if (hgDisarmTimer) { clearTimeout(hgDisarmTimer); hgDisarmTimer = 0; }
+            hgBackArmed = false;                            // Back used up the entry
+            hgCloseNewest();
+            if (hgAnythingOpen()) hgArmBack();
+            else hgStepOffOurEntry();                       // landed on an older entry of ours: step off it too
+        });
+        document.addEventListener('hg:sheet', function (e) {
+            if (e.detail && e.detail.open) hgArmBack(); else hgDisarmBack();
+        });
+        // Reloaded while something was open: the current entry is left over from before. Treat it as
+        // ours, so it is removed (or simply reused if a window opens straight away). Otherwise this is the
+        // app's first entry: mark it, so nothing ever steps back off it.
+        if (history.state && history.state.hgBack) { hgBackArmed = true; hgDisarmBack(); }
+        else { try { history.replaceState(Object.assign({}, history.state || {}, { hgBase: 1 }), ''); } catch (_) {} }
+
         function openWindow(appName) {
             const window = document.getElementById(`window-${appName}`);
             window.classList.add('active');
             openWindows.add(appName);
             updateTaskbar();
             bringToFront(window);
+            hgArmBack();
             if (appName === 'history') renderHistoryList();
             if (appName === 'jartest-dss') {
                 const fr = document.getElementById('jartestFrame');
@@ -4252,7 +4375,7 @@
             if (appName === 'schedule') renderPMs();
             if (appName === 'msds') renderSDS();
             if (appName === 'loto') renderLOTO();
-            if (appName === 'incident') renderIncidents();
+            if (appName === 'incident') { incPrefillTime(); renderIncidents(); }
             if (appName === 'catalogue') renderCatalogue();
             if (appName === 'jobs') { renderJobs(); renderTimers(); tickActiveTimer(); }
             if (appName === 'trends') { if (window.hgTrendsOpen) window.hgTrendsOpen(); }
@@ -4273,6 +4396,7 @@
             window.classList.remove('active');
             openWindows.delete(appName);
             updateTaskbar();
+            hgDisarmBack();   // last thing on screen closed with ←: drop the Back entry again
         }
 
         function closeAllWindows() {
@@ -6687,8 +6811,8 @@
         }
 
         // ── Picker modal ──
-        function srOpenTestPicker(pid) { sr_activePoint = pid || (sr_points[0] && sr_points[0].id) || null; document.getElementById('sr_test_picker').style.display = 'block'; document.getElementById('sr_test_search').value = ''; srRenderPickerList(); setTimeout(() => { const s = document.getElementById('sr_test_search'); if (s) s.focus(); }, 60); }
-        function srCloseTestPicker() { document.getElementById('sr_test_picker').style.display = 'none'; }
+        function srOpenTestPicker(pid) { sr_activePoint = pid || (sr_points[0] && sr_points[0].id) || null; document.getElementById('sr_test_picker').style.display = 'block'; hgArmBack(); document.getElementById('sr_test_search').value = ''; srRenderPickerList(); setTimeout(() => { const s = document.getElementById('sr_test_search'); if (s) s.focus(); }, 60); }
+        function srCloseTestPicker() { document.getElementById('sr_test_picker').style.display = 'none'; hgDisarmBack(); }
         function srRenderPickerList() {
             const q = (document.getElementById('sr_test_search').value || '').toLowerCase().trim();
             const _ap = sr_points.find(x => x.id === sr_activePoint);
@@ -6749,6 +6873,7 @@
         }
         function srShowCrop(dataUrl) {
             const ov = document.getElementById('sr_crop_overlay'); ov.style.display = 'flex';
+            hgArmBack();   // Back cancels the crop first (see the Back button guard)
             const img = new Image();
             img.onload = () => {
                 sr_cropImg = img;
@@ -6788,7 +6913,7 @@
                 document.addEventListener('mouseup', () => { sr_cropDrag = null; });
                 document.addEventListener('touchend', () => { sr_cropDrag = null; }); }
         }
-        function srCropCancel() { document.getElementById('sr_crop_overlay').style.display = 'none'; sr_cropImg = null; sr_cropDrag = null; }
+        function srCropCancel() { document.getElementById('sr_crop_overlay').style.display = 'none'; sr_cropImg = null; sr_cropDrag = null; hgDisarmBack(); }
         function srCropRetake() { const id = sr_ocrTarget; srCropCancel(); srOcrPhoto(id); }
         // Grayscale + Otsu auto-threshold + auto-invert (digits dark on white).
         function srOtsu(canvas) {
@@ -7491,11 +7616,12 @@
             ov.innerHTML = html;
             ov.addEventListener('click', (e) => { if (e.target === ov) hgModalClose(); });
             document.body.appendChild(ov);
+            hgArmBack();   // Back closes this form first (see the Back button guard)
             return ov;
         }
         function hgModalClose() {
             const ov = document.getElementById('hgModalOverlay');
-            if (ov) ov.remove();
+            if (ov) { ov.remove(); hgDisarmBack(); }
         }
         // Single asset row block — used inside both the new-site modal and the
         // add-assets-to-existing-site modal.
@@ -7978,6 +8104,7 @@
             const modal = document.getElementById('sr_qr_modal'); if (!modal) return;
             srClosing = false;
             modal.style.display = 'flex';
+            hgArmBack();   // Back closes the scanner first (see the Back button guard)
             const status = document.getElementById('sr_qr_status'); if (status) status.textContent = 'Starting camera…';
             ensureQrLib(() => {
                 try {
@@ -7997,7 +8124,7 @@
         function srCloseSiteScan() {
             srClosing = true;
             const modal = document.getElementById('sr_qr_modal');
-            const done = () => { if (modal) modal.style.display = 'none'; };
+            const done = () => { if (modal) modal.style.display = 'none'; hgDisarmBack(); };
             if (srQrScanner) {
                 const sc = srQrScanner; srQrScanner = null;
                 // html5-qrcode 2.3.8 stop() THROWS SYNCHRONOUSLY when not yet scanning (camera denied / mid-start) — wrap it so the modal always closes on the first tap.
@@ -8149,19 +8276,82 @@
             l.off = new Date().toISOString(); LS.set('hadron_loto', list); renderLOTO();
         }
 
-        let inc_photoData = null;
-        function incPhoto(ev) {
+        // A phone photo is several MB; stored as-is it fills the phone's storage after a few incidents
+        // and the save fails. Downscale it like service-report photos (1000 px JPEG). Each photo is a
+        // numbered job: a slow one that finishes after a newer photo, or after the form was saved and
+        // cleared, is dropped, so a photo can never land on the next incident.
+        let inc_photoData = null, inc_photoJob = 0, inc_photoPending = false;
+        // The incident being written keeps ONE id until it is saved, so a retry after a failed or slow
+        // attempt (e.g. the cloud-only path below) overwrites the same record instead of adding another.
+        let inc_pendingId = null, inc_cloudBusy = false;
+        async function incPhoto(ev) {
             const f = ev.target.files[0]; if (!f) return;
-            const r = new FileReader();
-            r.onload = e => { inc_photoData = e.target.result; const img = document.getElementById('inc_photo_preview'); img.src = e.target.result; img.style.display = 'block'; };
-            r.readAsDataURL(f);
+            const job = ++inc_photoJob;
+            inc_photoPending = true;
+            try {
+                const full = await new Promise(res => { const rd = new FileReader(); rd.onload = e => res(e.target.result); rd.onerror = () => res(null); rd.readAsDataURL(f); });
+                const small = full ? await srThumb(full, 1000, 0.7) : null;
+                if (job !== inc_photoJob) return;   // superseded
+                if (!small || small === full) {     // unreadable, or a format this browser can't decode (e.g. HEIC)
+                    ev.target.value = '';
+                    showToast('That photo can’t be used. Take a new photo, or choose a JPG or PNG.');
+                    return;
+                }
+                inc_photoData = small;
+                const img = document.getElementById('inc_photo_preview'); img.src = small; img.style.display = 'block';
+            } finally { if (job === inc_photoJob) inc_photoPending = false; }
         }
-        function saveIncident() {
-            const e = { id: uid(), sev: document.getElementById('inc_sev').value,
-                dt: document.getElementById('inc_dt').value, site: document.getElementById('inc_site').value,
-                desc: document.getElementById('inc_desc').value, photo: inc_photoData,
+        // A new incident starts at "now". The time follows the clock until the user sets it themselves.
+        function incPrefillTime() {
+            const el = document.getElementById('inc_dt'); if (!el) return;
+            if (el.value && el.dataset.auto !== '1') return;
+            const d = new Date(); d.setMinutes(d.getMinutes() - d.getTimezoneOffset());
+            el.value = d.toISOString().slice(0, 16);
+            el.dataset.auto = '1';
+        }
+        function incResetForm() {
+            inc_photoData = null; inc_photoJob++; inc_photoPending = false; inc_pendingId = null;
+            ['inc_dt', 'inc_site', 'inc_desc'].forEach(id => { const el = document.getElementById(id); if (el) el.value = ''; });
+            const file = document.getElementById('inc_photo'); if (file) file.value = '';
+            const img = document.getElementById('inc_photo_preview'); if (img) { img.removeAttribute('src'); img.style.display = 'none'; }
+            incPrefillTime();
+        }
+        async function saveIncident() {
+            if (inc_cloudBusy) { showToast('Still sending the incident to the cloud…'); return; }
+            if (inc_photoPending) { showToast('The photo is still loading. Try again in a moment.'); return; }
+            const descEl = document.getElementById('inc_desc');
+            const desc = descEl.value.trim();
+            if (!desc) { descEl.setAttribute('aria-invalid', 'true'); descEl.focus(); showToast('Describe what happened first'); return; }
+            descEl.removeAttribute('aria-invalid');
+            incPrefillTime();   // still on "now"? then use the time of saving
+            const e = { id: inc_pendingId || (inc_pendingId = uid()), sev: document.getElementById('inc_sev').value,
+                dt: document.getElementById('inc_dt').value, site: document.getElementById('inc_site').value.trim(),
+                desc: desc, photo: inc_photoData,
                 savedAt: new Date().toISOString() };
-            LS.push('hadron_incident', e); hgIncidentsPush(e); showToast('Incident logged'); renderIncidents();
+            const list = LS.get('hadron_incident', []); list.unshift(e);
+            if (LS.set('hadron_incident', list)) {
+                hgIncidentsPush(e); showToast('Incident logged'); incResetForm(); renderIncidents();
+                return;
+            }
+            if (window.__hgTenantFrozen) return;   // signing out / switching user: nothing is saved now
+            // The phone's storage is full. The incident is a shared record, so if we're online and signed
+            // in it can still go straight to the cloud; otherwise the form keeps everything.
+            if (navigator.onLine !== false && window.HG_PROFILE && window.HG_SUPA) {
+                inc_cloudBusy = true;
+                showToast('Phone storage is full. Sending the incident to the cloud…');
+                let sent = false;
+                try {
+                    const res = await Promise.race([
+                        window.HG_SUPA.from('incidents').upsert(hgIncidentToRow(e)),
+                        new Promise(r => setTimeout(() => r({ error: { message: 'timeout' } }), 10000))
+                    ]);
+                    sent = !(res && res.error);
+                } catch (_) {} finally { inc_cloudBusy = false; }
+                if (sent) { showToast('Incident sent to the cloud. It isn’t kept on this phone: storage is full.'); incResetForm(); return; }
+                showToast('Couldn’t send it either. Free some space on this phone, then submit again.');
+                return;
+            }
+            // Offline: LS.set has already said storage is full, and the form keeps what was typed.
         }
         function renderIncidents() {
             const list = LS.get('hadron_incident', []);

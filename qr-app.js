@@ -517,13 +517,23 @@
   };
 
   /* ---------- Deep-link handler ---------- */
-  function handleHash() {
-    const h = (window.location.hash || '').replace(/^#/, '');
+  // Clear the hash BEFORE opening anything: opening a window adds a Back-button history entry on
+  // top of this one, and a hash left here would re-open the window when Back returns to it. The
+  // entry's state is kept (it may be the Back-button entry itself).
+  function clearHash() { history.replaceState(history.state, '', window.location.pathname + window.location.search); }
+  // Open a route. Called by hashchange / on load (reads location.hash), or directly with a route
+  // string via window.hgOpenRoute('lims/sample/<id>'), which opens it without a hash navigation.
+  // The routes handled here must match hgIsRouteHash() in index.html (the Back button guard).
+  function safeDecode(s) { try { return decodeURIComponent(s); } catch (_) { return null; } }
+  function handleHash(route) {
+    const h = (typeof route === 'string' ? route : (window.location.hash || '')).replace(/^#/, '');
     if (!h) return;
     const parts = h.split('/');
     if (parts[0] === 'lims' && parts[1] && parts[2]) {
       const kind = parts[1]; // sample|instrument|inventory
-      const id   = decodeURIComponent(parts[2]);
+      const id   = safeDecode(parts[2]);
+      clearHash();
+      if (id === null) return;   // malformed link
       // Open LIMS, then navigate to the item
       if (typeof window.openWindow === 'function') window.openWindow('lims');
       // Wait a tick for LIMS to init, then go
@@ -532,15 +542,14 @@
         const view = kind === 'sample' ? 'sample' : (kind === 'instrument' ? 'instrument' : 'inventory');
         if (view === 'inventory') window.limsGo('inventory');
         else window.limsGo(view, { id });
-        // Clear the hash so it's not re-handled
-        history.replaceState(null, '', window.location.pathname + window.location.search);
       };
       setTimeout(go, 400);
     } else if (parts[0] === 'qr') {
+      clearHash();
       if (typeof window.openWindow === 'function') window.openWindow('qr');
       setTimeout(()=>window.qrOpen(), 200);
-      history.replaceState(null, '', window.location.pathname + window.location.search);
     } else if (parts[0] === 'asset' && parts[1] && parts[2]) {
+      clearHash();
       // #asset/site/<siteId>  or  #asset/equip/<siteId|equipId>
       if (typeof window.openWindow === 'function') {
         window.openWindow('assets');
@@ -549,7 +558,8 @@
       // Highlight the asset/site after sites window renders
       setTimeout(() => {
         if (typeof window.renderSites === 'function') window.renderSites();
-        const target = decodeURIComponent(parts[2]);
+        const target = safeDecode(parts[2]);
+        if (target === null) return;   // malformed link
         const flashId = parts[1] === 'equip' ? 'site-equip-' + target.replace('|','-') : 'site-' + target;
         const el = document.getElementById(flashId);
         if (el) {
@@ -559,14 +569,21 @@
           setTimeout(()=>{ el.style.boxShadow = 'none'; }, 1800);
         }
       }, 600);
-      history.replaceState(null, '', window.location.pathname + window.location.search);
     }
+  }
+  window.hgOpenRoute = handleHash;
+  // The route the app was opened with. index.html moves it out of the URL into sessionStorage at
+  // start-up (before any window adds a history entry); falls back to the URL if that didn't happen.
+  function openLaunchRoute() {
+    let r = null;
+    try { r = sessionStorage.getItem('hg-launch-route'); sessionStorage.removeItem('hg-launch-route'); } catch (_) {}
+    handleHash(r || undefined);
   }
   // Run after DOM ready
   if (document.readyState === 'complete' || document.readyState === 'interactive') {
-    setTimeout(handleHash, 600);
+    setTimeout(openLaunchRoute, 600);
   } else {
-    window.addEventListener('DOMContentLoaded', () => setTimeout(handleHash, 600));
+    window.addEventListener('DOMContentLoaded', () => setTimeout(openLaunchRoute, 600));
   }
   window.addEventListener('hashchange', handleHash);
 
