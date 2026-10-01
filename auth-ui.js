@@ -312,6 +312,61 @@
     else showSyncPill(remaining ? `${remaining} change${remaining===1?'':'s'} still pending` : 'All changes synced ✓');
   });
 
+  // ── Top bar: company and sync status ────────────────────
+  // The chip says whether this phone's changes have reached the server: Synced, "3 to sync", Offline
+  // (no connection) or Connecting… (a connection, but the server hasn't confirmed the user yet).
+  function word(key, en) {
+    if (typeof window.t !== 'function') return en;
+    const v = window.t(key);
+    return (v && v !== key) ? v : en;
+  }
+  function refreshSyncChip() {
+    const chip = document.getElementById('hgSyncChip'), text = document.getElementById('hgSyncText');
+    if (!chip || !text) return;
+    const signedIn = !!(window.HG_AUTH && window.HG_AUTH.configured) && !!(window.HG_PROFILE || window.__hgOfflineSession);
+    if (!signedIn) { chip.hidden = true; return; }
+    let n = 0;
+    try { n = (window.HG_DB && typeof window.HG_DB._queueLen === 'function') ? window.HG_DB._queueLen() : 0; } catch (_) {}
+    const toSync = word('sync.pending', '{n} to sync').replace('{n}', String(n));
+    let state, words;
+    if (navigator.onLine === false) { state = 'offline'; words = word('sync.offline', 'Offline') + (n ? ' · ' + toSync : ''); }
+    else if (!window.HG_PROFILE) { state = 'offline'; words = word('sync.connecting', 'Connecting…') + (n ? ' · ' + toSync : ''); }
+    else if (n) { state = 'pending'; words = toSync; }
+    else { state = 'synced'; words = word('sync.synced', 'Synced'); }
+    chip.dataset.state = state;
+    if (text.textContent !== words) text.textContent = words;
+    chip.hidden = false;
+  }
+  let chipTimer = 0;
+  function refreshSyncChipSoon() {
+    if (chipTimer) return;
+    chipTimer = setTimeout(function () { chipTimer = 0; refreshSyncChip(); }, 300);
+  }
+  window.hgRefreshSyncChip = refreshSyncChip;
+  ['hg:sync:flushed', 'hg:sync:queued', 'hg:profile:loaded', 'hg:auth:changed'].forEach(function (ev) { document.addEventListener(ev, refreshSyncChipSoon); });
+  window.addEventListener('online', refreshSyncChipSoon);
+  window.addEventListener('offline', refreshSyncChipSoon);
+
+  // The company name in the top bar. Kept on this phone with hg-last-org (and cleared with it), so it
+  // also shows when signed in without the server.
+  function paintTopOrg(name) {
+    const el = document.getElementById('hgTopOrg');
+    if (el && el.textContent !== (name || '')) el.textContent = name || '';
+  }
+  // Signed in without the server: the account button shows the stored session's user instead of "User".
+  function paintAccountFromSession() {
+    try {
+      const s = JSON.parse(localStorage.getItem('hg-auth-v1') || 'null');
+      const u = (s && (s.user || (s.currentSession && s.currentSession.user))) || null;
+      if (!u) return;
+      const full = (u.user_metadata && typeof u.user_metadata.full_name === 'string') ? u.user_metadata.full_name.trim() : '';
+      const email = typeof u.email === 'string' ? u.email : '';
+      const nameEl = document.getElementById('userName'), avatarEl = document.getElementById('userAvatar');
+      if (nameEl) nameEl.textContent = full || (email ? email.split('@')[0] : 'User');
+      if (avatarEl) avatarEl.textContent = ((full || email || 'U').trim().charAt(0) || 'U').toUpperCase();
+    } catch (_) {}
+  }
+
   // ── Boot logic ──────────────────────────────────────────
   function paintLocalProfile() {
     const set = (id, value) => { const el = document.getElementById(id); if (el) el.textContent = value; };
@@ -473,11 +528,14 @@
           // phone's organisation instead of trying the network first (__hgOfflineSession: supabase-client,
           // lims-sync, index.html). refreshProfileCard clears it once the server confirms the user.
           window.__hgOfflineSession = true;
-          let role = '';
-          try { role = localStorage.getItem('hg-last-role') || ''; } catch (_) {}
+          let role = '', orgName = '';
+          try { role = localStorage.getItem('hg-last-role') || ''; orgName = localStorage.getItem('hg-last-org-name') || ''; } catch (_) {}
           applyRole(role);
+          paintTopOrg(orgName);
+          paintAccountFromSession();
         }
         showDesktop(true);
+        refreshSyncChip();
         if (!window.HG_PROFILE) {
           if (offline) noteUnconfirmed(); else setTimeout(noteUnconfirmed, 4000);
           retryConfirmLater();
@@ -549,6 +607,9 @@
     // The role, also kept on this phone (with hg-last-org) so the right screens show when signed in offline.
     try { if (profile.role) localStorage.setItem('hg-last-role', profile.role); else localStorage.removeItem('hg-last-role'); } catch (_) {}
     applyRole(profile.role || '');
+    const orgName = (profile.organisations && profile.organisations.name) || '';
+    paintTopOrg(orgName);
+    try { if (orgName) localStorage.setItem('hg-last-org-name', orgName); else localStorage.removeItem('hg-last-org-name'); } catch (_) {}
     document.body.setAttribute('data-org-type', profile.organisations?.type || '');
 
     // Top-right user chip on the desktop
@@ -747,6 +808,7 @@
       try {
         if (org) localStorage.setItem('hg-last-org', org); else localStorage.removeItem('hg-last-org');
         localStorage.removeItem('hg-last-role');   // the role in the new organisation comes with its profile
+        localStorage.removeItem('hg-last-org-name');
         localStorage.removeItem('hg-restore-pending');
       } catch (_) {}
       try { location.reload(); } catch (_) {}
@@ -1117,6 +1179,7 @@
         localStorage.setItem('hg-last-uid', uid);
         localStorage.removeItem('hg-last-org');
         localStorage.removeItem('hg-last-role');
+        localStorage.removeItem('hg-last-org-name');
         localStorage.setItem('hg-restore-pending', uid);
       } catch (_) {}
       if (purge) { try { location.reload(); } catch (_) {} return true; }   // modules may still hold the old data in memory
@@ -1227,7 +1290,7 @@
       // 6. Only now drop the per-device markers: other tabs reload when hg-last-uid changes, and must
       //    find the session already gone (else they'd boot as this user again and re-fill the phone).
       //    If the app dies before this line, hgEnsureUser finds the user's stash and marks it for restore.
-      try { ['hg-last-uid', 'hg-last-org', 'hg-last-role', 'hg-restore-pending'].forEach(function (k) { localStorage.removeItem(k); }); } catch (_) {}
+      try { ['hg-last-uid', 'hg-last-org', 'hg-last-role', 'hg-last-org-name', 'hg-restore-pending'].forEach(function (k) { localStorage.removeItem(k); }); } catch (_) {}
     });
     try { location.reload(); } catch (_) {}   // no tenant state left in memory
   };

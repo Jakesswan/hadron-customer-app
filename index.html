@@ -33,7 +33,7 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="Hadron">
     <meta name="application-name" content="Hadron">
-    <meta name="theme-color" content="#3AAEDB">
+    <meta name="theme-color" content="#F5A623">
     <meta name="description" content="Hadron Group customer interface — water treatment dosage calculators and support.">
     <title>Hadron Group - Customer Interface</title>
 
@@ -52,59 +52,59 @@
     <!-- Supabase JS SDK (auth + cloud sync), pinned 2.117.2 and served by the app itself so sign-in
          works offline from the precache (it used to be the floating @2 from a CDN). See
          THIRD_PARTY_NOTICES.md. To upgrade: replace the file, rename it, update this tag + sw.js. -->
-    <script src="supabase-js-2.117.2.js?v=151"></script>
+    <script src="supabase-js-2.117.2.js?v=152"></script>
 
     <!-- Hadron Supabase bridge -->
-    <script src="supabase-client.js?v=151"></script>
+    <script src="supabase-client.js?v=152"></script>
 
     <!-- Shared UI primitives (in-app sheets) — loaded before auth-ui, which uses them -->
-    <script src="hg-ui.js?v=151" defer></script>
+    <script src="hg-ui.js?v=152" defer></script>
     <!-- Auth UI (login/signup gate, profile binding) -->
-    <script src="auth-ui.js?v=151" defer></script>
+    <script src="auth-ui.js?v=152" defer></script>
 
     <!-- Push notifications -->
-    <script src="push.js?v=151" defer></script>
+    <script src="push.js?v=152" defer></script>
 
     <!-- Translation bundle -->
-    <script src="i18n.js?v=151"></script>
+    <script src="i18n.js?v=152"></script>
 
     <!-- Hadron Tristroke icon system (matches the ERP) -->
-    <script src="hadron-icons.js?v=151" defer></script>
+    <script src="hadron-icons.js?v=152" defer></script>
 
     <!-- Cross-platform emoji rendering (Twemoji) -->
-    <script src="emoji.js?v=151" defer></script>
+    <script src="emoji.js?v=152" defer></script>
 
     <!-- Customizable home grid (drag-to-reorder) -->
-    <script src="customize.js?v=151" defer></script>
+    <script src="customize.js?v=152" defer></script>
 
     <!-- Data Manager (Excel import/export) -->
-    <script src="data-manager.js?v=151" defer></script>
+    <script src="data-manager.js?v=152" defer></script>
 
     <!-- QR encoder (MIT, Kazuhiko Arase) -->
-    <script src="qr.js?v=151"></script>
+    <script src="qr.js?v=152"></script>
 
     <!-- QR Builder app -->
-    <script src="qr-app.js?v=151" defer></script>
+    <script src="qr-app.js?v=152" defer></script>
 
     <!-- Pool Water module -->
-    <script src="pool.js?v=151" defer></script>
+    <script src="pool.js?v=152" defer></script>
     <!-- Cooling Tower field calculator -->
-    <script src="coolingtower.js?v=151" defer></script>
+    <script src="coolingtower.js?v=152" defer></script>
     <!-- Boiler / Steam field calculator -->
-    <script src="boiler.js?v=151" defer></script>
+    <script src="boiler.js?v=152" defer></script>
     <!-- Water softener sizing calculator -->
-    <script src="softener.js?v=151" defer></script>
-    <script src="academy-content.js?v=151" defer></script>
-    <script src="academy.js?v=151" defer></script>
+    <script src="softener.js?v=152" defer></script>
+    <script src="academy-content.js?v=152" defer></script>
+    <script src="academy.js?v=152" defer></script>
 
-    <script src="searchable-select.js?v=151" defer></script>
-    <script src="trends.js?v=151" defer></script>
+    <script src="searchable-select.js?v=152" defer></script>
+    <script src="trends.js?v=152" defer></script>
 
     <!-- LIMS module (loaded at end of body via defer) -->
-    <script src="lims.js?v=151" defer></script>
-    <script src="lims-sync.js?v=151" defer></script>
-    <script src="portal.js?v=151" defer></script>
-    <script src="team.js?v=151" defer></script>
+    <script src="lims.js?v=152" defer></script>
+    <script src="lims-sync.js?v=152" defer></script>
+    <script src="portal.js?v=152" defer></script>
+    <script src="team.js?v=152" defer></script>
 
     <!-- Default UI font: Gothic A1 (Google Fonts) -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -275,14 +275,17 @@
         .desktop:not(.visible) { visibility: hidden; }
         body:not(.hg-app-ready) .window { visibility: hidden; }
 
-        /* Top Bar — Hadron yellow with dark navy text for proper contrast */
+        /* Top Bar — Hadron gold with charcoal text. It reaches under a notch / translucent status bar
+           (viewport-fit=cover) and keeps its content below it. */
         .top-bar {
-            height: 50px;
+            box-sizing: border-box;
+            min-height: calc(50px + env(safe-area-inset-top, 0px));
             background: #F5A623;
             display: flex;
             align-items: center;
             justify-content: space-between;
-            padding: 0 15px;
+            gap: 10px;
+            padding: env(safe-area-inset-top, 0px) calc(15px + env(safe-area-inset-right, 0px)) 0 calc(15px + env(safe-area-inset-left, 0px));
             color: #2E3742;
             box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
             flex-shrink: 0;
@@ -295,8 +298,9 @@
 
         @media (max-width: 768px) {
             .top-bar {
-                height: 56px;
-                padding: 0 10px;
+                min-height: calc(56px + env(safe-area-inset-top, 0px));
+                padding-left: calc(10px + env(safe-area-inset-left, 0px));
+                padding-right: calc(10px + env(safe-area-inset-right, 0px));
             }
         }
 
@@ -304,6 +308,8 @@
             display: flex;
             align-items: center;
             gap: 15px;
+            min-width: 0;          /* lets the company name shorten instead of pushing the account button off a narrow phone */
+            flex: 1 1 auto;
         }
 
         @media (max-width: 480px) {
@@ -324,45 +330,54 @@
             height: 32px;
             width: auto;
         }
+        .logo { flex: none; }
 
         @media (max-width: 480px) {
             .logo img {
-                height: 28px;
+                height: 26px;
             }
         }
 
-        .datetime-display {
+        /* Company and sync status, instead of a clock (the phone already shows the time). */
+        .hg-topbar-status {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 3px;
+            min-width: 0;
+        }
+        .hg-topbar-org {
+            max-width: 100%;
+            font-size: 13px;
+            font-weight: 700;
+            line-height: 1.2;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .hg-topbar-org:empty { display: none; }
+        .hg-sync-chip {
             display: inline-flex;
             align-items: center;
-            gap: 8px;
-            font-size: 14px;
-            font-weight: 500;
-            opacity: 0.95;
+            gap: 6px;
+            max-width: 100%;
+            height: 22px;
+            padding: 0 9px 0 7px;
+            border-radius: 999px;
+            background: rgba(46, 55, 66, 0.12);
+            color: #2E3742;
+            font-size: 12px;
+            font-weight: 700;
+            line-height: 1;
             white-space: nowrap;
+            overflow: hidden;
         }
-        .date-display {
-            font-weight: 600;
-        }
-        .date-dot {
-            opacity: 0.6;
-        }
-        @media (max-width: 480px) {
-            .datetime-display {
-                font-size: 12px;
-                gap: 5px;
-            }
-        }
-
-        .time-display {
-            font-size: 14px;
-            font-weight: 500;
-        }
-
-        @media (max-width: 480px) {
-            .time-display {
-                font-size: 13px;
-            }
-        }
+        .hg-sync-chip[hidden] { display: none; }
+        .hg-sync-chip .hg-sync-text { overflow: hidden; text-overflow: ellipsis; }
+        /* The words carry the state; the dot repeats it: green = synced, solid = waiting to send, ring = offline. */
+        .hg-sync-dot { flex: none; width: 8px; height: 8px; border-radius: 50%; background: #157B3A; box-sizing: border-box; }
+        .hg-sync-chip[data-state="pending"] .hg-sync-dot { background: #2E3742; }
+        .hg-sync-chip[data-state="offline"] .hg-sync-dot { background: transparent; border: 2px solid #2E3742; }
 
         .user-info {
             display: flex;
@@ -450,7 +465,7 @@
             width: 32px;
             height: 32px;
             border-radius: 50%;
-            background: linear-gradient(135deg, #3AAEDB 0%, #1a3d9e 100%);
+            background: #2E3742;   /* charcoal circle on the gold bar, white initial */
             display: flex;
             align-items: center;
             justify-content: center;
@@ -2385,12 +2400,12 @@
         <div class="top-bar">
             <div class="top-bar-left">
                 <div class="logo">
-                    <img src="Hadron_Logo.png" alt="Hadron Group">
+                    <img src="Hadron_Logo_dark.png" alt="Hadron Group">
                 </div>
-                <div class="datetime-display">
-                    <span class="date-display" id="dateDisplay">—</span>
-                    <span class="date-dot">·</span>
-                    <span class="time-display" id="timeDisplay">00:00</span>
+                <!-- The signed-in company and whether this phone's changes have reached the server (auth-ui.js). -->
+                <div class="hg-topbar-status" role="status" aria-live="polite">
+                    <span class="hg-topbar-org" id="hgTopOrg"></span>
+                    <span class="hg-sync-chip" id="hgSyncChip" data-state="synced" hidden><span class="hg-sync-dot" aria-hidden="true"></span><span class="hg-sync-text" id="hgSyncText"></span></span>
                 </div>
             </div>
             <div class="user-info">
@@ -2703,7 +2718,7 @@
                 <div class="hg-section-title">About</div>
                 <div class="hg-kvgrid">
                     <div class="hg-kv"><div class="k">App</div><div class="v">Hadron Group</div></div>
-                    <div class="hg-kv"><div class="k">Version</div><div class="v">v151</div></div>
+                    <div class="hg-kv"><div class="k">Version</div><div class="v">v152</div></div>
                     <div class="hg-kv"><div class="k">Platform</div><div class="v">PWA</div></div>
                 </div>
             </div>
@@ -4132,24 +4147,18 @@
         }
 
         // Time & date display
-        function updateTime() {
-            const now = new Date();
-            const hours = now.getHours().toString().padStart(2, '0');
-            const minutes = now.getMinutes().toString().padStart(2, '0');
-            document.getElementById('timeDisplay').textContent = `${hours}:${minutes}`;
-
-            // Locale-aware date, e.g. "Sun, 19 Apr" — honours the user's language choice
-            const lang = (window.currentLanguage || navigator.language || 'en');
-            const dateStr = now.toLocaleDateString(lang, {
-                weekday: 'short', day: '2-digit', month: 'short'
-            });
-            document.getElementById('dateDisplay').textContent = dateStr;
-        }
-        updateTime();
-        setInterval(updateTime, 1000);
-
         // Window management
         const openWindows = new Set();
+
+        // Android's status bar takes the colour of what is right under it: the gold top bar on the home
+        // screen (and behind the sign-in card), the window header (teal ink) while a window is open.
+        function hgStatusBar() {
+            const meta = document.querySelector('meta[name="theme-color"]');
+            if (!meta) return;
+            const inWindow = openWindows.size > 0 && document.body.classList.contains('hg-app-ready');
+            const colour = inWindow ? '#1B77A0' : '#F5A623';
+            if (meta.getAttribute('content') !== colour) meta.setAttribute('content', colour);
+        }
 
         // ── Back button (Android, browser): close what's open instead of leaving the app ──
         // While anything is open (a window, an in-app sheet, a full-screen layer such as the add-site
@@ -4292,7 +4301,7 @@
             if (e.detail && e.detail.open) hgArmBack(); else hgDisarmBack();
         });
         // Revealed (signed in): arm for whatever opened behind the start-up screen (a deep link, a sheet).
-        new MutationObserver(function () { if (document.body.classList.contains('hg-app-ready') && hgAnythingOpen()) hgArmBack(); })
+        new MutationObserver(function () { hgStatusBar(); if (document.body.classList.contains('hg-app-ready') && hgAnythingOpen()) hgArmBack(); })
             .observe(document.body, { attributes: true, attributeFilter: ['class'] });
         // Esc while typing in a field first just leaves the field (as Back on a phone first hides the
         // keyboard), so a stray Esc can't throw away a half-filled form; the next Esc closes the screen.
@@ -4320,6 +4329,7 @@
             updateTaskbar();
             bringToFront(window);
             hgArmBack();
+            hgStatusBar();
             if (appName === 'history') renderHistoryList();
             if (appName === 'jartest-dss') {
                 const fr = document.getElementById('jartestFrame');
@@ -4357,6 +4367,7 @@
             openWindows.delete(appName);
             updateTaskbar();
             hgDisarmBack();   // last thing on screen closed with ←: drop the Back entry again
+            hgStatusBar();
         }
 
         function closeAllWindows() {
@@ -4918,7 +4929,7 @@
             const select = document.getElementById('languageSelect');
             if (select) select.value = code;
             applyTranslations();
-            updateTime(); // date format depends on language
+            if (typeof window.hgRefreshSyncChip === 'function') window.hgRefreshSyncChip();   // its words follow the language
 
             // Tell every dynamic module to re-render so its JS-built UI picks up
             // the new translations. Each module exposes its own re-render fn.
@@ -4963,8 +4974,7 @@
             const enabled = theme === 'dark';
             document.documentElement.setAttribute('data-theme', theme);   // drives the design tokens
             document.body.classList.toggle('dark', enabled);              // bridge: keep legacy body.dark rules working
-            const meta = document.querySelector('meta[name="theme-color"]');
-            if (meta) meta.setAttribute('content', enabled ? '#0F172A' : '#FFFFFF');
+            hgStatusBar();
             const choice = themeChoice();
             [['btnAuto', 'auto'], ['btnLight', 'light'], ['btnDark', 'dark']].forEach(function (b) {
                 const el = document.getElementById(b[0]);
@@ -6713,7 +6723,7 @@
         }
         function srDerivedChips(p) {
             return srDerived(p).map(x =>
-                `<span style="display:inline-flex;align-items:baseline;gap:5px;background:var(--bg-soft);border:1px solid var(--border);border-radius:999px;padding:3px 11px;font-size:12px;color:var(--text);" title="${esc(x[2])}"><span style="color:var(--muted);">${esc(x[0])}</span><strong style="font-variant-numeric:tabular-nums;color:var(--accent-ink);">${esc(x[1])}</strong></span>`).join('');
+                `<span style="display:inline-flex;align-items:baseline;gap:5px;background:var(--surface);border:1px solid var(--border);border-radius:999px;padding:3px 11px;font-size:12px;color:var(--text);" title="${esc(x[2])}"><span style="color:var(--muted);">${esc(x[0])}</span><strong style="font-variant-numeric:tabular-nums;color:var(--accent-ink);">${esc(x[1])}</strong></span>`).join('');
         }
         function srRefreshDerived(pid) { const el = document.getElementById('sr_deriv_' + pid); const p = sr_points.find(x => x.id === pid); if (el && p) el.innerHTML = srDerivedChips(p); }
         function srMapRow(t) {

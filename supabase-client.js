@@ -70,6 +70,7 @@
     op.qid = op.qid || (Date.now().toString(36) + Math.random().toString(36).slice(2, 8));
     q.push(op);
     saveQueue(q);
+    try { document.dispatchEvent(new CustomEvent('hg:sync:queued')); } catch (_) {}   // the top-bar sync chip counts it
   }
   // Identity of one queued op: its qid, or table:id for ops queued before qids existed
   // (unique within a queue because enqueue de-dupes per record).
