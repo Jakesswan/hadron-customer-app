@@ -46,6 +46,8 @@
     <!-- Hadron Supabase bridge -->
     <script src="supabase-client.js"></script>
 
+    <!-- Shared UI primitives (in-app sheets) — loaded before auth-ui, which uses them -->
+    <script src="hg-ui.js" defer></script>
     <!-- Auth UI (login/signup gate, profile binding) -->
     <script src="auth-ui.js" defer></script>
 
@@ -139,6 +141,10 @@
           --bg:#0F172A; --bg-soft:#1E293B; --surface:#1A222F; --border:#2D3B4F;
           --text:#FFFFFF; --muted:#CBD5E1;
           --success:#34D399; --warning:#F5B82E; --danger:#F87171; --info:#3AAEDB;
+          /* Contrast-safe "ink" tokens (audit 2026-10): text/links and filled buttons that must pass
+             4.5:1. Dark: brand teal on dark surfaces, dark text on teal/red fills. */
+          --accent-ink:#3AAEDB; --on-accent:#0F172A; --on-danger:#0F172A;
+          --ok-ink:#34D399; --warn-ink:#F5A623; --danger-ink:#F87171;
           --header-h:46px;
           --badge-blue-text:#3AAEDB; --badge-yellow-text:#F5B82E;
           --icon-primary:#FFFFFF; --icon-secondary:#25B6D2; --icon-accent:#FFC52B;
@@ -155,6 +161,9 @@
           --success:#2D8F4E; --danger:#C0392B;
           --badge-blue-text:#2588B0; --badge-yellow-text:#D4A01A;
           --icon-primary:#4D4D4F;
+          /* Light: teal ink #1B77A0 (5.0:1 on white, and white on it), white on the red fill. */
+          --accent-ink:#1B77A0; --on-accent:#FFFFFF; --on-danger:#FFFFFF;
+          --ok-ink:#157B3A; --warn-ink:#9A6400; --danger-ink:#C0392B;
         }
         .print-page {
           --bg:#FFFFFF; --bg-soft:#F7F8F9; --surface:#FFFFFF; --border:#D8DDE2;
@@ -455,10 +464,29 @@
                 font-size: 13px;
             }
             
-            .user-info span {
+            .user-info #userName {
                 display: none;
             }
         }
+
+        /* Avatar + name as one account button (opens the account menu; Sign out lives there). */
+        .hg-account-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            min-height: 44px;
+            min-width: 44px;
+            padding: 0 6px;
+            margin: 0;
+            background: transparent;
+            border: 0;
+            border-radius: 9999px;
+            color: inherit;
+            font: inherit;
+            cursor: pointer;
+            touch-action: manipulation;
+        }
+        .hg-account-btn:focus-visible { outline: 3px solid currentColor; outline-offset: 2px; }
 
         .user-avatar {
             width: 32px;
@@ -472,38 +500,6 @@
             font-weight: 700;
             font-size: 14px;
             flex-shrink: 0;
-        }
-
-        .logout-btn {
-            padding: 6px 14px;
-            background: rgba(26, 61, 158, 0.12);
-            border: 1px solid rgba(26, 61, 158, 0.4);
-            border-radius: 6px;
-            color: #1a3d9e;
-            cursor: pointer;
-            font-size: 13px;
-            font-weight: 600;
-            transition: background 0.2s;
-            touch-action: manipulation;
-        }
-        .logout-btn:hover { background: rgba(26, 61, 158, 0.22); }
-        body.dark .logout-btn { color: #0e1530; border-color: rgba(14,21,48,0.5); background: rgba(14,21,48,0.12); }
-
-        .logout-btn:active {
-            background: rgba(255, 255, 255, 0.3);
-        }
-
-        @media (hover: hover) {
-            .logout-btn:hover {
-                background: rgba(255, 255, 255, 0.3);
-            }
-        }
-
-        @media (max-width: 480px) {
-            .logout-btn {
-                padding: 6px 10px;
-                font-size: 12px;
-            }
         }
 
         /* Desktop Content */
@@ -2457,9 +2453,10 @@
             </div>
             <div class="user-info">
                 <button class="topbar-theme-toggle no-print" id="topThemeToggle" aria-label="Toggle light/dark theme" title="Toggle light/dark theme" onclick="setTheme(document.documentElement.getAttribute('data-theme')==='dark'?'light':'dark')"></button>
-                <div class="user-avatar" id="userAvatar">U</div>
-                <span id="userName">User</span>
-                <button class="logout-btn" onclick="logout()" data-i18n="header.logout">Logout</button>
+                <button type="button" class="hg-account-btn" id="hgAccountBtn" aria-haspopup="dialog" aria-label="Account menu" onclick="window.hgOpenAccountMenu ? window.hgOpenAccountMenu() : openWindow('profile')">
+                    <span class="user-avatar" id="userAvatar" aria-hidden="true">U</span>
+                    <span id="userName">User</span>
+                </button>
             </div>
         </div>
 
@@ -2652,7 +2649,7 @@
                 <p style="margin: 0 0 12px; font-size: 13px; opacity: 0.8;">Account changes are handled by the Hadron Group team. Reach us via Support and we'll update your profile within 1 business day.</p>
                 <div style="display: flex; gap: 10px; flex-wrap: wrap;">
                     <button class="hg-btn ghost" onclick="openWindow('support')">🎧 Open Support</button>
-                    <button class="hg-btn ghost" onclick="hgSignOut && hgSignOut()" style="color: #d32f2f; border-color: #d32f2f;">⏻ Sign out</button>
+                    <button class="hg-btn ghost" onclick="window.hgConfirmSignOut ? window.hgConfirmSignOut() : (window.hgSignOut && window.hgSignOut())" style="color: var(--danger-ink); border-color: var(--danger-ink);">⏻ Sign out</button>
                 </div>
             </div>
         </div>
@@ -2758,7 +2755,7 @@
                 <div class="hg-section-title">About</div>
                 <div class="hg-kvgrid">
                     <div class="hg-kv"><div class="k">App</div><div class="v">Hadron Group</div></div>
-                    <div class="hg-kv"><div class="k">Version</div><div class="v">v143</div></div>
+                    <div class="hg-kv"><div class="k">Version</div><div class="v">v144</div></div>
                     <div class="hg-kv"><div class="k">Platform</div><div class="v">PWA</div></div>
                 </div>
             </div>
@@ -4196,6 +4193,8 @@
             // appears (instead of the legacy demo form which would reject real
             // credentials).
             if (window.HG_AUTH && window.HG_AUTH.configured) {
+                // Confirm first (unsynced count, keep-or-remove device data); the sheet signs out.
+                if (typeof window.hgConfirmSignOut === 'function') { window.hgConfirmSignOut(); return; }
                 closeAllWindows();
                 if (typeof window.hgSignOut === 'function') {
                     window.hgSignOut();
@@ -5623,7 +5622,9 @@
 
         const LS = {
             get: (k, d) => { try { const v = localStorage.getItem(k); return v ? JSON.parse(v) : d; } catch (e) { return d; } },
-            set: (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); return true; } catch (e) { showToast('Storage full — could not save. Remove some photos or old items.'); return false; } },
+            // Nothing is written while sign-out / a user or organisation switch is clearing this phone
+            // (a late write, e.g. a cloud pull landing, would otherwise survive into the next session).
+            set: (k, v) => { if (window.__hgTenantFrozen) return false; try { localStorage.setItem(k, JSON.stringify(v)); return true; } catch (e) { showToast('Storage full — could not save. Remove some photos or old items.'); return false; } },
             push: (k, item, cap) => { const list = LS.get(k, []); list.unshift(item); LS.set(k, cap ? list.slice(0, cap) : list); return list; }
         };
         const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
@@ -5866,7 +5867,7 @@
             if (r.tech) LS.set('hadron_sr_lasttech', r.tech);
             srRememberProducts(r.dosing); srRememberInstruments(r.instruments);
             const saved = srLocalSave(r);
-            showToast(saved ? 'Report submitted & locked' : '⚠ Device storage full — submitted to cloud; keeping a recovery draft.');
+            showToast(saved ? 'Report submitted & locked' : (window.__hgTenantFrozen ? 'Signing out — this report wasn’t saved on this phone.' : '⚠ Device storage full — submitted to cloud; keeping a recovery draft.'));
             srCloudPushReport(r);
             if (saved) srClearDraft();   // keep the recovery draft if the device save failed
             listServiceReports();
@@ -6236,7 +6237,14 @@
         // wall-clock 'YYYY-MM-DDTHH:mm', so a cloud-only report's list row shows the tech's actual
         // local visit time instead of the raw UTC string (2h early in SAST).
         function srIsoToLocalDt(iso) { if (!iso) return ''; const x = new Date(iso); if (isNaN(x.getTime())) return String(iso).slice(0, 16); x.setMinutes(x.getMinutes() - x.getTimezoneOffset()); return x.toISOString().slice(0, 16); }
-        function srToCloudRow(r) { return { id: r.id, site: r.site || null, customer_name: r.customerName || null, technician: r.tech || null, report_date: srDateIso(r.date), status: r.status || 'draft', payload: r }; }
+        // The organisation the data on this phone belongs to (hg-last-org, set once the profile has
+        // confirmed it), stamped on every cloud row saved from it. The server only accepts rows for the
+        // user's CURRENT organisation (RLS with check), so a change queued offline can never be replayed
+        // into another organisation after a user switch or an org move. Unstamped rows would default to
+        // whatever org the session is in when they finally reach the server.
+        function hgRowOrg() { try { return localStorage.getItem('hg-last-org') || (window.HG_PROFILE && window.HG_PROFILE.organisation_id) || null; } catch (_) { return null; } }
+        function hgStampOrg(row) { const o = hgRowOrg(); if (o) row.organisation_id = o; return row; }
+        function srToCloudRow(r) { return hgStampOrg({ id: r.id, site: r.site || null, customer_name: r.customerName || null, technician: r.tech || null, report_date: srDateIso(r.date), status: r.status || 'draft', payload: r }); }
         function srCloudPushReport(r) {
             try { if (window.HG_DB && window.HG_DB.service_reports && r && r.id) window.HG_DB.service_reports.upsert(srToCloudRow(r)).catch(() => {}); } catch (_) {}
         }
@@ -7123,6 +7131,7 @@
             return false;
         }
         function srAutosaveDraft() {
+            if (window.__hgTenantFrozen) return;   // signing out / switching user: the live store is being cleared
             try {
                 const form = document.getElementById('sr_form');
                 if (!form || form.style.display === 'none' || sr_readOnly) return;
@@ -7151,7 +7160,7 @@
             const saved = srLocalSave(r);
             srCloudPushReport(r);   // best-effort cloud sync (queues if offline / not signed in)
             if (saved) { showToast('Report saved'); srClearDraft(); }   // persisted — drop the recovery draft
-            else showToast('⚠ Device storage full — pushed to cloud; keeping a recovery draft. Free space soon.');
+            else showToast(window.__hgTenantFrozen ? 'Signing out — this report wasn’t saved on this phone.' : '⚠ Device storage full — pushed to cloud; keeping a recovery draft. Free space soon.');
             const pf = srPreflight(r); if (pf.warns.length) setTimeout(() => showToast('⚠ Check: ' + pf.warns[0]), 900);   // non-blocking heads-up
         }
         function deleteSR(id) {
@@ -8189,7 +8198,7 @@
             return out;
         }
 
-        function hgIncidentToRow(e) { return { id: e.id, payload: e, updated_at: new Date().toISOString() }; }   // org/user default server-side
+        function hgIncidentToRow(e) { return hgStampOrg({ id: e.id, payload: e, updated_at: new Date().toISOString() }); }   // user defaults server-side; org stamped (see hgRowOrg)
         function hgIncidentsPush(e) {
             try { if (window.HG_PROFILE && window.HG_DB && window.HG_DB.incidents && e && e.id) window.HG_DB.incidents.upsert(hgIncidentToRow(e)).catch(() => {}); } catch (_) {}
         }
@@ -8228,7 +8237,7 @@
             document.head.appendChild(st);
         })();
         function hgSiteIsOwner() { const r = (window.HG_PROFILE && window.HG_PROFILE.role) || document.body.dataset.role || ''; return r === 'admin' || r === 'customer_admin'; }
-        function hgSiteToRow(s) { return { id: s.id, name: (s.name || 'Site'), payload: s, updated_at: new Date().toISOString() }; }
+        function hgSiteToRow(s) { return hgStampOrg({ id: s.id, name: (s.name || 'Site'), payload: s, updated_at: new Date().toISOString() }); }
         function hgSitesPush(s) {
             try { if (hgSiteIsOwner() && window.HG_PROFILE && window.HG_DB && window.HG_DB.sites && s && s.id) window.HG_DB.sites.upsert(hgSiteToRow(s)).catch(() => {}); } catch (_) {}
         }

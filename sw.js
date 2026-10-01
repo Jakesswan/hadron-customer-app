@@ -12,7 +12,7 @@
  * Bump CACHE_VERSION whenever you ship a change so phones pick it up on next launch.
  */
 
-const CACHE_VERSION = 'hadron-v143';
+const CACHE_VERSION = 'hadron-v144';
 const APP_SHELL = [
   './',
   './index.html',
@@ -27,6 +27,7 @@ const APP_SHELL = [
   './academy.js',
   './academy-content.js',
   './supabase-client.js',
+  './hg-ui.js',
   './auth-ui.js',
   './push.js',
   './lims-sync.js',
@@ -58,11 +59,14 @@ const OPTIONAL_CACHE = [
   './html5-qrcode.min.js'   // offline QR scanning (falls back to cdnjs when not cached)
 ];
 
+// cache: 'reload' bypasses the browser's HTTP cache (GitHub Pages serves max-age=600), so a new
+// version can't precache a stale copy of a file fetched in the last ten minutes.
+const fresh = (u) => new Request(u, { cache: 'reload' });
 self.addEventListener('install', (event) => {
   event.waitUntil(
     caches.open(CACHE_VERSION).then((cache) =>
-      cache.addAll(APP_SHELL).then(() =>
-        Promise.allSettled(OPTIONAL_CACHE.map((u) => cache.add(u)))
+      cache.addAll(APP_SHELL.map(fresh)).then(() =>
+        Promise.allSettled(OPTIONAL_CACHE.map((u) => cache.add(fresh(u))))
       )
     )
   );

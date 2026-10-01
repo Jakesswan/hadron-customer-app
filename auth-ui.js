@@ -347,10 +347,34 @@
       legacy.setAttribute('aria-hidden', 'true');
     }
 
+    // The user whose data this page holds in memory (open forms, caches, autosave timers).
+    let pageUid = null;
+    function reloadFrozen() {
+      if (window.__hgTenantFrozen) return;   // a sign-out / switch is already reloading this page
+      window.__hgTenantFrozen = true;
+      window.__hgSuppressQueuePersist = true;
+      try { location.reload(); } catch (_) {}
+    }
+
     async function reconcile() {
       const session = await window.HG_AUTH.getSession();
+      const uid = (session && session.user && session.user.id) || null;
+      // Signed out or switched user in ANOTHER tab: this page still holds the previous user's data
+      // in memory, so reload instead of carrying it into the next session.
+      if (pageUid && uid !== pageUid) {
+        // Offline with an expired token, getSession() answers null but the session is still stored
+        // (it refreshes once back online): nobody signed out, so keep the page and what's being typed.
+        if (!uid && hasStoredSession()) return;
+        reloadFrozen();
+        if (!uid) showDesktop(false);
+        return;
+      }
       if (session) {
         teardown();
+        // Make sure THIS user's data is what's live before anything is shown. Keyed on the session's
+        // user id, so it holds even when the profile fetch fails (offline). True = reloading.
+        if (await hgEnsureUser(uid)) return;
+        pageUid = uid;
         // Resolve the profile (role) BEFORE revealing the desktop, so role-gated UI (data-roles
         // tiles like the admin-only Data Manager, plus owner-only controls) is correct on first
         // paint instead of flashing for a beat while the profile loads. Bounded by a timeout so a
@@ -359,6 +383,8 @@
         // reconcile the desktop is already visible, so showDesktop(true) below just re-asserts it.
         try { await Promise.race([refreshProfileCard(), new Promise(res => setTimeout(res, 2000))]); } catch (_) {}
         showDesktop(true);
+        // Unsynced changes are sent from refreshProfileCard, once the profile has confirmed the user
+        // and organisation they belong to (a session alone isn't enough: see mayFlushAs).
       } else {
         // Hide desktop and demo gate; auth overlay covers everything.
         showDesktop(false);
@@ -367,7 +393,22 @@
     }
 
     document.addEventListener('hg:auth:changed', () => reconcile());
+    // Another tab signed out, switched user (hg-last-uid) or found the account in another organisation
+    // (hg-last-org): this page's in-memory state belongs to the old one, so don't keep it.
+    window.addEventListener('storage', function (e) {
+      if (e.key !== null && e.key !== 'hg-last-uid' && e.key !== 'hg-last-org') return;
+      if ((pageUid && lastUid() !== pageUid) || (pageOrg && lastOrg() !== pageOrg)) reloadFrozen();
+    });
+    // Signed in but the profile couldn't load (offline): try again when the connection returns, so
+    // the organisation is confirmed and unsynced changes can be sent.
+    window.addEventListener('online', function () { if (pageUid && !window.HG_PROFILE) reconcile(); });
     reconcile();
+  }
+
+  // The organisation of the data this page holds in memory (set once the profile confirms it).
+  let pageOrg = null;
+  function hasStoredSession() {
+    try { return Object.keys(localStorage).some(function (k) { return k === 'hg-auth-v1'; }); } catch (_) { return false; }
   }
 
   // ── Profile card binding ────────────────────────────────
@@ -390,19 +431,12 @@
 
     // Stash on window so other modules can use it without a round trip.
     window.HG_PROFILE = profile;
-    // Shared-browser defence: if a DIFFERENT user has signed in since last time on
-    // this browser, wipe the previous tenant's local data before showing anything.
-    try {
-      const uid = profile && profile.id, lastUid = localStorage.getItem('hg-last-uid');
-      if (uid && lastUid && lastUid !== uid) {
-        hgClearTenantData().then(function () {
-          try { localStorage.setItem('hg-last-uid', uid); } catch (_) {}
-          location.reload();
-        });
-        return;
-      }
-      if (uid) localStorage.setItem('hg-last-uid', uid);
-    } catch (_) {}
+    // The user switch itself ran in reconcile (hgEnsureUser). Here, with the organisation known:
+    // make sure the data on this phone belongs to it, then finish a pending restore of this user's
+    // own device data.
+    if (await hgEnsureOrg(profile)) return;        // reloading without the other organisation's data
+    pageOrg = lastOrg();                           // the organisation this page's data belongs to
+    if (await hgRestorePending(profile)) return;   // reloading with the restored data
     document.body.setAttribute('data-role', profile.role || '');
     document.body.setAttribute('data-org-type', profile.organisations?.type || '');
 
@@ -424,8 +458,37 @@
 
     document.dispatchEvent(new CustomEvent('hg:profile:loaded', { detail: profile }));
 
+    // User and organisation confirmed: send anything waiting in the write queue.
+    try { if (window.HG_DB && window.HG_DB._flush) window.HG_DB._flush(); } catch (_) {}
+
     // Team invite: if this user has a pending invite to another org, offer to join it.
     try { maybeOfferInvite(); } catch (_) {}
+  }
+
+  // The organisation the data on this phone belongs to is recorded in hg-last-org (stashes are
+  // tagged with it too). If the same user now belongs to a different organisation (invite accepted
+  // on another device, moved by an admin, or a join whose reply was lost), that organisation's data
+  // must neither stay visible nor sync into the new one: clear it, and the user's stash of it.
+  async function hgEnsureOrg(profile) {
+    const uid = profile && profile.id;
+    if (!uid || uid !== lastUid()) return false;
+    if (window.__hgTenantFrozen) return true;            // a sign-out / switch is already reloading
+    const org = profile.organisation_id || '';
+    const prev = lastOrg();
+    if (prev && prev !== org) {
+      window.__hgTenantFrozen = true;
+      window.__hgSuppressQueuePersist = true;
+      try { await hgClearTenantData(); } catch (_) {}
+      try { await stashDel(uid); } catch (_) {}
+      try {
+        if (org) localStorage.setItem('hg-last-org', org); else localStorage.removeItem('hg-last-org');
+        localStorage.removeItem('hg-restore-pending');
+      } catch (_) {}
+      try { location.reload(); } catch (_) {}
+      return true;
+    }
+    if (!prev && org) { try { localStorage.setItem('hg-last-org', org); } catch (_) {} }
+    return false;
   }
 
   // One-time-per-load consent prompt: my_pending_invite() (SECURITY DEFINER) tells us
@@ -439,55 +502,520 @@
     catch (_) { return; }
     if (!inv || !inv.organisation) return;
     const access = inv.role === 'viewer' ? 'with view-only access' : 'to create and view reports';
-    const ok = window.confirm('You have been invited to join "' + inv.organisation + '" ' + access +
-      '.\n\nJoin now? Your account moves into this company.');
-    if (!ok) return;
-    try {
-      const { data } = await window.HG_SUPA.rpc('redeem_org_invite');
-      // Moving into a different org: clear THIS org's local cache + sync queue first so no
-      // sites/incidents/reports (or queued writes) from the old org leak into the new one.
-      if (data && data.joined) { try { await hgClearTenantData(); } catch (_) {} location.reload(); }
-    } catch (_) {}
+
+    // Joining moves the account into another organisation. Rows are written into whatever org the
+    // account is in when they reach the server, so: send this org's unsent changes FIRST, then PAUSE
+    // the queue and wait for any send in flight to finish, and only then move the account. Whatever
+    // still couldn't be sent is named, and only removed if the user says so. After the move, this
+    // org's device data and stash are cleared; hg-last-org keeps the OLD org, so the next profile load
+    // (hgEnsureOrg) also clears anything a late writer put back before the reload.
+    let decide = null;   // resolves the "join anyway?" step; a dismissed sheet counts as "no"
+    function answer(v) { if (decide) { const d = decide; decide = null; d(v); } }
+    function confirmLoss(c, n) {
+      const msg = plural(n, 'change hasn’t', 'changes haven’t') + ' synced yet. Joining removes ' + (n === 1 ? 'it' : 'them') + ' from this phone.';
+      if (!c) return Promise.resolve(window.confirm(msg + '\n\nJoin anyway?'));
+      return new Promise(function (resolve) {
+        decide = resolve;
+        c.setBusy(false);
+        c.setBody('<div class="hg-sheet-note warn"><span aria-hidden="true">⚠</span><span>' + msg + '</span></div>' +
+                  '<p>To keep ' + (n === 1 ? 'it' : 'them') + ', choose Not now and try again when you have a connection.</p>');
+        c.setActions([
+          { label: 'Not now', kind: 'primary', onClick: function () { answer(false); } },
+          { label: 'Join anyway and remove ' + (n === 1 ? 'it' : 'them'), kind: 'danger', keepOpen: true, onClick: function () { answer(true); } }
+        ]);
+      });
+    }
+    async function join(c) {
+      if (c) c.setBusy(true, 'Sending unsynced changes…');
+      try {
+        if (navigator.onLine !== false && window.HG_DB && window.HG_DB._flush) {
+          await Promise.race([window.HG_DB._flush(), new Promise(function (r) { setTimeout(r, 8000); })]);
+        }
+      } catch (_) {}
+      window.__hgQueuePaused = true;
+      // Wait for a send in flight to stop, but not for minutes: a big report on a slow link can take
+      // that long, and the account must not move while it is still being written.
+      let stopped = true;
+      if (window.HG_DB && window.HG_DB._flush) {
+        stopped = await Promise.race([
+          window.HG_DB._flush().then(function () { return true; }, function () { return true; }),
+          new Promise(function (r) { setTimeout(function () { r(false); }, 20000); })
+        ]);
+      }
+      if (!stopped) {
+        window.__hgQueuePaused = false;
+        const busyMsg = 'A large upload is still sending. Try joining again in a few minutes.';
+        if (!c) { window.alert(busyMsg); return; }
+        c.setBusy(false);
+        c.setBody('<div class="hg-sheet-note warn"><span>' + busyMsg + '</span></div>');
+        c.setActions([{ label: 'Close', kind: 'plain', focus: true }]);
+        return;
+      }
+      const left = (window.HG_DB && typeof window.HG_DB._queueLen === 'function') ? window.HG_DB._queueLen() : 0;
+      if (left) {
+        if (!(await confirmLoss(c, left))) { window.__hgQueuePaused = false; return; }
+        if (c) c.setActions([{ label: 'Joining…', kind: 'danger' }]);
+      }
+      if (c) c.setBusy(true, 'Joining…');
+      const oldOrg = (window.HG_PROFILE && window.HG_PROFILE.organisation_id) || lastOrg();
+      try {
+        let joined = false;
+        try { const { data } = await window.HG_SUPA.rpc('redeem_org_invite'); joined = !!(data && data.joined); } catch (_) {}
+        // No answer doesn't mean no move (a dropped reply on mobile): check where the account is now.
+        if (!joined) { try { const p = await window.HG_AUTH.getProfile(); joined = !!(p && p.organisation_id && p.organisation_id !== oldOrg); } catch (_) {} }
+        if (joined) {
+          window.__hgSuppressQueuePersist = true;
+          window.__hgTenantFrozen = true;
+          try { await hgClearTenantData(); } catch (_) {}
+          try { const uid = lastUid(); if (uid) await stashDel(uid); } catch (_) {}
+          try { location.reload(); } catch (_) {}
+          return;
+        }
+      } catch (_) {}
+      window.__hgQueuePaused = false;
+      if (c) {
+        c.setBusy(false);
+        c.setBody('<div class="hg-sheet-note danger"><span>Couldn’t join right now. Check your connection and try again.</span></div>');
+        c.setActions([{ label: 'Try again', kind: 'primary', keepOpen: true, onClick: join }, { label: 'Close', kind: 'plain', focus: true }]);
+      }
+    }
+
+    if (!window.hgSheet) {
+      if (window.confirm('You have been invited to join "' + inv.organisation + '" ' + access + '.\n\nJoin now? Your account moves into this company.')) join(null);
+      return;
+    }
+    window.hgSheet.open({
+      title: 'Join ' + inv.organisation + '?',
+      body: '<p>You’ve been invited to join <b>' + escH(inv.organisation) + '</b> ' + escH(access) + '.</p>' +
+            '<p>Your account moves into this company. Anything not yet synced is sent first, then this phone’s data for your current company is removed.</p>',
+      actions: [{ label: 'Join company', kind: 'primary', keepOpen: true, onClick: join }, { label: 'Not now', kind: 'plain', focus: true }],
+      onClose: function () { answer(false); }
+    });
   }
 
-  // Wipe every trace of the previous tenant's data from THIS browser (the LIMS
-  // IndexedDB + tenant localStorage), keeping only device prefs (theme/language).
-  // Server-side RLS already isolates tenants; this closes the local-cache gap so
-  // one account's customers/sites/reports never linger for the next sign-in on a
-  // shared browser.
+  // ── Tenant data on this device ──────────────────────────
+  // Tenant data = every localStorage key starting hadron_ or hg_, except per-device prefs.
+  // (hadron-theme, hg-last-uid and the hg-auth-v1 session use hyphens, so they never match.)
+  const DEVICE_PREFS = new Set(['hadron_lang', 'hadron_dark']);
+  function isTenantKey(k) { return !DEVICE_PREFS.has(k) && (k.indexOf('hadron_') === 0 || k.indexOf('hg_') === 0); }
+
+  // Clear the LIVE store (LIMS IndexedDB + tenant localStorage) so the next person on this
+  // browser never sees the previous account's customers/sites/reports. Server-side RLS already
+  // isolates tenants; this closes the local-cache gap (the v110 fix). Per-user stashes below are
+  // separate and survive this.
   async function hgClearTenantData() {
     try { if (typeof window.hgWipeLimsDb === 'function') await window.hgWipeLimsDb(); } catch (_) {}
     try {
-      const KEEP = new Set(['hadron_lang', 'hadron_dark']); // prefs (hadron-theme / hg-auth-v1 use hyphens → not matched)
       Object.keys(localStorage).forEach(function (k) {
-        if (KEEP.has(k)) return;
-        if (k.indexOf('hadron_') === 0 || k.indexOf('hg_') === 0) { try { localStorage.removeItem(k); } catch (_) {} }
+        if (isTenantKey(k)) { try { localStorage.removeItem(k); } catch (_) {} }
       });
     } catch (_) {}
     try { window.__custCache = null; window.__hgCustomerCache = {}; } catch (_) {}
   }
   window.hgClearTenantData = hgClearTenantData;
 
-  // Sign out helper bound to a global so the profile screen can call it.
-  // No confirm() — modal dialogs can be blocked by browsers / cause hangs,
-  // and signing out is reversible (just sign back in).
-  window.hgSignOut = async function () {
-    if (!window.HG_AUTH || !window.HG_AUTH.configured) return;
-    // Land any queued offline writes under the still-valid session BEFORE wiping the queue, so a
-    // sign-out doesn't silently drop unsynced work. Bounded (3s) so it can never hang sign-out.
-    // Suppress queue PERSISTENCE first: the flush may still be running when the timeout wins, and
-    // its trailing saveQueue must not re-persist the departing user's ops after the wipe — that
-    // would replay them into the next user's session (a cross-tenant leak). Sends still happen.
-    window.__hgSuppressQueuePersist = true;
+  // ── Per-user stash ──────────────────────────────────────
+  // Sign-out used to DELETE everything kept only on the phone (history, jobs, LOTO, drafts and
+  // unsynced changes). Now each user's tenant data is moved into their own stash and put back when
+  // that same user signs in again. The stash lives in IndexedDB so it doesn't compete with the app
+  // for localStorage space. LIMS IndexedDB is NOT stashed: it is a cloud cache (re-pulled at sign-in)
+  // and its unsynced edits sit in the write queue, which IS stashed.
+  // Each stash is tagged with the organisation it belongs to and is only ever restored into that
+  // same organisation. A small index (hg-stash-index: uid → {t: savedAt, p: unsynced ops}) lives
+  // outside the tenant keys, so pruning never has to load stashes (which can hold photos).
+  const STASH_DB = 'hadron_stash', STASH_STORE = 'stash', STASH_INDEX = 'hg-stash-index';
+  const STASH_KEEP = 10, STASH_MAX_AGE = 180 * 864e5;
+  // IndexedDB can hang without ever answering (a known WebKit failure). Every stash step is time-
+  // limited, so a hung database means "stash unavailable" (callers already handle that), never a
+  // blank screen or a sign-out sheet stuck on "Signing out…".
+  const IDB_TIMEOUT_MS = 4000;
+  function timed(p) {
+    return new Promise(function (res, rej) {
+      const t = setTimeout(function () { rej(new Error('stash timeout')); }, IDB_TIMEOUT_MS);
+      p.then(function (v) { clearTimeout(t); res(v); }, function (e) { clearTimeout(t); rej(e); });
+    });
+  }
+  function stashDb() {
+    return new Promise(function (res, rej) {
+      let settled = false;
+      const t = setTimeout(function () { if (!settled) { settled = true; rej(new Error('stash db timeout')); } }, IDB_TIMEOUT_MS);
+      const ok = function (db) { if (settled) { try { db.close(); } catch (_) {} return; } settled = true; clearTimeout(t); res(db); };
+      const fail = function (e) { if (settled) return; settled = true; clearTimeout(t); rej(e); };
+      try {
+        const r = indexedDB.open(STASH_DB, 1);
+        r.onupgradeneeded = function () { if (!r.result.objectStoreNames.contains(STASH_STORE)) r.result.createObjectStore(STASH_STORE); };
+        r.onsuccess = function () { ok(r.result); };
+        r.onerror = function () { fail(r.error); };
+        r.onblocked = function () { fail(new Error('stash db blocked')); };
+      } catch (e) { fail(e); }
+    });
+  }
+  function txDone(tx) {
+    return timed(new Promise(function (res, rej) {
+      tx.oncomplete = function () { res(); };
+      tx.onerror = function () { rej(tx.error); };
+      tx.onabort = function () { rej(tx.error || new Error('stash tx aborted')); };
+    }));
+  }
+  function reqDone(r) {
+    return timed(new Promise(function (res, rej) {
+      r.onsuccess = function () { res(r.result); };
+      r.onerror = function () { rej(r.error); };
+    }));
+  }
+  function stashIndex() { try { return JSON.parse(localStorage.getItem(STASH_INDEX) || '{}') || {}; } catch (_) { return {}; } }
+  function saveStashIndex(ix) { try { localStorage.setItem(STASH_INDEX, JSON.stringify(ix)); } catch (_) {} }
+  // Save a user's device data. It is MERGED into anything already set aside for them: a restore may
+  // still be pending (the profile didn't load) or have failed for lack of space, so the live data can
+  // be partial and must never replace the stash. Empty data writes nothing. A stash of another
+  // organisation, or one already restored (hg-restore-done), is replaced instead: it can never come
+  // back here, and re-merging restored ops would replay ones that were sent since.
+  // Throws if the stash can't be read or written (callers treat that as "not saved").
+  async function stashPut(uid, data, org) {
+    if (!uid) return false;
+    if (!data || !Object.keys(data).length) return true;
+    const db = await stashDb();
+    let rec = null;
     try {
-      if (window.HG_DB && window.HG_DB._flush) {
-        await Promise.race([window.HG_DB._flush(), new Promise(function (res) { setTimeout(res, 3000); })]);
+      // Read and write in ONE transaction, so two tabs saving the same user's data can't lose a merge.
+      const tx = db.transaction(STASH_STORE, 'readwrite'), st = tx.objectStore(STASH_STORE);
+      const g = st.get(uid);
+      g.onsuccess = function () {
+        const prev = g.result || null;
+        const merge = !!(prev && prev.data) && restoreDone(uid) !== prev.savedAt && !(prev.org && org && prev.org !== org);
+        rec = { uid: uid, org: org || (merge && prev.org) || null, savedAt: Date.now(), data: merge ? mergeStash(prev.data, data) : data };
+        st.put(rec, uid);
+      };
+      await txDone(tx);
+    } finally { db.close(); }
+    if (!rec) throw new Error('stash not written');
+    let pending = 0;
+    try { pending = (JSON.parse(rec.data.hg_sync_queue_v1 || '[]') || []).length; } catch (_) {}
+    const ix = stashIndex(); ix[uid] = { t: rec.savedAt, p: pending }; saveStashIndex(ix);
+    try { await pruneStashes(); } catch (_) {}   // best effort
+    return true;
+  }
+  // older = what's in the stash, newer = live data. Lists and keyed maps are merged (see
+  // mergeValues); for anything else a non-empty newer value wins.
+  function mergeStash(older, newer) {
+    const out = Object.assign({}, older);
+    Object.keys(newer).forEach(function (k) {
+      const o = older[k], n = newer[k];
+      if (typeof n !== 'string' || EMPTY_VALUES.has(n)) return;
+      if (typeof o !== 'string' || EMPTY_VALUES.has(o)) { out[k] = n; return; }
+      const m = mergeValues(k, n, o);
+      out[k] = m === null ? n : m;
+    });
+    return out;
+  }
+  // Which stash (by savedAt) was last put back for each user: a stash that was restored but couldn't
+  // be deleted must never be restored or merged into again (its queued ops may have been sent since).
+  function restoreDoneMap() { try { return JSON.parse(localStorage.getItem('hg-restore-done') || '{}') || {}; } catch (_) { return {}; } }
+  function restoreDone(uid) { return restoreDoneMap()[uid] || null; }
+  function setRestoreDone(uid, savedAt) {
+    try { const m = restoreDoneMap(); m[uid] = savedAt; localStorage.setItem('hg-restore-done', JSON.stringify(m)); } catch (_) {}
+  }
+  // Keep the newest STASH_KEEP stashes. A stash still holding unsynced changes is kept beyond that
+  // (up to STASH_MAX_AGE), so another user's unsent work isn't silently evicted.
+  async function pruneStashes() {
+    const ix = stashIndex(), now = Date.now();
+    const ids = Object.keys(ix).sort(function (a, b) { return (ix[b].t || 0) - (ix[a].t || 0); });
+    const drop = ids.filter(function (id, i) {
+      const e = ix[id] || {};
+      return (now - (e.t || 0) > STASH_MAX_AGE) || (i >= STASH_KEEP && !(e.p > 0));
+    });
+    if (!drop.length) return;
+    const db = await stashDb();
+    try {
+      const tx = db.transaction(STASH_STORE, 'readwrite'), st = tx.objectStore(STASH_STORE);
+      drop.forEach(function (id) { st.delete(id); });
+      await txDone(tx);
+    } finally { db.close(); }
+    drop.forEach(function (id) { delete ix[id]; });
+    saveStashIndex(ix);
+  }
+  async function stashGet(uid) {
+    const db = await stashDb();
+    try {
+      return (await reqDone(db.transaction(STASH_STORE).objectStore(STASH_STORE).get(uid))) || null;
+    } finally { db.close(); }
+  }
+  async function stashDel(uid) {
+    const db = await stashDb();
+    try {
+      const tx = db.transaction(STASH_STORE, 'readwrite');
+      tx.objectStore(STASH_STORE).delete(uid);
+      await txDone(tx);
+    } finally { db.close(); }
+    const ix = stashIndex(); if (ix[uid]) { delete ix[uid]; saveStashIndex(ix); }
+  }
+  function collectTenantData() {
+    const out = {};
+    Object.keys(localStorage).forEach(function (k) { if (isTenantKey(k)) out[k] = localStorage.getItem(k); });
+    return out;
+  }
+  // Put a stash back into the live store without losing anything written since (e.g. offline, when
+  // the desktop opened before the profile loaded): empty keys are filled; lists present on both
+  // sides are merged (the write queue keeps its order: stashed ops first); any other non-empty live
+  // value wins. All-or-nothing: if storage fills part-way, every key written is put back as it was
+  // and the stash is kept for a later try.
+  const EMPTY_VALUES = new Set(['[]', '{}', 'null', '""']);
+  const FIFO_KEYS = new Set(['hg_sync_queue_v1', 'hg_sync_deadletter_v1']);
+  const MAP_KEYS = new Set(['hadron_sr_limits', 'hadron_academy_progress']);   // keyed maps: merge their keys
+  // Merge a live (newer) and a saved (older) value of key k, or null = no merge (the newer one wins).
+  // Lists: items from both, de-duplicated by qid / id (the write queue and dead-letter keep their
+  // order, older ops first; other lists newest first). Keyed maps: keys from both, newer entry wins.
+  function mergeValues(k, live, saved) {
+    let a, b;
+    try { a = JSON.parse(live); b = JSON.parse(saved); } catch (_) { return null; }
+    if (MAP_KEYS.has(k) && a && b && typeof a === 'object' && typeof b === 'object' && !Array.isArray(a) && !Array.isArray(b)) {
+      return JSON.stringify(Object.assign({}, b, a));
+    }
+    if (!Array.isArray(a) || !Array.isArray(b)) return null;
+    const idOf = function (x) { return (x && typeof x === 'object') ? String(x.qid || x.id || JSON.stringify(x)) : JSON.stringify(x); };
+    const first = FIFO_KEYS.has(k) ? b : a, second = FIFO_KEYS.has(k) ? a : b;
+    const seen = new Set(first.map(idOf));
+    return JSON.stringify(first.concat(second.filter(function (x) { const id = idOf(x); if (seen.has(id)) return false; seen.add(id); return true; })));
+  }
+  function restoreTenantData(data) {
+    const written = [];
+    try {
+      Object.keys(data || {}).forEach(function (k) {
+        if (!isTenantKey(k) || typeof data[k] !== 'string') return;
+        const cur = localStorage.getItem(k);
+        let val = data[k];
+        if (cur !== null && !EMPTY_VALUES.has(cur)) {
+          val = mergeValues(k, cur, data[k]);
+          if (val === null || val === cur) return;   // the live value wins / nothing to add
+        }
+        localStorage.setItem(k, val);
+        written.push([k, cur]);
+      });
+      return true;
+    } catch (e) {
+      written.forEach(function (w) { try { if (w[1] === null) localStorage.removeItem(w[0]); else localStorage.setItem(w[0], w[1]); } catch (_) {} });
+      return false;
+    }
+  }
+  function lastUid() { try { return localStorage.getItem('hg-last-uid'); } catch (_) { return null; } }
+  function lastOrg() { try { return localStorage.getItem('hg-last-org'); } catch (_) { return null; } }
+
+  // ── User switch (single-flight) ─────────────────────────
+  // Runs on every reconcile with the SESSION's user id (so it doesn't depend on the profile fetch).
+  // Same user → nothing. Otherwise the live store may hold another person's data (they never signed
+  // out) or late writes from an earlier sign-out: set the previous user's data aside for THEM, clear
+  // the live store, record the new user, and mark their own stash for restore (finished in
+  // refreshProfileCard once the organisation can be checked).
+  // Single-flight: boot and supabase's INITIAL_SESSION / SIGNED_IN can call this concurrently.
+  // Crash-safe: hg-last-uid changes right after the clear, and a stash is never overwritten with
+  // empty data, so an interrupted switch can't destroy or misfile anyone's data.
+  let _switchRun = null;
+  function hgEnsureUser(uid) {
+    if (_switchRun) return _switchRun;
+    _switchRun = (async function () {
+      const prev = lastUid();
+      if (!uid) return false;
+      if (prev === uid) {
+        // Same user. If their data is set aside (a sign-out that didn't finish, so the markers were
+        // never dropped), mark it for restore: the restore merges and never clobbers, so this is safe.
+        try { if (stashIndex()[uid] && !localStorage.getItem('hg-restore-pending')) localStorage.setItem('hg-restore-pending', uid); } catch (_) {}
+        return false;
+      }
+      window.__hgTenantFrozen = true;            // late tenant writers (report autosave…) must not write now
+      window.__hgSuppressQueuePersist = true;    // nor the sync queue
+      const residue = Object.keys(localStorage).some(isTenantKey);
+      if (prev && residue) {
+        try { await stashPut(prev, collectTenantData(), lastOrg()); } catch (_) {}   // best effort; isolation wins either way
+      }
+      const purge = !!prev || residue;
+      if (purge) { try { await hgClearTenantData(); } catch (_) {} }
+      try {
+        localStorage.setItem('hg-last-uid', uid);
+        localStorage.removeItem('hg-last-org');
+        localStorage.setItem('hg-restore-pending', uid);
+      } catch (_) {}
+      if (purge) { try { location.reload(); } catch (_) {} return true; }   // modules may still hold the old data in memory
+      window.__hgTenantFrozen = false;
+      window.__hgSuppressQueuePersist = false;
+      return false;
+    })().finally(function () { _switchRun = null; });
+    return _switchRun;
+  }
+
+  // Finish a pending restore for this user (single-flight). Only into the SAME organisation the data
+  // was saved from: if the account has moved org since, that org's data is discarded, never restored.
+  let _restoreRun = null, _restoreWarned = false;
+  function hgRestorePending(profile) {
+    if (_restoreRun) return _restoreRun;
+    _restoreRun = (async function () {
+      let pending = null;
+      try { pending = localStorage.getItem('hg-restore-pending'); } catch (_) {}
+      const uid = profile && profile.id;
+      if (!pending || !uid || pending !== uid) return false;
+      const clearPending = function () { try { localStorage.removeItem('hg-restore-pending'); } catch (_) {} };
+      let st;
+      try { st = await stashGet(uid); } catch (_) { return false; }   // storage unavailable now: retry on a later load
+      if (!st || !st.data) { clearPending(); return false; }
+      if (st.org && st.org !== (profile.organisation_id || null)) {
+        try { await stashDel(uid); } catch (_) {}
+        clearPending();
+        return false;
+      }
+      // Already put back once (the app closed before the stash could be deleted): restoring it again
+      // would re-add queued changes that have been sent since, and replay them over newer edits.
+      if (restoreDone(uid) === st.savedAt) {
+        try { await stashDel(uid); } catch (_) {}
+        clearPending();
+        return false;
+      }
+      // A stash with no organisation recorded (signed out offline on the first launch of this
+      // version) is restored into the current one: its queued rows carry their own organisation_id
+      // where it was known, so the server rejects any that belong elsewhere.
+      if (!restoreTenantData(st.data)) {   // storage full: keep stash + marker, retried next load
+        if (!_restoreWarned) {
+          _restoreWarned = true;
+          setTimeout(function () {
+            const msg = 'Your saved data couldn’t be put back on this phone because storage is full. It is kept safely and comes back automatically once there is space: remove old photos or saved items, then reopen the app.';
+            if (window.hgSheet) window.hgSheet.open({ title: 'Saved data not restored yet', body: '<div class="hg-sheet-note warn"><span>' + msg + '</span></div>', actions: [{ label: 'OK', kind: 'primary' }] });
+            else if (typeof window.showToast === 'function') window.showToast(msg);
+          }, 600);
+        }
+        return false;
+      }
+      setRestoreDone(uid, st.savedAt);   // same task as the restore
+      try { await stashDel(uid); } catch (_) {}
+      clearPending();
+      try { location.reload(); } catch (_) {}
+      return true;
+    })().finally(function () { _restoreRun = null; });
+    return _restoreRun;
+  }
+
+  // Sign out. opts.removeData (shared device) deletes this user's data from the phone; otherwise it
+  // is kept in their stash. Throws Error('stash-failed') if the data could not be set aside — then
+  // NOTHING has been signed out or cleared (the caller offers "remove data" or cancel).
+  // Throws Error('not-configured') when there is no cloud sign-in (the caller uses the local path).
+  window.hgSignOut = async function (opts) {
+    opts = opts || {};
+    if (!window.HG_AUTH || !window.HG_AUTH.configured) throw new Error('not-configured');
+    const uid = (window.HG_PROFILE && window.HG_PROFILE.id) || lastUid();
+    const org = (window.HG_PROFILE && window.HG_PROFILE.organisation_id) || lastOrg();
+    // 1. Online only: try to land queued changes under the still-valid session (persistence stays
+    //    ON, so the queue records progress op by op). Offline a flush would only burn retry attempts.
+    try {
+      if (navigator.onLine !== false && window.HG_DB && window.HG_DB._flush) {
+        const wait = opts.syncWait == null ? 3000 : opts.syncWait;
+        await Promise.race([window.HG_DB._flush(), new Promise(function (res) { setTimeout(res, wait); })]);
       }
     } catch (_) {}
+    // 2. Freeze: the queue stops sending/persisting, and late tenant writers (e.g. the report draft
+    //    autosave that fires on unload) must not write the departing user's data back.
+    window.__hgSuppressQueuePersist = true;
+    window.__hgTenantFrozen = true;
+    // 3. Keep this user's device data for them, unless they asked to remove it.
+    if (opts.removeData) {
+      if (uid) { try { await stashDel(uid); } catch (_) {} }
+    } else {
+      const data = collectTenantData();
+      let ok = false;
+      if (!Object.keys(data).length) ok = true;   // nothing to keep
+      else { try { ok = !!uid && await stashPut(uid, data, org); } catch (_) { ok = false; } }
+      if (!ok) {
+        window.__hgSuppressQueuePersist = false;
+        window.__hgTenantFrozen = false;
+        throw new Error('stash-failed');
+      }
+    }
+    // 4. Clear the live store (isolation).
     try { await hgClearTenantData(); } catch (_) {}
-    try { localStorage.removeItem('hg-last-uid'); } catch (_) {}
-    try { await window.HG_AUTH.signOut(); } catch (_) {}
-    try { location.reload(); } catch (_) {}   // hard reset — no tenant state left in memory
+    // 5. End the session. Bounded: a hung request must not freeze the sheet, and supabase-js can
+    //    return early offline WITHOUT removing the stored session, so always remove it locally too.
+    try { await Promise.race([window.HG_AUTH.signOut(), new Promise(function (res) { setTimeout(res, 3000); })]); } catch (_) {}
+    try { Object.keys(localStorage).forEach(function (k) { if (k.indexOf('hg-auth-v1') === 0) localStorage.removeItem(k); }); } catch (_) {}
+    // 6. Only now drop the per-device markers: other tabs reload when hg-last-uid changes, and must
+    //    find the session already gone (else they'd boot as this user again and re-fill the phone).
+    //    If the app dies before this line, hgEnsureUser finds the user's stash and marks it for restore.
+    try { ['hg-last-uid', 'hg-last-org', 'hg-restore-pending'].forEach(function (k) { localStorage.removeItem(k); }); } catch (_) {}
+    try { location.reload(); } catch (_) {}   // no tenant state left in memory
+  };
+
+  // ── Account menu + sign-out confirmation (in-app sheets, not browser pop-ups) ──
+  function escH(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
+  function plural(n, one, many) { return n + ' ' + (n === 1 ? one : many); }
+
+  window.hgConfirmSignOut = function () {
+    if (!window.hgSheet) {   // sheet UI failed to load: plain confirm, keep data (the safe default)
+      if (window.confirm('Sign out? Your saved data stays on this phone for when you sign in again.')) {
+        window.hgSignOut().catch(function (e) {
+          if (e && e.message === 'not-configured') { if (typeof window.logout === 'function') window.logout(); }
+          else if (e && e.message === 'stash-failed') window.alert('This phone couldn’t set your data aside, so you are still signed in.');
+        });
+      }
+      return;
+    }
+    const pending = (window.HG_DB && typeof window.HG_DB._queueLen === 'function') ? window.HG_DB._queueLen() : 0;
+    const dead = (window.HG_DB && typeof window.HG_DB._deadLen === 'function') ? window.HG_DB._deadLen() : 0;
+    const online = navigator.onLine !== false;
+    const status = pending
+      ? '<div class="hg-sheet-note warn"><span aria-hidden="true">⚠</span><span>' + plural(pending, 'change is', 'changes are') + ' still waiting to sync. ' +
+          (online ? 'Signing out will try to send ' + (pending === 1 ? 'it' : 'them') + ' first.'
+                  : 'You’re offline. ' + (pending === 1 ? 'It stays' : 'They stay') + ' on this phone and sync the next time you sign in here.') + '</span></div>'
+      : '<div class="hg-sheet-note ok"><span aria-hidden="true">✓</span><span>' + (dead ? 'Nothing is waiting to sync.' : 'Everything is synced.') + '</span></div>';
+    const body = status +
+      '<p>Your calculation history, job cards, safety records and drafts stay on this phone and come back when you sign in again. Lab (LIMS) records come back from the cloud.</p>' +
+      '<label class="hg-sheet-check"><input type="checkbox" id="hgSoRemove"><span><b>This is a shared device</b><small>Remove my data from this phone when I sign out.</small></span></label>' +
+      '<div class="hg-sheet-note danger" id="hgSoRemoveWarn" hidden><span>This deletes everything saved only on this phone: calculation history, job cards, safety records and drafts.' +
+        (pending ? ' ' + plural(pending, 'unsynced change', 'unsynced changes') + ' will be lost.' : '') + '</span></div>';
+
+    async function run(c) {
+      const remove = !!(c.el.querySelector('#hgSoRemove') || {}).checked;
+      c.setBusy(true, pending && online ? 'Syncing…' : 'Signing out…');
+      try {
+        await window.hgSignOut({ removeData: remove, syncWait: pending && online ? 10000 : 1500 });
+      } catch (e) {
+        if (e && e.message === 'not-configured') { c.close(); if (typeof window.logout === 'function') window.logout(); return; }
+        c.setBusy(false);
+        c.setBody('<div class="hg-sheet-note danger"><span>This phone couldn’t set your data aside (a storage problem), so you are still signed in.</span></div>' +
+          '<p>To sign out anyway, remove your data from this phone.' + (pending ? ' ' + plural(pending, 'unsynced change', 'unsynced changes') + ' will be lost.' : '') + '</p>');
+        c.setActions([
+          { label: 'Sign out and remove data', kind: 'danger', keepOpen: true, onClick: async function (c2) {
+              c2.setBusy(true, 'Signing out…');
+              try { await window.hgSignOut({ removeData: true, syncWait: 1500 }); } catch (_) { c2.setBusy(false); }
+            } },
+          { label: 'Cancel', kind: 'plain', focus: true }
+        ]);
+      }
+    }
+
+    const ctx = window.hgSheet.open({
+      title: 'Sign out?',
+      body: body,
+      actions: [{ label: 'Sign out', kind: 'primary', keepOpen: true, onClick: run }, { label: 'Cancel', kind: 'plain' }]
+    });
+    const cb = ctx.el.querySelector('#hgSoRemove'), warn = ctx.el.querySelector('#hgSoRemoveWarn');
+    if (cb) cb.addEventListener('change', function () {
+      warn.hidden = !cb.checked;
+      const main = ctx.el.querySelector('.hg-sheet-actions button');
+      if (main) { main.textContent = cb.checked ? 'Sign out and remove data' : 'Sign out'; main.className = 'hg-sheet-btn ' + (cb.checked ? 'danger' : 'primary'); }
+    });
+  };
+
+  window.hgOpenAccountMenu = function () {
+    const go = function (name) { if (typeof window.openWindow === 'function') window.openWindow(name); };
+    if (!window.hgSheet) { go('profile'); return; }
+    const p = window.HG_PROFILE || {};
+    const name = p.full_name || (p.email ? p.email.split('@')[0] : 'Your account');
+    const org = (p.organisations && p.organisations.name) || '';
+    window.hgSheet.open({
+      title: name,
+      body: (p.email || org) ? '<p>' + escH(p.email || '') + (p.email && org ? '<br>' : '') + escH(org) + '</p>' : '',
+      actions: [
+        { label: 'Profile', kind: 'secondary', onClick: function () { go('profile'); } },
+        { label: 'Settings', kind: 'secondary', onClick: function () { go('settings'); } },
+        { label: 'Sign out', kind: 'secondary', keepOpen: true, onClick: function (c) { c.close(); setTimeout(window.hgConfirmSignOut, 0); } },
+        { label: 'Close', kind: 'plain' }
+      ]
+    });
   };
 
   // Wait for supabase-client.js to finish initialising. If it's already

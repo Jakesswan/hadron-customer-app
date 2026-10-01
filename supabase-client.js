@@ -53,11 +53,10 @@
   const DEAD_KEY  = 'hg_sync_deadletter_v1';
   const MAX_ATTEMPTS = 6;
   function loadQueue()   { try { return JSON.parse(localStorage.getItem(QUEUE_KEY) || '[]'); } catch { return []; } }
-  // While signing out, a raced-out flush must NOT re-persist the queue after hgClearTenantData
-  // wipes it — otherwise the departing user's ops would survive and replay into the NEXT user's
-  // session (cross-tenant leak). hgSignOut sets window.__hgSuppressQueuePersist before wiping;
-  // the reload clears it. Sends still happen (under the still-valid old session); only local
-  // persistence is suppressed.
+  // While signing out / switching user, a raced-out flush must NOT re-persist the queue after
+  // hgClearTenantData wipes it — otherwise the departing user's ops would survive and replay into
+  // the NEXT user's session (cross-tenant leak). auth-ui sets window.__hgSuppressQueuePersist before
+  // wiping (the reload clears it); a running flush also stops sending at its next op.
   function saveQueue(q)  { if (window.__hgSuppressQueuePersist) return; try { localStorage.setItem(QUEUE_KEY, JSON.stringify(q || [])); } catch (e) { console.warn('[HG_SYNC] queue persist failed (storage full?)', e); } }
   function loadDead()    { try { return JSON.parse(localStorage.getItem(DEAD_KEY) || '[]'); } catch { return []; } }
   function saveDead(d)   { if (window.__hgSuppressQueuePersist) return; try { localStorage.setItem(DEAD_KEY, JSON.stringify((d || []).slice(-50))); } catch (_) {} }
@@ -66,9 +65,14 @@
     const key = opId(op);
     const q = loadQueue().filter(o => opId(o) !== key);   // a newer write for a record supersedes any pending op for it
     op.attempts = op.attempts || 0;
+    // Unique per enqueue, so a running flush can tell ops added (or replaced) mid-run from the snapshot it is sending.
+    op.qid = op.qid || (Date.now().toString(36) + Math.random().toString(36).slice(2, 8));
     q.push(op);
     saveQueue(q);
   }
+  // Identity of one queued op: its qid, or table:id for ops queued before qids existed
+  // (unique within a queue because enqueue de-dupes per record).
+  function opTok(op)     { return op.qid ? 'q:' + op.qid : 'k:' + opId(op); }
   function queueLen()    { return loadQueue().length; }
   function deadLen()     { return loadDead().length; }
   function deadLetter(op, reason) {
@@ -89,39 +93,118 @@
     return false;
   }
 
-  async function flushQueue() {
+  // Single-flight: the online event, sign-in and sign-out can all ask for a flush at once; they share
+  // one run instead of sending the same ops twice and racing each other's final save.
+  let _flushRun = null;
+  function flushQueue() {
+    if (_flushRun) return _flushRun;
+    _flushRun = _flushOnce().finally(() => { _flushRun = null; });
+    return _flushRun;
+  }
+  // A stalled request must not pin the single-flight run forever, so each op has a time limit. It
+  // scales with the payload (a report with photos on a slow uplink needs minutes, ~100 kbps floor),
+  // and a time-out is NOT a failed attempt: the op stays queued as it was, so a big upload is never
+  // dead-lettered just for being slow (the run moves on past a big one, and stops if a small one
+  // times out too).
+  const OP_TIMEOUT_MS = 20000;
+  function opTimeoutMs(op) {
+    let n = 0;
+    try { n = JSON.stringify(op.row || '').length; } catch (_) {}
+    return Math.max(OP_TIMEOUT_MS, Math.round(n / 12.5));
+  }
+  async function sendOp(sb, op) {
+    const b = op.kind === 'upsert' ? sb.from(op.table).upsert(op.row)
+            : op.kind === 'delete' ? sb.from(op.table).delete().eq('id', op.id) : null;
+    if (!b) return { res: { error: { message: 'unknown op kind' }, status: 400 }, timedOut: false };
+    if (typeof b.abortSignal !== 'function' || typeof AbortController === 'undefined') return { res: await b, timedOut: false };
+    const ctrl = new AbortController();
+    const t = setTimeout(() => ctrl.abort(), opTimeoutMs(op));
+    try {
+      const res = await b.abortSignal(ctrl.signal);
+      return { res, timedOut: ctrl.signal.aborted };
+    } catch (e) {
+      if (ctrl.signal.aborted) return { res: null, timedOut: true };
+      throw e;
+    } finally { clearTimeout(t); }
+  }
+  // The queue may only be sent by the user it belongs to (hg-last-uid), in the organisation it was
+  // made in (hg-last-org, checked against the loaded profile), and never while sign-out / a user or
+  // org switch has frozen it (__hgSuppressQueuePersist) or a join has paused it (__hgQueuePaused).
+  // Rows default to current_org() on the server, so sending under the wrong user or org would write
+  // them into someone else's organisation.
+  function queueOwner() { try { return localStorage.getItem('hg-last-uid'); } catch (_) { return null; } }
+  function queueBlocked() { return !!(window.__hgSuppressQueuePersist || window.__hgQueuePaused); }
+  async function mayFlushAs(sb, owner) {
+    const s = (await sb.auth.getSession()).data.session;
+    if (!s || !s.user || !owner || s.user.id !== owner || queueOwner() !== owner) return false;
+    const p = window.HG_PROFILE;
+    if (!p || p.id !== owner) return false;              // profile not loaded yet: refreshProfileCard flushes once it is
+    let org = null;
+    try { org = localStorage.getItem('hg-last-org'); } catch (_) {}
+    // No organisation recorded (e.g. storage too full to record it) can't be compared: allow, as the
+    // rows themselves carry organisation_id where it was known.
+    return !org || org === (p.organisation_id || null);
+  }
+  async function _flushOnce() {
     if (!CONFIGURED) return;
     const sb = window.HG_SUPA;
-    if (!sb) return;
-    const session = (await sb.auth.getSession()).data.session;
-    if (!session) return;
-    let q = loadQueue();
-    if (!q.length) return;
-    const remaining = [];
+    if (!sb || queueBlocked()) return;
+    const owner = queueOwner();
+    if (!(await mayFlushAs(sb, owner))) return;
+    const snapshot = loadQueue();
+    if (!snapshot.length) return;
+    const done = new Set();       // tokens sent or set aside
+    const retry = new Map();      // token -> op with bumped attempts (transient failure, try again later)
     let deadened = 0;
-    for (const op of q) {
+    // Persist progress after EVERY op, merged with the live queue. Ops enqueued while this run is
+    // sending (new qids), or newer writes that replaced a snapshot op, are kept. The old single save at
+    // the end dropped anything saved mid-flush, and left already-sent ops queued if the run was cut short
+    // (e.g. sign-out's time limit), which could later replay stale data over newer edits.
+    const persist = () => {
+      const out = [];
+      for (const o of loadQueue()) {
+        const t = opTok(o);
+        if (done.has(t)) continue;
+        out.push(retry.has(t) ? retry.get(t) : o);
+      }
+      saveQueue(out);
+      return out.length;
+    };
+    for (const op of snapshot) {
+      // Signing out / switching user froze the queue, or a join paused it: stop sending. Anything sent
+      // after a freeze would stay in the frozen copy and replay later as a stale overwrite.
+      if (queueBlocked()) break;
+      // Another tab may have signed this user out or switched user since the run started.
+      if (!(await mayFlushAs(sb, owner))) break;
       let error = null, status = 0;
+      const t = opTok(op);
       try {
-        let res;
-        if (op.kind === 'upsert') res = await sb.from(op.table).upsert(op.row);
-        else if (op.kind === 'delete') res = await sb.from(op.table).delete().eq('id', op.id);
+        const sent = await sendOp(sb, op);
+        if (sent.timedOut) {                               // too slow right now: op stays queued unchanged
+          persist();
+          if (opTimeoutMs(op) > OP_TIMEOUT_MS) continue;    // a big upload timed out: smaller ops behind it may still get through
+          break;                                           // even a small op timed out: the link is down
+        }
+        const res = sent.res;
         error = res && res.error;                          // supabase-js returns {error} (no throw) on RLS/constraint
         status = (res && res.status) || 0;                 // HTTP status lives on the response envelope, not on error
       } catch (thrown) {
         error = thrown;                                    // network / transport failure → transient
       }
-      if (!error) continue;                                // success → drop from the queue
+      if (!error) { done.add(t); persist(); continue; }   // success → drop from the queue
       op.attempts = (op.attempts || 0) + 1;
       if (!isPermanentError(error, status) && op.attempts < MAX_ATTEMPTS) {
-        remaining.push(op);                                // transient / unknown → retry, bounded
+        retry.set(t, op);                                  // transient / unknown → retry, bounded
       } else {
         deadLetter(op, (error && (error.message || error.code)) || 'failed');   // permanent or exhausted → set aside
         deadened++;
+        done.add(t);
       }
+      persist();
     }
-    saveQueue(remaining);
+    const remaining = persist();
     if (deadened) console.warn('[HG_SYNC] ' + deadened + ' op(s) could not sync and were set aside (localStorage.' + DEAD_KEY + ')');
-    document.dispatchEvent(new CustomEvent('hg:sync:flushed', { detail: { remaining: remaining.length, dead: loadDead().length, deadNew: deadened } }));
+    document.dispatchEvent(new CustomEvent('hg:sync:flushed', { detail: { remaining, dead: loadDead().length, deadNew: deadened } }));
   }
 
   // ── Init ────────────────────────────────────────────────
