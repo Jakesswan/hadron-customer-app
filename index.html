@@ -43,59 +43,59 @@
     <!-- Supabase JS SDK (auth + cloud sync), pinned 2.117.2 and served by the app itself so sign-in
          works offline from the precache (it used to be the floating @2 from a CDN). See
          THIRD_PARTY_NOTICES.md. To upgrade: replace the file, rename it, update this tag + sw.js. -->
-    <script src="supabase-js-2.117.2.js?v=149"></script>
+    <script src="supabase-js-2.117.2.js?v=150"></script>
 
     <!-- Hadron Supabase bridge -->
-    <script src="supabase-client.js?v=149"></script>
+    <script src="supabase-client.js?v=150"></script>
 
     <!-- Shared UI primitives (in-app sheets) — loaded before auth-ui, which uses them -->
-    <script src="hg-ui.js?v=149" defer></script>
+    <script src="hg-ui.js?v=150" defer></script>
     <!-- Auth UI (login/signup gate, profile binding) -->
-    <script src="auth-ui.js?v=149" defer></script>
+    <script src="auth-ui.js?v=150" defer></script>
 
     <!-- Push notifications -->
-    <script src="push.js?v=149" defer></script>
+    <script src="push.js?v=150" defer></script>
 
     <!-- Translation bundle -->
-    <script src="i18n.js?v=149"></script>
+    <script src="i18n.js?v=150"></script>
 
     <!-- Hadron Tristroke icon system (matches the ERP) -->
-    <script src="hadron-icons.js?v=149" defer></script>
+    <script src="hadron-icons.js?v=150" defer></script>
 
     <!-- Cross-platform emoji rendering (Twemoji) -->
-    <script src="emoji.js?v=149" defer></script>
+    <script src="emoji.js?v=150" defer></script>
 
     <!-- Customizable home grid (drag-to-reorder) -->
-    <script src="customize.js?v=149" defer></script>
+    <script src="customize.js?v=150" defer></script>
 
     <!-- Data Manager (Excel import/export) -->
-    <script src="data-manager.js?v=149" defer></script>
+    <script src="data-manager.js?v=150" defer></script>
 
     <!-- QR encoder (MIT, Kazuhiko Arase) -->
-    <script src="qr.js?v=149"></script>
+    <script src="qr.js?v=150"></script>
 
     <!-- QR Builder app -->
-    <script src="qr-app.js?v=149" defer></script>
+    <script src="qr-app.js?v=150" defer></script>
 
     <!-- Pool Water module -->
-    <script src="pool.js?v=149" defer></script>
+    <script src="pool.js?v=150" defer></script>
     <!-- Cooling Tower field calculator -->
-    <script src="coolingtower.js?v=149" defer></script>
+    <script src="coolingtower.js?v=150" defer></script>
     <!-- Boiler / Steam field calculator -->
-    <script src="boiler.js?v=149" defer></script>
+    <script src="boiler.js?v=150" defer></script>
     <!-- Water softener sizing calculator -->
-    <script src="softener.js?v=149" defer></script>
-    <script src="academy-content.js?v=149" defer></script>
-    <script src="academy.js?v=149" defer></script>
+    <script src="softener.js?v=150" defer></script>
+    <script src="academy-content.js?v=150" defer></script>
+    <script src="academy.js?v=150" defer></script>
 
-    <script src="searchable-select.js?v=149" defer></script>
-    <script src="trends.js?v=149" defer></script>
+    <script src="searchable-select.js?v=150" defer></script>
+    <script src="trends.js?v=150" defer></script>
 
     <!-- LIMS module (loaded at end of body via defer) -->
-    <script src="lims.js?v=149" defer></script>
-    <script src="lims-sync.js?v=149" defer></script>
-    <script src="portal.js?v=149" defer></script>
-    <script src="team.js?v=149" defer></script>
+    <script src="lims.js?v=150" defer></script>
+    <script src="lims-sync.js?v=150" defer></script>
+    <script src="portal.js?v=150" defer></script>
+    <script src="team.js?v=150" defer></script>
 
     <!-- Default UI font: Gothic A1 (Google Fonts) -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -2676,7 +2676,7 @@
                 <div class="hg-section-title">About</div>
                 <div class="hg-kvgrid">
                     <div class="hg-kv"><div class="k">App</div><div class="v">Hadron Group</div></div>
-                    <div class="hg-kv"><div class="k">Version</div><div class="v">v149</div></div>
+                    <div class="hg-kv"><div class="k">Version</div><div class="v">v150</div></div>
                     <div class="hg-kv"><div class="k">Platform</div><div class="v">PWA</div></div>
                 </div>
             </div>
@@ -4134,7 +4134,33 @@
         // deferred, so a sheet that opens the next sheet keeps it, and only ever our own entries, so Back
         // on the home screen leaves the app in one press. A followed #route link (portal, notification)
         // is navigation, not Back. Decisions use the app's state, not event.state.
+        // Android's Back (and Esc on a computer) is also a "close request". Where the browser has
+        // CloseWatcher (Chrome 120+), ONE watcher stands for "something is open" alongside the entry: a
+        // close request goes to it instead of to history, closes the topmost layer the same way, and a new
+        // watcher is set while anything is still open, so Back pressed several times in a row closes one
+        // layer per press. (With the entry alone, Chrome skips an entry added without a tap in between, so
+        // a second Back in a row could leave the app.) The entry stays for browsers without CloseWatcher
+        // and for a computer's Back button.
         let hgBackArmed = false, hgBackSkip = 0, hgDisarmTimer = 0;
+        const hgCanWatch = typeof window.CloseWatcher === 'function';
+        let hgWatcher = null;
+        function hgWatch() {
+            if (!hgCanWatch || hgWatcher || !document.body.classList.contains('hg-app-ready')) return;
+            try {
+                const w = new CloseWatcher();
+                w.onclose = function () {
+                    if (hgWatcher !== w) return;            // already replaced or removed
+                    hgWatcher = null;
+                    hgCloseNewest();
+                    if (hgAnythingOpen()) hgWatch(); else hgDisarmBack();
+                };
+                hgWatcher = w;
+            } catch (_) { hgWatcher = null; }
+        }
+        function hgUnwatch() {
+            const w = hgWatcher; hgWatcher = null;
+            if (w) { try { w.destroy(); } catch (_) {} }
+        }
         function hgSheetsOpen() { return (window.hgSheet && typeof window.hgSheet.count === 'function') ? window.hgSheet.count() : 0; }
         function hgShown(id) { const el = document.getElementById(id); return !!(el && el.style.display && el.style.display !== 'none'); }
         // Full-screen layers ABOVE sheets (z 12500 / 12000 / 9999), topmost first.
@@ -4171,6 +4197,10 @@
         });
         function hgArmBack() {
             if (hgDisarmTimer) { clearTimeout(hgDisarmTimer); hgDisarmTimer = 0; }
+            // Behind the start-up / sign-in screen nothing can be seen (v149 hg-app-ready), so Back must not
+            // be spent closing it: it is armed when the app is revealed (below).
+            if (!document.body.classList.contains('hg-app-ready')) return;
+            hgWatch();
             if (hgBackArmed) return;
             try { history.pushState({ hgBack: 1 }, ''); hgBackArmed = true; } catch (_) {}
         }
@@ -4180,10 +4210,12 @@
             hgBackSkip++; try { history.back(); } catch (_) { hgBackSkip--; }
         }
         function hgDisarmBack() {
-            if (!hgBackArmed || hgDisarmTimer || hgAnythingOpen()) return;
+            if (!(hgBackArmed || hgWatcher) || hgDisarmTimer || hgAnythingOpen()) return;
             hgDisarmTimer = setTimeout(function () {
                 hgDisarmTimer = 0;
-                if (!hgBackArmed || hgAnythingOpen()) return;
+                if (hgAnythingOpen()) return;
+                hgUnwatch();
+                if (!hgBackArmed) return;
                 hgBackArmed = false;
                 hgStepOffOurEntry();
             }, 80);
@@ -4211,7 +4243,7 @@
                 if (hgAnythingOpen()) {
                     // Something opened while that step back was in flight (its new entry was dropped):
                     // make sure an entry of ours is on top again.
-                    if (onOurEntry) hgBackArmed = true; else { hgBackArmed = false; hgArmBack(); }
+                    if (onOurEntry) { hgBackArmed = true; hgWatch(); } else { hgBackArmed = false; hgArmBack(); }
                 } else if (!hgBackArmed && onOurEntry) {
                     hgStepOffOurEntry();                    // landed on another entry of ours: step off it too
                 }
@@ -4227,10 +4259,26 @@
             hgBackArmed = false;                            // Back used up the entry
             hgCloseNewest();
             if (hgAnythingOpen()) hgArmBack();
-            else hgStepOffOurEntry();                       // landed on an older entry of ours: step off it too
+            else { hgUnwatch(); hgStepOffOurEntry(); }      // landed on an older entry of ours: step off it too
         });
         document.addEventListener('hg:sheet', function (e) {
             if (e.detail && e.detail.open) hgArmBack(); else hgDisarmBack();
+        });
+        // Revealed (signed in): arm for whatever opened behind the start-up screen (a deep link, a sheet).
+        new MutationObserver(function () { if (document.body.classList.contains('hg-app-ready') && hgAnythingOpen()) hgArmBack(); })
+            .observe(document.body, { attributes: true, attributeFilter: ['class'] });
+        // Esc while typing in a field first just leaves the field (as Back on a phone first hides the
+        // keyboard), so a stray Esc can't throw away a half-filled form; the next Esc closes the screen.
+        // Handlers that already used Esc (an hg-ui sheet, an open searchable list) prevented it first.
+        document.addEventListener('keydown', function (e) {
+            if (e.key !== 'Escape' || e.defaultPrevented || e.isComposing) return;
+            const t = e.target;
+            if (!t || !t.tagName) return;
+            const typing = t.isContentEditable || t.tagName === 'TEXTAREA' || t.tagName === 'SELECT' ||
+                (t.tagName === 'INPUT' && !/^(button|submit|reset|checkbox|radio|file|image|range|color)$/i.test(t.type || ''));
+            if (!typing || t.closest('#sr_test_picker')) return;   // the test picker's search box: Esc closes the picker
+            e.preventDefault();
+            try { t.blur(); } catch (_) {}
         });
         // Reloaded while something was open: the current entry is left over from before. Treat it as
         // ours, so it is removed (or simply reused if a window opens straight away). Otherwise this is the

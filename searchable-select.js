@@ -124,7 +124,12 @@
         const opts = panel.querySelectorAll('.hg-ss-opt');
         const pick = active >= 0 ? opts[active] : opts[0];
         if (pick) choose(pick.getAttribute('data-value'));
-      } else if (e.key === 'Escape') { panel.style.display = 'none'; syncInput(); input.blur(); }
+      } else if (e.key === 'Escape') {
+        // With the list open, Esc closes just the list: handled here, it isn't also a close request
+        // for the screen behind it (index.html Back guard).
+        if (panel.style.display !== 'none') e.preventDefault();
+        panel.style.display = 'none'; syncInput(); input.blur();
+      }
     });
     panel.addEventListener('mousedown', (e) => {   // mousedown beats the input blur
       const opt = e.target.closest('.hg-ss-opt');

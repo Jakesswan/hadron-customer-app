@@ -823,11 +823,19 @@
       }
       if (c) c.setBusy(true, 'Joining…');
       const oldOrg = (window.HG_PROFILE && window.HG_PROFILE.organisation_id) || lastOrg();
+      // Time-limited, so "Joining…" (which can't be dismissed, not even with Back) can't hang for ever.
+      let unsure = false;   // the join got no answer in time: the server may still move the account
       try {
         let joined = false;
-        try { const { data } = await window.HG_SUPA.rpc('redeem_org_invite'); joined = !!(data && data.joined); } catch (_) {}
+        try {
+          const r = await withLimit(window.HG_SUPA.rpc('redeem_org_invite'));
+          joined = !!(r && r.data && r.data.joined);
+          // No reply from the server (the connection dropped after sending): it may have moved the account all the same.
+          if (r && r.error && !r.status && navigator.onLine !== false) unsure = true;
+        }
+        catch (e) { if (e && e.code === 'timeout') unsure = true; }
         // No answer doesn't mean no move (a dropped reply on mobile): check where the account is now.
-        if (!joined) { try { const p = await window.HG_AUTH.getProfile(); joined = !!(p && p.organisation_id && p.organisation_id !== oldOrg); } catch (_) {} }
+        if (!joined) { try { const p = await withLimit(window.HG_AUTH.getProfile()); joined = !!(p && p.organisation_id && p.organisation_id !== oldOrg); } catch (_) {} }
         if (joined) {
           window.__hgSuppressQueuePersist = true;
           window.__hgTenantFrozen = true;
@@ -837,6 +845,12 @@
           return;
         }
       } catch (_) {}
+      if (unsure) {
+        // The move may still land after this: keep the queue paused (nothing is sent into the wrong
+        // company) and start again from what the server says; a late move is cleared up by hgEnsureOrg.
+        try { location.reload(); } catch (_) {}
+        return;
+      }
       window.__hgQueuePaused = false;
       if (c) {
         c.setBusy(false);
