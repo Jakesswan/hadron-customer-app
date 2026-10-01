@@ -182,7 +182,7 @@
           ${list.map(it => `<option value="${esc(it.id)}" ${s.payload===it.id?'selected':''}>${esc(it.__label)}</option>`).join('')}
         </select>
         <div class="qr-hint">Scanning opens the Hadron app directly to this asset (${esc(BASE_URL)}#lims/${s.type.replace('lims-','')}/…).</div>
-        ${list.length===0?'<div class="qr-hint" style="color:#c59d2b;">No LIMS entries yet — create samples/instruments in LIMS first.</div>':''}`;
+        ${list.length===0?'<div class="qr-hint" style="color:var(--warn-ink,#9A6400);">No LIMS entries yet — create samples/instruments in LIMS first.</div>':''}`;
     } else if (s.type === 'hg-site' || s.type === 'hg-asset') {
       const sites = loadHGSites();
       if (s.type === 'hg-site') {
@@ -192,7 +192,7 @@
             ${sites.map(st => `<option value="${esc(st.id)}" ${s.payload===st.id?'selected':''}>${esc(st.name)} · ${st.equipment.length} asset(s)</option>`).join('')}
           </select>
           <div class="qr-hint">Scanning opens the Site Register (Assets app) for this site.</div>
-          ${sites.length===0?'<div class="qr-hint" style="color:#c59d2b;">No sites yet — open Assets → Site Register to add one.</div>':''}`;
+          ${sites.length===0?'<div class="qr-hint" style="color:var(--warn-ink,#9A6400);">No sites yet — open Assets → Site Register to add one.</div>':''}`;
       } else {
         // hg-asset: dropdown of all equipment across all sites
         const allEquip = [];
@@ -206,7 +206,7 @@
             }).join('')}
           </select>
           <div class="qr-hint">Scanning opens the asset's site in the Site Register.</div>
-          ${allEquip.length===0?'<div class="qr-hint" style="color:#c59d2b;">No assets yet — open Assets → Site Register and click "+ Add asset" on a site.</div>':''}`;
+          ${allEquip.length===0?'<div class="qr-hint" style="color:var(--warn-ink,#9A6400);">No assets yet — open Assets → Site Register and click "+ Add asset" on a site.</div>':''}`;
       }
     } else if (s.type === 'vcard') {
       inner = `<div class="qr-section-title">2 · Contact card</div>
@@ -396,7 +396,7 @@
       body { font-family: Arial, sans-serif; margin: 0; padding: 4mm; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2mm; }
       .lbl { font-weight: 700; font-size: 11pt; font-family: 'Courier New', monospace; }
       .sub { font-size: 8pt; color: #333; text-align: center; max-width: 64mm; }
-      .brand { font-size: 7pt; color: #3AAEDB; letter-spacing: 1px; margin-top: 1mm; }
+      .brand { font-size: 7pt; color: #1B77A0; letter-spacing: 1px; margin-top: 1mm; }
       svg { width: 36mm; height: 36mm; }
     </style></head><body>
       ${STATE.label ? `<div class="lbl">${esc(STATE.label)}</div>` : ''}
@@ -453,7 +453,7 @@
       .st { border: 0.3mm dashed #ccc; border-radius: 3mm; padding: 3mm; display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 38mm; text-align: center; break-inside: avoid; }
       .lbl { font-family: 'Courier New', monospace; font-weight: 700; font-size: 9pt; margin-bottom: 1mm; }
       .sub { font-size: 7pt; color: #333; margin-top: 1mm; }
-      .brand { font-size: 6pt; color: #3AAEDB; letter-spacing: 1px; margin-top: 1mm; }
+      .brand { font-size: 6pt; color: #1B77A0; letter-spacing: 1px; margin-top: 1mm; }
       svg { width: 28mm; height: 28mm; }
       @media print { body { -webkit-print-color-adjust: exact; } }
     </style></head><body>

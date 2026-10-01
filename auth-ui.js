@@ -62,7 +62,7 @@
     .hg-auth-btn {
       width: 100%; padding: 13px; border-radius: 12px; border: none;
       font-size: 15px; font-weight: 700; cursor: pointer;
-      background: linear-gradient(135deg, #3AAEDB, #1a3d9e); color: #fff;
+      background: var(--accent-ink, #1B77A0); color: var(--on-accent, #fff);
       transition: transform 0.1s ease;
     }
     .hg-auth-btn:hover { transform: translateY(-1px); }
@@ -84,8 +84,8 @@
     .hg-auth-divider::before, .hg-auth-divider::after {
       content: ""; flex: 1; height: 1px; background: var(--border, rgba(0,0,0,0.12));
     }
-    .hg-auth-switch { text-align: center; margin-top: 16px; font-size: 13px; opacity: 0.85; }
-    .hg-auth-switch a { color: #3AAEDB; cursor: pointer; font-weight: 600; }
+    .hg-auth-switch { text-align: center; margin-top: 16px; font-size: 13px; }
+    .hg-auth-switch a { color: var(--accent-ink, #1B77A0); cursor: pointer; font-weight: 600; }
     .hg-auth-error {
       margin-top: 12px; padding: 10px 12px; border-radius: 10px;
       background: rgba(220, 53, 69, 0.10); color: var(--danger);
@@ -101,7 +101,7 @@
     }
     .hg-sync-pill {
       position: fixed; bottom: 90px; left: 50%; transform: translateX(-50%);
-      z-index: 8000; background: #3AAEDB; color: #fff;
+      z-index: 8000; background: var(--accent-ink, #1B77A0); color: var(--on-accent, #fff);
       padding: 8px 14px; border-radius: 999px; font-size: 12px;
       box-shadow: 0 8px 22px rgba(0,177,202,0.35);
       display: none;

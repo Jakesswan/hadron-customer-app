@@ -37,13 +37,13 @@
       border:  g('--border', '#ccd3da'),
       surface: g('--surface', '#ffffff'),
       accent:  g('--accent', '#3AAEDB'),
-      accent2: g('--accent-2', '#F5B82E'),
+      accent2: g('--accent-2', '#F5A623'),
       danger:  g('--danger', '#F87171'),
       success: g('--success', '#34D399')
     };
   }
   // Distinct series palette (built off the brand accents, cycled).
-  const SERIES_COLORS = ['#3AAEDB', '#F5B82E', '#8E7CC3', '#5FB878', '#E4785B', '#4A7CB5', '#C0507A', '#7A8794'];
+  const SERIES_COLORS = ['#3AAEDB', '#F5A623', '#8E7CC3', '#5FB878', '#E4785B', '#4A7CB5', '#C0507A', '#7A8794'];
 
   // ── data ────────────────────────────────────────────────
   let _readings = null;   // cached flat readings
@@ -317,7 +317,7 @@
         ${stat('Breaches', st.breaches, st.breaches ? cC.danger : '')}
       </div>
       <div style="border:1px solid var(--border);border-radius:10px;padding:8px;background:var(--surface);overflow-x:auto;">${chartSvg(series, spec, { unit })}</div>
-      <details style="margin-top:12px;"><summary style="cursor:pointer;color:var(--accent);font-weight:600;">Readings (${rows.length})</summary>
+      <details style="margin-top:12px;"><summary style="cursor:pointer;color:var(--accent-ink);font-weight:600;">Readings (${rows.length})</summary>
         <div style="overflow-x:auto;margin-top:8px;"><table class="tr-table"><thead><tr><th>Date</th><th>Site</th><th>Point</th><th>Value</th><th>Spec</th><th>Status</th></tr></thead><tbody>
         ${rows.slice().sort((a, b) => new Date(b.date) - new Date(a.date)).map(r => {
           const ok = inSpec(r);
@@ -437,7 +437,7 @@
 
     // Render the chart with a fixed LIGHT palette so it rasterizes crisply on the white PDF page,
     // regardless of the app's current (possibly dark) theme.
-    const LIGHT = { text: '#1d262d', muted: '#6b7684', border: '#c9d2da', surface: '#ffffff', accent: '#3AAEDB', accent2: '#F5B82E', danger: '#C0392B', success: '#2E7D5B' };
+    const LIGHT = { text: '#1d262d', muted: '#6b7684', border: '#c9d2da', surface: '#ffffff', accent: '#3AAEDB', accent2: '#F5A623', danger: '#C0392B', success: '#2E7D5B' };
     const pdfSvg = chartSvg(series, { min: specMin == null ? null : specMin, max: specMax == null ? null : specMax }, { unit: ctx.unit }, LIGHT);
     let png = null;
     try { png = await svgToPng(pdfSvg, 2); } catch (_) {}

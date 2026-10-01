@@ -112,7 +112,7 @@
       '* { box-sizing: border-box; }' +
       'body { margin:0; font-family: Georgia, "Times New Roman", serif; color: var(--ink); background:#5b6b78; }' +
       '.bar { text-align:center; padding:14px; }' +
-      '.bar button { font-family: system-ui, sans-serif; font-size:14px; font-weight:600; cursor:pointer; border:0; border-radius:8px; padding:10px 18px; margin:0 4px; background:var(--accent); color:#fff; }' +
+      '.bar button { font-family: system-ui, sans-serif; font-size:14px; font-weight:600; cursor:pointer; border:0; border-radius:8px; padding:10px 18px; margin:0 4px; background:#1B77A0; color:#fff; }' +
       '.bar button.ghost { background:#fff; color:var(--ink); border:1px solid #ccc; }' +
       '.sheet { width:297mm; min-height:210mm; margin:0 auto 24px; background:#fff; position:relative; padding:18mm 20mm; }' +
       '.frame { position:absolute; inset:8mm; border:2px solid var(--blue); }' +
@@ -3095,7 +3095,7 @@
                 </div>
                 <div style="text-align:right; min-width: 120px;">
                   <div style="font-size:12px; color:#6b7684; text-transform:uppercase; letter-spacing:0.4px;">Progress</div>
-                  <div style="font-size:22px; font-weight:700; color:${pct === 100 ? '#157b3a' : '#3AAEDB'};">${pct}%</div>
+                  <div style="font-size:22px; font-weight:700; color:${pct === 100 ? '#157b3a' : 'var(--accent-ink,#1B77A0)'};">${pct}%</div>
                   <div class="academy-progress-bar"><div class="academy-progress-fill" style="width:${pct}%;"></div></div>
                 </div>
               </div>

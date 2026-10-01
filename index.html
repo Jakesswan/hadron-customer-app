@@ -2,20 +2,29 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <!-- FOUC-free theme bootstrap. Shares localStorage["hadron-theme"] with the
-         ERP so a user signed into both gets a consistent theme on this device. -->
+    <!-- FOUC-free theme bootstrap. localStorage["hadron-theme"] is "light" or "dark" when the user
+         chose one (same key as the ERP); otherwise the app follows the phone's theme. Keep in step
+         with themeChoice() further down. -->
     <script>
       (function () {
+        var t = null;
         try {
-          var t = localStorage.getItem("hadron-theme");
-          if (t !== "light" && t !== "dark") {
-            var legacy = localStorage.getItem("hadron_dark"); // migrate old '1'/'0'
-            t = legacy === "0" ? "light" : "dark";            // default dark (ERP parity)
+          t = localStorage.getItem("hadron-theme");
+          // Once per phone, before anything else runs: before v151 the default ("dark") was saved on first
+          // launch, so a saved "dark" can't be told apart from a choice. Follow the phone from now on
+          // (Settings > Dark sets it again). "light" was always a choice. (If the app is ever rolled back
+          // below v151 and shipped again, use a new marker name: the old version saves "dark" again.)
+          if (!localStorage.getItem("hadron-theme-v2")) {
+            if (t === "dark") { localStorage.removeItem("hadron-theme"); t = null; }
+            else if (t !== "light" && localStorage.getItem("hadron_dark") === "0") { localStorage.setItem("hadron-theme", "light"); t = "light"; }   // a very old choice
+            localStorage.setItem("hadron-theme-v2", "1");
           }
-          document.documentElement.setAttribute("data-theme", t);
-        } catch (e) {
-          document.documentElement.setAttribute("data-theme", "dark");
+        } catch (e) {}
+        if (t !== "light" && t !== "dark") {
+          try { t = window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light"; }
+          catch (e) { t = "dark"; }
         }
+        document.documentElement.setAttribute("data-theme", t);
       })();
     </script>
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
@@ -43,59 +52,59 @@
     <!-- Supabase JS SDK (auth + cloud sync), pinned 2.117.2 and served by the app itself so sign-in
          works offline from the precache (it used to be the floating @2 from a CDN). See
          THIRD_PARTY_NOTICES.md. To upgrade: replace the file, rename it, update this tag + sw.js. -->
-    <script src="supabase-js-2.117.2.js?v=150"></script>
+    <script src="supabase-js-2.117.2.js?v=151"></script>
 
     <!-- Hadron Supabase bridge -->
-    <script src="supabase-client.js?v=150"></script>
+    <script src="supabase-client.js?v=151"></script>
 
     <!-- Shared UI primitives (in-app sheets) — loaded before auth-ui, which uses them -->
-    <script src="hg-ui.js?v=150" defer></script>
+    <script src="hg-ui.js?v=151" defer></script>
     <!-- Auth UI (login/signup gate, profile binding) -->
-    <script src="auth-ui.js?v=150" defer></script>
+    <script src="auth-ui.js?v=151" defer></script>
 
     <!-- Push notifications -->
-    <script src="push.js?v=150" defer></script>
+    <script src="push.js?v=151" defer></script>
 
     <!-- Translation bundle -->
-    <script src="i18n.js?v=150"></script>
+    <script src="i18n.js?v=151"></script>
 
     <!-- Hadron Tristroke icon system (matches the ERP) -->
-    <script src="hadron-icons.js?v=150" defer></script>
+    <script src="hadron-icons.js?v=151" defer></script>
 
     <!-- Cross-platform emoji rendering (Twemoji) -->
-    <script src="emoji.js?v=150" defer></script>
+    <script src="emoji.js?v=151" defer></script>
 
     <!-- Customizable home grid (drag-to-reorder) -->
-    <script src="customize.js?v=150" defer></script>
+    <script src="customize.js?v=151" defer></script>
 
     <!-- Data Manager (Excel import/export) -->
-    <script src="data-manager.js?v=150" defer></script>
+    <script src="data-manager.js?v=151" defer></script>
 
     <!-- QR encoder (MIT, Kazuhiko Arase) -->
-    <script src="qr.js?v=150"></script>
+    <script src="qr.js?v=151"></script>
 
     <!-- QR Builder app -->
-    <script src="qr-app.js?v=150" defer></script>
+    <script src="qr-app.js?v=151" defer></script>
 
     <!-- Pool Water module -->
-    <script src="pool.js?v=150" defer></script>
+    <script src="pool.js?v=151" defer></script>
     <!-- Cooling Tower field calculator -->
-    <script src="coolingtower.js?v=150" defer></script>
+    <script src="coolingtower.js?v=151" defer></script>
     <!-- Boiler / Steam field calculator -->
-    <script src="boiler.js?v=150" defer></script>
+    <script src="boiler.js?v=151" defer></script>
     <!-- Water softener sizing calculator -->
-    <script src="softener.js?v=150" defer></script>
-    <script src="academy-content.js?v=150" defer></script>
-    <script src="academy.js?v=150" defer></script>
+    <script src="softener.js?v=151" defer></script>
+    <script src="academy-content.js?v=151" defer></script>
+    <script src="academy.js?v=151" defer></script>
 
-    <script src="searchable-select.js?v=150" defer></script>
-    <script src="trends.js?v=150" defer></script>
+    <script src="searchable-select.js?v=151" defer></script>
+    <script src="trends.js?v=151" defer></script>
 
     <!-- LIMS module (loaded at end of body via defer) -->
-    <script src="lims.js?v=150" defer></script>
-    <script src="lims-sync.js?v=150" defer></script>
-    <script src="portal.js?v=150" defer></script>
-    <script src="team.js?v=150" defer></script>
+    <script src="lims.js?v=151" defer></script>
+    <script src="lims-sync.js?v=151" defer></script>
+    <script src="portal.js?v=151" defer></script>
+    <script src="team.js?v=151" defer></script>
 
     <!-- Default UI font: Gothic A1 (Google Fonts) -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -139,16 +148,16 @@
           color-scheme: dark;
           --primary:#2C3038; --primary-dark:#1A1D22; --primary-light:#4A525C;
           --accent:#3AAEDB; --accent-dark:#2588B0; --accent-light:#1B3D52;
-          --accent-2:#F5B82E; --accent-2-dark:#D4A01A; --accent-2-light:#3A2F10;
+          --accent-2:#F5A623; --accent-2-dark:#D98E10; --accent-2-light:#3A2F10;
           --bg:#0F172A; --bg-soft:#1E293B; --surface:#1A222F; --border:#2D3B4F;
           --text:#FFFFFF; --muted:#CBD5E1;
-          --success:#34D399; --warning:#F5B82E; --danger:#F87171; --info:#3AAEDB;
+          --success:#34D399; --warning:#F5A623; --danger:#F87171; --info:#3AAEDB;
           /* Contrast-safe "ink" tokens (audit 2026-10): text/links and filled buttons that must pass
              4.5:1. Dark: brand teal on dark surfaces, dark text on teal/red fills. */
           --accent-ink:#3AAEDB; --on-accent:#0F172A; --on-danger:#0F172A;
           --ok-ink:#34D399; --warn-ink:#F5A623; --danger-ink:#F87171;
           --header-h:46px;
-          --badge-blue-text:#3AAEDB; --badge-yellow-text:#F5B82E;
+          --badge-blue-text:#3AAEDB; --badge-yellow-text:#F5A623;
           --icon-primary:#FFFFFF; --icon-secondary:#25B6D2; --icon-accent:#FFC52B;
           --shadow-card:0 1px 3px rgba(0,0,0,0.08);
           --shadow-modal:0 10px 25px rgba(0,0,0,0.18);
@@ -161,7 +170,7 @@
           --bg:#F5F6F7; --bg-soft:#EEF0F2; --surface:#FFFFFF; --border:#D8DDE2;
           --text:#000000; --muted:#374151;
           --success:#2D8F4E; --danger:#C0392B;
-          --badge-blue-text:#2588B0; --badge-yellow-text:#D4A01A;
+          --badge-blue-text:#1B77A0; --badge-yellow-text:#9A6400;
           --icon-primary:#4D4D4F;
           /* Light: teal ink #1B77A0 (5.0:1 on white, and white on it), white on the red fill. */
           --accent-ink:#1B77A0; --on-accent:#FFFFFF; --on-danger:#FFFFFF;
@@ -170,7 +179,7 @@
         .print-page {
           --bg:#FFFFFF; --bg-soft:#F7F8F9; --surface:#FFFFFF; --border:#D8DDE2;
           --text:#000000; --muted:#374151; --accent-light:#E6F5FC; --accent-2-light:#FEF5E0;
-          --badge-blue-text:#2588B0; --badge-yellow-text:#D4A01A; --icon-primary:#4D4D4F;
+          --badge-blue-text:#1B77A0; --badge-yellow-text:#9A6400; --icon-primary:#4D4D4F;
         }
         html { background: var(--bg); }
 
@@ -180,12 +189,12 @@
         .btn:active{ transform:scale(.98); }
         .btn:focus-visible{ outline:2px solid var(--accent); outline-offset:2px; }
         .btn:disabled{ opacity:.5; cursor:not-allowed; }
-        .btn-primary{ background:var(--accent-2); color:var(--text); border-color:var(--accent-2-dark); font-weight:600; }
+        .btn-primary{ background:var(--accent-2); color:#2E3742; border-color:var(--accent-2-dark); font-weight:600; }
         .btn-primary:hover{ background:var(--accent-2-dark); }
-        .btn-accent{ background:var(--accent); color:#fff; border-color:var(--accent); }
-        .btn-accent:hover{ background:var(--accent-dark); }
+        .btn-accent{ background:var(--accent-ink); color:var(--on-accent); border-color:var(--accent-ink); }
+        .btn-accent:hover{ filter:brightness(1.1); }
         .btn-success{ background:var(--success); color:#fff; border-color:var(--success); }
-        .btn-warn{ background:var(--warning); color:var(--text); border-color:var(--warning); }
+        .btn-warn{ background:var(--warning); color:#2E3742; border-color:var(--warning); }
         .btn-danger{ background:var(--danger); color:#fff; border-color:var(--danger); }
         .btn-secondary{ background:var(--surface); color:var(--text); border:1px solid var(--border); font-weight:500; }
         .btn-secondary:hover{ background:var(--bg-soft); }
@@ -196,7 +205,7 @@
         .field input:focus,.field select:focus,.field textarea:focus{ outline:2px solid var(--accent); outline-offset:0; }
         .badge { display:inline-flex; align-items:center; padding:2px 8px; font-size:10px; font-weight:600; text-transform:uppercase; letter-spacing:.04em; border-radius:var(--radius-full); }
         .badge-green{ background:rgba(52,211,153,.10); color:var(--success); }
-        .badge-yellow{ background:rgba(245,184,46,.20); color:var(--badge-yellow-text); }
+        .badge-yellow{ background:rgba(245,166,35,.20); color:var(--badge-yellow-text); }
         .badge-red{ background:rgba(248,113,113,.10); color:var(--danger); }
         .badge-blue{ background:rgba(58,174,219,.15); color:var(--badge-blue-text); }
         .badge-gray{ background:var(--bg-soft); color:var(--muted); }
@@ -212,7 +221,8 @@
         .hg-emoji-ico svg { width:1.05em; height:1.05em; }
         /* Window hero icons + the header back arrow sit on dark gradients — force
            light-on-dark strokes so they pop (and stay white in light mode too). */
-        .hg-hero-icon, .window-header { --icon-primary:#FFFFFF; --icon-secondary:#25B6D2; --icon-accent:#FFC52B; }
+        .window-header { --icon-primary:#FFFFFF; --icon-secondary:#25B6D2; --icon-accent:#FFC52B; }
+        .hg-hero-icon { --icon-primary:#2E3742; --icon-secondary:#1B77A0; --icon-accent:#FFFFFF; }   /* on the gold banner */
         @media print { .no-print{ display:none !important; } }
 
         * {
@@ -268,18 +278,18 @@
         /* Top Bar — Hadron yellow with dark navy text for proper contrast */
         .top-bar {
             height: 50px;
-            background: #F5B82E;
+            background: #F5A623;
             display: flex;
             align-items: center;
             justify-content: space-between;
             padding: 0 15px;
-            color: #1a3d9e;
+            color: #2E3742;
             box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
             flex-shrink: 0;
         }
         body.dark .top-bar {
-            background: #F5B82E;
-            color: #0e1530;
+            background: #F5A623;
+            color: #2E3742;
             box-shadow: 0 2px 10px rgba(0, 0, 0, 0.4);
         }
 
@@ -616,7 +626,7 @@
 
         .window-header {
             min-height: 56px;
-            background: linear-gradient(135deg, #2B7DB3 0%, #123E63 100%);
+            background: linear-gradient(135deg, #1B77A0 0%, #123E63 100%);   /* white title passes 4.5:1 */
             color: white;
             display: flex;
             align-items: center;
@@ -726,6 +736,13 @@
         .window-content h3,
         .window-content h4,
         .window-content h5 { color: #333; }
+        /* Headings inside the white-on-colour calculator result panels take the panel's white. */
+        .window-content [style*="border-radius: 10px; color: white"] h3,
+        .window-content [style*="border-radius: 10px; color: white"] h4,
+        body.dark .window-content [style*="border-radius: 10px; color: white"] h3,
+        body.dark .window-content [style*="border-radius: 10px; color: white"] h4,
+        .window-content [style*="border-radius: 10px; color: white"] span:not([class]),
+        body.dark .window-content [style*="border-radius: 10px; color: white"] span:not([class]) { color: inherit; }
         .window-content,
         .window-content li,
         .window-content td,
@@ -810,7 +827,7 @@
             box-shadow: 0 0 0 2px #1a3d9e, 0 6px 14px rgba(0,177,202,0.4);
         }
         body.dark .taskbar-icon.active {
-            box-shadow: 0 0 0 2px #F5B82E, 0 6px 14px rgba(0,177,202,0.4);
+            box-shadow: 0 0 0 2px #F5A623, 0 6px 14px rgba(0,177,202,0.4);
         }
 
         /* Save / history / PDF buttons on calculator result screens */
@@ -831,15 +848,15 @@
         }
 
         .save-calc-btn {
-            background: linear-gradient(135deg, #3AAEDB 0%, #4f4f4f 100%);
-            color: #fff;
+            background: var(--accent-ink);
+            color: var(--on-accent);
             box-shadow: 0 4px 12px rgba(0, 177, 202, 0.25);
         }
 
         .pdf-calc-btn {
-            background: linear-gradient(135deg, #F5B82E 0%, #d99500 100%);
-            color: #fff;
-            box-shadow: 0 4px 12px rgba(249, 187, 50, 0.25);
+            background: #F5A623;
+            color: #2E3742;
+            box-shadow: 0 4px 12px rgba(245, 166, 35, 0.25);
         }
 
         .save-calc-btn:active, .pdf-calc-btn:active {
@@ -895,7 +912,7 @@
             font-weight: 700;
             letter-spacing: 0.5px;
             text-transform: uppercase;
-            color: #3AAEDB;
+            color: var(--accent-ink);
             margin-bottom: 4px;
         }
 
@@ -1008,8 +1025,8 @@
         }
         .settings-action {
             background: rgba(0,177,202,0.1);
-            color: #3AAEDB;
-            border: 1px solid #3AAEDB;
+            color: var(--accent-ink);
+            border: 1px solid var(--accent-ink);
             border-radius: 8px;
             padding: 8px 14px;
             font-size: 13px;
@@ -1076,9 +1093,14 @@
             touch-action: manipulation;
             transition: background 0.15s, color 0.15s, box-shadow 0.15s;
         }
+        @media (max-width: 600px) {
+            .settings-row.theme-row { flex-wrap: wrap; }
+            .settings-row.theme-row > .segmented { flex: 1 1 100%; display: flex; }
+            .settings-row.theme-row .seg-btn { flex: 1 1 0; min-width: 0; padding: 7px 4px; overflow-wrap: anywhere; }
+        }
         .seg-btn.active {
             background: #fff;
-            color: #3AAEDB;
+            color: var(--accent-ink);
             box-shadow: 0 1px 4px rgba(0,0,0,0.08);
         }
         body.dark .segmented {
@@ -1190,8 +1212,8 @@
             color: #888;
         }
         .onboarding-btn.primary {
-            background: linear-gradient(135deg, #3AAEDB 0%, #F5B82E 100%);
-            color: white;
+            background: var(--accent-ink);
+            color: var(--on-accent);
             box-shadow: 0 6px 16px rgba(0, 177, 202, 0.3);
         }
 
@@ -1366,7 +1388,7 @@
             font-size: 13px; color: #6b7684; margin-bottom: 14px;
         }
         .lims-breadcrumb a {
-            color: #3AAEDB; cursor: pointer; text-decoration: none; font-weight: 600;
+            color: var(--accent-ink); cursor: pointer; text-decoration: none; font-weight: 600;
         }
         .lims-breadcrumb a:hover { text-decoration: underline; }
         .lims-breadcrumb .sep { color: #cfd6dd; }
@@ -1467,12 +1489,12 @@
         .lims-btn:hover { background: #e2e8ee; }
         .lims-btn:active { transform: scale(0.98); }
         .lims-btn.primary {
-            background: linear-gradient(135deg, #3AAEDB 0%, #008aa3 100%); color: #fff;
+            background: var(--accent-ink); color: var(--on-accent);
             box-shadow: 0 3px 10px rgba(0,177,202,0.35);
         }
         .lims-btn.primary:hover { filter: brightness(1.08); }
         .lims-btn.warn { background: #ff5252; color: #fff; }
-        .lims-btn.ghost { background: transparent; color: #3AAEDB; border: 1px solid #3AAEDB; }
+        .lims-btn.ghost { background: transparent; color: var(--accent-ink); border: 1px solid var(--accent-ink); }
         body.dark .lims-btn { background: #1A222F; color: #e8ecef; }
         body.dark .lims-btn:hover { background: #2D3B4F; }
         .lims-search {
@@ -1522,7 +1544,7 @@
             letter-spacing: 0.5px; color: #6b7684; display: flex; gap: 6px; align-items: center;
         }
         .lims-kcol h4 .count {
-            background: #3AAEDB; color: #fff; font-size: 11px; font-weight: 700;
+            background: var(--accent-ink); color: var(--on-accent); font-size: 11px; font-weight: 700;
             border-radius: 10px; padding: 1px 8px; letter-spacing: 0;
         }
         .lims-kcard {
@@ -1556,7 +1578,7 @@
         }
         .lims-field textarea { resize: vertical; min-height: 60px; }
         .lims-section-title {
-            font-size: 15px; font-weight: 700; color: #3AAEDB; text-transform: uppercase;
+            font-size: 15px; font-weight: 700; color: var(--accent-ink); text-transform: uppercase;
             letter-spacing: 0.5px; margin: 18px 0 10px; padding-bottom: 6px; border-bottom: 2px solid #eef3f7;
         }
         body.dark .lims-section-title { border-bottom-color: #1A222F; }
@@ -1697,7 +1719,7 @@
         }
 
         /* ---------- LIMS supplementary styles (hub, dashboard, detail, kanban, charts) ---------- */
-        .lims-hub-header { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 18px; padding: 16px 18px; background: linear-gradient(135deg, #3AAEDB 0%, #0078a3 100%); border-radius: 16px; color: #fff; box-shadow: 0 4px 16px rgba(0,125,150,0.25); }
+        .lims-hub-header { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 18px; padding: 16px 18px; background: linear-gradient(135deg, #1B77A0 0%, #0E5A7E 100%); border-radius: 16px; color: #fff; box-shadow: 0 4px 16px rgba(0,125,150,0.25); }
         .lims-hub-hello { font-size: 19px; font-weight: 700; }
         .lims-hub-sub { font-size: 12px; opacity: 0.85; margin-top: 3px; }
         .lims-hub-clock { font-size: 13px; font-variant-numeric: tabular-nums; background: rgba(255,255,255,0.18); padding: 8px 12px; border-radius: 10px; backdrop-filter: blur(6px); }
@@ -1810,7 +1832,7 @@
         .qr-typegrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 8px; }
         .qr-typebtn { padding: 12px 10px; background: #f3f6f9; border: 2px solid transparent; border-radius: 10px; font-size: 13px; cursor: pointer; transition: all 0.15s; text-align: left; }
         .qr-typebtn:hover { background: #eaf2f6; }
-        .qr-typebtn.active { background: linear-gradient(135deg, #3AAEDB 0%, #2e3742 100%); color: #fff; border-color: #3AAEDB; box-shadow: 0 4px 12px rgba(0,177,202,0.25); }
+        .qr-typebtn.active { background: var(--accent-ink); color: var(--on-accent); border-color: var(--accent-ink); box-shadow: 0 4px 12px rgba(0,177,202,0.25); }
         body.dark .qr-typebtn { background: #1E293B; color: #e8ecef; }
         body.dark .qr-typebtn:hover { background: #1A222F; }
 
@@ -1835,7 +1857,7 @@
         .qr-sticker-label { font-family: 'Courier New', monospace; font-weight: 700; font-size: 14px; color: #2e3742; }
         .qr-sticker-code svg { display: block; }
         .qr-sticker-sub { font-size: 12px; color: #4f4f4f; max-width: 280px; line-height: 1.3; }
-        .qr-sticker-brand { font-size: 10px; color: #3AAEDB; letter-spacing: 1.5px; font-weight: 700; margin-top: 2px; }
+        .qr-sticker-brand { font-size: 10px; color: #1B77A0; letter-spacing: 1.5px; font-weight: 700; margin-top: 2px; }
         .qr-payload { font-family: 'Courier New', monospace; font-size: 11px; color: #6b7684; background: #f3f6f9; padding: 8px 10px; border-radius: 6px; margin: 10px 0; word-break: break-all; max-height: 60px; overflow-y: auto; text-align: left; }
         body.dark .qr-payload { background: #1E293B; color: #b5b5b5; }
 
@@ -1844,13 +1866,13 @@
         .qr-btn:hover:not(:disabled) { background: #dce3e8; }
         .qr-btn:active:not(:disabled) { transform: scale(0.97); }
         .qr-btn:disabled { opacity: 0.4; cursor: not-allowed; }
-        .qr-btn.primary { background: linear-gradient(135deg, #3AAEDB 0%, #0088a3 100%); color: #fff; }
+        .qr-btn.primary { background: var(--accent-ink); color: var(--on-accent); }
         .qr-btn.primary:hover:not(:disabled) { filter: brightness(1.08); }
         .qr-btn.small { padding: 4px 10px; font-size: 12px; }
         body.dark .qr-btn { background: #1A222F; color: #e8ecef; }
         body.dark .qr-btn:hover:not(:disabled) { background: #2D3B4F; }
 
-        .qr-badge { display: inline-block; background: #3AAEDB; color: #fff; font-size: 11px; font-weight: 700; padding: 2px 8px; border-radius: 999px; margin-left: 6px; vertical-align: middle; min-width: 18px; text-align: center; }
+        .qr-badge { display: inline-block; background: var(--accent-ink); color: var(--on-accent); font-size: 11px; font-weight: 700; padding: 2px 8px; border-radius: 999px; margin-left: 6px; vertical-align: middle; min-width: 18px; text-align: center; }
         .qr-sheet-list { max-height: 260px; overflow-y: auto; margin: 6px 0 10px; }
         .qr-sheet-item { display: flex; justify-content: space-between; align-items: center; padding: 8px 10px; background: #f7f9fb; border-radius: 8px; margin-bottom: 6px; font-size: 13px; }
         body.dark .qr-sheet-item { background: #1E293B; color: #e8ecef; }
@@ -1894,7 +1916,7 @@
         .hg-modal-head {
             padding: 16px 20px; border-bottom: 1px solid #eef3f7;
             display: flex; align-items: center; gap: 12px;
-            background: linear-gradient(135deg, #3AAEDB 0%, #1a3d9e 100%);
+            background: linear-gradient(135deg, #1B77A0 0%, #1a3d9e 100%);
             color: #fff;
         }
         body.dark .hg-modal-head { border-bottom-color: rgba(255,255,255,0.08); }
@@ -1933,7 +1955,7 @@
             outline: 2px solid #3AAEDB; outline-offset: 1px;
         }
         .hg-modal-section-title {
-            font-size: 12px; font-weight: 800; color: #3AAEDB;
+            font-size: 12px; font-weight: 800; color: var(--accent-ink);
             text-transform: uppercase; letter-spacing: 0.06em;
             margin: 16px 0 10px; padding-bottom: 4px; border-bottom: 1px solid #eef3f7;
         }
@@ -1955,15 +1977,15 @@
         .hg-card.pad-sm { padding: 12px 14px; }
         .hg-card.pad-lg { padding: 22px 24px; }
 
-        .hg-section-title { font-size: 13px; font-weight: 700; color: #3AAEDB; text-transform: uppercase; letter-spacing: 0.5px; margin: 0 0 12px; padding-bottom: 6px; border-bottom: 2px solid #eef3f7; }
+        .hg-section-title { font-size: 13px; font-weight: 700; color: var(--accent-ink); text-transform: uppercase; letter-spacing: 0.5px; margin: 0 0 12px; padding-bottom: 6px; border-bottom: 2px solid #eef3f7; }
         body.dark .hg-section-title { border-bottom-color: #1A222F; }
 
         .hg-btn { padding: 9px 16px; border: none; border-radius: 10px; cursor: pointer; font-weight: 600; font-size: 14px; background: #eef2f6; color: #2e3742; transition: background 0.15s, transform 0.1s; font-family: inherit; }
         .hg-btn:hover { background: #e2e8ee; }
         .hg-btn:active { transform: scale(0.98); }
-        .hg-btn.primary { background: linear-gradient(135deg, #3AAEDB 0%, #008aa3 100%); color: #fff; box-shadow: 0 3px 10px rgba(0,177,202,0.35); }
+        .hg-btn.primary { background: var(--accent-ink); color: var(--on-accent); box-shadow: 0 3px 10px rgba(0,177,202,0.35); }
         .hg-btn.primary:hover { filter: brightness(1.08); }
-        .hg-btn.ghost { background: transparent; color: #3AAEDB; border: 1px solid #3AAEDB; }
+        .hg-btn.ghost { background: transparent; color: var(--accent-ink); border: 1px solid var(--accent-ink); }
         .hg-btn.warn { background: #ff5252; color: #fff; }
         .hg-btn.full { width: 100%; padding: 12px 16px; font-size: 15px; }
         body.dark .hg-btn { background: #1A222F; color: #e8ecef; }
@@ -2016,8 +2038,10 @@
         .hg-empty h3 { margin: 0 0 6px; color: #2e3742; font-weight: 700; font-size: 16px; }
         body.dark .hg-empty h3 { color: #e8ecef; }
 
-        .hg-hero { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 18px; padding: 18px 20px; background: linear-gradient(135deg, #f5a623 0%, #e07b00 100%) !important; border-radius: 16px; color: #fff; box-shadow: 0 4px 16px rgba(224,123,0,0.25); }
+        .hg-hero { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 18px; padding: 18px 20px; background: linear-gradient(135deg, #F5A623 0%, #EE9A12 100%) !important; border-radius: 16px; color: #2E3742; box-shadow: 0 4px 16px rgba(224,123,0,0.25); }
         .hg-hero-title { font-size: 19px; font-weight: 700; margin: 0; }
+        /* Charcoal on gold in both themes (the generic window heading colours would make it grey / near-white). */
+        .hg-hero .hg-hero-title, body.dark .hg-hero .hg-hero-title { color: #2E3742; }
         .hg-hero-sub { font-size: 12px; opacity: 0.9; margin-top: 3px; }
         .hg-hero-icon { font-size: 40px; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.2)); }
 
@@ -2031,7 +2055,7 @@
 
         .hg-actions { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 14px; }
         .hg-breadcrumb { display: flex; flex-wrap: wrap; gap: 4px; font-size: 12px; color: #6b7684; margin-bottom: 10px; }
-        .hg-breadcrumb a { color: #3AAEDB; cursor: pointer; text-decoration: none; }
+        .hg-breadcrumb a { color: var(--accent-ink); cursor: pointer; text-decoration: none; }
         .hg-breadcrumb .sep { color: #cfd6dd; }
 
         .hg-recipe { background: #f7fbfd; border-left: 4px solid #3AAEDB; border-radius: 0 10px 10px 0; padding: 12px 14px; margin: 10px 0; font-size: 14px; line-height: 1.5; color: #2e3742; }
@@ -2122,14 +2146,14 @@
         body.dark .pdf-calc-btn:hover { background: #2D3B4F; }
         /* primary action — first .calc-btn in a row gets the brand teal */
         .save-calc-btn {
-            background: linear-gradient(135deg, #3AAEDB 0%, #008aa3 100%); color: #fff;
+            background: var(--accent-ink); color: var(--on-accent);   /* teal ink: white text passes 4.5:1 */
             box-shadow: 0 3px 10px rgba(0,177,202,0.35);
             margin-right: 6px;
         }
         .save-calc-btn:hover { filter: brightness(1.08); }
         body.dark .save-calc-btn { color: #fff; }
         .pdf-calc-btn {
-            background: linear-gradient(135deg, #f5a623 0%, #e07b00 100%); color: #fff;
+            background: linear-gradient(135deg, #F5A623 0%, #EE9A12 100%); color: #2E3742;   /* charcoal on gold */
             box-shadow: 0 3px 10px rgba(245,166,35,0.35);
         }
         .pdf-calc-btn:hover { filter: brightness(1.08); }
@@ -2171,26 +2195,28 @@
 
         /* Dated grey-yellow gradient result panels → brand teal */
         [style*="linear-gradient(135deg, #4f4f4f 0%, #F5B82E"] {
-            background: linear-gradient(135deg, #3AAEDB 0%, #0078a3 100%) !important;
+            background: linear-gradient(135deg, #1B77A0 0%, #0E5A7E 100%) !important;
             box-shadow: 0 4px 16px rgba(0,125,150,0.25) !important;
         }
         /* Brand teal-grey gradient (Skid Sizing recommended panel) → deeper navy variant */
         [style*="linear-gradient(135deg, #3AAEDB 0%, #4f4f4f"] {
-            background: linear-gradient(135deg, #1a3d9e 0%, #3AAEDB 100%) !important;
+            background: linear-gradient(135deg, #1a3d9e 0%, #1B77A0 100%) !important;
             box-shadow: 0 4px 16px rgba(26,61,158,0.25) !important;
         }
 
         /* Inner result tiles (translucent white) → tighten + crisp typography */
-        [style*="background: rgba(255,255,255,0.2)"][style*="border-radius: 8px"] {
-            background: rgba(255,255,255,0.18) !important;
+        [style*="background: rgba(255,255,255,0.2)"][style*="border-radius: 8px"],
+        [style*="background: rgba(255,255,255,0.18)"][style*="border-radius: 8px"],
+        [style*="background: rgba(255,255,255,0.15)"][style*="border-radius: 8px"] {
+            background: rgba(0,0,0,0.14) !important;
             backdrop-filter: blur(2px);
             border: 1px solid rgba(255,255,255,0.18);
         }
 
         /* Calculator "Back to Menu" pill — promote to hg-btn ghost styling */
         [style*="background: rgba(0,177,202,0.1)"][style*="color: #3AAEDB"][style*="border: 1px solid #3AAEDB"] {
-            background: transparent !important; color: #3AAEDB !important;
-            border: 1px solid #3AAEDB !important; border-radius: 10px !important;
+            background: transparent !important; color: var(--accent-ink) !important;
+            border: 1px solid var(--accent-ink) !important; border-radius: 10px !important;
             padding: 9px 16px !important; font-weight: 600 !important;
         }
         body.dark [style*="background: rgba(0,177,202,0.1)"][style*="color: #3AAEDB"][style*="border: 1px solid #3AAEDB"] {
@@ -2271,7 +2297,7 @@
         .academy-module-num {
             width: 32px; height: 32px;
             border-radius: 50%;
-            background: #eef3f7; color: #3AAEDB;
+            background: #eef3f7; color: var(--accent-ink);
             display: flex; align-items: center; justify-content: center;
             font-weight: 700; flex-shrink: 0; font-size: 14px;
         }
@@ -2294,7 +2320,7 @@
         }
         body.dark .academy-lesson .academy-h3 { color: #6bd9ec; border-bottom-color: #1A222F; }
         .academy-lesson .academy-h4 {
-            color: #3AAEDB; font-size: 14px; font-weight: 700;
+            color: var(--accent-ink); font-size: 14px; font-weight: 700;
             margin: 14px 0 6px; text-transform: uppercase; letter-spacing: 0.4px;
         }
         body.dark .academy-lesson .academy-h4 { color: #6bd9ec; }
@@ -2617,12 +2643,13 @@
 
             <div class="hg-card">
                 <div class="hg-section-title">Appearance & language</div>
-                <div class="settings-row">
+                <div class="settings-row theme-row">
                     <div>
                         <div class="settings-label" data-i18n="settings.appearance">Appearance</div>
-                        <div class="settings-sub" data-i18n="settings.appearance.sub">Choose a light or dark theme</div>
+                        <div class="settings-sub" data-i18n="settings.appearance.sub">Follow your phone, or choose light or dark</div>
                     </div>
                     <div class="segmented" role="group" aria-label="Appearance">
+                        <button type="button" class="seg-btn" id="btnAuto"  onclick="setTheme('auto')"  data-i18n="settings.auto">🌓 Auto</button>
                         <button type="button" class="seg-btn" id="btnLight" onclick="setTheme('light')" data-i18n="settings.light">☀️ Light</button>
                         <button type="button" class="seg-btn" id="btnDark"  onclick="setTheme('dark')"  data-i18n="settings.dark">🌙 Dark</button>
                     </div>
@@ -2676,7 +2703,7 @@
                 <div class="hg-section-title">About</div>
                 <div class="hg-kvgrid">
                     <div class="hg-kv"><div class="k">App</div><div class="v">Hadron Group</div></div>
-                    <div class="hg-kv"><div class="k">Version</div><div class="v">v150</div></div>
+                    <div class="hg-kv"><div class="k">Version</div><div class="v">v151</div></div>
                     <div class="hg-kv"><div class="k">Platform</div><div class="v">PWA</div></div>
                 </div>
             </div>
@@ -2785,7 +2812,7 @@
             <span class="window-title">Hadron Store</span>
         </div>
         <div class="window-content">
-            <div class="hg-hero" style="background:linear-gradient(135deg,#3AAEDB 0%,#F5B82E 100%);">
+            <div class="hg-hero" style="background:linear-gradient(135deg,#3AAEDB 0%,#F5A623 100%);">
                 <div>
                     <h2 class="hg-hero-title">Hadron Store</h2>
                     <div class="hg-hero-sub">Water treatment products · Quotes · Orders</div>
@@ -2834,7 +2861,7 @@
                 <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 14px;">
                     <div class="hg-card" style="cursor:pointer; margin:0;" onclick="showCalculator('chlorine')">
                         <div style="display:flex; align-items:center; gap:14px;">
-                            <div style="width:48px; height:48px; border-radius:12px; background:linear-gradient(135deg,#3AAEDB 0%,#F5B82E 100%); display:flex; align-items:center; justify-content:center; font-size:24px; flex-shrink:0;">⚗️</div>
+                            <div style="width:48px; height:48px; border-radius:12px; background:linear-gradient(135deg,#3AAEDB 0%,#F5A623 100%); display:flex; align-items:center; justify-content:center; font-size:24px; flex-shrink:0;">⚗️</div>
                             <div>
                                 <div style="font-weight:700; font-size:15px; color:#2e3742;">Chlorine (TCCA)</div>
                                 <div style="font-size:12px; color:#6b7684; margin-top:2px;">Calculate chlorine dosage requirements</div>
@@ -2876,7 +2903,7 @@
                 <h2 style="margin-bottom: 20px;">Chlorine (TCCA) Calculator</h2>
                 
                 <div style="background: #f8f9fa; padding: 20px; border-radius: 10px; margin-bottom: 25px;">
-                    <h3 style="margin-bottom: 15px; color: #3AAEDB; font-size: 18px;" data-i18n="calc.plantConfig">Plant Configuration</h3>
+                    <h3 style="margin-bottom: 15px; color: var(--accent-ink); font-size: 18px;" data-i18n="calc.plantConfig">Plant Configuration</h3>
                     <div style="display: flex; flex-direction: column; gap: 12px;">
                         <label style="font-weight: 600; font-size: 15px;">Plant Size (MLD):</label>
                         <input type="number" id="mldInput" value="0.5" step="0.1" min="0.1"
@@ -2916,7 +2943,7 @@
                 <h2 style="margin-bottom: 20px;">Chlorine Dioxide (ClO2) Calculator</h2>
                 
                 <div style="background: #f8f9fa; padding: 20px; border-radius: 10px; margin-bottom: 25px;">
-                    <h3 style="margin-bottom: 15px; color: #3AAEDB; font-size: 18px;" data-i18n="calc.plantConfig">Plant Configuration</h3>
+                    <h3 style="margin-bottom: 15px; color: var(--accent-ink); font-size: 18px;" data-i18n="calc.plantConfig">Plant Configuration</h3>
                     <div style="display: flex; flex-direction: column; gap: 12px;">
                         <label style="font-weight: 600; font-size: 15px;">Plant Size (MLD):</label>
                         <input type="number" id="mldInputClO2" value="0.5" step="0.1" min="0.1"
@@ -2939,7 +2966,7 @@
                 </div>
 
                 <div style="background: #f8f9fa; padding: 20px; border-radius: 10px; margin-bottom: 25px;">
-                    <h3 style="margin-bottom: 6px; color: #3AAEDB; font-size: 18px;">On-Site Generator — Feed Chemicals</h3>
+                    <h3 style="margin-bottom: 6px; color: var(--accent-ink); font-size: 18px;">On-Site Generator — Feed Chemicals</h3>
                     <p style="color:#666; font-size:13px; margin-bottom:15px;">Two-precursor generator dosing <strong>HCl and NaClO₂ 1:1 by volume</strong> (single dual-head pump — both run at the same rate). NaClO₂ is sized from the ClO₂ demand (5&nbsp;NaClO₂ + 4&nbsp;HCl → 4&nbsp;ClO₂ + 5&nbsp;NaCl + 2&nbsp;H₂O); HCl matches its volume. Adjust strengths, density and yield to match your generator.</p>
                     <div style="display:flex; flex-direction:column; gap:12px;">
                         <label style="font-weight:600; font-size:15px;">System preset:</label>
@@ -2991,7 +3018,7 @@
                     </div>
                 </div>
 
-                <div style="margin-top: 20px; padding: 20px; background: linear-gradient(135deg, #3AAEDB 0%, #2e3742 100%); border-radius: 10px; color: white;">
+                <div style="margin-top: 20px; padding: 20px; background: linear-gradient(135deg, #1B77A0 0%, #2e3742 100%); border-radius: 10px; color: white;">
                     <h3 style="margin-bottom: 6px; font-size: 18px;">Generator Feed Chemicals &amp; Pump Rates</h3>
                     <div style="font-size:13px; opacity:0.9; margin-bottom:4px;">Active ClO₂ generated: <strong id="clo2Active">0</strong> kg/day</div>
                     <div style="font-size:12px; opacity:0.8; margin-bottom:14px;">HCl and NaClO₂ dosed <strong>1:1 by volume</strong> — the two pumps run at the same L/h and mL/min.</div>
@@ -3022,7 +3049,7 @@
                 <h2 style="margin-bottom: 20px;">Coagulants Calculator</h2>
                 
                 <div style="background: #f8f9fa; padding: 20px; border-radius: 10px; margin-bottom: 25px;">
-                    <h3 style="margin-bottom: 15px; color: #3AAEDB; font-size: 18px;" data-i18n="calc.plantConfig">Plant Configuration</h3>
+                    <h3 style="margin-bottom: 15px; color: var(--accent-ink); font-size: 18px;" data-i18n="calc.plantConfig">Plant Configuration</h3>
                     <div style="display: flex; flex-direction: column; gap: 12px;">
                         <label style="font-weight: 600; font-size: 15px;">Plant Size (MLD):</label>
                         <input type="number" id="mldInputCoag" value="0.5" step="0.1" min="0.1" 
@@ -3090,7 +3117,7 @@
                 <h2 style="margin-bottom: 20px;">Chlorine Dioxide Skid Sizing</h2>
 
                 <div style="background: #f8f9fa; padding: 20px; border-radius: 10px; margin-bottom: 25px;">
-                    <h3 style="margin-bottom: 15px; color: #3AAEDB; font-size: 18px;" data-i18n="calc.plantConfig">Plant Configuration</h3>
+                    <h3 style="margin-bottom: 15px; color: var(--accent-ink); font-size: 18px;" data-i18n="calc.plantConfig">Plant Configuration</h3>
                     <div style="display: flex; flex-direction: column; gap: 12px;">
                         <label style="font-weight: 600; font-size: 15px;">Application / Water Source:</label>
                         <select id="skidApp" onchange="onSkidAppChange(); calculateClO2Skid()"
@@ -3191,7 +3218,7 @@
             </p>
 
             <div style="background: #f8f9fa; padding: 20px; border-radius: 10px; margin-bottom: 25px;">
-                <h3 style="margin-bottom: 15px; color: #3AAEDB; font-size: 18px;">Water Analysis</h3>
+                <h3 style="margin-bottom: 15px; color: var(--accent-ink); font-size: 18px;">Water Analysis</h3>
                 <div style="display: grid; grid-template-columns: 1fr; gap: 16px;">
                     <div style="display: flex; flex-direction: column; gap: 6px;">
                         <label style="font-weight: 600; font-size: 15px;">Measured pH:</label>
@@ -3684,7 +3711,7 @@
 
                     <button type="button" class="calc-btn" style="margin-top:16px;" onclick="saveServiceReport()">💾 Save report</button>
                     <button type="button" class="calc-btn" style="background:#2e8b57;color:#fff;" onclick="submitServiceReport()">✅ Submit &amp; lock</button>
-                    <button type="button" class="calc-btn" style="background:#c59d2b;" onclick="exportServiceReportPdf()">📄 Save &amp; Export PDF</button>
+                    <button type="button" class="calc-btn" style="background:#c59d2b;color:#2E3742;" onclick="exportServiceReportPdf()">📄 Save &amp; Export PDF</button>
                     <button type="button" class="calc-btn" style="background:#3AAEDB;color:#0f2733;" onclick="shareServiceReportPdf()">📤 Share / send report</button>
                 </div>
             </div>
@@ -4390,7 +4417,7 @@
         }
 
         // Draggable windows (disabled on mobile)
-        const isMobile = window.matchMedia('(max-width: 768px)').matches;
+        const isMobile = window.matchMedia ? window.matchMedia('(max-width: 768px)').matches : window.innerWidth <= 768;
         
         if (!isMobile) {
             document.querySelectorAll('.window').forEach(window => {
@@ -4921,8 +4948,16 @@
         /* =======================================================
            Appearance (Light / Dark)
            ======================================================= */
-        const THEME_KEY = 'hadron-theme';   // shared with the ERP for cross-app theme consistency
-        const DARK_KEY  = 'hadron_dark';     // legacy key — read only, for one-time migration
+        const THEME_KEY = 'hadron-theme';     // "light" | "dark" when the user chose one (same key as the ERP); absent = follow the phone
+        // (The one-time migration of the default saved before v151 runs in the theme bootstrap in <head>.)
+        const phoneDark = window.matchMedia ? window.matchMedia('(prefers-color-scheme: dark)') : null;
+        let themeChosenNow = null;   // a choice made in this session: kept even where storage can't save it
+        function themeChoice() {   // 'light' | 'dark' | 'auto'
+            if (themeChosenNow) return themeChosenNow;
+            try { const t = localStorage.getItem(THEME_KEY); if (t === 'light' || t === 'dark') return t; } catch (e) {}
+            return 'auto';
+        }
+        function phoneTheme() { return phoneDark && phoneDark.matches ? 'dark' : 'light'; }
 
         function applyTheme(theme) {
             const enabled = theme === 'dark';
@@ -4930,20 +4965,29 @@
             document.body.classList.toggle('dark', enabled);              // bridge: keep legacy body.dark rules working
             const meta = document.querySelector('meta[name="theme-color"]');
             if (meta) meta.setAttribute('content', enabled ? '#0F172A' : '#FFFFFF');
-            const btnLight = document.getElementById('btnLight');
-            const btnDark  = document.getElementById('btnDark');
-            if (btnLight) btnLight.classList.toggle('active', !enabled);
-            if (btnDark)  btnDark.classList.toggle('active', enabled);
+            const choice = themeChoice();
+            [['btnAuto', 'auto'], ['btnLight', 'light'], ['btnDark', 'dark']].forEach(function (b) {
+                const el = document.getElementById(b[0]);
+                if (el) { el.classList.toggle('active', choice === b[1]); el.setAttribute('aria-pressed', choice === b[1] ? 'true' : 'false'); }
+            });
             const topToggle = document.getElementById('topThemeToggle');
             if (topToggle && typeof hadronThemeIcon === 'function') {
                 topToggle.innerHTML = hadronThemeIcon(theme);   // sun when dark, moon when light
             }
         }
 
+        // 'light' / 'dark' = the user's choice; 'auto' = follow the phone (and keep following it).
         function setTheme(theme) {
-            const t = theme === 'dark' ? 'dark' : 'light';
-            try { localStorage.setItem(THEME_KEY, t); } catch (e) {}
-            applyTheme(t);
+            const chosen = theme === 'light' || theme === 'dark';
+            themeChosenNow = chosen ? theme : 'auto';
+            try { if (chosen) localStorage.setItem(THEME_KEY, theme); else localStorage.removeItem(THEME_KEY); } catch (e) {}
+            applyTheme(chosen ? theme : phoneTheme());
+        }
+        if (phoneDark) {
+            // Also checked when the app comes back into view (the phone may have switched while it was away).
+            const followPhone = function () { if (themeChoice() === 'auto' && document.documentElement.getAttribute('data-theme') !== phoneTheme()) applyTheme(phoneTheme()); };
+            try { phoneDark.addEventListener('change', followPhone); } catch (e) { try { phoneDark.addListener(followPhone); } catch (_) {} }
+            document.addEventListener('visibilitychange', function () { if (document.visibilityState === 'visible') followPhone(); });
         }
 
         /* ============================================================
@@ -5039,19 +5083,8 @@
         window.ensureWindowHeros = ensureWindowHeros;
 
         function initDarkMode() {
-            let theme = null;
-            try {
-                const saved = localStorage.getItem(THEME_KEY);
-                if (saved === 'light' || saved === 'dark') {
-                    theme = saved;
-                } else {
-                    const legacy = localStorage.getItem(DARK_KEY);   // migrate old '1'/'0'
-                    if (legacy === '0') theme = 'light';
-                    else if (legacy === '1') theme = 'dark';
-                }
-            } catch (e) {}
-            if (!theme) theme = 'dark';   // default dark = ERP parity
-            setTheme(theme);              // persist under the shared key so it syncs from here on
+            const choice = themeChoice();
+            applyTheme(choice === 'auto' ? phoneTheme() : choice);
         }
 
         /* =======================================================
@@ -5534,12 +5567,12 @@
                 '<h2 style="margin-bottom:6px;">' + escapeHtml(entry.label) + '</h2>' +
                 '<p style="color:#888; font-size:13px; margin-bottom:20px;">Saved ' + escapeHtml(formatDate(entry.savedAt)) + '</p>' +
 
-                '<h3 style="color:#3AAEDB; font-size:15px; margin-bottom:8px;">Inputs</h3>' +
+                '<h3 style="color:var(--accent-ink); font-size:15px; margin-bottom:8px;">Inputs</h3>' +
                 '<div style="background:#f8f9fa; border-radius:10px; padding:6px 16px; margin-bottom:20px;">' +
                     entry.inputs.map(i => row(i.label, i.value)).join('') +
                 '</div>' +
 
-                '<h3 style="color:#3AAEDB; font-size:15px; margin-bottom:8px;">Results</h3>' +
+                '<h3 style="color:var(--accent-ink); font-size:15px; margin-bottom:8px;">Results</h3>' +
                 '<div style="background:#f8f9fa; border-radius:10px; padding:6px 16px; margin-bottom:24px;">' +
                     entry.results.map(r => row(r.label, r.value)).join('') +
                 '</div>' +
@@ -6680,7 +6713,7 @@
         }
         function srDerivedChips(p) {
             return srDerived(p).map(x =>
-                `<span style="display:inline-flex;align-items:baseline;gap:5px;background:var(--bg-soft);border:1px solid var(--border);border-radius:999px;padding:3px 11px;font-size:12px;color:var(--text);" title="${esc(x[2])}"><span style="color:var(--muted);">${esc(x[0])}</span><strong style="font-variant-numeric:tabular-nums;color:var(--accent);">${esc(x[1])}</strong></span>`).join('');
+                `<span style="display:inline-flex;align-items:baseline;gap:5px;background:var(--bg-soft);border:1px solid var(--border);border-radius:999px;padding:3px 11px;font-size:12px;color:var(--text);" title="${esc(x[2])}"><span style="color:var(--muted);">${esc(x[0])}</span><strong style="font-variant-numeric:tabular-nums;color:var(--accent-ink);">${esc(x[1])}</strong></span>`).join('');
         }
         function srRefreshDerived(pid) { const el = document.getElementById('sr_deriv_' + pid); const p = sr_points.find(x => x.id === pid); if (el && p) el.innerHTML = srDerivedChips(p); }
         function srMapRow(t) {
@@ -6737,7 +6770,7 @@
                         <div style="font-weight:600;font-size:14px;color:var(--text);">${esc(t.name)} <span style="color:var(--muted);font-weight:400;">${esc(t.unit || '')}</span></div>
                         <div style="margin-top:3px;display:flex;align-items:center;gap:10px;">
                             <span id="sr_chip_${esc(t.id)}">${srChip(t)}</span>
-                            <button type="button" onclick="srToggleLimitEditor('${esc(t.id)}')" title="Set your own pass/fail limit" style="border:none;background:transparent;color:var(--accent);font-size:12px;cursor:pointer;padding:0;">✎ limit</button>
+                            <button type="button" onclick="srToggleLimitEditor('${esc(t.id)}')" title="Set your own pass/fail limit" style="border:none;background:transparent;color:var(--accent-ink);font-size:12px;cursor:pointer;padding:0;">✎ limit</button>
                             ${spark}
                         </div>
                     </div>
@@ -7007,7 +7040,7 @@
             const ctl = 'padding:6px 7px;border:1px solid var(--border);border-radius:6px;background:var(--surface);color:var(--text);font-size:12px;';
             host.innerHTML = sr_recs.map(x => {
                 const badges = [];
-                if (x.carried && x.raisedAt) badges.push('<span style="font-size:11px;color:var(--accent);white-space:nowrap;" title="Carried forward from a previous visit">↩ open since ' + esc(srShortDate(x.raisedAt)) + '</span>');
+                if (x.carried && x.raisedAt) badges.push('<span style="font-size:11px;color:var(--accent-ink);white-space:nowrap;" title="Carried forward from a previous visit">↩ open since ' + esc(srShortDate(x.raisedAt)) + '</span>');
                 if (srRecOverdue(x)) badges.push('<span style="font-size:11px;font-weight:700;color:var(--danger);white-space:nowrap;">⚠ overdue</span>');
                 return `<div style="border:1px solid var(--border);border-radius:8px;padding:8px;${x.carried ? 'border-left:3px solid var(--accent);' : ''}">
                     <div style="display:flex;gap:6px;align-items:flex-start;">
@@ -7068,7 +7101,7 @@
             host.innerHTML = sr_micro.map(x => {
                 const pending = x.status !== 'read';
                 const badge = x.carried && x.setAt
-                    ? '<span style="font-size:11px;font-weight:700;color:var(--accent);white-space:nowrap;" title="Set at a previous visit — awaiting result">◷ set ' + esc(srShortDate(x.setAt)) + ' — enter result</span>'
+                    ? '<span style="font-size:11px;font-weight:700;color:var(--accent-ink);white-space:nowrap;" title="Set at a previous visit — awaiting result">◷ set ' + esc(srShortDate(x.setAt)) + ' — enter result</span>'
                     : '';
                 const resultCtl = srMicroIsDip(x.type)
                     ? `<select onchange="srSetMicro('${escJs(x.id)}','result',this.value)" style="${ctl}">${SR_MICRO_BANDS.map(b => `<option value="${esc(b)}"${x.result === b ? ' selected' : ''}>${b ? esc(b) + ' CFU/mL' : 'Result…'}</option>`).join('')}</select>`

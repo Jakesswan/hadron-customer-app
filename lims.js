@@ -186,7 +186,7 @@
 
   /* ---------- Router ---------- */
   // Tiny localiser for chrome — falls back to English when t() unavailable
-  const tt = (k, en) => (typeof window.t === 'function') ? window.t(k) : en;
+  const tt = (k, en) => { if (typeof window.t !== 'function') return en; const v = window.t(k); return (v && v !== k) ? v : en; };
 
   // Re-render the current view (used when user switches UI language)
   // Exposed for the cloud-sync layer (lims-sync.js).
@@ -571,9 +571,9 @@
         <div class="lims-kpi"><div class="v">${authorised}</div><div class="l">Authorised / Released</div></div>
         <div class="lims-kpi"><div class="v">${avgTat}</div><div class="l">Avg TAT (released)</div></div>
         <div class="lims-kpi"><div class="v" style="color:#e53935;">${calOverdue.length}</div><div class="l">Cal overdue</div></div>
-        <div class="lims-kpi"><div class="v" style="color:#c59d2b;">${calDue14.length}</div><div class="l">Cal due ≤14d</div></div>
+        <div class="lims-kpi"><div class="v" style="color:var(--warn-ink,#9A6400);">${calDue14.length}</div><div class="l">Cal due ≤14d</div></div>
         <div class="lims-kpi"><div class="v" style="color:#e53935;">${invExpired.length}</div><div class="l">Reagents expired</div></div>
-        <div class="lims-kpi"><div class="v" style="color:#c59d2b;">${invExpSoon.length}</div><div class="l">Expire ≤30d</div></div>
+        <div class="lims-kpi"><div class="v" style="color:var(--warn-ink,#9A6400);">${invExpSoon.length}</div><div class="l">Expire ≤30d</div></div>
         <div class="lims-kpi"><div class="v">${invLow.length}</div><div class="l">Low stock</div></div>
         <div class="lims-kpi"><div class="v">${ncsOpen.length}</div><div class="l">Open NCs</div></div>
         <div class="lims-kpi"><div class="v">${failFlags}</div><div class="l">Out-of-spec results</div></div>

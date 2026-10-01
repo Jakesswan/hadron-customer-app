@@ -279,14 +279,14 @@
   function injectStyles() {
     if (document.getElementById('boiler-styles')) return;
     var css =
-      '#bo_root{--bo-char:' + PAL.charcoal + ';--bo-teal:' + PAL.teal + ';--bo-gold:' + PAL.gold + ';--bo-ok:' + PAL.ok + ';--bo-watch:' + PAL.watch + ';--bo-act:' + PAL.action + ';}' +
+      '#bo_root{--bo-char:' + PAL.charcoal + ';--bo-teal:var(--accent-ink,' + PAL.teal + ');--bo-gold:' + PAL.gold + ';--bo-ok:' + PAL.ok + ';--bo-watch:' + PAL.watch + ';--bo-act:' + PAL.action + ';}' +
       'body.dark #bo_root{--bo-char:#e8ecef;}' +   /* charcoal text → light in dark mode (fixes bare var(--bo-char) e.g. the sampling-validity gate) */
       '#bo_root .bo-lead{font-size:13px;color:#6b7684;margin:0 0 12px;}' +
       '#bo_root .bo-toolbar{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:12px;}' +
       '#bo_root .bo-seg{display:inline-flex;border:1.5px solid var(--bo-teal);border-radius:10px;overflow:hidden;}' +
       '#bo_root .bo-seg button{border:0;background:#fff;color:var(--bo-teal);font-weight:700;padding:9px 16px;font-size:14px;cursor:pointer;}' +
-      '#bo_root .bo-seg button.on{background:var(--bo-teal);color:#fff;}' +
-      'body.dark #bo_root .bo-seg button{background:#0F172A;} body.dark #bo_root .bo-seg button.on{background:var(--bo-teal);color:#fff;}' +
+      '#bo_root .bo-seg button.on{background:var(--accent-ink,#1B77A0);color:var(--on-accent,#fff);}' +
+      'body.dark #bo_root .bo-seg button{background:#0F172A;} body.dark #bo_root .bo-seg button.on{background:var(--accent-ink,#1B77A0);color:var(--on-accent,#fff);}' +
       '#bo_root details.bo-sec{border:1px solid #e3e9ee;border-left:4px solid var(--bo-teal);border-radius:12px;margin-bottom:12px;background:#fff;overflow:hidden;}' +
       'body.dark #bo_root details.bo-sec{background:#0F172A;border-color:#1A222F;}' +
       '#bo_root details.bo-sec[data-accent="gold"]{border-left-color:var(--bo-gold);}' +
@@ -335,7 +335,7 @@
       'body.dark #bo_root table.bo-t input{background:#111a24;border-color:#28323d;color:#e8ecef;}' +
       '#bo_root .bo-actions{display:flex;gap:8px;flex-wrap:wrap;margin:16px 0 4px;}' +
       '#bo_root .bo-btn{border:0;border-radius:10px;padding:12px 16px;font-size:14px;font-weight:700;cursor:pointer;}' +
-      '#bo_root .bo-btn.teal{background:var(--bo-teal);color:#fff;} #bo_root .bo-btn.gold{background:var(--bo-gold);color:#fff;} #bo_root .bo-btn.ghost{background:#fff;color:var(--bo-char);border:1px solid #cdd6dd;}' +
+      '#bo_root .bo-btn.teal{background:var(--accent-ink,#1B77A0);color:var(--on-accent,#fff);} #bo_root .bo-btn.gold{background:var(--bo-gold);color:#2E3742;} #bo_root .bo-btn.ghost{background:#fff;color:var(--bo-char);border:1px solid #cdd6dd;}' +
       'body.dark #bo_root .bo-btn.ghost{background:#0F172A;color:#e8ecef;border-color:#28323d;}' +
       '#bo_root .bo-note{font-size:11.5px;color:#8a97a4;margin:6px 0 0;line-height:1.5;}';
     var st = document.createElement('style'); st.id = 'boiler-styles'; st.textContent = css; document.head.appendChild(st);

@@ -199,14 +199,14 @@
   function injectStyles() {
     if (document.getElementById('softener-styles')) return;
     var css =
-      '#sf_root{--so-char:' + PAL.charcoal + ';--so-teal:' + PAL.teal + ';--so-gold:' + PAL.gold + ';--so-ok:' + PAL.ok + ';--so-watch:' + PAL.watch + ';--so-act:' + PAL.action + ';}' +
+      '#sf_root{--so-char:' + PAL.charcoal + ';--so-teal:var(--accent-ink,' + PAL.teal + ');--so-gold:' + PAL.gold + ';--so-ok:' + PAL.ok + ';--so-watch:' + PAL.watch + ';--so-act:' + PAL.action + ';}' +
       'body.dark #sf_root{--so-char:#e8ecef;}' +
       '#sf_root .so-lead{font-size:13px;color:#6b7684;margin:0 0 12px;}' +
       '#sf_root .so-toolbar{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:12px;}' +
       '#sf_root .so-seg{display:inline-flex;border:1.5px solid var(--so-teal);border-radius:10px;overflow:hidden;}' +
       '#sf_root .so-seg button{border:0;background:#fff;color:var(--so-teal);font-weight:700;padding:9px 16px;font-size:14px;cursor:pointer;}' +
-      '#sf_root .so-seg button.on{background:var(--so-teal);color:#fff;}' +
-      'body.dark #sf_root .so-seg button{background:#0F172A;} body.dark #sf_root .so-seg button.on{background:var(--so-teal);color:#fff;}' +
+      '#sf_root .so-seg button.on{background:var(--accent-ink,#1B77A0);color:var(--on-accent,#fff);}' +
+      'body.dark #sf_root .so-seg button{background:#0F172A;} body.dark #sf_root .so-seg button.on{background:var(--accent-ink,#1B77A0);color:var(--on-accent,#fff);}' +
       '#sf_root details.so-sec{border:1px solid #e3e9ee;border-left:4px solid var(--so-teal);border-radius:12px;margin-bottom:12px;background:#fff;overflow:hidden;}' +
       'body.dark #sf_root details.so-sec{background:#0F172A;border-color:#1A222F;}' +
       '#sf_root details.so-sec[data-accent="gold"]{border-left-color:var(--so-gold);}' +
@@ -249,7 +249,7 @@
       'body.dark #sf_root .so-flag.info{color:#8fd3dd;} body.dark #sf_root .so-flag.amber{color:#f0c674;} body.dark #sf_root .so-flag.red{color:#f5b0a6;}' +
       '#sf_root .so-actions{display:flex;gap:8px;flex-wrap:wrap;margin:16px 0 4px;}' +
       '#sf_root .so-btn{border:0;border-radius:10px;padding:12px 16px;font-size:14px;font-weight:700;cursor:pointer;}' +
-      '#sf_root .so-btn.teal{background:var(--so-teal);color:#fff;} #sf_root .so-btn.gold{background:var(--so-gold);color:#fff;} #sf_root .so-btn.ghost{background:#fff;color:var(--so-char);border:1px solid #cdd6dd;}' +
+      '#sf_root .so-btn.teal{background:var(--accent-ink,#1B77A0);color:var(--on-accent,#fff);} #sf_root .so-btn.gold{background:var(--so-gold);color:#2E3742;} #sf_root .so-btn.ghost{background:#fff;color:var(--so-char);border:1px solid #cdd6dd;}' +
       'body.dark #sf_root .so-btn.ghost{background:#0F172A;color:#e8ecef;border-color:#28323d;}' +
       '#sf_root .so-note{font-size:11.5px;color:#8a97a4;margin:6px 0 0;line-height:1.5;}';
     var st = document.createElement('style'); st.id = 'softener-styles'; st.textContent = css; document.head.appendChild(st);
