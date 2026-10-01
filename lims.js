@@ -133,6 +133,31 @@
     } catch (_) { return false; }
   }
 
+  // Lab identity for the LIMS header, test chips and every generated PDF. Only Hadron's own
+  // laboratory is ISO/IEC 17025 accredited (SANAS T0492). Every other account is a separate lab: it
+  // gets its own name and NEVER Hadron's accreditation or contact details. An unknown or not-yet-
+  // loaded profile makes no claim (the safe direction). The claim needs Hadron's fixed organisation
+  // id as well as type 'hadron': an org's admin can edit their own organisation row, but not its id.
+  function limsLab() {
+    const HADRON_ORG_ID = 'e955af0c-cbbf-4696-a2b9-5cde4f882892';   // Customer App DB, organisations "Hadron Group"
+    let org = {}, orgId = '';
+    try {
+      org = (window.HG_PROFILE && window.HG_PROFILE.organisations) || {};
+      orgId = (window.HG_PROFILE && window.HG_PROFILE.organisation_id) || '';
+    } catch (_) {}
+    if (org.type === 'hadron' && orgId === HADRON_ORG_ID) {
+      return {
+        name: 'Hadron Group', accredited: true,
+        hubLine: 'Hadron Group · ISO/IEC 17025:2017 Laboratory · SANAS T0492',
+        accLine: 'ISO/IEC 17025:2017 · SANAS Accredited · T0492',
+        contact: 'hadrongrp.com · lab@hadrongrp.com · +27 82 375 9734',
+        web: 'hadrongrp.com'
+      };
+    }
+    const name = String(org.name || '').trim();   // may be '' (profile not loaded yet)
+    return { name: name, accredited: false, hubLine: name ? name + ' · Laboratory' : 'Laboratory', accLine: '', contact: '', web: '' };
+  }
+
   // Customer management (add/edit/delete) is owner-only, matching the "master manages, operators
   // do reports" model and the customers RLS (UPDATE/DELETE are admin/customer_admin only).
   // Operators/viewers see the client list read-only. Empty-role handling: in CLOUD mode the role
@@ -476,7 +501,7 @@
       <div class="lims-hub-header">
         <div class="lims-hub-welcome">
           <div class="lims-hub-hello">${esc(tt('lims.welcome','Welcome back'))}, ${esc((S.currentUser&&S.currentUser.name)||'Analyst')} 👋</div>
-          <div class="lims-hub-sub">Hadron Group · ISO/IEC 17025:2017 Laboratory · SANAS T0492</div>
+          <div class="lims-hub-sub">${esc(limsLab().hubLine)}</div>
         </div>
         <div class="lims-hub-clock" id="limsClock">${new Date().toLocaleString()}</div>
       </div>
@@ -975,7 +1000,7 @@
                   <td onclick="limsGo('test',{id:'${t.id}'})">${t.specMin!=null?esc(t.specMin+'–'+t.specMax):'—'}</td>
                   <td onclick="limsGo('test',{id:'${t.id}'})">${esc(t.sans241||'—')}</td>
                   <td onclick="limsGo('test',{id:'${t.id}'})">${t.tat||'—'}d</td>
-                  <td onclick="limsGo('test',{id:'${t.id}'})">${t.accredited?chip('SANAS','ok'):chip('Non-accred','warn')}</td>
+                  <td onclick="limsGo('test',{id:'${t.id}'})">${limsLab().accredited ? (t.accredited?chip('SANAS','ok'):chip('Non-accred','warn')) : '—'}</td>
                   <td style="white-space:nowrap;">
                     <button class="lims-btn ghost" onclick="event.stopPropagation();limsGo('test-form',{id:'${t.id}'})">✏️</button>
                     <button class="lims-btn ghost" onclick="event.stopPropagation();limsDeleteTest('${t.id}')">🗑️</button>
@@ -997,7 +1022,7 @@
       ${breadcrumb([{label:'LIMS',view:'hub'},{label:'Tests',view:'tests'},{label:t.code,view:'test',params:{id:t.id}}])}
       <div class="lims-toolbar">
         <h2 class="lims-title">${esc(t.code)} · ${esc(t.name)}</h2>
-        ${t.accredited?chip('SANAS T0492','ok'):chip('Non-accredited','warn')}
+        ${limsLab().accredited ? (t.accredited?chip('SANAS T0492','ok'):chip('Non-accredited','warn')) : ''}
       </div>
       <div class="lims-card">
         <div class="lims-fieldgrid">
@@ -1865,11 +1890,13 @@
     const W = 210;
     // Header
     doc.setFillColor(0,177,202); doc.rect(0,0,W,22,'F');
+    // Lab identity: accreditation + contact print ONLY for the accredited lab that holds them.
+    const lab = limsLab();
     doc.setTextColor(255,255,255); doc.setFont('helvetica','bold'); doc.setFontSize(16);
-    doc.text('HADRON GROUP · LABORATORY', 10, 10);
+    doc.text(((lab.name ? lab.name.toUpperCase() + ' · ' : '') + 'LABORATORY').slice(0, 60), 10, 10);
     doc.setFontSize(9); doc.setFont('helvetica','normal');
-    doc.text('ISO/IEC 17025:2017 · SANAS Accredited · T0492', 10, 16);
-    doc.text('hadrongrp.com · lab@hadrongrp.com · +27 82 375 9734', 10, 20);
+    if (lab.accLine) doc.text(lab.accLine, 10, 16);
+    if (lab.contact) doc.text(lab.contact, 10, 20);
     doc.setTextColor(0,0,0);
     // Title
     doc.setFontSize(14); doc.setFont('helvetica','bold');
@@ -2272,7 +2299,7 @@
             </select>
           </div>
           <div class="lims-field"><label>Turnaround (days)</label><input id="tf_tat" type="number" min="0" class="lims-search" value="${t.tat!=null?t.tat:1}"></div>
-          <div class="lims-field"><label>Accredited (SANAS)</label>
+          <div class="lims-field"><label>Accredited${limsLab().accredited ? ' (SANAS)' : ''}</label>
             <select id="tf_accredited" class="lims-search">
               <option value="false" ${!t.accredited?'selected':''}>No</option>
               <option value="true"  ${ t.accredited?'selected':''}>Yes</option>
@@ -2610,12 +2637,13 @@
       pdf.setTextColor(255, 255, 255);
       pdf.setFont('helvetica', 'bold');
       pdf.setFontSize(20);
-      pdf.text('HADRON GROUP', MARGIN, 38);
+      const lab = limsLab();   // the account's own name; Hadron's web address only on Hadron's documents
+      pdf.text((lab.name || 'Laboratory').toUpperCase().slice(0, 40), MARGIN, 38);
       pdf.setFont('helvetica', 'normal');
       pdf.setFontSize(10);
       pdf.text(d.type + ' · ' + (d.code || 'Untitled'), MARGIN, 56);
       pdf.setFontSize(9);
-      pdf.text('hadrongrp.com', MARGIN, 70);
+      if (lab.web) pdf.text(lab.web, MARGIN, 70);
       // Status pill on the right
       pdf.setFontSize(9);
       pdf.text('Version ' + (d.ver||'—') + '   ·   Status: ' + (d.status||'—'), PAGE_W - MARGIN, 70, { align: 'right' });
