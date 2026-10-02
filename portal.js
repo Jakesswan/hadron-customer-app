@@ -103,7 +103,7 @@
 
     // ── Open samples ──
     const openSamples = (samples || [])
-      .filter(s => ['received','testing','in-progress','pending'].includes(s.status))
+      .filter(s => !s.deleted_at && ['received','testing','in-progress','pending'].includes(s.status))   // not deleted (a deletion mark)
       .sort((a,b) => new Date(b.created_at||0) - new Date(a.created_at||0))
       .slice(0, 8);
 
@@ -130,7 +130,7 @@
 
     // ── Recent reports ──
     const recentReports = (reports || [])
-      .filter(r => r.status === 'authorised' || r.pass_fail)
+      .filter(r => !r.deleted_at && (r.status === 'authorised' || r.pass_fail))
       .sort((a,b) => new Date(b.recorded_at||b.created_at||0) - new Date(a.recorded_at||a.created_at||0))
       .slice(0, 8);
 

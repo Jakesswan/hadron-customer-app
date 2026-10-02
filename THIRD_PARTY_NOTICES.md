@@ -37,9 +37,10 @@ Licensed under the Apache License, Version 2.0: https://www.apache.org/licenses/
 
 ### Gothic A1 — `fonts/gothic-a1-{400,700,800}-latin.woff2`
 The Latin subset of Gothic A1 (Version 2.50) in three weights, as served by Google Fonts, unmodified.
-Copyright notice, as carried in each font file: "(C) Copyright HanYang I&C Co.,Ltd. All rights reserved."
-Licensed under the SIL Open Font License, Version 1.1, whose address each font file also carries:
-http://scripts.sil.org/OFL (now https://openfontlicense.org).
+"(C) Copyright HanYang I&C Co.,Ltd. All rights reserved." Licensed under the SIL Open Font License,
+Version 1.1: the full text, with that copyright notice, is in `fonts/OFL.txt` (from the font's upstream,
+google/fonts `ofl/gothica1/OFL.txt`). No Reserved Font Name is declared. Each font file also carries the
+copyright notice and the licence's address.
 
 ### QR Code Generator for JavaScript — `qr.js`
 Copyright (c) 2009 Kazuhiko Arase. Licensed under the MIT license (notice kept in the file).

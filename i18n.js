@@ -333,7 +333,7 @@
             'sync.synced':                'Gesinkroniseer',
             'sync.offline':               'Vanlyn',
             'sync.connecting':            'Koppel tans…',
-            'sync.pending':               '{n} om te sinkroniseer',
+            'sync.pending':               '{n} wag',   // short, so the state word fits on a small phone: '2 wag · Vanlyn'
             'settings.light':             '☀️ Lig',
             'settings.dark':              '🌙 Donker',
             'settings.language':          'Taal',

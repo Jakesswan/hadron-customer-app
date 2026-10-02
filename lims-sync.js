@@ -54,7 +54,10 @@
   // ── Mappers: local row → cloud row ──────────────────────
   // Every cloud row gets organisation_id stamped on it from the current profile.
   function mapOut(localStore, row, orgId) {
-    const base = { id: row.id, organisation_id: orgId, payload: row };
+    // deleted_at: null — a write from this app means the record is live: it brings back a record marked
+    // deleted (migration 0019). Older apps send no deleted_at, so their stale re-sends can't undo a delete.
+    // (Needs the column, migration 0018.)
+    const base = { id: row.id, organisation_id: orgId, payload: row, deleted_at: null };
     switch (localStore) {
       case 'clients':
         return Object.assign(base, {
@@ -202,7 +205,7 @@
   async function pullAll() {
     if (!state.orgId || !window.HG_LIMS_DB || !window.HG_DB) return;
     const stores = Object.keys(TABLE_MAP);
-    let pulled = 0, erpClients = 0;
+    let pulled = 0, removed = 0, erpClients = 0;
     const byStore = {};
     // A record changed on this phone whose change hasn't reached the server yet (e.g. edited offline)
     // keeps its local copy: overwriting it with the server's older copy would lose the change. Checked
@@ -230,6 +233,13 @@
               continue;
             }
             if (pending.has(cloudTable + ':' + r.id)) continue;   // local change still on its way up
+            // Deleted on the server (a deletion mark, migration 0018): gone here too. Its id stays in
+            // serverIds, so pushAllOnce never sends it back.
+            if (r.deleted_at) {
+              const had = typeof window.HG_LIMS_DB.get === 'function' ? await window.HG_LIMS_DB.get(store, r.id) : true;
+              if (had) { await window.HG_LIMS_DB.delLocal(store, r.id); removed++; }
+              continue;
+            }
             const local = mapIn(store, r);
             await window.HG_LIMS_DB.putLocal(store, local);
             pulled++;
@@ -242,13 +252,13 @@
       }
     }
     // Visibility: what actually came down, and how many clients are ERP-bridged.
-    console.info('[HG_LIMS_SYNC] pull complete —', pulled, 'rows', byStore, '| ERP customers:', erpClients);
+    console.info('[HG_LIMS_SYNC] pull complete —', pulled, 'rows', byStore, '| deleted on the server:', removed, '| ERP customers:', erpClients);
     const erpLinked = !!(window.HG_PROFILE && window.HG_PROFILE.organisations
                          && window.HG_PROFILE.organisations.erp_tenant_id);
     if (erpLinked && erpClients === 0) {
       console.warn('[HG_LIMS_SYNC] this Tenant is ERP-linked but 0 ERP customers were pulled — check the ERP→App push / erp-ingest.');
     }
-    if (pulled > 0) {
+    if (pulled > 0 || removed > 0) {
       // Trigger LIMS re-render so newly-pulled data shows up.
       try { window.limsRerender && window.limsRerender(); } catch (_) {}
     }
@@ -307,8 +317,15 @@
               console.error('[HG_LIMS_SYNC] dropped cross-org realtime row', store, row.id);
               return;
             }
-            const local = mapIn(store, row);
-            await pause(() => window.HG_LIMS_DB.putLocal(store, local));
+            if (row.deleted_at) {                       // deleted on the server (a deletion mark)
+              let pending = new Set();
+              try { pending = window.HG_DB._pendingKeys ? window.HG_DB._pendingKeys() : pending; } catch (_) {}
+              if (pending.has(cloudTable + ':' + row.id)) return;   // this phone's change, still on its way up, brings it back
+              await pause(() => window.HG_LIMS_DB.delLocal(store, row.id));
+            } else {
+              const local = mapIn(store, row);
+              await pause(() => window.HG_LIMS_DB.putLocal(store, local));
+            }
           }
           // Rerender LIMS only if it's already open; otherwise it'll pick up
           // fresh data on next open.

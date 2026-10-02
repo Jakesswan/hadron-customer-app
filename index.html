@@ -52,59 +52,59 @@
     <!-- Supabase JS SDK (auth + cloud sync), pinned 2.117.2 and served by the app itself so sign-in
          works offline from the precache (it used to be the floating @2 from a CDN). See
          THIRD_PARTY_NOTICES.md. To upgrade: replace the file, rename it, update this tag + sw.js. -->
-    <script src="supabase-js-2.117.2.js?v=156"></script>
+    <script src="supabase-js-2.117.2.js?v=157"></script>
 
     <!-- Hadron Supabase bridge -->
-    <script src="supabase-client.js?v=156"></script>
+    <script src="supabase-client.js?v=157"></script>
 
     <!-- Shared UI primitives (in-app sheets) — loaded before auth-ui, which uses them -->
-    <script src="hg-ui.js?v=156" defer></script>
+    <script src="hg-ui.js?v=157" defer></script>
     <!-- Auth UI (login/signup gate, profile binding) -->
-    <script src="auth-ui.js?v=156" defer></script>
+    <script src="auth-ui.js?v=157" defer></script>
 
     <!-- Push notifications -->
-    <script src="push.js?v=156" defer></script>
+    <script src="push.js?v=157" defer></script>
 
     <!-- Translation bundle -->
-    <script src="i18n.js?v=156"></script>
+    <script src="i18n.js?v=157"></script>
 
     <!-- Hadron Tristroke icon system (matches the ERP) -->
-    <script src="hadron-icons.js?v=156" defer></script>
+    <script src="hadron-icons.js?v=157" defer></script>
 
     <!-- Emoji the app has an icon for become Tristroke icons (the rest stay the phone's own emoji) -->
-    <script src="emoji.js?v=156" defer></script>
+    <script src="emoji.js?v=157" defer></script>
 
     <!-- Customizable home grid (drag-to-reorder) -->
-    <script src="customize.js?v=156" defer></script>
+    <script src="customize.js?v=157" defer></script>
 
     <!-- Data Manager (Excel import/export) -->
-    <script src="data-manager.js?v=156" defer></script>
+    <script src="data-manager.js?v=157" defer></script>
 
     <!-- QR encoder (MIT, Kazuhiko Arase) -->
-    <script src="qr.js?v=156"></script>
+    <script src="qr.js?v=157"></script>
 
     <!-- QR Builder app -->
-    <script src="qr-app.js?v=156" defer></script>
+    <script src="qr-app.js?v=157" defer></script>
 
     <!-- Pool Water module -->
-    <script src="pool.js?v=156" defer></script>
+    <script src="pool.js?v=157" defer></script>
     <!-- Cooling Tower field calculator -->
-    <script src="coolingtower.js?v=156" defer></script>
+    <script src="coolingtower.js?v=157" defer></script>
     <!-- Boiler / Steam field calculator -->
-    <script src="boiler.js?v=156" defer></script>
+    <script src="boiler.js?v=157" defer></script>
     <!-- Water softener sizing calculator -->
-    <script src="softener.js?v=156" defer></script>
-    <script src="academy-content.js?v=156" defer></script>
-    <script src="academy.js?v=156" defer></script>
+    <script src="softener.js?v=157" defer></script>
+    <script src="academy-content.js?v=157" defer></script>
+    <script src="academy.js?v=157" defer></script>
 
-    <script src="searchable-select.js?v=156" defer></script>
-    <script src="trends.js?v=156" defer></script>
+    <script src="searchable-select.js?v=157" defer></script>
+    <script src="trends.js?v=157" defer></script>
 
     <!-- LIMS module (loaded at end of body via defer) -->
-    <script src="lims.js?v=156" defer></script>
-    <script src="lims-sync.js?v=156" defer></script>
-    <script src="portal.js?v=156" defer></script>
-    <script src="team.js?v=156" defer></script>
+    <script src="lims.js?v=157" defer></script>
+    <script src="lims-sync.js?v=157" defer></script>
+    <script src="portal.js?v=157" defer></script>
+    <script src="team.js?v=157" defer></script>
 
 
     <style>
@@ -352,6 +352,7 @@
         }
         .hg-sync-chip[hidden] { display: none; }
         .hg-sync-chip .hg-sync-text { overflow: hidden; text-overflow: ellipsis; }
+        @media (max-width: 360px) { .hg-sync-chip { gap: 4px; padding: 0 7px 0 6px; } }   /* "2 wag · Vanlyn" fits at 320 px */
         /* The words carry the state; the dot repeats it: green = synced, solid = waiting to send, ring = offline. */
         .hg-sync-dot { flex: none; width: 8px; height: 8px; border-radius: 50%; background: #157B3A; box-sizing: border-box; }
         .hg-sync-chip[data-state="pending"] .hg-sync-dot { background: #2E3742; }
@@ -2717,7 +2718,7 @@
                 <div class="hg-section-title">About</div>
                 <div class="hg-kvgrid">
                     <div class="hg-kv"><div class="k">App</div><div class="v">Hadron Group</div></div>
-                    <div class="hg-kv"><div class="k">Version</div><div class="v">v156</div></div>
+                    <div class="hg-kv"><div class="k">Version</div><div class="v">v157</div></div>
                     <div class="hg-kv"><div class="k">Platform</div><div class="v">PWA</div></div>
                 </div>
             </div>
@@ -4957,6 +4958,7 @@
             const select = document.getElementById('languageSelect');
             if (select) select.value = code;
             applyTranslations();
+            if (typeof window.hgRefreshSyncChip === 'function') window.hgRefreshSyncChip();   // painted before the language was known (offline start)
         }
 
         /* =======================================================

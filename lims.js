@@ -361,7 +361,9 @@
         signature: (name.match(/\b\w/g) || []).join('').slice(0, 3).toUpperCase()
       };
       S.currentUser = user;
-      try { if (!(await DB.get('users', user.id))) await DB.put('users', user); } catch (_) {}
+      // On this phone only: lims-sync's start-up push uploads it if the server doesn't have it, and leaves it
+      // alone if an admin deleted it (it was re-sent, or refused for an operator, every session).
+      try { if (!(await DB.get('users', user.id))) await DB.putLocal('users', user); } catch (_) {}
     },
 
     // One-time removal of the OLD demo dataset on devices seeded before go-live.
@@ -405,11 +407,8 @@
       // is already there. So we manually duplicate the catalogue arrays here.
       const tests = SEED._tests();
       const profiles = SEED._profiles();
-      // Wipe + replace
-      const existingTests = await DB.all('tests');
-      for (const t of existingTests) await DB.del('tests', t.id);
-      const existingProfiles = await DB.all('profiles');
-      for (const p of existingProfiles) await DB.del('profiles', p.id);
+      // Overwrite the standard set in place. Nothing is deleted: a delete is now a mark the whole
+      // organisation sees (migration 0019), and this used to wipe the lab's own tests and profiles too.
       for (const t of tests) await DB.put('tests', t);
       for (const p of profiles) await DB.put('profiles', p);
     },
