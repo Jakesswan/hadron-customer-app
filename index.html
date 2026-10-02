@@ -52,59 +52,59 @@
     <!-- Supabase JS SDK (auth + cloud sync), pinned 2.117.2 and served by the app itself so sign-in
          works offline from the precache (it used to be the floating @2 from a CDN). See
          THIRD_PARTY_NOTICES.md. To upgrade: replace the file, rename it, update this tag + sw.js. -->
-    <script src="supabase-js-2.117.2.js?v=155"></script>
+    <script src="supabase-js-2.117.2.js?v=156"></script>
 
     <!-- Hadron Supabase bridge -->
-    <script src="supabase-client.js?v=155"></script>
+    <script src="supabase-client.js?v=156"></script>
 
     <!-- Shared UI primitives (in-app sheets) — loaded before auth-ui, which uses them -->
-    <script src="hg-ui.js?v=155" defer></script>
+    <script src="hg-ui.js?v=156" defer></script>
     <!-- Auth UI (login/signup gate, profile binding) -->
-    <script src="auth-ui.js?v=155" defer></script>
+    <script src="auth-ui.js?v=156" defer></script>
 
     <!-- Push notifications -->
-    <script src="push.js?v=155" defer></script>
+    <script src="push.js?v=156" defer></script>
 
     <!-- Translation bundle -->
-    <script src="i18n.js?v=155"></script>
+    <script src="i18n.js?v=156"></script>
 
     <!-- Hadron Tristroke icon system (matches the ERP) -->
-    <script src="hadron-icons.js?v=155" defer></script>
+    <script src="hadron-icons.js?v=156" defer></script>
 
     <!-- Emoji the app has an icon for become Tristroke icons (the rest stay the phone's own emoji) -->
-    <script src="emoji.js?v=155" defer></script>
+    <script src="emoji.js?v=156" defer></script>
 
     <!-- Customizable home grid (drag-to-reorder) -->
-    <script src="customize.js?v=155" defer></script>
+    <script src="customize.js?v=156" defer></script>
 
     <!-- Data Manager (Excel import/export) -->
-    <script src="data-manager.js?v=155" defer></script>
+    <script src="data-manager.js?v=156" defer></script>
 
     <!-- QR encoder (MIT, Kazuhiko Arase) -->
-    <script src="qr.js?v=155"></script>
+    <script src="qr.js?v=156"></script>
 
     <!-- QR Builder app -->
-    <script src="qr-app.js?v=155" defer></script>
+    <script src="qr-app.js?v=156" defer></script>
 
     <!-- Pool Water module -->
-    <script src="pool.js?v=155" defer></script>
+    <script src="pool.js?v=156" defer></script>
     <!-- Cooling Tower field calculator -->
-    <script src="coolingtower.js?v=155" defer></script>
+    <script src="coolingtower.js?v=156" defer></script>
     <!-- Boiler / Steam field calculator -->
-    <script src="boiler.js?v=155" defer></script>
+    <script src="boiler.js?v=156" defer></script>
     <!-- Water softener sizing calculator -->
-    <script src="softener.js?v=155" defer></script>
-    <script src="academy-content.js?v=155" defer></script>
-    <script src="academy.js?v=155" defer></script>
+    <script src="softener.js?v=156" defer></script>
+    <script src="academy-content.js?v=156" defer></script>
+    <script src="academy.js?v=156" defer></script>
 
-    <script src="searchable-select.js?v=155" defer></script>
-    <script src="trends.js?v=155" defer></script>
+    <script src="searchable-select.js?v=156" defer></script>
+    <script src="trends.js?v=156" defer></script>
 
     <!-- LIMS module (loaded at end of body via defer) -->
-    <script src="lims.js?v=155" defer></script>
-    <script src="lims-sync.js?v=155" defer></script>
-    <script src="portal.js?v=155" defer></script>
-    <script src="team.js?v=155" defer></script>
+    <script src="lims.js?v=156" defer></script>
+    <script src="lims-sync.js?v=156" defer></script>
+    <script src="portal.js?v=156" defer></script>
+    <script src="team.js?v=156" defer></script>
 
 
     <style>
@@ -1250,7 +1250,7 @@
         body.dark input[type="number"],
         body.dark input[type="email"],
         body.dark .window-content select {
-            background: #243044;
+            background-color: #243044;   /* only the colour: a field's own background image (a list's chevron) stays */
             border-color: #3A4A61;
             color: #e6e6e6;
         }
@@ -1715,6 +1715,12 @@
             #poolShell > .lims-table > tbody {
                 display: table; width: 100%; min-width: 640px;
             }
+            /* LIMS tables: their own scroll box (lims.js wraps them), at least 640 px wide */
+            .lims-table-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; max-width: 100%; }
+            .lims-detail-grid > *, .lims-dashgrid > * { min-width: 0; }   /* detail screens: cards fit the phone, their tables scroll */
+            .lims-table-wrap > .lims-table:has(td.lims-empty) { min-width: 0; }   /* an empty list's message stays on screen, */
+            .lims-table-wrap > .lims-table:has(td.lims-empty) > thead { display: none; }   /* with no headings to scroll past */
+            .window-content .lims-table-wrap > .lims-table { min-width: 640px; }
             /* Subtle scroll-shadow hint so users know there's more to the right */
             .lims-card::-webkit-scrollbar, .hg-card::-webkit-scrollbar { height: 6px; }
             .lims-card::-webkit-scrollbar-thumb, .hg-card::-webkit-scrollbar-thumb { background: #cfd6dd; border-radius: 3px; }
@@ -2711,7 +2717,7 @@
                 <div class="hg-section-title">About</div>
                 <div class="hg-kvgrid">
                     <div class="hg-kv"><div class="k">App</div><div class="v">Hadron Group</div></div>
-                    <div class="hg-kv"><div class="k">Version</div><div class="v">v155</div></div>
+                    <div class="hg-kv"><div class="k">Version</div><div class="v">v156</div></div>
                     <div class="hg-kv"><div class="k">Platform</div><div class="v">PWA</div></div>
                 </div>
             </div>
@@ -4318,11 +4324,11 @@
         else { try { history.replaceState(Object.assign({}, history.state || {}, { hgBase: 1 }), ''); } catch (_) {} }
 
         function openWindow(appName) {
-            const window = document.getElementById(`window-${appName}`);
-            window.classList.add('active');
+            const win = document.getElementById(`window-${appName}`);   // not "window": that hid the global (window.hgTrendsOpen below)
+            win.classList.add('active');
             openWindows.add(appName);
             updateTaskbar();
-            bringToFront(window);
+            bringToFront(win);
             hgArmBack();
             hgStatusBar();
             if (appName === 'history') renderHistoryList();

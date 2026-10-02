@@ -439,6 +439,24 @@
   ];
 
   /* ---------- Renderer ---------- */
+  // Wide tables scroll sideways in their own box on a phone: the window itself never scrolls sideways, so
+  // their right-hand columns (e.g. Results → Submit) were out of reach. Every LIMS table drawn into the
+  // shell, by render() or by a view redrawing part of itself, gets a .lims-table-wrap around it.
+  function wrapTables(scope) {
+    scope.querySelectorAll('table.lims-table').forEach(function (t) {
+      if (!t.parentNode || (t.parentElement && t.parentElement.classList.contains('lims-table-wrap'))) return;
+      const w = document.createElement('div');
+      w.className = 'lims-table-wrap';
+      t.parentNode.insertBefore(w, t);
+      w.appendChild(t);
+    });
+  }
+  (function watchShell() {
+    const shell = document.getElementById('limsShell');
+    if (!shell || !window.MutationObserver) return;
+    new MutationObserver(function () { wrapTables(shell); }).observe(shell, { childList: true, subtree: true });
+  })();
+
   async function render() {
     const root = document.getElementById('limsShell');
     if (!root) return;
