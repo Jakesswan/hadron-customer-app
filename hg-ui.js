@@ -13,6 +13,8 @@
  *                  action that gets focus first (use it to put focus on the SAFE choice when the
  *                  main action is consequential), otherwise the first action does,
  *     dismissible: true  (Esc, a backdrop tap and a 'plain' Cancel close it; not while busy),
+ *     role:        'alertdialog' for a message the user didn't ask for (read out in full, not just the title),
+ *     focusSheet:  true = focus goes to the sheet, not a button (a key meant for a field can't dismiss it),
  *     onClose()
  *   }
  *   ctx = { el, body, close(), setBody(html|Node), setActions(actions), setBusy(on, label) }
@@ -48,6 +50,7 @@
     '.hg-sheet-btn.secondary{background:transparent;border-color:var(--border,#2D3B4F);color:var(--text,#F1F5F9)}',
     '.hg-sheet-btn.plain{background:transparent;color:var(--accent-ink,#1B77A0)}',
     '.hg-sheet-btn:disabled{opacity:.6;cursor:progress}',
+    '.hg-sheet:focus{outline:none}',
     '.hg-sheet-btn:focus-visible,.hg-sheet-check input:focus-visible{outline:3px solid var(--accent-ink,#1B77A0);outline-offset:2px}',
     '.hg-sheet-note{display:flex;gap:10px;align-items:flex-start;padding:12px 14px;border-radius:12px;font-weight:700;font-size:14px;line-height:1.45}',
     '.hg-sheet-note.warn{background:rgba(245,166,35,.14);color:var(--warn-ink,#9A6400)}',
@@ -98,6 +101,11 @@
     const panel = root.querySelector('.hg-sheet');
     const bodyEl = root.querySelector('.hg-sheet-body');
     const actEl = root.querySelector('.hg-sheet-actions');
+    if (o.role === 'alertdialog') {
+      panel.setAttribute('role', 'alertdialog');
+      bodyEl.id = titleId + 'b';
+      panel.setAttribute('aria-describedby', bodyEl.id);
+    }
     let busy = false, closed = false, mainLabel = '', focusBtn = null;
 
     const ctx = {
@@ -160,7 +168,7 @@
     function focusables() { return Array.prototype.slice.call(panel.querySelectorAll(FOCUSABLE)); }
     function focusFirst() {
       const f = focusables();
-      const target = (focusBtn && !focusBtn.disabled && focusBtn) || actEl.querySelector('button:not([disabled])') || f[0] || panel;
+      const target = o.focusSheet ? panel : ((focusBtn && !focusBtn.disabled && focusBtn) || actEl.querySelector('button:not([disabled])') || f[0] || panel);
       if (target === panel) panel.setAttribute('tabindex', '-1');
       try { target.focus(); } catch (_) {}
     }
@@ -171,7 +179,7 @@
       const f = focusables();
       if (!f.length) { e.preventDefault(); return; }
       const first = f[0], last = f[f.length - 1];
-      if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus(); }
+      if (e.shiftKey && (document.activeElement === first || document.activeElement === panel)) { e.preventDefault(); last.focus(); }   // from the sheet itself too (focusSheet)
       else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); }
       else if (!panel.contains(document.activeElement)) { e.preventDefault(); first.focus(); }
     }

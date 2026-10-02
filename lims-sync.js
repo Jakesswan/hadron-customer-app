@@ -146,6 +146,7 @@
 
   // ── State ───────────────────────────────────────────────
   const state = {
+    serverIds: {},            // store -> Set of the ids the last pull got (unset: that pull failed)
     orgId: null,
     ready: false,
     paused: false,            // pause hook while applying remote changes
@@ -189,6 +190,14 @@
     }
   }
 
+  // Every row of a table for this organisation (all pages), or null when the read failed: then nobody
+  // can tell what the server has. (An HG_DB without listAll: one read, where a failure looks empty.)
+  async function fetchAll(cloudTable) {
+    const api = window.HG_DB[cloudTable];
+    if (typeof api.listAll === 'function') return api.listAll({ organisation_id: state.orgId });
+    try { return await api.list({ organisation_id: state.orgId }); } catch (_) { return null; }
+  }
+
   // ── Pull-down on session start ──────────────────────────
   async function pullAll() {
     if (!state.orgId || !window.HG_LIMS_DB || !window.HG_DB) return;
@@ -206,7 +215,10 @@
       const cloudTable = TABLE_MAP[store];
       try {
         const pending = pendingNow();
-        const rows = await window.HG_DB[cloudTable].list({ organisation_id: state.orgId });
+        delete state.serverIds[store];
+        const rows = await fetchAll(cloudTable);
+        if (!rows) { console.warn('[HG_LIMS_SYNC] pull failed for', store); continue; }   // (and nothing is pushed for it: pushAllOnce)
+        state.serverIds[store] = new Set(rows.map(function (r) { return r && r.id; }));
         if (!rows.length) continue;
         pendingNow().forEach(function (k) { pending.add(k); });
         await pause(async () => {
@@ -243,15 +255,22 @@
   }
 
   // ── Push-up: drain any local rows not yet on the server ──
+  // Only rows the server doesn't have: the pull has just replaced the others with the server's copy, and a
+  // change still on its way up is in the queue. (Until v154 every row was sent again on every start; an
+  // operator or viewer may not update existing rows, so each one came back refused.)
   async function pushAllOnce() {
     if (!state.orgId || !window.HG_LIMS_DB || !window.HG_DB) return;
+    if (((window.HG_PROFILE && window.HG_PROFILE.role) || '') === 'viewer') return;   // viewers can't add records
     const stores = Object.keys(TABLE_MAP);
     let pushed = 0;
     for (const store of stores) {
       const cloudTable = TABLE_MAP[store];
+      const onServer = state.serverIds[store];
+      if (!onServer) continue;   // this store's pull failed: which rows are only on this phone is unknown
       try {
         const rows = await window.HG_LIMS_DB.all(store);
         for (const r of rows) {
+          if (!r || onServer.has(r.id)) continue;
           // One-way bridge: ERP-owned clients are read-only here, never pushed up.
           if (store === 'clients' && r && r.source === 'erp') continue;
           const cloudRow = mapOut(store, r, state.orgId);

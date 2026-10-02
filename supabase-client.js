@@ -66,6 +66,7 @@
     const key = opId(op);
     const q = loadQueue().filter(o => opId(o) !== key);   // a newer write for a record supersedes any pending op for it
     op.attempts = op.attempts || 0;
+    op.fmt = 2;   // queued from v154 on (auth-ui doesn't report refused LIMS re-sends queued before it)
     // Unique per enqueue, so a running flush can tell ops added (or replaced) mid-run from the snapshot it is sending.
     op.qid = op.qid || (Date.now().toString(36) + Math.random().toString(36).slice(2, 8));
     q.push(op);
@@ -161,6 +162,7 @@
     const done = new Set();       // tokens sent or set aside
     const retry = new Map();      // token -> op with bumped attempts (transient failure, try again later)
     let deadened = 0;
+    const deadItems = [];   // refused for good in this run: told to the user (auth-ui)
     // Persist progress after EVERY op, merged with the live queue. Ops enqueued while this run is
     // sending (new qids), or newer writes that replaced a snapshot op, are kept. The old single save at
     // the end dropped anything saved mid-flush, and left already-sent ops queued if the run was cut short
@@ -204,13 +206,14 @@
       } else {
         deadLetter(op, (error && (error.message || error.code)) || 'failed');   // permanent or exhausted → set aside
         deadened++;
+        deadItems.push({ table: op.table, kind: op.kind, status: Number(status) || 0, old: !op.fmt, code: String((error && error.code) || ''), reason: String((error && error.message) || '').slice(0, 200) });
         done.add(t);
       }
       persist();
     }
     const remaining = persist();
     if (deadened) console.warn('[HG_SYNC] ' + deadened + ' op(s) could not sync and were set aside (localStorage.' + DEAD_KEY + ')');
-    document.dispatchEvent(new CustomEvent('hg:sync:flushed', { detail: { remaining, dead: loadDead().length, deadNew: deadened } }));
+    document.dispatchEvent(new CustomEvent('hg:sync:flushed', { detail: { remaining, dead: loadDead().length, deadNew: deadened, deadItems } }));
   }
 
   // ── Init ────────────────────────────────────────────────
@@ -363,6 +366,29 @@
           const { data, error } = await q;
           if (error) { console.warn('[HG_DB]', table, 'list error', error); return []; }
           return data || [];
+        },
+        // Every row in id order, page by page after the last id seen (a row added or removed meanwhile can't
+        // shift a page), or null when a page fails: unlike list(), a caller can tell "the server has none"
+        // from "couldn't ask". PAGE must not exceed the API's max rows per request (Supabase: 1000), since a
+        // shorter page is taken as the last one.
+        async listAll(filters) {
+          if (!client) return null;
+          const PAGE = 1000, out = [];
+          let after = null;
+          for (;;) {
+            let q = client.from(table).select('*');
+            if (filters) Object.entries(filters).forEach(([k, v]) => { q = q.eq(k, v); });
+            if (after !== null) q = q.gt('id', after);
+            let res;
+            try { res = await q.order('id', { ascending: true }).limit(PAGE); }
+            catch (e) { console.warn('[HG_DB]', table, 'listAll failed', e); return null; }
+            if (!res || res.error || !Array.isArray(res.data)) { console.warn('[HG_DB]', table, 'listAll error', res && res.error); return null; }
+            for (const r of res.data) out.push(r);
+            if (res.data.length < PAGE) return out;
+            const next = res.data[res.data.length - 1].id;
+            if (next == null || next === after) return null;   // no progress: never loop on a bad answer
+            after = next;
+          }
         },
         async get(id) {
           if (!client) return null;

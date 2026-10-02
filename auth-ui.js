@@ -292,6 +292,7 @@
   };
 
   // ── Sync pill ───────────────────────────────────────────
+  let pillTimer = null;
   function showSyncPill(text, ms) {
     let pill = document.getElementById('hgSyncPill');
     if (!pill) {
@@ -302,13 +303,89 @@
     }
     pill.textContent = text;
     pill.classList.add('show');
-    setTimeout(() => pill.classList.remove('show'), ms || 2400);
+    clearTimeout(pillTimer);   // a newer note gets its full time
+    pillTimer = setTimeout(() => pill.classList.remove('show'), ms || 2400);
   }
 
   document.addEventListener('hg:sync:flushed', (e) => {
     const deadNew = e.detail?.deadNew ?? 0;
     // The top-bar chip shows what is still waiting; a change the server refused gets its own warning.
-    if (deadNew) showSyncPill(`⚠ ${deadNew} change${deadNew===1?'':'s'} couldn't be saved`);
+    if (deadNew) showRejected(deadNew, e.detail?.deadItems || []);
+  });
+
+  // Changes the server refused for good (not allowed for this account, or invalid), or that couldn't be
+  // sent after several tries: say so plainly and keep it on screen until it's read. The chip's "Synced"
+  // only means nothing is waiting to be sent.
+  const RECORD_WORDS = {
+    service_reports: 'Service report', incidents: 'Incident', sites: 'Site', customers: 'Customer',
+    samples: 'Lab sample', sample_results: 'Lab result', jobs: 'Job', equipment: 'Equipment',
+    academy_progress: 'Academy progress', push_subscriptions: 'Notification settings', org_invites: 'Team invite'
+  };
+  const isDenied = function (it) { return it.code === '42501' || /row-level security|permission denied/i.test(it.reason || ''); };
+  const isUnreached = function (it) { const s = Number(it.status || 0); return !s || s >= 500 || s === 408 || s === 429; };
+  // Until v154 the LIMS sync sent every lab record again on every start, and an operator's or viewer's
+  // copies came back refused. Those still queued from before v154 are set aside without a word (the queue
+  // marks what it takes in from v154 on); anything queued since is reported.
+  const isOldLimsResend = function (it) { return !!it.old && /^(customers|samples|sample_results|lims_\w+)$/.test(it.table || '') && isDenied(it); };
+  function rejectedContent(n, items) {
+    const one = n === 1;
+    const kinds = [];
+    items.forEach(function (it) {
+      const w = RECORD_WORDS[it.table] || (/^lims_/.test(it.table || '') ? 'LIMS record' : 'Record');
+      if (kinds.indexOf(w) < 0) kinds.push(w);
+    });
+    const all = function (f) { return items.length > 0 && items.every(f); };
+    const unreached = all(isUnreached), denied = all(isDenied), deletes = all(function (it) { return it.kind === 'delete'; });
+    const msg = unreached
+      ? (one ? 'One change from this phone' : n + ' changes from this phone') + ' couldn’t be sent after several tries, so ' + (one ? 'it wasn’t' : 'they weren’t') + ' saved.'
+      : (one ? 'One change from this phone was' : n + ' changes from this phone were') + ' refused by the server, so ' + (one ? 'it wasn’t' : 'they weren’t') + ' saved.';
+    const why = denied && deletes
+      ? 'Your account isn’t allowed to delete ' + (one ? 'it, so it stays' : 'them, so they stay') + ' on the server. Ask your company’s admin if you need to.'
+      : denied
+      ? 'Your account isn’t allowed to make ' + (one ? 'this change' : 'these changes') + '. Ask your company’s admin if you need to.'
+      : 'Open the item, check it, and make the change again. If it keeps happening, contact Hadron support.';
+    return {
+      title: one ? 'A change wasn’t saved' : n + ' changes weren’t saved',
+      body: '<div class="hg-sheet-note danger"><span aria-hidden="true">⚠</span><span>' + escH(msg) + '</span></div>' +
+            (kinds.length ? '<p>' + escH(kinds.join(', ')) + '</p>' : '') +
+            '<p>' + escH(why) + '</p>'
+    };
+  }
+  // One pop-up: while it's open, new refusals are added to it; while another sheet is open (account menu,
+  // a form…) it waits and opens when that one closes. Only while the page is being cleared (or sheets
+  // aren't available) a 6-second note instead.
+  let rejectedCtx = null, rejectedN = 0, rejectedItems = [];
+  function showRejected(n, items) {
+    if (items.length) { items = items.filter(function (it) { return !isOldLimsResend(it); }); n = items.length; }
+    if (!n) return;
+    if (!window.hgSheet || window.__hgTenantFrozen) {
+      showSyncPill('⚠ ' + (n === 1 ? 'A change wasn’t saved' : n + ' changes weren’t saved'), 6000);
+      return;
+    }
+    rejectedN += n; rejectedItems = rejectedItems.concat(items);
+    if (rejectedCtx) { paintRejected(); return; }
+    if (typeof window.hgSheet.count === 'function' && window.hgSheet.count() > 0) return;   // opens when that sheet closes (below)
+    openRejected();
+  }
+  function openRejected() {
+    const c = rejectedContent(rejectedN, rejectedItems);
+    rejectedCtx = window.hgSheet.open({
+      title: c.title, body: c.body, role: 'alertdialog', focusSheet: true,
+      actions: [{ label: 'OK', kind: 'primary' }],
+      onClose: function () { rejectedCtx = null; rejectedN = 0; rejectedItems = []; }
+    });
+  }
+  function paintRejected() {
+    const c = rejectedContent(rejectedN, rejectedItems);
+    rejectedCtx.el.querySelector('.hg-sheet-title').textContent = c.title;
+    rejectedCtx.setBody(c.body);
+  }
+  document.addEventListener('hg:sheet', function (e) {
+    if (!rejectedN || rejectedCtx || !e.detail || e.detail.open || e.detail.count !== 0) return;
+    setTimeout(function () {   // a sheet that opens the next one (account menu → sign-out) goes first
+      if (!rejectedN || rejectedCtx || window.__hgTenantFrozen || (window.hgSheet && window.hgSheet.count() > 0)) return;
+      openRejected();
+    }, 350);
   });
 
   // ── Top bar: company and sync status ────────────────────
