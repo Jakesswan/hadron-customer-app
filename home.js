@@ -8,7 +8,8 @@
  *   - searches every tool, including the ones inside Dosage, Effluent, Assets, Safety and LIMS, and opens
  *     the one picked directly;
  *   - shows unfinished work at the top (Continue: a service report that wasn't saved, a job timer still
- *     running) and the last tools opened (Recent).
+ *     running), the tools this person pinned (Pinned) and the last tools opened (Recent). While customizing,
+ *     every tile has a star that pins it; so does every search result.
  * Customize home (customize.js) reorders tiles within each section.
  */
 (function () {
@@ -92,6 +93,7 @@
     // A saved layout may already say where this tile goes (customize.js keeps data-home-first tiles in front).
     if (window.HG_HOME && typeof window.HG_HOME.applyOrder === 'function' && !window.HG_HOME.isEditing()) window.HG_HOME.applyOrder();
     refreshSections();
+    if (editing()) paintTileStars(tile);
     renderQuick();   // a recent Team / Portal can be shown now
     return true;
   }
@@ -108,7 +110,9 @@
   // The recent list is this person's data on the phone: an hg_ key, kept per user at sign-out.
   const RECENT_KEY = 'hg_home_recent_v1';
   const RECENT_KEEP = 10, RECENT_SHOW = 3;
-  let quick = null;
+  // Pinned: the tools this person keeps at the top, in their order (an hg_ key too).
+  const PINS_KEY = 'hg_home_pins_v1', PINS_MAX = 9;
+  let quick = null, pinSort = null;   // pinSort: the Pinned row's SortableJS while customizing
   const readJSON = (k, d) => { try { const v = JSON.parse(localStorage.getItem(k) || 'null'); return v == null ? d : v; } catch (_) { return d; } };
   const homeTile = (id) => Array.from(document.querySelectorAll('[data-home-grid] .app-icon[data-app]')).find((t) => t.getAttribute('data-app') === id) || null;
   const editing = () => !!(window.HG_HOME && typeof window.HG_HOME.isEditing === 'function' && window.HG_HOME.isEditing());
@@ -121,6 +125,62 @@
     if (!id || window.__hgTenantFrozen) return;   // signing out: this person's data is being put away
     const next = [{ id: id, at: Date.now() }].concat(recentList().filter((x) => x.id !== id)).slice(0, RECENT_KEEP);
     try { localStorage.setItem(RECENT_KEY, JSON.stringify(next)); } catch (_) {}
+  }
+  function pinList() {
+    const a = readJSON(PINS_KEY, []);
+    return Array.isArray(a) ? a.filter((x, i) => typeof x === 'string' && a.indexOf(x) === i) : [];
+  }
+  function savePins(list) {
+    if (window.__hgTenantFrozen) return false;
+    try { localStorage.setItem(PINS_KEY, JSON.stringify(list)); return true; } catch (_) { return false; }
+  }
+  const toast = (m) => { if (typeof window.showToast === 'function') window.showToast(m); };
+  function togglePin(id) {
+    const list = pinList(), on = list.indexOf(id) === -1;
+    // The limit is about what this person sees: ids they can't open here (another role's tools, a tool renamed or
+    // gone) don't count. They are kept for when they come back, but never more than a few: past twice the limit
+    // the oldest of them make way.
+    const can = new Set(items().map((it) => it.id));
+    if (on && list.filter((x) => can.has(x)).length >= PINS_MAX) { toast(tr('home.pinFull', 'You can pin up to {n} tools. Unpin one first.').replace('{n}', PINS_MAX)); return; }
+    const next = on ? list.concat(id) : list.filter((x) => x !== id);
+    for (let i = 0; next.length > PINS_MAX * 2 && i < next.length;) { if (can.has(next[i])) i++; else next.splice(i, 1); }
+    if (!savePins(next)) return;
+    toast(on ? tr('home.pinnedToast', 'Pinned to the top') : tr('home.unpinnedToast', 'Removed from pinned'));
+    // A star in the Pinned row is redrawn with the row: keep the keyboard on the nearest star there.
+    const stars = () => (quick ? Array.from(quick.querySelectorAll('.hg-pin-toggle')) : []);
+    const at = stars().indexOf(document.activeElement);
+    syncPinToggles();
+    renderQuick();
+    if (at !== -1) { const s = stars(); const nx = s[Math.min(at, s.length - 1)]; if (nx) nx.focus(); else focusPinnedHead(); }   // never the search box: a phone would open its keyboard
+  }
+  // A pin toggle: its name stays "Pin <tool>", aria-pressed says whether it is pinned.
+  function pinToggle(id, name, cls) {
+    const star = typeof window.hadronIcon === 'function' ? window.hadronIcon('star', { size: 22, strokeWidth: 1.6 }) : '★';
+    return '<button type="button" class="hg-pin-toggle' + (cls ? ' ' + cls : '') + '" data-pin="' + esc(id) + '" aria-pressed="' + (pinList().indexOf(id) !== -1) + '"' +
+      ' aria-label="' + esc(tr('home.pin', 'Pin {x}').replace('{x}', () => name)) + '">' + star + '</button>';
+  }
+  function syncPinToggles() {
+    const pins = pinList();
+    document.querySelectorAll('.hg-pin-toggle[data-pin]').forEach((b) => b.setAttribute('aria-pressed', String(pins.indexOf(b.getAttribute('data-pin')) !== -1)));
+  }
+  // Customizing: a star on every home tile (removed again when done).
+  function paintTileStars(only) {
+    const edit = editing();
+    const tiles = only ? [only] : homeGrids().reduce((a, g) => a.concat(Array.from(g.querySelectorAll('.app-icon[data-app]'))), []);
+    tiles.forEach((tile) => {
+      const old = tile.querySelector(':scope > .hg-pin-toggle');
+      if (!edit) { if (old) old.remove(); return; }
+      const html = pinToggle(tile.getAttribute('data-app'), tileName(tile));
+      if (!old) { tile.insertAdjacentHTML('beforeend', html); return; }
+      // already there (a language change): renamed in place, so a focused star keeps the focus
+      const t = document.createElement('div'); t.innerHTML = html;
+      ['aria-label', 'aria-pressed'].forEach((a) => old.setAttribute(a, t.firstChild.getAttribute(a)));
+    });
+  }
+  // The Pinned heading takes the focus when its row has no star left (or Customize was started from a link there).
+  function focusPinnedHead() {
+    const h = document.getElementById('hgSec-pinned');
+    if (h) { h.setAttribute('tabindex', '-1'); h.focus({ preventScroll: true }); }
   }
   // A time today as 08:42; an earlier one with its date.
   function when(v) {
@@ -169,11 +229,21 @@
   }
   function renderQuick() {
     if (!quick) return;
-    if ((input && input.value.trim()) || editing()) { quick.hidden = true; return; }   // a search or Customize: the tiles only
-    if (window.hgSrDraft && window.hgSrDraft.flush) window.hgSrDraft.flush();   // an edit still waiting to be autosaved counts
-    const cont = unfinished();
+    if (pinSort) { try { pinSort.destroy(); } catch (_) {} pinSort = null; }
+    if (input && input.value.trim()) { quick.hidden = true; return; }   // a search: the results only
+    const edit = editing();   // customizing: only the Pinned row (to arrange), no Continue / Recent
+    if (!edit && window.hgSrDraft && window.hgSrDraft.flush) window.hgSrDraft.flush();   // an edit still waiting to be autosaved counts
+    const cont = edit ? [] : unfinished();
     const byId = new Map(items().map((it) => [it.id, it]));
-    const recent = recentList().map((x) => byId.get(x.id)).filter(Boolean).slice(0, RECENT_SHOW);
+    const pinIds = pinList();
+    const pinned = pinIds.map((id) => byId.get(id)).filter(Boolean);
+    const recent = edit ? [] : recentList().filter((x) => pinIds.indexOf(x.id) === -1).map((x) => byId.get(x.id)).filter(Boolean).slice(0, RECENT_SHOW);
+    const link = (text) => '<button type="button" class="hg-quick-link">' + esc(text) + '</button>';
+    // While customizing, a pinned shortcut doesn't open its tool: its star (unpin) is what's there to use.
+    const shortcut = (it, i, kind) => '<div role="listitem" class="hg-short-wrap"' + (kind === 'p' ? ' data-id="' + esc(it.id) + '"' : '') + '>' +
+      '<button type="button" class="hg-short" data-' + kind + '="' + i + '"' + (edit ? ' tabindex="-1" aria-hidden="true"' : it.sub ? ' aria-label="' + esc(it.name + ', ' + it.sub) + '"' : '') + '>' +
+        '<span class="icon" aria-hidden="true">' + iconOf(it.iconFrom) + '</span><span class="app-name">' + esc(it.name) + '</span></button>' +
+      (edit ? pinToggle(it.id, it.sub ? it.name + ', ' + it.sub : it.name) : '') + '</div>';
     let html = '';
     if (cont.length) html += '<div class="hg-cont-list" role="list" aria-label="' + esc(tr('home.unfinished', 'Unfinished work')) + '">' + cont.map((c, i) =>
       '<div class="hg-cont" role="listitem">' +
@@ -182,16 +252,31 @@
         '<button type="button" class="hg-cont-go" data-c="' + i + '" aria-describedby="hgCont' + i + ' hgContN' + i + '">' + esc(c.go) + '</button>' +
         (c.drop ? '<button type="button" class="hg-cont-x" data-c="' + i + '" aria-label="' + esc(tr('home.discardAria', 'Discard unsaved work')) + '" aria-describedby="hgCont' + i + '">×</button>' : '') +
       '</div>').join('') + '</div>';
-    if (recent.length) html += '<section class="hg-home-recent" aria-labelledby="hgSec-recent"><h2 class="hg-home-sec-title" id="hgSec-recent">' + esc(tr('home.recent', 'Recent')) + '</h2>' +
-      '<div class="hg-short-grid" role="list">' + recent.map((it, i) =>
-        '<div role="listitem"><button type="button" class="hg-short" data-r="' + i + '"' + (it.sub ? ' aria-label="' + esc(it.name + ', ' + it.sub) + '"' : '') + '>' +
-          '<span class="icon" aria-hidden="true">' + iconOf(it.iconFrom) + '</span><span class="app-name">' + esc(it.name) + '</span></button></div>').join('') +
-      '</div></section>';
+    if (pinned.length || edit) html += '<section class="hg-home-pins" aria-labelledby="hgSec-pinned"><div class="hg-home-quick-head"><h2 class="hg-home-sec-title" id="hgSec-pinned">' + esc(tr('home.pinned', 'Pinned')) + '</h2>' +
+        (edit ? '' : link(tr('home.editPins', 'Edit'))) + '</div>' +
+      (pinned.length ? '<div class="hg-short-grid" role="list" id="hgHomePins">' + pinned.map((it, i) => shortcut(it, i, 'p')).join('') + '</div>'
+        : '<p class="hg-pin-hint">' + esc(tr('home.pinHint', 'Tap the star on a tool to pin it here.')) + '</p>') + '</section>';
+    if (recent.length) html += '<section class="hg-home-recent" aria-labelledby="hgSec-recent"><div class="hg-home-quick-head"><h2 class="hg-home-sec-title" id="hgSec-recent">' + esc(tr('home.recent', 'Recent')) + '</h2>' +
+        (pinned.length ? '' : link(tr('home.pinTools', 'Pin tools'))) + '</div>' +
+      '<div class="hg-short-grid" role="list">' + recent.map((it, i) => shortcut(it, i, 'r')).join('') + '</div></section>';
     quick.innerHTML = html;
     quick.hidden = !html;
     quick.querySelectorAll('.hg-cont-go').forEach((b) => b.addEventListener('click', () => cont[+b.getAttribute('data-c')].open()));
     quick.querySelectorAll('.hg-cont-x').forEach((b) => b.addEventListener('click', () => cont[+b.getAttribute('data-c')].drop()));
-    quick.querySelectorAll('.hg-short').forEach((b) => b.addEventListener('click', () => { const it = recent[+b.getAttribute('data-r')]; if (it) { recordRecent(it.id); it.open(); } }));
+    quick.querySelectorAll('.hg-quick-link').forEach((b) => b.addEventListener('click', () => {
+      if (!(window.HG_HOME && typeof window.HG_HOME.enterEditMode === 'function')) return;
+      Promise.resolve(window.HG_HOME.enterEditMode()).then(() => { if (editing()) focusPinnedHead(); }, () => {});   // the link is redrawn away
+    }));
+    const openShort = (it) => { if (!it || editing()) return; recordRecent(it.id); it.open(); };
+    quick.querySelectorAll('.hg-short[data-r]').forEach((b) => b.addEventListener('click', () => openShort(recent[+b.getAttribute('data-r')])));
+    quick.querySelectorAll('.hg-short[data-p]').forEach((b) => b.addEventListener('click', () => openShort(pinned[+b.getAttribute('data-p')])));
+    // Customizing: drag the pinned tools into order (with the SortableJS customize.js loaded). Pins this role
+    // doesn't show keep their place after the ones arranged.
+    const grid = edit ? document.getElementById('hgHomePins') : null;
+    if (grid && window.Sortable && typeof window.Sortable.create === 'function') {
+      pinSort = window.Sortable.create(grid, { animation: 180, forceFallback: true, fallbackTolerance: 5, filter: '.hg-pin-toggle', preventOnFilter: false,
+        onEnd: () => { const order = Array.from(grid.querySelectorAll('[data-id]')).map((el) => el.getAttribute('data-id')); savePins(order.concat(pinList().filter((id) => order.indexOf(id) === -1))); } });
+    }
   }
 
   // ── Search ──
@@ -256,11 +341,11 @@
       return;
     }
     results.innerHTML = found.map((it, i) =>
-      '<div role="listitem"><button type="button" class="hg-home-result" data-i="' + i + '">' +
+      '<div role="listitem" class="hg-home-result-row"><button type="button" class="hg-home-result" data-i="' + i + '">' +
         '<span class="hg-home-result-ico" aria-hidden="true">' + ((it.iconFrom && it.iconFrom.querySelector('.icon svg')) ? it.iconFrom.querySelector('.icon').innerHTML : '') + '</span>' +
         '<span class="hg-home-result-txt"><span class="hg-home-result-name">' + esc(it.name) + '</span>' +
         (it.sub ? '<span class="hg-home-result-sub">' + esc(it.sub) + '</span>' : '') + '</span>' +
-      '</button></div>').join('');
+      '</button>' + pinToggle(it.id, it.sub ? it.name + ', ' + it.sub : it.name, 'hg-pin-toggle--row') + '</div>').join('');
     results.querySelectorAll('.hg-home-result').forEach((b) => b.addEventListener('click', () => pick(found[+b.getAttribute('data-i')])));
     status.textContent = found.length === 1 ? tr('home.oneResult', '1 tool') : tr('home.nResults', '{n} tools').replace('{n}', found.length);
   }
@@ -295,6 +380,14 @@
     refreshSections();
     // The role can be set without a profile event (an offline start uses the last known role): body[data-role].
     if (window.MutationObserver) new MutationObserver(() => { refreshSections(); renderQuick(); if (input.value) render(); }).observe(document.body, { attributes: true, attributeFilter: ['data-role'] });
+    // A pin star, wherever it is: handled here, at the start of the click, so neither the tile under it opens nor
+    // Customize's click blocker swallows it.
+    document.addEventListener('click', (e) => {
+      const b = e.target && e.target.closest ? e.target.closest('.hg-pin-toggle[data-pin]') : null;
+      if (!b) return;
+      e.preventDefault(); e.stopPropagation();
+      togglePin(b.getAttribute('data-pin'));
+    }, true);
     // A home tile opened is remembered (Recent); not in Customize, where a tap doesn't open it.
     document.addEventListener('click', (e) => {
       const tile = e.target && e.target.closest ? e.target.closest('[data-home-grid] .app-icon[data-app]') : null;
@@ -309,9 +402,9 @@
       new MutationObserver((list) => list.forEach((m) => m.addedNodes.forEach((n) => { if (n.nodeType === 1 && n.classList.contains('window')) watch(n); })))
         .observe(document.body, { childList: true });   // windows mounted later (Team, Portal)
     }
-    window.addEventListener('storage', (e) => { if (!e.key || e.key === RECENT_KEY || e.key === 'hadron_sr_draft' || e.key === 'hadron_timer_active') renderQuick(); });
+    window.addEventListener('storage', (e) => { if (!e.key || e.key === RECENT_KEY || e.key === PINS_KEY || e.key === 'hadron_sr_draft' || e.key === 'hadron_timer_active') { syncPinToggles(); renderQuick(); } });
     document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible' && !document.querySelector('.window.active')) renderQuick(); });   // "edited 08:42" becomes a date after midnight
-    document.addEventListener('hg:home:edit', renderQuick);
+    document.addEventListener('hg:home:edit', () => { paintTileStars(); renderQuick(); });
     renderQuick();
     // The language and the tiles' Hadron icons are applied on window load (index.html), after this ran: draw
     // again then, or a start with nothing else to redraw it (offline) keeps English words and emoji icons.
@@ -320,5 +413,5 @@
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot); else boot();
   // Roles decide which tiles show; a language change renames them (results follow the new names).
   document.addEventListener('hg:profile:loaded', () => setTimeout(() => { refreshSections(); renderQuick(); if (input && input.value) render(); }, 0));
-  document.addEventListener('hg:lang:changed', () => { renderQuick(); if (input && input.value) render(); });
+  document.addEventListener('hg:lang:changed', () => { if (editing()) paintTileStars(); renderQuick(); if (input && input.value) render(); });
 })();

@@ -52,60 +52,60 @@
     <!-- Supabase JS SDK (auth + cloud sync), pinned 2.117.2 and served by the app itself so sign-in
          works offline from the precache (it used to be the floating @2 from a CDN). See
          THIRD_PARTY_NOTICES.md. To upgrade: replace the file, rename it, update this tag + sw.js. -->
-    <script src="supabase-js-2.117.2.js?v=159"></script>
+    <script src="supabase-js-2.117.2.js?v=160"></script>
 
     <!-- Hadron Supabase bridge -->
-    <script src="supabase-client.js?v=159"></script>
+    <script src="supabase-client.js?v=160"></script>
 
     <!-- Shared UI primitives (in-app sheets) — loaded before auth-ui, which uses them -->
-    <script src="hg-ui.js?v=159" defer></script>
+    <script src="hg-ui.js?v=160" defer></script>
     <!-- Auth UI (login/signup gate, profile binding) -->
-    <script src="auth-ui.js?v=159" defer></script>
+    <script src="auth-ui.js?v=160" defer></script>
 
     <!-- Push notifications -->
-    <script src="push.js?v=159" defer></script>
+    <script src="push.js?v=160" defer></script>
 
     <!-- Translation bundle -->
-    <script src="i18n.js?v=159"></script>
+    <script src="i18n.js?v=160"></script>
 
     <!-- Hadron Tristroke icon system (matches the ERP) -->
-    <script src="hadron-icons.js?v=159" defer></script>
+    <script src="hadron-icons.js?v=160" defer></script>
 
     <!-- Emoji the app has an icon for become Tristroke icons (the rest stay the phone's own emoji) -->
-    <script src="emoji.js?v=159" defer></script>
+    <script src="emoji.js?v=160" defer></script>
 
     <!-- Customizable home grid (drag-to-reorder) -->
-    <script src="home.js?v=159" defer></script>
-    <script src="customize.js?v=159" defer></script>
+    <script src="home.js?v=160" defer></script>
+    <script src="customize.js?v=160" defer></script>
 
     <!-- Data Manager (Excel import/export) -->
-    <script src="data-manager.js?v=159" defer></script>
+    <script src="data-manager.js?v=160" defer></script>
 
     <!-- QR encoder (MIT, Kazuhiko Arase) -->
-    <script src="qr.js?v=159"></script>
+    <script src="qr.js?v=160"></script>
 
     <!-- QR Builder app -->
-    <script src="qr-app.js?v=159" defer></script>
+    <script src="qr-app.js?v=160" defer></script>
 
     <!-- Pool Water module -->
-    <script src="pool.js?v=159" defer></script>
+    <script src="pool.js?v=160" defer></script>
     <!-- Cooling Tower field calculator -->
-    <script src="coolingtower.js?v=159" defer></script>
+    <script src="coolingtower.js?v=160" defer></script>
     <!-- Boiler / Steam field calculator -->
-    <script src="boiler.js?v=159" defer></script>
+    <script src="boiler.js?v=160" defer></script>
     <!-- Water softener sizing calculator -->
-    <script src="softener.js?v=159" defer></script>
-    <script src="academy-content.js?v=159" defer></script>
-    <script src="academy.js?v=159" defer></script>
+    <script src="softener.js?v=160" defer></script>
+    <script src="academy-content.js?v=160" defer></script>
+    <script src="academy.js?v=160" defer></script>
 
-    <script src="searchable-select.js?v=159" defer></script>
-    <script src="trends.js?v=159" defer></script>
+    <script src="searchable-select.js?v=160" defer></script>
+    <script src="trends.js?v=160" defer></script>
 
     <!-- LIMS module (loaded at end of body via defer) -->
-    <script src="lims.js?v=159" defer></script>
-    <script src="lims-sync.js?v=159" defer></script>
-    <script src="portal.js?v=159" defer></script>
-    <script src="team.js?v=159" defer></script>
+    <script src="lims.js?v=160" defer></script>
+    <script src="lims-sync.js?v=160" defer></script>
+    <script src="portal.js?v=160" defer></script>
+    <script src="team.js?v=160" defer></script>
 
 
     <style>
@@ -545,6 +545,28 @@
         .hg-short .icon { background: linear-gradient(135deg, #2B7DB3 0%, #123E63 100%); box-shadow: 0 4px 14px rgba(13,42,74,0.30); --icon-primary: #FFFFFF; --icon-secondary: #25B6D2; --icon-accent: #FFC52B; }
         body.dark .hg-short .icon { box-shadow: 0 4px 14px rgba(0,0,0,0.40); }
         .hg-short .icon svg { width: 64%; height: 64%; }
+        /* Pins (home.js): a star on each tile while customizing and on each search result; the Pinned row */
+        .hg-home-quick-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin: 0 0 4px; }
+        .hg-home-quick-head .hg-home-sec-title { margin-bottom: 0; }
+        .hg-quick-link { flex: none; min-height: 44px; padding: 0 8px; border: 0; border-radius: 10px; background: none; color: var(--accent-ink); font: inherit; font-size: 14px; font-weight: 700; cursor: pointer; }
+        .hg-quick-link:focus-visible { outline: 3px solid var(--accent-ink); outline-offset: 0; }
+        .hg-home-pins { margin: 0 0 24px; }
+        .hg-pin-hint { margin: 6px 6px 0; color: var(--muted); font-size: 14px; }
+        .hg-short-wrap { position: relative; }
+        .hg-pin-toggle { display: grid; place-items: center; width: 40px; height: 40px; padding: 0; border: 1px solid var(--border); border-radius: 50%; background: var(--surface); color: #374151; cursor: pointer; --icon-primary: currentColor; }
+        .hg-pin-toggle svg { width: 22px; height: 22px; }
+        .hg-pin-toggle[aria-pressed="true"] { background: #2e3742; border-color: #2e3742; color: #f5a623; }
+        .hg-pin-toggle[aria-pressed="true"] svg path { fill: #f5a623; }
+        .hg-pin-toggle:focus-visible { outline: 3px solid var(--accent-ink); outline-offset: 2px; }
+        body.dark .hg-pin-toggle { background: #243044; border-color: #3A4A61; color: #CBD5E1; }
+        body.dark .hg-pin-toggle[aria-pressed="true"] { color: #f5a623; }
+        .apps-grid.is-editing .app-icon { position: relative; }
+        .apps-grid.is-editing .app-icon > .hg-pin-toggle, .hg-short-wrap > .hg-pin-toggle { position: absolute; top: -2px; right: -2px; z-index: 1; box-shadow: 0 2px 6px rgba(0, 0, 0, 0.18); }
+        .hg-home-result-row { display: flex; align-items: center; gap: 6px; }
+        .hg-home-result-row > .hg-home-result { flex: 1; min-width: 0; }
+        .hg-home-result-row > .hg-pin-toggle { flex: none; width: 44px; height: 44px; border-color: transparent; background: none; }
+        .hg-home-result-row > .hg-pin-toggle[aria-pressed="true"] { background: #2e3742; }
+        body.dark .hg-home-result-row > .hg-pin-toggle { background: none; border-color: transparent; }
 
         .app-icon {
             display: flex;
@@ -2807,7 +2829,7 @@
                 <div class="hg-section-title">About</div>
                 <div class="hg-kvgrid">
                     <div class="hg-kv"><div class="k">App</div><div class="v">Hadron Group</div></div>
-                    <div class="hg-kv"><div class="k">Version</div><div class="v">v159</div></div>
+                    <div class="hg-kv"><div class="k">Version</div><div class="v">v160</div></div>
                     <div class="hg-kv"><div class="k">Platform</div><div class="v">PWA</div></div>
                 </div>
             </div>

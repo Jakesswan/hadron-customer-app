@@ -16,6 +16,7 @@
 (function () {
   'use strict';
 
+  const tr = (k, en) => { const v = (typeof window.t === 'function') ? window.t(k) : null; return v && v !== k ? v : en; };
   const STORAGE_KEY = 'hg_home_order_v1';
   const SORTABLE_CDN = 'https://cdn.jsdelivr.net/npm/sortablejs@1.15.2/Sortable.min.js';
   const LONG_PRESS_MS = 550;
@@ -31,6 +32,7 @@
       cursor: grab;
     }
     .apps-grid.is-editing .app-icon:active { cursor: grabbing; }
+    .apps-grid.is-editing.no-drag .app-icon { animation: none; cursor: default; }
     .apps-grid.is-editing .app-icon .icon { box-shadow: 0 6px 18px rgba(0,0,0,0.18); }
     @keyframes hgWiggle {
       0%   { transform: rotate(-1.2deg); }
@@ -49,6 +51,7 @@
       border: none; outline: none;
     }
     .hg-customize-pill:hover { transform: translateX(-50%) translateY(-1px); }
+    body.hg-home-editing .toast { bottom: 160px; }
   `;
   const style = document.createElement('style');
   style.textContent = css;
@@ -63,7 +66,7 @@
       s.src = SORTABLE_CDN;
       s.async = true;
       s.onload = res;
-      s.onerror = rej;
+      s.onerror = (e) => { window.__hgSortableLoading = null; s.remove(); rej(e); };   // a later try (back online) loads it again
       document.head.appendChild(s);
     });
     return window.__hgSortableLoading;
@@ -138,37 +141,47 @@
     // an open search hides the sections: clear it, the tiles are what's being arranged
     const search = document.getElementById('hgHomeSearch');
     if (search && search.value) { search.value = ''; search.dispatchEvent(new Event('input', { bubbles: true })); }
-    await loadSortable();
-    if (!window.Sortable) {
-      console.warn('[HG_CUSTOMIZE] Sortable.js failed to load');
-      return;
-    }
+    // SortableJS only moves tiles; pins work without it. Don't keep a person waiting on a bad connection: after 2.5 s
+    // Customize opens without it (a later Customize tries again). A tool opened meanwhile is where they are now.
+    const shown = document.querySelector('.window.active');
+    try { await Promise.race([loadSortable(), new Promise((res) => setTimeout(res, 2500))]); } catch (_) {}
+    if (editing) return;   // a second tap while SortableJS was loading
+    const now = document.querySelector('.window.active');
+    if (now && now !== shown) return;
+    // Without SortableJS (offline before it was ever loaded) tiles can't be moved, but pins still work.
+    const canDrag = !!(window.Sortable && typeof window.Sortable.create === 'function');
     editing = true;
+    document.body.classList.add('hg-home-editing');   // the toast moves up off the Done pill
     document.dispatchEvent(new CustomEvent('hg:home:edit', { detail: { editing: true } }));   // home.js hides Continue / Recent
     // One sortable list per section: tiles move within their section only.
     sortables = grids.map(grid => {
       grid.classList.add('is-editing');
+      grid.classList.toggle('no-drag', !canDrag);
       // While editing, intercept clicks so users don't open windows by accident
       grid.addEventListener('click', blockClickWhileEditing, true);
+      if (!canDrag) return null;
       return window.Sortable.create(grid, {
         animation: 180,
         delay: 0,
-        filter: '[data-no-reorder]',     // tiles with this attr stay put
+        filter: '[data-no-reorder], .hg-pin-toggle',   // tiles with this attr stay put; a pin star is tapped, not dragged
+        preventOnFilter: false,
         forceFallback: true,             // consistent UX across desktop+mobile
         fallbackTolerance: 5,
         onEnd: () => saveOrder(readCurrentOrder())
       });
-    });
+    }).filter(Boolean);
 
     showDonePill();
+    if (!canDrag && typeof window.showToast === 'function') window.showToast(tr('home.noDrag', 'Moving tiles needs a connection. Pins still work.'), 3500);
   }
 
   function exitEditMode() {
     if (!editing) return;
     editing = false;
+    document.body.classList.remove('hg-home-editing');
     document.dispatchEvent(new CustomEvent('hg:home:edit', { detail: { editing: false } }));
     getGrids().forEach(grid => {
-      grid.classList.remove('is-editing');
+      grid.classList.remove('is-editing', 'no-drag');
       grid.removeEventListener('click', blockClickWhileEditing, true);
     });
     sortables.forEach(s => { try { s.destroy(); } catch (_) {} });
