@@ -145,6 +145,16 @@
              : 'role="presentation">');
   }
 
+  // App additions, drawn in the same style (outline, teal detail, gold highlight) until the ERP sheet has
+  // them: kept out of the generated map above so a regeneration doesn't drop them.
+  const APP_ICONS = {
+    // a vertical boiler: vessel with steam outlet and legs, water line, flame
+    "boiler": "<g stroke=\"var(--icon-primary)\"><rect x=\"5.5\" y=\"5\" width=\"13\" height=\"14\" rx=\"3\"></rect><path d=\"M10.5 5V3.2h3V5\"></path><path d=\"M8 19v2.3\"></path><path d=\"M16 19v2.3\"></path></g><g stroke=\"var(--icon-secondary)\"><path d=\"M8 9.8q2-1.4 4 0t4 0\"></path></g><g stroke=\"var(--icon-accent)\"><path d=\"M12 16.9c-1.25 0-2.15-0.85-2.15-1.95 0-1.15 0.95-1.95 2.15-3.25 1.2 1.3 2.15 2.1 2.15 3.25 0 1.1-0.9 1.95-2.15 1.95z\"></path></g>",
+    // a softener: resin tank (beads) with control valve, brine line to the brine tank, salt crystal
+    "softener": "<g stroke=\"var(--icon-primary)\"><rect x=\"3.5\" y=\"6\" width=\"8\" height=\"15\" rx=\"4\"></rect><path d=\"M5.5 6V3.5h4V6\"></path><rect x=\"14\" y=\"11\" width=\"6.5\" height=\"10\" rx=\"1.5\"></rect></g><g stroke=\"var(--icon-secondary)\"><path d=\"M9.5 4.5h5.5a2.25 2.25 0 0 1 2.25 2.25V11\"></path><circle cx=\"6.4\" cy=\"13.6\" r=\"0.7\"></circle><circle cx=\"8.6\" cy=\"15.8\" r=\"0.7\"></circle><circle cx=\"6.4\" cy=\"18\" r=\"0.7\"></circle></g><g stroke=\"var(--icon-accent)\"><path d=\"M17.25 14.3l1.6 1.6-1.6 1.6-1.6-1.6z\"></path></g>"
+  };
+  Object.keys(APP_ICONS).forEach(function (k) { if (!HADRON_ICONS[k]) HADRON_ICONS[k] = APP_ICONS[k]; });
+
   function hadronIcon(name, opts) {
     opts = opts || {};
     const b = HADRON_ICONS[name];

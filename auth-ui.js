@@ -306,10 +306,9 @@
   }
 
   document.addEventListener('hg:sync:flushed', (e) => {
-    const remaining = e.detail?.remaining ?? 0;
     const deadNew = e.detail?.deadNew ?? 0;
+    // The top-bar chip shows what is still waiting; a change the server refused gets its own warning.
     if (deadNew) showSyncPill(`⚠ ${deadNew} change${deadNew===1?'':'s'} couldn't be saved`);
-    else showSyncPill(remaining ? `${remaining} change${remaining===1?'':'s'} still pending` : 'All changes synced ✓');
   });
 
   // ── Top bar: company and sync status ────────────────────
@@ -329,8 +328,9 @@
     try { n = (window.HG_DB && typeof window.HG_DB._queueLen === 'function') ? window.HG_DB._queueLen() : 0; } catch (_) {}
     const toSync = word('sync.pending', '{n} to sync').replace('{n}', String(n));
     let state, words;
-    if (navigator.onLine === false) { state = 'offline'; words = word('sync.offline', 'Offline') + (n ? ' · ' + toSync : ''); }
-    else if (!window.HG_PROFILE) { state = 'offline'; words = word('sync.connecting', 'Connecting…') + (n ? ' · ' + toSync : ''); }
+    // With changes waiting the count comes first: it stays visible when a small phone cuts the chip short.
+    if (navigator.onLine === false) { state = 'offline'; words = (n ? toSync + ' · ' : '') + word('sync.offline', 'Offline'); }
+    else if (!window.HG_PROFILE) { state = 'offline'; words = (n ? toSync + ' · ' : '') + word('sync.connecting', 'Connecting…'); }
     else if (n) { state = 'pending'; words = toSync; }
     else { state = 'synced'; words = word('sync.synced', 'Synced'); }
     chip.dataset.state = state;
@@ -346,6 +346,7 @@
   ['hg:sync:flushed', 'hg:sync:queued', 'hg:profile:loaded', 'hg:auth:changed'].forEach(function (ev) { document.addEventListener(ev, refreshSyncChipSoon); });
   window.addEventListener('online', refreshSyncChipSoon);
   window.addEventListener('offline', refreshSyncChipSoon);
+  window.addEventListener('storage', function (e) { if (e.key === 'hg_sync_queue_v1' || e.key === null) refreshSyncChipSoon(); });   // another tab
 
   // The company name in the top bar. Kept on this phone with hg-last-org (and cleared with it), so it
   // also shows when signed in without the server.
@@ -603,6 +604,9 @@
     if (await hgEnsureOrg(profile)) return;        // reloading without the other organisation's data
     pageOrg = lastOrg();                           // the organisation this page's data belongs to
     if (await hgRestorePending(profile)) return;   // reloading with the restored data
+    // Only for this phone's current user, and not while the page is being cleared: a late reply in a tab
+    // that another tab has switched to someone else must not write this phone's markers (role, company).
+    { const lu = lastUid(); if ((lu && profile.id !== lu) || window.__hgTenantFrozen) return; }
     window.__hgOfflineSession = false;             // the server has confirmed who this is
     // The role, also kept on this phone (with hg-last-org) so the right screens show when signed in offline.
     try { if (profile.role) localStorage.setItem('hg-last-role', profile.role); else localStorage.removeItem('hg-last-role'); } catch (_) {}
@@ -903,6 +907,7 @@
           window.__hgTenantFrozen = true;
           try { await hgClearTenantData(); } catch (_) {}
           try { const uid = lastUid(); if (uid) await stashDel(uid); } catch (_) {}
+          try { localStorage.removeItem('hg-last-role'); localStorage.removeItem('hg-last-org-name'); } catch (_) {}   // the old company's (hg-last-org stays: see above)
           try { location.reload(); } catch (_) {}
           return;
         }

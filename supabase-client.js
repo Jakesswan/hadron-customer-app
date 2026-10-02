@@ -173,6 +173,7 @@
         out.push(retry.has(t) ? retry.get(t) : o);
       }
       saveQueue(out);
+      try { document.dispatchEvent(new CustomEvent('hg:sync:queued')); } catch (_) {}   // the top-bar chip recounts
       return out.length;
     };
     for (const op of snapshot) {

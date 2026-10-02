@@ -52,59 +52,59 @@
     <!-- Supabase JS SDK (auth + cloud sync), pinned 2.117.2 and served by the app itself so sign-in
          works offline from the precache (it used to be the floating @2 from a CDN). See
          THIRD_PARTY_NOTICES.md. To upgrade: replace the file, rename it, update this tag + sw.js. -->
-    <script src="supabase-js-2.117.2.js?v=152"></script>
+    <script src="supabase-js-2.117.2.js?v=153"></script>
 
     <!-- Hadron Supabase bridge -->
-    <script src="supabase-client.js?v=152"></script>
+    <script src="supabase-client.js?v=153"></script>
 
     <!-- Shared UI primitives (in-app sheets) — loaded before auth-ui, which uses them -->
-    <script src="hg-ui.js?v=152" defer></script>
+    <script src="hg-ui.js?v=153" defer></script>
     <!-- Auth UI (login/signup gate, profile binding) -->
-    <script src="auth-ui.js?v=152" defer></script>
+    <script src="auth-ui.js?v=153" defer></script>
 
     <!-- Push notifications -->
-    <script src="push.js?v=152" defer></script>
+    <script src="push.js?v=153" defer></script>
 
     <!-- Translation bundle -->
-    <script src="i18n.js?v=152"></script>
+    <script src="i18n.js?v=153"></script>
 
     <!-- Hadron Tristroke icon system (matches the ERP) -->
-    <script src="hadron-icons.js?v=152" defer></script>
+    <script src="hadron-icons.js?v=153" defer></script>
 
     <!-- Cross-platform emoji rendering (Twemoji) -->
-    <script src="emoji.js?v=152" defer></script>
+    <script src="emoji.js?v=153" defer></script>
 
     <!-- Customizable home grid (drag-to-reorder) -->
-    <script src="customize.js?v=152" defer></script>
+    <script src="customize.js?v=153" defer></script>
 
     <!-- Data Manager (Excel import/export) -->
-    <script src="data-manager.js?v=152" defer></script>
+    <script src="data-manager.js?v=153" defer></script>
 
     <!-- QR encoder (MIT, Kazuhiko Arase) -->
-    <script src="qr.js?v=152"></script>
+    <script src="qr.js?v=153"></script>
 
     <!-- QR Builder app -->
-    <script src="qr-app.js?v=152" defer></script>
+    <script src="qr-app.js?v=153" defer></script>
 
     <!-- Pool Water module -->
-    <script src="pool.js?v=152" defer></script>
+    <script src="pool.js?v=153" defer></script>
     <!-- Cooling Tower field calculator -->
-    <script src="coolingtower.js?v=152" defer></script>
+    <script src="coolingtower.js?v=153" defer></script>
     <!-- Boiler / Steam field calculator -->
-    <script src="boiler.js?v=152" defer></script>
+    <script src="boiler.js?v=153" defer></script>
     <!-- Water softener sizing calculator -->
-    <script src="softener.js?v=152" defer></script>
-    <script src="academy-content.js?v=152" defer></script>
-    <script src="academy.js?v=152" defer></script>
+    <script src="softener.js?v=153" defer></script>
+    <script src="academy-content.js?v=153" defer></script>
+    <script src="academy.js?v=153" defer></script>
 
-    <script src="searchable-select.js?v=152" defer></script>
-    <script src="trends.js?v=152" defer></script>
+    <script src="searchable-select.js?v=153" defer></script>
+    <script src="trends.js?v=153" defer></script>
 
     <!-- LIMS module (loaded at end of body via defer) -->
-    <script src="lims.js?v=152" defer></script>
-    <script src="lims-sync.js?v=152" defer></script>
-    <script src="portal.js?v=152" defer></script>
-    <script src="team.js?v=152" defer></script>
+    <script src="lims.js?v=153" defer></script>
+    <script src="lims-sync.js?v=153" defer></script>
+    <script src="portal.js?v=153" defer></script>
+    <script src="team.js?v=153" defer></script>
 
     <!-- Default UI font: Gothic A1 (Google Fonts) -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -219,10 +219,9 @@
         /* Inline emoji-replacement icons (emoji.js swaps mapped emoji → Tristroke SVG). */
         .hg-emoji-ico { display:inline-flex; align-items:center; vertical-align:-0.14em; line-height:0; }
         .hg-emoji-ico svg { width:1.05em; height:1.05em; }
-        /* Window hero icons + the header back arrow sit on dark gradients — force
+        /* Icons in the window header (the back arrow) sit on its dark teal gradient — force
            light-on-dark strokes so they pop (and stay white in light mode too). */
         .window-header { --icon-primary:#FFFFFF; --icon-secondary:#25B6D2; --icon-accent:#FFC52B; }
-        .hg-hero-icon { --icon-primary:#2E3742; --icon-secondary:#1B77A0; --icon-accent:#FFFFFF; }   /* on the gold banner */
         @media print { .no-print{ display:none !important; } }
 
         * {
@@ -337,6 +336,9 @@
                 height: 26px;
             }
         }
+        @media (max-width: 360px) {
+            .logo img { height: 22px; }   /* room for the sync count on the smallest phones */
+        }
 
         /* Company and sync status, instead of a clock (the phone already shows the time). */
         .hg-topbar-status {
@@ -386,6 +388,7 @@
             font-size: 14px;
         }
 
+        .user-info #userName { max-width: 12em; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }   /* a long name mustn't squeeze the company and sync status */
         @media (max-width: 480px) {
             .user-info {
                 gap: 8px;
@@ -2053,12 +2056,16 @@
         .hg-empty h3 { margin: 0 0 6px; color: #2e3742; font-weight: 700; font-size: 16px; }
         body.dark .hg-empty h3 { color: #e8ecef; }
 
-        .hg-hero { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 18px; padding: 18px 20px; background: linear-gradient(135deg, #F5A623 0%, #EE9A12 100%) !important; border-radius: 16px; color: #2E3742; box-shadow: 0 4px 16px rgba(224,123,0,0.25); }
-        .hg-hero-title { font-size: 19px; font-weight: 700; margin: 0; }
-        /* Charcoal on gold in both themes (the generic window heading colours would make it grey / near-white). */
-        .hg-hero .hg-hero-title, body.dark .hg-hero .hg-hero-title { color: #2E3742; }
-        .hg-hero-sub { font-size: 12px; opacity: 0.9; margin-top: 3px; }
-        .hg-hero-icon { font-size: 40px; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.2)); }
+        /* A screen's intro: not a second (gold) header any more, just its heading when that says more than
+           the window title, and its description line. (Inline gradients on old markup are overridden.) */
+        .hg-hero { display: block; margin: 0 0 16px; padding: 0; background: none !important; border-radius: 0; color: var(--text); box-shadow: none; }
+        .hg-hero .hg-hero-title { font-size: 18px; font-weight: 700; margin: 0; }   /* beats .window-content h2 */
+        .hg-hero .hg-hero-title, body.dark .hg-hero .hg-hero-title { color: var(--text); }
+        .hg-hero-sub { font-size: 13px; margin-top: 4px; color: var(--muted); }
+        .hg-hero.hg-hero--same .hg-hero-title { position: absolute; width: 1px; height: 1px; margin: 0; padding: 0; overflow: hidden; clip: rect(0 0 0 0); clip-path: inset(50%); white-space: nowrap; }   /* kept for screen readers: the window title is not a heading */
+        .hg-hero.hg-hero--same .hg-hero-sub { margin-top: 0; }
+        .hg-hero-icon { display: none; }
+        .hg-labcom-logo { display: block; width: 64px; height: 64px; margin: 0 auto 16px; padding: 6px; border-radius: 14px; background: #fff; }   /* a white tile keeps its dark strokes visible in dark mode */
 
         .hg-kvgrid { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 10px; }
         .hg-kv { background: #f7f9fb; border-radius: 10px; padding: 10px 12px; }
@@ -2090,9 +2097,7 @@
 
         @media (max-width: 480px) {
             .hg-title { font-size: 18px; }
-            .hg-hero { padding: 14px 16px; }
-            .hg-hero-title { font-size: 16px; }
-            .hg-hero-icon { font-size: 32px; }
+            .hg-hero .hg-hero-title { font-size: 17px; }
             .hg-table th, .hg-table td { padding: 9px 10px; font-size: 13px; }
         }
 
@@ -2403,9 +2408,9 @@
                     <img src="Hadron_Logo_dark.png" alt="Hadron Group">
                 </div>
                 <!-- The signed-in company and whether this phone's changes have reached the server (auth-ui.js). -->
-                <div class="hg-topbar-status" role="status" aria-live="polite">
-                    <span class="hg-topbar-org" id="hgTopOrg"></span>
-                    <span class="hg-sync-chip" id="hgSyncChip" data-state="synced" hidden><span class="hg-sync-dot" aria-hidden="true"></span><span class="hg-sync-text" id="hgSyncText"></span></span>
+                <div class="hg-topbar-status">
+                    <span class="hg-topbar-org" id="hgTopOrg" dir="auto"></span>
+                    <span class="hg-sync-chip" id="hgSyncChip" data-state="synced" role="status" hidden><span class="hg-sync-dot" aria-hidden="true"></span><span class="hg-sync-text" id="hgSyncText" dir="auto"></span></span>
                 </div>
             </div>
             <div class="user-info">
@@ -2718,7 +2723,7 @@
                 <div class="hg-section-title">About</div>
                 <div class="hg-kvgrid">
                     <div class="hg-kv"><div class="k">App</div><div class="v">Hadron Group</div></div>
-                    <div class="hg-kv"><div class="k">Version</div><div class="v">v152</div></div>
+                    <div class="hg-kv"><div class="k">Version</div><div class="v">v153</div></div>
                     <div class="hg-kv"><div class="k">Platform</div><div class="v">PWA</div></div>
                 </div>
             </div>
@@ -2760,14 +2765,12 @@
             <span class="window-title">LabCom</span>
         </div>
         <div class="window-content">
-            <div class="hg-hero" style="background:linear-gradient(135deg,#3AAEDB 0%,#1a3d9e 100%);">
-                <div>
-                    <h2 class="hg-hero-title" data-i18n="labcom.title">LabCom Laboratory Platform</h2>
-                    <div class="hg-hero-sub">labcom.cloud · Laboratory results portal</div>
-                </div>
-                <img src="LabCom_Logo.svg" alt="LabCom" style="width:64px; height:64px; filter:drop-shadow(0 2px 4px rgba(0,0,0,0.25));">
+            <div class="hg-hero">
+                <h2 class="hg-hero-title" data-i18n="labcom.title">LabCom Laboratory Platform</h2>
+                <div class="hg-hero-sub">labcom.cloud · Laboratory results portal</div>
             </div>
             <div class="hg-card" style="text-align:center;">
+                <img src="LabCom_Logo.svg" alt="LabCom" class="hg-labcom-logo">
                 <p class="hg-subtitle" style="max-width:440px; margin:0 auto 20px;" data-i18n="labcom.body">
                     Sign in to <strong>labcom.cloud</strong> with your LabCom credentials to view and manage Hadron Group laboratory reports.
                 </p>
@@ -3061,7 +3064,7 @@
 
             <!-- Coagulants Calculator -->
             <div id="coagulantsCalculator" style="display: none;">
-                <h2 style="margin-bottom: 20px;">Coagulants Calculator</h2>
+                <div class="hg-hero"><h2 class="hg-hero-title">Coagulants Calculator</h2></div>
                 
                 <div style="background: #f8f9fa; padding: 20px; border-radius: 10px; margin-bottom: 25px;">
                     <h3 style="margin-bottom: 15px; color: var(--accent-ink); font-size: 18px;" data-i18n="calc.plantConfig">Plant Configuration</h3>
@@ -3391,8 +3394,10 @@
             <span class="window-title">RO Performance</span>
         </div>
         <div class="window-content">
-            <h2>RO Performance</h2>
-            <p style="color:#666;font-size:13px;">Recovery, rejection, concentrate TDS &amp; normalised permeate flow.</p>
+            <div class="hg-hero">
+                <h2 class="hg-hero-title">RO Performance</h2>
+                <div class="hg-hero-sub">Recovery, rejection, concentrate TDS &amp; normalised permeate flow.</div>
+            </div>
             <div class="calc-form">
                 <div class="form-group"><label>Feed flow (m³/h)</label><input type="number" id="ro_feed" step="0.01"></div>
                 <div class="form-group"><label>Permeate flow (m³/h)</label><input type="number" id="ro_perm" step="0.01"></div>
@@ -3577,7 +3582,10 @@
             <span class="window-title">Sludge Age / SRT</span>
         </div>
         <div class="window-content">
-            <h2>Sludge Age / SRT</h2>
+            <div class="hg-hero">
+                <h2 class="hg-hero-title">Sludge Age / SRT</h2>
+                <div class="hg-hero-sub">Solids retention time in days: the solids in the aeration tank over the solids that leave each day (wasted and in the effluent).</div>
+            </div>
             <div class="calc-form">
                 <div class="form-group"><label>Aeration volume V (m³)</label><input type="number" id="srt_v" step="1"></div>
                 <div class="form-group"><label>MLSS X (mg/L)</label><input type="number" id="srt_x" step="1"></div>
@@ -4089,7 +4097,7 @@
     <div class="window" id="window-academy">
         <div class="window-header">
             <button class="back-button" onclick="academyBack()">←</button>
-            <span class="window-title">Hadron Academy</span>
+            <span class="window-title" data-i18n="academy.heroTitle">Hadron Academy</span>
         </div>
         <div class="window-content">
             <div id="academyShell"></div>
@@ -4146,7 +4154,6 @@
             closeAllWindows();
         }
 
-        // Time & date display
         // Window management
         const openWindows = new Set();
 
@@ -4359,6 +4366,7 @@
             if (appName === 'coolingtower') coolingtowerOpen();
             if (appName === 'boiler') boilerOpen();
             if (appName === 'softener') softenerOpen();
+            ensureWindowHeros(); setTimeout(ensureWindowHeros, 300);
         }
 
         function closeWindow(appName) {
@@ -4814,7 +4822,7 @@
             initLanguage();
             paintHadronIcons();
             setTimeout(paintHadronIcons, 400); // repaint after customize/emoji load handlers settle
-            ensureWindowHeros();                // give every window the yellow hero banner
+            ensureWindowHeros();                // intros: hide a heading that only repeats the window title
             calculateDosage();
             calculateClO2();
             calculateCoagulants();
@@ -5016,6 +5024,7 @@
             trends:'trend_up', sops:'sops', calibration:'calibration',
             lims:'lims', qr:'qr_builder', pool:'pool', academy:'academy',
             'jartest-dss':'jar_test', data:'data_manager', customers:'customers',
+            boiler:'boiler', softener:'softener',
             // in-window sub-tiles (effluent / assets / safety grids) — without these
             // they fell through to the tiny emoji-swap path or stayed raw emoji.
             removalcalc:'reports', fmcalc:'reports', srtcalc:'hourglass', jartest:'jar_test',
@@ -5042,55 +5051,37 @@
         }
         window.paintHadronIcons = paintHadronIcons;
 
-        // Windows whose content is fully rendered by their own module — skip them
-        // (a static hero would be overwritten; they manage their own UI).
-        const HERO_SKIP = ['lims','qr','pool','academy','jartest-dss','historydetail'];
-        const HERO_ICON = {
-            waterindex:'water_index', coolingtower:'cooling_tower', rocalc:'ro_performance',
-            converters:'converters', neutralise:'neutralise', effluent:'effluent',
-            removalcalc:'reports', fmcalc:'reports', srtcalc:'hourglass', jartest:'jar_test',
-            assets:'barcode', sites:'location', consumables:'inventory', qrscan:'camera',
-            schedule:'calendar', safety:'shield_check', msds:'document', spill:'hazard',
-            ppe:'shield_check', loto:'lock', incident:'hazard', catalogue:'product',
-            troubleshoot:'work_order', jobs:'tasks', trends:'trend_up', sops:'sops',
-            calibration:'calibration', labcom:'lims', sites:'location'
-        };
-
-        // Give every window the same yellow hero banner. For windows that don't
-        // already have one, promote the leading <h2> into a hero (so the heading
-        // isn't duplicated) and drop in a fitting Tristroke icon.
+        // One header per screen: the window header carries the title. A screen's own intro (.hg-hero)
+        // keeps its description, and its heading only when it says more than the window title (it is
+        // marked hg-hero--same otherwise). Until v153 a gold banner repeating the title was added to every
+        // window here. Run on load, whenever a window opens, and when an intro or window title changes.
         function ensureWindowHeros() {
-            if (typeof hadronIcon !== 'function') return;
-            document.querySelectorAll('.window[id^="window-"]').forEach(function (win) {
-                const id = win.id.slice('window-'.length);
-                if (HERO_SKIP.indexOf(id) > -1) return;
-                const content = win.querySelector('.window-content');
-                if (!content) return;
-                const existing = content.querySelector('.hg-hero');
-                if (existing) {   // already has a hero — ensure it carries a Tristroke icon
-                    if (HERO_ICON[id]) {
-                        let ei = existing.querySelector('.hg-hero-icon');
-                        if (!ei) { ei = document.createElement('div'); ei.className = 'hg-hero-icon'; existing.appendChild(ei); }
-                        if (!ei.querySelector('svg')) ei.innerHTML = hadronIcon(HERO_ICON[id]);
-                    }
-                    return;
-                }
-                let title = '';
-                const first = content.firstElementChild;
-                if (first && first.tagName === 'H2') { title = first.textContent.trim(); first.remove(); }
-                if (!title) { const t = win.querySelector('.window-title'); title = t ? t.textContent.trim() : ''; }
-                const hero = document.createElement('div');
-                hero.className = 'hg-hero';
-                const left = document.createElement('div');
-                const h = document.createElement('h2'); h.className = 'hg-hero-title'; h.textContent = title;
-                left.appendChild(h);
-                const ico = document.createElement('div'); ico.className = 'hg-hero-icon';
-                ico.innerHTML = hadronIcon(HERO_ICON[id] || 'document');
-                hero.appendChild(left); hero.appendChild(ico);
-                content.insertBefore(hero, content.firstChild);
+            const norm = function (s) { return String(s || '').replace(/\s+/g, ' ').trim().toLowerCase(); };
+            document.querySelectorAll('.window[id^="window-"] .hg-hero').forEach(function (hero) {
+                const win = hero.closest('.window');
+                const wt = win && win.querySelector('.window-title');
+                const ht = hero.querySelector('.hg-hero-title');
+                hero.classList.toggle('hg-hero--same', !!(wt && ht && norm(wt.textContent) === norm(ht.textContent)));
             });
         }
         window.ensureWindowHeros = ensureWindowHeros;
+        // Modules re-render their intro without openWindow (Academy Back / breadcrumbs, a language change, the
+        // Data Manager hub after its data loads), and the Dosage title changes with its sub-view: check again then.
+        (function () {
+            if (!window.MutationObserver || !document.body) return;
+            let queued = false;
+            const again = function () { if (queued) return; queued = true; Promise.resolve().then(function () { queued = false; ensureWindowHeros(); }); };
+            new MutationObserver(function (list) {
+                for (let i = 0; i < list.length; i++) {
+                    const m = list[i], t = m.target;
+                    if (t.nodeType === 1 && t.closest('.window-title')) { again(); return; }
+                    for (let j = 0; j < m.addedNodes.length; j++) {
+                        const n = m.addedNodes[j];
+                        if (n.nodeType === 1 && (n.classList.contains('hg-hero') || n.querySelector('.hg-hero'))) { again(); return; }
+                    }
+                }
+            }).observe(document.body, { childList: true, subtree: true });
+        })();
 
         function initDarkMode() {
             const choice = themeChoice();
