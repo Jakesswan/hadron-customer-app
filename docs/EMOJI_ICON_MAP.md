@@ -1,12 +1,14 @@
 # Emoji → Hadron Tristroke icon replacement
 
-**How it works:** `emoji.js` already routes every emoji through Twemoji, which
-normalises each to `<img class="emoji" alt="…">`. Right after that, `emoji.js`
-runs `swapToHadronIcons()` which replaces every emoji in the `EMOJI_TO_ICON` map
-with the matching inline Tristroke SVG (from `hadron-icons.js`). It is theme-aware
-(`var(--icon-*)`), sized to ~1em, and idempotent — it re-runs on every re-render
-(window open, LIMS sync, language change), so dynamically-rendered screens are
-covered too. One central map; no per-call-site edits.
+**How it works:** `emoji.js` finds the emoji in the `EMOJI_TO_ICON` map in the page's
+text and swaps each for the matching inline Tristroke SVG (from `hadron-icons.js`). It is
+theme-aware (`var(--icon-*)`; the main stroke follows the text colour), sized to ~1em, and
+idempotent. It runs at start-up, when a window opens, on LIMS sync / profile / language
+events, and whenever content with a mapped emoji is added to the page, so re-rendered
+screens are covered too. Form fields, code, SVG and editable text are left alone. Emoji
+not in the map stay as the phone's own emoji (since v155 there is no Twemoji; avoid emoji
+newer than Emoji 12, which older phones draw as an empty box). One central map; no
+per-call-site edits.
 
 To change a mapping, edit `EMOJI_TO_ICON` in `emoji.js`.
 
@@ -52,5 +54,4 @@ names to `EMOJI_TO_ICON`. Highest-value to commission first:
 6. **power/electrical** (⚡/🔌), **aeration/blower** (🌬), **cold/freeze** (❄) — plant assets.
 7. **salt/softener** (🧂), **compass** (🧭), **building/company** (🏢), **prohibition** (🚫).
 
-Until then they render as cross-platform Twemoji — consistent and legible, just not
-Tristroke. (Coloured status dots stay as emoji permanently — that's intentional.)
+Until then they show as the phone's own emoji — legible, just not Tristroke. (Coloured status dots stay as emoji permanently — that's intentional.)

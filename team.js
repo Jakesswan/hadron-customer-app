@@ -180,8 +180,9 @@
     tile.setAttribute('data-app', 'team');
     tile.setAttribute('data-roles', 'admin,customer_admin');
     tile.setAttribute('onclick', "openWindow('team')");
-    tile.innerHTML = '<div class="icon" style="background:linear-gradient(135deg,#3AAEDB 0%,#1a3d9e 100%);">👥</div><div class="app-name">Team</div>';
+    tile.innerHTML = '<div class="icon">👥</div><div class="app-name">Team</div>';
     grid.appendChild(tile);
+    if (typeof window.paintHadronIcons === 'function') window.paintHadronIcons();   // the same icon style as the other tiles
   }
 
   const _origOpen = window.openWindow;

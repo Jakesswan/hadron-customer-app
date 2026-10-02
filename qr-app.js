@@ -87,7 +87,7 @@
                 ['lims-sample','🧪 LIMS sample'],
                 ['lims-instrument','⚙️ LIMS instrument'],
                 ['lims-inventory','📦 LIMS reagent / lot'],
-                ['vcard','🪪 Contact (vCard)'],
+                ['vcard','👤 Contact (vCard)'],
                 ['wifi','📶 Wi-Fi']
               ].map(([k,l])=>`<button class="qr-typebtn ${STATE.type===k?'active':''}" onclick="qrSetType('${k}')">${l}</button>`).join('')}
             </div>

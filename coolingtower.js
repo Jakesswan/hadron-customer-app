@@ -701,7 +701,7 @@
   function copyText(btn) {
     recompute();
     var txt = textSummary();
-    var done = function () { if (btn) { var o = btn.textContent; btn.textContent = '✓ Copied'; setTimeout(function () { btn.textContent = o; }, 1500); } if (typeof showToast === 'function') showToast('Copied — paste into WhatsApp or email'); };
+    var done = function () { if (btn && !btn.dataset.hgFlash) { var o = btn.innerHTML; btn.dataset.hgFlash = '1'; btn.textContent = '✓ Copied'; setTimeout(function () { btn.innerHTML = o; delete btn.dataset.hgFlash; }, 1500); } if (typeof showToast === 'function') showToast('Copied — paste into WhatsApp or email'); };
     if (navigator.clipboard && navigator.clipboard.writeText) { navigator.clipboard.writeText(txt).then(done, function () { fallbackCopy(txt, done); }); }
     else fallbackCopy(txt, done);
   }

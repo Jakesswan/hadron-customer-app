@@ -539,7 +539,7 @@
     if (r.ph < 7.0) issues.push({ icon:'👁️', title:'Stinging eyes, corroding metal', cause:'Acidic water (pH < 7.0)', fix:'Raise pH with soda ash; check TA.' });
     // Scale / staining
     if (a.lsi != null && a.lsi > 0.3) issues.push({ icon:'🤍', title:'White scale on waterline / equipment', cause:'Positive LSI — water is scale-forming', fix:'Lower pH to 7.2–7.4. If CH > 400, partial drain.' });
-    if (a.lsi != null && a.lsi < -0.3) issues.push({ icon:'🩶', title:'Etched plaster, corroded metals', cause:'Negative LSI — water is aggressive', fix:'Raise pH, TA and CH to bring LSI into -0.3 to +0.3 range.' });
+    if (a.lsi != null && a.lsi < -0.3) issues.push({ icon:'🔘', title:'Etched plaster, corroded metals', cause:'Negative LSI — water is aggressive', fix:'Raise pH, TA and CH to bring LSI into -0.3 to +0.3 range.' });
     // Metals
     if ((r.copper||0) > 0.3) issues.push({ icon:'💚', title:'Green hair / blue-green water', cause:'High copper (' + fmt(r.copper, 2) + ' mg/L)', fix:'Sequester metals, check any copper-based algaecide, source of copper (heater coil?).' });
     if ((r.iron||0) > 0.3)   issues.push({ icon:'🟤', title:'Brown/rust staining', cause:'High iron (' + fmt(r.iron, 2) + ' mg/L)', fix:'Sequester metals; consider filling from RO or softened water.' });

@@ -35,6 +35,12 @@ https://github.com/supabase/supabase-js
 QR code scanning. By mebjas and contributors. https://github.com/mebjas/html5-qrcode
 Licensed under the Apache License, Version 2.0: https://www.apache.org/licenses/LICENSE-2.0
 
+### Gothic A1 — `fonts/gothic-a1-{400,700,800}-latin.woff2`
+The Latin subset of Gothic A1 (Version 2.50) in three weights, as served by Google Fonts, unmodified.
+Copyright notice, as carried in each font file: "(C) Copyright HanYang I&C Co.,Ltd. All rights reserved."
+Licensed under the SIL Open Font License, Version 1.1, whose address each font file also carries:
+http://scripts.sil.org/OFL (now https://openfontlicense.org).
+
 ### QR Code Generator for JavaScript — `qr.js`
 Copyright (c) 2009 Kazuhiko Arase. Licensed under the MIT license (notice kept in the file).
 "QR Code" is a registered trademark of DENSO WAVE INCORPORATED.
@@ -42,5 +48,9 @@ Copyright (c) 2009 Kazuhiko Arase. Licensed under the MIT license (notice kept i
 ## Loaded from public CDNs at runtime
 
 - **jsPDF 2.5.1** (cdnjs) — MIT License. https://github.com/parallax/jsPDF
-- **Twemoji** (jsDelivr) — code MIT License; graphics by Twitter, Inc and other contributors,
-  licensed under CC-BY 4.0 (https://creativecommons.org/licenses/by/4.0/). https://github.com/jdecked/twemoji
+- **Tesseract.js 5** (jsDelivr, loaded only when text is read from a photo) — Apache License 2.0. https://github.com/naptha/tesseract.js
+- **SortableJS 1.15.2** (jsDelivr, Customize home) — MIT License. https://github.com/SortableJS/Sortable
+- **SheetJS Community Edition 0.18.5** (jsDelivr, Data Manager import / export) — Apache License 2.0. https://github.com/SheetJS/sheetjs
+- **html5-qrcode 2.3.8** (cdnjs, only if the copy above fails to load) — Apache License 2.0.
+- **Chart.js 4.4.1** (cdnjs, Jar Test DSS page) — MIT License. https://github.com/chartjs/Chart.js
+- **Space Mono and Syne** (Google Fonts, Jar Test DSS page) — SIL Open Font License 1.1.
