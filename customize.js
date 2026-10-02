@@ -144,6 +144,7 @@
       return;
     }
     editing = true;
+    document.dispatchEvent(new CustomEvent('hg:home:edit', { detail: { editing: true } }));   // home.js hides Continue / Recent
     // One sortable list per section: tiles move within their section only.
     sortables = grids.map(grid => {
       grid.classList.add('is-editing');
@@ -165,6 +166,7 @@
   function exitEditMode() {
     if (!editing) return;
     editing = false;
+    document.dispatchEvent(new CustomEvent('hg:home:edit', { detail: { editing: false } }));
     getGrids().forEach(grid => {
       grid.classList.remove('is-editing');
       grid.removeEventListener('click', blockClickWhileEditing, true);

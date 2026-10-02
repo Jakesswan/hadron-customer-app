@@ -52,60 +52,60 @@
     <!-- Supabase JS SDK (auth + cloud sync), pinned 2.117.2 and served by the app itself so sign-in
          works offline from the precache (it used to be the floating @2 from a CDN). See
          THIRD_PARTY_NOTICES.md. To upgrade: replace the file, rename it, update this tag + sw.js. -->
-    <script src="supabase-js-2.117.2.js?v=158"></script>
+    <script src="supabase-js-2.117.2.js?v=159"></script>
 
     <!-- Hadron Supabase bridge -->
-    <script src="supabase-client.js?v=158"></script>
+    <script src="supabase-client.js?v=159"></script>
 
     <!-- Shared UI primitives (in-app sheets) — loaded before auth-ui, which uses them -->
-    <script src="hg-ui.js?v=158" defer></script>
+    <script src="hg-ui.js?v=159" defer></script>
     <!-- Auth UI (login/signup gate, profile binding) -->
-    <script src="auth-ui.js?v=158" defer></script>
+    <script src="auth-ui.js?v=159" defer></script>
 
     <!-- Push notifications -->
-    <script src="push.js?v=158" defer></script>
+    <script src="push.js?v=159" defer></script>
 
     <!-- Translation bundle -->
-    <script src="i18n.js?v=158"></script>
+    <script src="i18n.js?v=159"></script>
 
     <!-- Hadron Tristroke icon system (matches the ERP) -->
-    <script src="hadron-icons.js?v=158" defer></script>
+    <script src="hadron-icons.js?v=159" defer></script>
 
     <!-- Emoji the app has an icon for become Tristroke icons (the rest stay the phone's own emoji) -->
-    <script src="emoji.js?v=158" defer></script>
+    <script src="emoji.js?v=159" defer></script>
 
     <!-- Customizable home grid (drag-to-reorder) -->
-    <script src="home.js?v=158" defer></script>
-    <script src="customize.js?v=158" defer></script>
+    <script src="home.js?v=159" defer></script>
+    <script src="customize.js?v=159" defer></script>
 
     <!-- Data Manager (Excel import/export) -->
-    <script src="data-manager.js?v=158" defer></script>
+    <script src="data-manager.js?v=159" defer></script>
 
     <!-- QR encoder (MIT, Kazuhiko Arase) -->
-    <script src="qr.js?v=158"></script>
+    <script src="qr.js?v=159"></script>
 
     <!-- QR Builder app -->
-    <script src="qr-app.js?v=158" defer></script>
+    <script src="qr-app.js?v=159" defer></script>
 
     <!-- Pool Water module -->
-    <script src="pool.js?v=158" defer></script>
+    <script src="pool.js?v=159" defer></script>
     <!-- Cooling Tower field calculator -->
-    <script src="coolingtower.js?v=158" defer></script>
+    <script src="coolingtower.js?v=159" defer></script>
     <!-- Boiler / Steam field calculator -->
-    <script src="boiler.js?v=158" defer></script>
+    <script src="boiler.js?v=159" defer></script>
     <!-- Water softener sizing calculator -->
-    <script src="softener.js?v=158" defer></script>
-    <script src="academy-content.js?v=158" defer></script>
-    <script src="academy.js?v=158" defer></script>
+    <script src="softener.js?v=159" defer></script>
+    <script src="academy-content.js?v=159" defer></script>
+    <script src="academy.js?v=159" defer></script>
 
-    <script src="searchable-select.js?v=158" defer></script>
-    <script src="trends.js?v=158" defer></script>
+    <script src="searchable-select.js?v=159" defer></script>
+    <script src="trends.js?v=159" defer></script>
 
     <!-- LIMS module (loaded at end of body via defer) -->
-    <script src="lims.js?v=158" defer></script>
-    <script src="lims-sync.js?v=158" defer></script>
-    <script src="portal.js?v=158" defer></script>
-    <script src="team.js?v=158" defer></script>
+    <script src="lims.js?v=159" defer></script>
+    <script src="lims-sync.js?v=159" defer></script>
+    <script src="portal.js?v=159" defer></script>
+    <script src="team.js?v=159" defer></script>
 
 
     <style>
@@ -515,6 +515,36 @@
         .hg-home-result-name { font-size: 15px; font-weight: 700; overflow-wrap: anywhere; }
         .hg-home-result-sub { font-size: 13px; color: var(--muted); }
         .hg-home-noresult { padding: 18px 6px; color: var(--muted); overflow-wrap: anywhere; }
+        /* Home: unfinished work (Continue) and the last tools opened (Recent), home.js */
+        .hg-home-quick { max-width: 1200px; margin: 0 auto; }
+        .hg-home-quick[hidden] { display: none; }
+        .hg-cont-list { display: grid; gap: 10px; margin: 0 0 22px; }
+        .hg-cont { display: grid; grid-template-columns: 44px minmax(0, 1fr) auto auto; grid-template-areas: "ico txt go x"; align-items: center; column-gap: 12px; row-gap: 8px; padding: 12px 6px 12px 12px; border: 1px solid var(--border); border-radius: 14px; background: var(--surface); }
+        body.dark .hg-cont { background: #1A222F; }
+        .hg-cont .icon { grid-area: ico; width: 44px; height: 44px; border-radius: 12px; font-size: 20px; background: linear-gradient(135deg, #2B7DB3 0%, #123E63 100%); box-shadow: none; --icon-primary: #FFFFFF; --icon-secondary: #25B6D2; --icon-accent: #FFC52B; }
+        .hg-cont .icon svg { width: 64%; height: 64%; }
+        .hg-cont-txt { grid-area: txt; display: flex; flex-direction: column; gap: 2px; }
+        .hg-cont-title { font-size: 15px; font-weight: 700; color: var(--text); overflow-wrap: break-word; }
+        .hg-cont-note { font-size: 13px; color: var(--muted); }
+        .hg-cont-go { grid-area: go; min-height: 44px; padding: 0 18px; border: 0; border-radius: 12px; background: var(--accent-ink); color: var(--on-accent); font: inherit; font-size: 14px; font-weight: 800; cursor: pointer; }
+        .hg-cont-x { grid-area: x; width: 44px; height: 44px; border: 0; border-radius: 12px; background: none; color: var(--muted); font-size: 24px; line-height: 1; cursor: pointer; }
+        .hg-cont-go:focus-visible, .hg-cont-x:focus-visible { outline: 3px solid var(--accent-ink); outline-offset: 2px; }
+        /* a phone: the button goes under the text, which keeps the width to wrap in */
+        @media (max-width: 480px) { .hg-cont { grid-template-columns: 44px minmax(0, 1fr) auto; grid-template-areas: "ico txt x" ". go ."; align-items: start; } .hg-cont-go { justify-self: start; } }
+        .hg-home-recent { margin: 0 0 24px; }
+        .hg-short-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)); gap: 20px; }
+        @media (max-width: 768px) { .hg-short-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 15px; } }
+        @media (max-width: 480px) { .hg-short-grid { gap: 10px; } }
+        .hg-short { display: flex; flex-direction: column; align-items: center; gap: 8px; width: 100%; padding: 10px; border: 0; border-radius: 15px; background: none; color: inherit; font: inherit; cursor: pointer; touch-action: manipulation; transition: transform 0.2s; }
+        body.dark .hg-short { background: rgba(255, 255, 255, 0.04); color: #e6e6e6; }   /* as the dark home tiles */
+        body.dark .hg-short .app-name { color: #e6e6e6; }
+        .hg-short:active { transform: scale(0.95); background: rgba(0, 177, 202, 0.08); }
+        body.dark .hg-short:active { background: rgba(0, 177, 202, 0.18); }
+        @media (hover: hover) { .hg-short:hover { transform: translateY(-5px); background: rgba(0, 177, 202, 0.05); } body.dark .hg-short:hover { background: rgba(0, 177, 202, 0.12); } }
+        .hg-short:focus-visible { outline: 3px solid var(--accent-ink); outline-offset: 2px; }
+        .hg-short .icon { background: linear-gradient(135deg, #2B7DB3 0%, #123E63 100%); box-shadow: 0 4px 14px rgba(13,42,74,0.30); --icon-primary: #FFFFFF; --icon-secondary: #25B6D2; --icon-accent: #FFC52B; }
+        body.dark .hg-short .icon { box-shadow: 0 4px 14px rgba(0,0,0,0.40); }
+        .hg-short .icon svg { width: 64%; height: 64%; }
 
         .app-icon {
             display: flex;
@@ -2454,6 +2484,7 @@
             </div>
             <p id="hgHomeSearchStatus" class="hg-sr-only" role="status" aria-live="polite"></p>
             <div id="hgHomeResults" class="hg-home-results" role="list" hidden></div>
+            <div id="hgHomeQuick" class="hg-home-quick" hidden></div>
             <section class="hg-home-sec" data-home-sec="calculators" aria-labelledby="hgSec-calculators">
                 <h2 class="hg-home-sec-title" id="hgSec-calculators" data-i18n="home.sec.calculators">Calculators</h2>
                 <div class="apps-grid" data-home-grid>
@@ -2776,7 +2807,7 @@
                 <div class="hg-section-title">About</div>
                 <div class="hg-kvgrid">
                     <div class="hg-kv"><div class="k">App</div><div class="v">Hadron Group</div></div>
-                    <div class="hg-kv"><div class="k">Version</div><div class="v">v158</div></div>
+                    <div class="hg-kv"><div class="k">Version</div><div class="v">v159</div></div>
                     <div class="hg-kv"><div class="k">Platform</div><div class="v">PWA</div></div>
                 </div>
             </div>
@@ -6243,12 +6274,14 @@
             document.getElementById('sr_siteManualWrap').style.display = 'none';
             document.getElementById('sr_site').value = siteName;
             document.getElementById('sr_contact').value = prevContact;
+            srQueueAutosave();   // the report now points at the registered site
             const nPts = (site.samplePoints || []).length;
             showToast((created ? 'Saved "' : 'Updated "') + siteName + '" in the site register · ' + nPts + ' sample point' + (nPts === 1 ? '' : 's'));
         }
 
         async function newServiceReport() {
             srEnsureAutosaveWired();
+            srFlushDraft();   // an edit still waiting to be autosaved is in the draft before it is offered
             try { srLoadLogo(); } catch (_) {}   // warm the PDF logo cache so Share doesn't await a fetch (keeps the tap gesture valid)
             // Recover an unfinished report from a crash / reload / accidental close before starting fresh.
             try {
@@ -6267,10 +6300,13 @@
             document.getElementById('sr_form').style.display = 'block';
             document.getElementById('sr_list').style.display = 'none';
             sr_status = 'draft'; applySrReadOnly(false);
+            _srDirty = false;   // a blank report: nothing unsaved yet
             // Defaults
             document.getElementById('sr_dt').value = srLocalDtValue();
             document.getElementById('sr_gps').value = '';
             document.getElementById('sr_next_due').value = '';
+            // A new report starts blank: not with the last report's notes, or the last customer's signer.
+            ['sr_obs', 'sr_act', 'sr_chem', 'sr_sig_name', 'sr_sig_title'].forEach(function (id) { const el = document.getElementById(id); if (el) el.value = ''; });
             document.getElementById('sr_tech').value = (window.HG_PROFILE && window.HG_PROFILE.full_name) || LS.get('hadron_sr_lasttech', '') || '';
             _srLastVisit = null; srUpdateCloneBtn();
             sr_photos = []; document.getElementById('sr_photos').innerHTML = '';
@@ -6294,8 +6330,9 @@
         // Only the owner reaches this (the Edit button is gated); RLS blocks anyone else's write.
         async function openServiceReport(id, readOnly) {
             srEnsureAutosaveWired();
-            let r = LS.get('hadron_sr', []).find(x => x.id === id)
-                 || (window._srResumeDraft && window._srResumeDraft.id === id ? window._srResumeDraft : null);   // resume path
+            // Resuming: the unsaved draft, which is newer than a saved copy of the same report.
+            let r = (window._srResumeDraft && window._srResumeDraft.id === id ? window._srResumeDraft : null)
+                 || LS.get('hadron_sr', []).find(x => x.id === id);
             // Cross-device freshness: if another device saved a newer version of THIS report, load
             // that cloud copy instead of editing a stale local one (which would overwrite the newer
             // version on save). Skip the resume-draft path — the draft is the freshest in-progress work.
@@ -6313,6 +6350,8 @@
             }
             if (!r) { showToast('Report not found'); return; }
 
+            _srDirty = false;     // as opened: nothing unsaved (a resumed draft stays in its slot). Set before the form shows,
+                                  // so an edit made while it loads (the awaits below) still counts; nothing below fires input/change.
             document.getElementById('sr_form').style.display = 'block';
             document.getElementById('sr_list').style.display = 'none';
             sr_reportId = r.id;   // re-save upserts THIS report
@@ -6484,6 +6523,7 @@
                 }).join('');
         }
         function listServiceReports() {
+            srFlushDraft();   // an edit still waiting to be autosaved is kept before the list replaces the form
             document.getElementById('sr_form').style.display = 'none';
             document.getElementById('sr_list').style.display = 'block';
             srRenderReportList(srMergedReports());                            // instant: local (+ any cached cloud)
@@ -6494,6 +6534,7 @@
             if (!silent) showToast('Locating…');
             navigator.geolocation.getCurrentPosition(p => {
                 const el = document.getElementById('sr_gps'); if (el) el.value = p.coords.latitude.toFixed(5) + ', ' + p.coords.longitude.toFixed(5) + ' (±' + Math.round(p.coords.accuracy) + 'm)';
+                if (!silent) srQueueAutosave();   // the Capture button: a change to keep, like typing
             }, e => { if (!silent) showToast('GPS: ' + e.message); }, { enableHighAccuracy: true, timeout: 8000 });
         }
         // datetime-local wants LOCAL wall-clock; toISOString() is UTC, so a naive slice is off by the
@@ -6708,7 +6749,7 @@
             const f = srFindRow(rid); if (!f) return;
             srResetLimit(f.t.catId);
             const L = srLimitFor(f.t.catId); f.t.specMin = L.min; f.t.specMax = L.max; f.t.custom = false;
-            srRenderPoints();
+            srRenderPoints(); srQueueAutosave();
         }
 
         // ── Sample points ──────────────────────────────────────────────
@@ -6736,8 +6777,8 @@
         }
         function srSetPointName(pid, v) { const p = sr_points.find(x => x.id === pid); if (p) p.name = v; }   // no re-render → keeps input focus
 
-        function srAddTest(catId) { const p = sr_points.find(x => x.id === sr_activePoint) || sr_points[0]; if (!p) return; if (p.tests.some(t => t.catId === catId)) return; const c = srCatItem(catId); if (c) { p.tests.push(srNewRow(c)); srRenderPoints(); } }
-        function srRemoveTest(rid) { const f = srFindRow(rid); if (f) { f.p.tests = f.p.tests.filter(x => x.id !== rid); srRenderPoints(); } }
+        function srAddTest(catId) { const p = sr_points.find(x => x.id === sr_activePoint) || sr_points[0]; if (!p) return; if (p.tests.some(t => t.catId === catId)) return; const c = srCatItem(catId); if (c) { p.tests.push(srNewRow(c)); srRenderPoints(); srQueueAutosave(); } }
+        function srRemoveTest(rid) { const f = srFindRow(rid); if (f) { f.p.tests = f.p.tests.filter(x => x.id !== rid); srRenderPoints(); srQueueAutosave(); } }
         function srSetVal(rid, v) { const f = srFindRow(rid); if (f) { f.t.value = v; srUpdateChip(rid); srRefreshDerived(f.p.id); } }
 
         // ── System packs & derived control metrics ──
@@ -7305,6 +7346,10 @@
         // and offer to resume it the next time a report is started. Cleared on Save/Submit.
         const SR_DRAFT_KEY = 'hadron_sr_draft';
         let _srDraftTimer = null, _srAutosaveWired = false;
+        // Changed since it was opened or last saved. Only then is there unsaved work to keep: a report that was
+        // just saved (and shared), or only looked at, leaves no draft behind when the phone switches apps.
+        let _srDirty = false;
+        let _srEditedAt = null;   // when the last change was made: the draft's "edited 08:42" (a later page hide doesn't move it)
         function srDraftHasContent(r) {
             if (!r) return false;
             if ((r.site || '').trim()) return true;
@@ -7321,22 +7366,46 @@
             if (window.__hgTenantFrozen) return;   // signing out / switching user: the live store is being cleared
             try {
                 const form = document.getElementById('sr_form');
-                if (!form || form.style.display === 'none' || sr_readOnly) return;
+                if (!form || form.style.display === 'none' || sr_readOnly || !_srDirty) return;
                 const r = gatherSR();
                 if (!srDraftHasContent(r)) { localStorage.removeItem(SR_DRAFT_KEY); return; }
-                r._draftAt = new Date().toISOString();
+                r._draftAt = _srEditedAt || new Date().toISOString();
                 localStorage.setItem(SR_DRAFT_KEY, JSON.stringify(r));
             } catch (_) { /* quota / serialise failure — best-effort, never block the form */ }
         }
-        function srQueueAutosave() { if (_srDraftTimer) clearTimeout(_srDraftTimer); _srDraftTimer = setTimeout(srAutosaveDraft, 1200); }
-        function srClearDraft() { try { localStorage.removeItem(SR_DRAFT_KEY); } catch (_) {} }
+        function srQueueAutosave() { _srDirty = true; _srEditedAt = new Date().toISOString(); if (_srDraftTimer) clearTimeout(_srDraftTimer); _srDraftTimer = setTimeout(srAutosaveDraft, 1200); }
+        function srFlushDraft() { if (_srDraftTimer) { clearTimeout(_srDraftTimer); _srDraftTimer = null; srAutosaveDraft(); } }
+        // Saved (or thrown away): nothing unsaved is left, and an autosave still waiting mustn't bring the draft back.
+        function srClearDraft() { _srDirty = false; if (_srDraftTimer) { clearTimeout(_srDraftTimer); _srDraftTimer = null; } try { localStorage.removeItem(SR_DRAFT_KEY); } catch (_) {} }
         function srEnsureAutosaveWired() {
             if (_srAutosaveWired) return; _srAutosaveWired = true;
             const form = document.getElementById('sr_form');
-            if (form) { form.addEventListener('input', srQueueAutosave); form.addEventListener('change', srQueueAutosave); }
+            // Typing in a searchable list's filter box isn't an edit (picking an option is: that fires the select's change).
+            const onEdit = function (e) { if (e && e.target && e.target.classList && e.target.classList.contains('hg-ss-input')) return; srQueueAutosave(); };
+            if (form) { form.addEventListener('input', onEdit); form.addEventListener('change', onEdit); }
             window.addEventListener('beforeunload', srAutosaveDraft);
             document.addEventListener('visibilitychange', function () { if (document.hidden) srAutosaveDraft(); });
         }
+        // The home's Continue card (home.js): the unfinished report, reopened or thrown away from there.
+        window.hgSrDraft = {
+            get: function () {
+                try {
+                    const d = JSON.parse(localStorage.getItem(SR_DRAFT_KEY) || 'null');
+                    return (d && srDraftHasContent(d) && (d.status || 'draft') !== 'submitted') ? d : null;
+                } catch (_) { return null; }
+            },
+            flush: srFlushDraft,
+            resume: async function () {
+                srFlushDraft();
+                const d = window.hgSrDraft.get();
+                if (!d) return false;
+                openWindow('servicereport');
+                window._srResumeDraft = d;
+                try { await openServiceReport(d.id, false); } finally { window._srResumeDraft = null; }
+                return true;
+            },
+            discard: function () { srClearDraft(); }
+        };
 
         function saveServiceReport() {
             if (sr_readOnly) return;
@@ -7365,9 +7434,10 @@
             const r = gatherSR();
             if (!r.site) { showToast('Enter site name'); return; }
             srRememberProducts(r.dosing); srRememberInstruments(r.instruments);
-            srLocalSave(r);   // best-effort local save (upsert by id)
+            const saved = srLocalSave(r);   // best-effort local save (upsert by id)
             srCloudPushReport(r);
-            srClearDraft();   // report is now persisted — drop the recovery draft (no stale resume prompt)
+            if (saved) srClearDraft();   // report is now persisted — drop the recovery draft (no stale resume prompt)
+            else showToast(window.__hgTenantFrozen ? 'Signing out — this report wasn’t saved on this phone.' : '⚠ Device storage full — pushed to cloud; keeping a recovery draft. Free space soon.');
             generateSrPdf(r, share);
         }
         function shareServiceReportPdf() { exportServiceReportPdf(true); }

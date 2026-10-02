@@ -6,7 +6,9 @@
  *   - puts tiles that other modules add later (Team, Portal) into the right section: window.hgHomePlace;
  *   - hides a section when none of its tiles is shown for the signed-in role;
  *   - searches every tool, including the ones inside Dosage, Effluent, Assets, Safety and LIMS, and opens
- *     the one picked directly.
+ *     the one picked directly;
+ *   - shows unfinished work at the top (Continue: a service report that wasn't saved, a job timer still
+ *     running) and the last tools opened (Recent).
  * Customize home (customize.js) reorders tiles within each section.
  */
 (function () {
@@ -90,6 +92,7 @@
     // A saved layout may already say where this tile goes (customize.js keeps data-home-first tiles in front).
     if (window.HG_HOME && typeof window.HG_HOME.applyOrder === 'function' && !window.HG_HOME.isEditing()) window.HG_HOME.applyOrder();
     refreshSections();
+    renderQuick();   // a recent Team / Portal can be shown now
     return true;
   }
   window.hgHomePlace = place;
@@ -99,6 +102,96 @@
       const any = Array.from(sec.querySelectorAll('.app-icon[data-app]')).some(tileShown);
       sec.hidden = !any;
     });
+  }
+
+  // ── Continue (unfinished work) and Recent (the last tools opened) ──
+  // The recent list is this person's data on the phone: an hg_ key, kept per user at sign-out.
+  const RECENT_KEY = 'hg_home_recent_v1';
+  const RECENT_KEEP = 10, RECENT_SHOW = 3;
+  let quick = null;
+  const readJSON = (k, d) => { try { const v = JSON.parse(localStorage.getItem(k) || 'null'); return v == null ? d : v; } catch (_) { return d; } };
+  const homeTile = (id) => Array.from(document.querySelectorAll('[data-home-grid] .app-icon[data-app]')).find((t) => t.getAttribute('data-app') === id) || null;
+  const editing = () => !!(window.HG_HOME && typeof window.HG_HOME.isEditing === 'function' && window.HG_HOME.isEditing());
+  const iconOf = (tile) => { const i = tile && tile.querySelector('.icon'); return i ? i.innerHTML : ''; };
+  function recentList() {
+    const a = readJSON(RECENT_KEY, []);
+    return Array.isArray(a) ? a.filter((x) => x && typeof x.id === 'string') : [];
+  }
+  function recordRecent(id) {
+    if (!id || window.__hgTenantFrozen) return;   // signing out: this person's data is being put away
+    const next = [{ id: id, at: Date.now() }].concat(recentList().filter((x) => x.id !== id)).slice(0, RECENT_KEEP);
+    try { localStorage.setItem(RECENT_KEY, JSON.stringify(next)); } catch (_) {}
+  }
+  // A time today as 08:42; an earlier one with its date.
+  function when(v) {
+    const d = new Date(v);
+    if (isNaN(d.getTime())) return '';
+    const fmt = (fn, o) => { try { return d[fn]([(window.currentLanguage || 'en') + '-ZA', 'en-ZA'], o); } catch (_) { return d[fn](undefined, o); } };
+    const time = fmt('toLocaleTimeString', { hour: '2-digit', minute: '2-digit' });
+    return d.toDateString() === new Date().toDateString() ? time : fmt('toLocaleDateString', { day: 'numeric', month: 'short' }) + ' ' + time;
+  }
+  // Unfinished work and what reopens it: a service report that wasn't saved (index.html keeps it in one draft
+  // slot), a job timer still running. Each only for a role that has its tool.
+  function unfinished() {
+    const out = [];
+    const srTile = homeTile('servicereport');
+    const sr = srTile && tileShown(srTile) && window.hgSrDraft ? window.hgSrDraft.get() : null;
+    if (sr) {
+      const site = String(sr.site || '').trim(), t = when(sr._draftAt);
+      out.push({ tile: srTile, title: tileName(srTile) + (site ? ' · ' + site : ''),
+        note: t ? tr('home.contNotSaved', 'Not saved · edited {t}').replace('{t}', () => t) : tr('home.notSaved', 'Not saved'),
+        go: tr('home.resume', 'Resume'), open: () => { recordRecent('servicereport'); window.hgSrDraft.resume(); },
+        drop: () => discardReport(site) });
+    }
+    const jobsTile = homeTile('jobs');
+    const tm = jobsTile && tileShown(jobsTile) ? readJSON('hadron_timer_active', null) : null;
+    if (tm && tm.start) {
+      const label = String(tm.label || '').trim(), t = when(tm.start);
+      out.push({ tile: jobsTile, title: tileName(jobsTile) + (label ? ' · ' + label : ''),
+        note: tr('home.contTimer', 'Timer running since {t}').replace('{t}', () => t),
+        go: tr('home.open', 'Open'), open: () => jobsTile.click() });
+    }
+    return out;
+  }
+  function discardReport(site) {
+    if (!window.hgSheet || !window.hgSrDraft) return;
+    window.hgSheet.open({
+      title: tr('home.discardTitle', 'Discard unsaved work?'),
+      body: '<p>' + esc(site
+        ? tr('home.discardBody', 'The changes to the report for {site} that weren’t saved will be lost. This can’t be undone.').replace('{site}', () => site)
+        : tr('home.discardBodyNoSite', 'The changes to this report that weren’t saved will be lost. This can’t be undone.')) + '</p>',
+      actions: [
+        { label: tr('home.discard', 'Discard'), kind: 'danger', onClick: () => { window.hgSrDraft.discard(); renderQuick(); } },
+        { label: tr('home.keep', 'Keep'), kind: 'plain', focus: true }
+      ],
+      onClose: () => { if (quick && !quick.contains(document.activeElement)) { const b = quick.querySelector('button'); if (b) b.focus(); } }   // Discard removed the × that opened it
+    });
+  }
+  function renderQuick() {
+    if (!quick) return;
+    if ((input && input.value.trim()) || editing()) { quick.hidden = true; return; }   // a search or Customize: the tiles only
+    if (window.hgSrDraft && window.hgSrDraft.flush) window.hgSrDraft.flush();   // an edit still waiting to be autosaved counts
+    const cont = unfinished();
+    const byId = new Map(items().map((it) => [it.id, it]));
+    const recent = recentList().map((x) => byId.get(x.id)).filter(Boolean).slice(0, RECENT_SHOW);
+    let html = '';
+    if (cont.length) html += '<div class="hg-cont-list" role="list" aria-label="' + esc(tr('home.unfinished', 'Unfinished work')) + '">' + cont.map((c, i) =>
+      '<div class="hg-cont" role="listitem">' +
+        '<span class="icon" aria-hidden="true">' + iconOf(c.tile) + '</span>' +
+        '<span class="hg-cont-txt"><span class="hg-cont-title" id="hgCont' + i + '">' + esc(c.title) + '</span><span class="hg-cont-note" id="hgContN' + i + '">' + esc(c.note) + '</span></span>' +
+        '<button type="button" class="hg-cont-go" data-c="' + i + '" aria-describedby="hgCont' + i + ' hgContN' + i + '">' + esc(c.go) + '</button>' +
+        (c.drop ? '<button type="button" class="hg-cont-x" data-c="' + i + '" aria-label="' + esc(tr('home.discardAria', 'Discard unsaved work')) + '" aria-describedby="hgCont' + i + '">×</button>' : '') +
+      '</div>').join('') + '</div>';
+    if (recent.length) html += '<section class="hg-home-recent" aria-labelledby="hgSec-recent"><h2 class="hg-home-sec-title" id="hgSec-recent">' + esc(tr('home.recent', 'Recent')) + '</h2>' +
+      '<div class="hg-short-grid" role="list">' + recent.map((it, i) =>
+        '<div role="listitem"><button type="button" class="hg-short" data-r="' + i + '"' + (it.sub ? ' aria-label="' + esc(it.name + ', ' + it.sub) + '"' : '') + '>' +
+          '<span class="icon" aria-hidden="true">' + iconOf(it.iconFrom) + '</span><span class="app-name">' + esc(it.name) + '</span></button></div>').join('') +
+      '</div></section>';
+    quick.innerHTML = html;
+    quick.hidden = !html;
+    quick.querySelectorAll('.hg-cont-go').forEach((b) => b.addEventListener('click', () => cont[+b.getAttribute('data-c')].open()));
+    quick.querySelectorAll('.hg-cont-x').forEach((b) => b.addEventListener('click', () => cont[+b.getAttribute('data-c')].drop()));
+    quick.querySelectorAll('.hg-short').forEach((b) => b.addEventListener('click', () => { const it = recent[+b.getAttribute('data-r')]; if (it) { recordRecent(it.id); it.open(); } }));
   }
 
   // ── Search ──
@@ -149,10 +242,12 @@
       results.hidden = true; results.innerHTML = '';
       sections.forEach((s) => { s.style.display = ''; });
       status.textContent = '';
+      renderQuick();
       return;
     }
     const found = search(q);
     sections.forEach((s) => { s.style.display = 'none'; });
+    if (quick) quick.hidden = true;
     results.hidden = false;
     if (!found.length) {
       const msg = tr('home.noMatch', 'No tool matches “{q}”').replace('{q}', () => q);   // a function: "$&" in q stays as typed
@@ -174,6 +269,7 @@
     input.value = '';
     render();
     input.blur();
+    recordRecent(it.id);
     it.open();
   }
 
@@ -183,6 +279,7 @@
     results = document.getElementById('hgHomeResults');
     status = document.getElementById('hgHomeSearchStatus');
     sections = Array.from(document.querySelectorAll('[data-home-sec]'));
+    quick = document.getElementById('hgHomeQuick');
     if (!input || !clearBtn || !results || !status) return;
     const ico = document.querySelector('.hg-home-search-ico');
     if (ico && typeof window.hadronIcon === 'function') ico.innerHTML = window.hadronIcon('search', { size: 20 });
@@ -197,10 +294,31 @@
     document.querySelectorAll('[data-home-grid] .app-icon[data-app]').forEach((tile) => { if (PLACE[tile.getAttribute('data-app')] === 'more' && !tile.closest('[data-home-sec="more"]')) place(tile); });
     refreshSections();
     // The role can be set without a profile event (an offline start uses the last known role): body[data-role].
-    if (window.MutationObserver) new MutationObserver(() => { refreshSections(); if (input.value) render(); }).observe(document.body, { attributes: true, attributeFilter: ['data-role'] });
+    if (window.MutationObserver) new MutationObserver(() => { refreshSections(); renderQuick(); if (input.value) render(); }).observe(document.body, { attributes: true, attributeFilter: ['data-role'] });
+    // A home tile opened is remembered (Recent); not in Customize, where a tap doesn't open it.
+    document.addEventListener('click', (e) => {
+      const tile = e.target && e.target.closest ? e.target.closest('[data-home-grid] .app-icon[data-app]') : null;
+      if (tile && !editing()) recordRecent(tile.getAttribute('data-app'));
+    }, true);
+    // The home shows again when the last window closes: unfinished work may have changed (a report saved, a
+    // timer stopped) and the tool just used is now the most recent.
+    if (window.MutationObserver) {
+      const shown = new MutationObserver(() => { if (!document.querySelector('.window.active')) renderQuick(); });
+      const watch = (w) => shown.observe(w, { attributes: true, attributeFilter: ['class'] });
+      document.querySelectorAll('.window').forEach(watch);
+      new MutationObserver((list) => list.forEach((m) => m.addedNodes.forEach((n) => { if (n.nodeType === 1 && n.classList.contains('window')) watch(n); })))
+        .observe(document.body, { childList: true });   // windows mounted later (Team, Portal)
+    }
+    window.addEventListener('storage', (e) => { if (!e.key || e.key === RECENT_KEY || e.key === 'hadron_sr_draft' || e.key === 'hadron_timer_active') renderQuick(); });
+    document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible' && !document.querySelector('.window.active')) renderQuick(); });   // "edited 08:42" becomes a date after midnight
+    document.addEventListener('hg:home:edit', renderQuick);
+    renderQuick();
+    // The language and the tiles' Hadron icons are applied on window load (index.html), after this ran: draw
+    // again then, or a start with nothing else to redraw it (offline) keeps English words and emoji icons.
+    if (document.readyState === 'complete') renderQuick(); else window.addEventListener('load', () => renderQuick());
   }
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot); else boot();
   // Roles decide which tiles show; a language change renames them (results follow the new names).
-  document.addEventListener('hg:profile:loaded', () => setTimeout(() => { refreshSections(); if (input && input.value) render(); }, 0));
-  document.addEventListener('hg:lang:changed', () => { if (input && input.value) render(); });
+  document.addEventListener('hg:profile:loaded', () => setTimeout(() => { refreshSections(); renderQuick(); if (input && input.value) render(); }, 0));
+  document.addEventListener('hg:lang:changed', () => { renderQuick(); if (input && input.value) render(); });
 })();
