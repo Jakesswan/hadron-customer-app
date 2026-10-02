@@ -52,59 +52,60 @@
     <!-- Supabase JS SDK (auth + cloud sync), pinned 2.117.2 and served by the app itself so sign-in
          works offline from the precache (it used to be the floating @2 from a CDN). See
          THIRD_PARTY_NOTICES.md. To upgrade: replace the file, rename it, update this tag + sw.js. -->
-    <script src="supabase-js-2.117.2.js?v=157"></script>
+    <script src="supabase-js-2.117.2.js?v=158"></script>
 
     <!-- Hadron Supabase bridge -->
-    <script src="supabase-client.js?v=157"></script>
+    <script src="supabase-client.js?v=158"></script>
 
     <!-- Shared UI primitives (in-app sheets) — loaded before auth-ui, which uses them -->
-    <script src="hg-ui.js?v=157" defer></script>
+    <script src="hg-ui.js?v=158" defer></script>
     <!-- Auth UI (login/signup gate, profile binding) -->
-    <script src="auth-ui.js?v=157" defer></script>
+    <script src="auth-ui.js?v=158" defer></script>
 
     <!-- Push notifications -->
-    <script src="push.js?v=157" defer></script>
+    <script src="push.js?v=158" defer></script>
 
     <!-- Translation bundle -->
-    <script src="i18n.js?v=157"></script>
+    <script src="i18n.js?v=158"></script>
 
     <!-- Hadron Tristroke icon system (matches the ERP) -->
-    <script src="hadron-icons.js?v=157" defer></script>
+    <script src="hadron-icons.js?v=158" defer></script>
 
     <!-- Emoji the app has an icon for become Tristroke icons (the rest stay the phone's own emoji) -->
-    <script src="emoji.js?v=157" defer></script>
+    <script src="emoji.js?v=158" defer></script>
 
     <!-- Customizable home grid (drag-to-reorder) -->
-    <script src="customize.js?v=157" defer></script>
+    <script src="home.js?v=158" defer></script>
+    <script src="customize.js?v=158" defer></script>
 
     <!-- Data Manager (Excel import/export) -->
-    <script src="data-manager.js?v=157" defer></script>
+    <script src="data-manager.js?v=158" defer></script>
 
     <!-- QR encoder (MIT, Kazuhiko Arase) -->
-    <script src="qr.js?v=157"></script>
+    <script src="qr.js?v=158"></script>
 
     <!-- QR Builder app -->
-    <script src="qr-app.js?v=157" defer></script>
+    <script src="qr-app.js?v=158" defer></script>
 
     <!-- Pool Water module -->
-    <script src="pool.js?v=157" defer></script>
+    <script src="pool.js?v=158" defer></script>
     <!-- Cooling Tower field calculator -->
-    <script src="coolingtower.js?v=157" defer></script>
+    <script src="coolingtower.js?v=158" defer></script>
     <!-- Boiler / Steam field calculator -->
-    <script src="boiler.js?v=157" defer></script>
+    <script src="boiler.js?v=158" defer></script>
     <!-- Water softener sizing calculator -->
-    <script src="softener.js?v=157" defer></script>
-    <script src="academy-content.js?v=157" defer></script>
-    <script src="academy.js?v=157" defer></script>
+    <script src="softener.js?v=158" defer></script>
+    <script src="academy-content.js?v=158" defer></script>
+    <script src="academy.js?v=158" defer></script>
 
-    <script src="searchable-select.js?v=157" defer></script>
-    <script src="trends.js?v=157" defer></script>
+    <script src="searchable-select.js?v=158" defer></script>
+    <script src="trends.js?v=158" defer></script>
 
     <!-- LIMS module (loaded at end of body via defer) -->
-    <script src="lims.js?v=157" defer></script>
-    <script src="lims-sync.js?v=157" defer></script>
-    <script src="portal.js?v=157" defer></script>
-    <script src="team.js?v=157" defer></script>
+    <script src="lims.js?v=158" defer></script>
+    <script src="lims-sync.js?v=158" defer></script>
+    <script src="portal.js?v=158" defer></script>
+    <script src="team.js?v=158" defer></script>
 
 
     <style>
@@ -488,6 +489,32 @@
                 padding: 15px 10px;
             }
         }
+
+        /* Home: search and sections (home.js) */
+        .hg-sr-only { position: absolute; width: 1px; height: 1px; margin: -1px; padding: 0; overflow: hidden; clip: rect(0 0 0 0); clip-path: inset(50%); white-space: nowrap; border: 0; }
+        .hg-home-search { position: relative; max-width: 1200px; margin: 0 auto 18px; }
+        .hg-home-search input { display: block; width: 100%; box-sizing: border-box; height: 48px; padding: 0 46px 0 44px; border: 1px solid var(--border); border-radius: 14px; background: var(--surface); color: var(--text); font: inherit; font-size: 16px; -webkit-appearance: none; appearance: none; }
+        .hg-home-search input::placeholder { color: var(--muted); opacity: 1; }
+        .hg-home-search input::-webkit-search-cancel-button { display: none; }
+        .hg-home-search input:focus-visible { outline: 3px solid var(--accent-ink); outline-offset: 1px; }
+        body.dark .hg-home-search input { background-color: #243044; border-color: #3A4A61; }
+        .hg-home-search-ico { position: absolute; left: 13px; top: 50%; transform: translateY(-50%); width: 20px; height: 20px; color: var(--muted); --icon-primary: currentColor; --icon-secondary: currentColor; --icon-accent: currentColor; pointer-events: none; }
+        .hg-home-search-ico svg { display: block; width: 20px; height: 20px; }
+        .hg-home-search-clear { position: absolute; right: 4px; top: 50%; transform: translateY(-50%); width: 44px; height: 44px; border: 0; border-radius: 12px; background: none; color: var(--muted); font-size: 24px; line-height: 1; cursor: pointer; }
+        .hg-home-search-clear:focus-visible { outline: 3px solid var(--accent-ink); outline-offset: -3px; }
+        .hg-home-sec { max-width: 1200px; margin: 0 auto 24px; }
+        .hg-home-sec-title { margin: 0 6px 10px; font-size: 12px; font-weight: 800; letter-spacing: 0.07em; text-transform: uppercase; color: var(--muted); }
+        .hg-home-results { max-width: 1200px; margin: 0 auto; display: grid; gap: 8px; }
+        .hg-home-results[hidden] { display: none; }
+        .hg-home-result { display: flex; align-items: center; gap: 12px; width: 100%; min-height: 60px; padding: 10px 12px; border: 1px solid var(--border); border-radius: 14px; background: var(--surface); color: var(--text); font: inherit; text-align: left; cursor: pointer; }
+        .hg-home-result:focus-visible { outline: 3px solid var(--accent-ink); outline-offset: 2px; }
+        body.dark .hg-home-result { background: #1A222F; }
+        .hg-home-result-ico { flex: none; width: 40px; height: 40px; border-radius: 11px; display: grid; place-items: center; background: linear-gradient(135deg, #2B7DB3 0%, #123E63 100%); color: #fff; font-size: 20px; --icon-primary: #FFFFFF; --icon-secondary: #25B6D2; --icon-accent: #FFC52B; }
+        .hg-home-result-ico svg { width: 26px; height: 26px; }
+        .hg-home-result-txt { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+        .hg-home-result-name { font-size: 15px; font-weight: 700; overflow-wrap: anywhere; }
+        .hg-home-result-sub { font-size: 13px; color: var(--muted); }
+        .hg-home-noresult { padding: 18px 6px; color: var(--muted); overflow-wrap: anywhere; }
 
         .app-icon {
             display: flex;
@@ -2419,149 +2446,180 @@
 
         <!-- Desktop Content -->
         <div class="desktop-content">
-            <div class="apps-grid">
-                <div class="app-icon" data-app="profile" onclick="openWindow('profile')">
-                    <div class="icon">👤</div>
-                    <div class="app-name" data-i18n="app.profile">Profile</div>
-                </div>
-                <!-- Messages hidden until it is a real feature. Today it is a static
-                     "No messages yet" placeholder — nothing reads/writes the messages
-                     table. To re-enable, restore this tile (window markup + HG_DB.messages
-                     are still in place):
-                <div class="app-icon" data-app="messages" onclick="openWindow('messages')">
-                    <div class="icon">💬</div>
-                    <div class="app-name" data-i18n="app.messages">Messages</div>
-                </div>
-                -->
-                <div class="app-icon" data-app="settings" onclick="openWindow('settings')">
-                    <div class="icon">⚙️</div>
-                    <div class="app-name" data-i18n="app.settings">Settings</div>
-                </div>
-                <div class="app-icon" data-app="files" onclick="openWindow('files')">
-                    <div class="icon">📁</div>
-                    <div class="app-name" data-i18n="app.files">Files</div>
-                </div>
-                <!-- LabCom hidden until it has real use. To re-enable, restore this tile:
-                <div class="app-icon" data-app="labcom" onclick="openLabCom()">
-                    <div class="icon icon-image"><img src="LabCom_Logo.svg" alt="LabCom"></div>
-                    <div class="app-name" data-i18n="app.labcom">LabCom</div>
-                </div>
-                -->
-                <div class="app-icon" data-app="support" onclick="openWindow('support')">
-                    <div class="icon">🎧</div>
-                    <div class="app-name" data-i18n="app.support">Support</div>
-                </div>
-                <!-- Store hidden until it has real use. To re-enable, restore this tile:
-                <div class="app-icon" data-app="store" onclick="openWindow('store')">
-                    <div class="icon">🛒</div>
-                    <div class="app-name" data-i18n="app.store">Store</div>
-                </div>
-                -->
-                <div class="app-icon" data-app="dosage" onclick="openWindow('dosage')">
-                    <div class="icon">💊</div>
-                    <div class="app-name" data-i18n="app.dosage">Dosage Calculator</div>
-                </div>
-                <div class="app-icon" data-app="waterindex" onclick="openWindow('waterindex')">
-                    <div class="icon">🧮</div>
-                    <div class="app-name" data-i18n="app.waterindex">LSI &amp; RSI Index</div>
-                </div>
-                <div class="app-icon" data-app="history" onclick="openWindow('history')">
-                    <div class="icon">📋</div>
-                    <div class="app-name" data-i18n="app.history">History</div>
-                </div>
-                <div class="app-icon" data-app="coolingtower" onclick="openWindow('coolingtower')">
-                    <div class="icon">🏭</div>
-                    <div class="app-name" data-i18n="pt.coolingtower">Cooling Tower</div>
-                </div>
-                <div class="app-icon" data-app="boiler" onclick="openWindow('boiler')">
-                    <div class="icon">🔥</div>
-                    <div class="app-name">Boiler / Steam</div>
-                </div>
-                <div class="app-icon" data-app="softener" onclick="openWindow('softener')">
-                    <div class="icon">🧂</div>
-                    <div class="app-name">Softener Sizing</div>
-                </div>
-                <div class="app-icon" data-app="rocalc" onclick="openWindow('rocalc')">
-                    <div class="icon">💧</div>
-                    <div class="app-name" data-i18n="pt.rocalc">RO Performance</div>
-                </div>
-                <div class="app-icon" data-app="converters" onclick="openWindow('converters')">
-                    <div class="icon">🔁</div>
-                    <div class="app-name" data-i18n="pt.converters">Converters</div>
-                </div>
-                <div class="app-icon" data-app="neutralise" onclick="openWindow('neutralise')">
-                    <div class="icon">⚗️</div>
-                    <div class="app-name" data-i18n="pt.neutralise">Acid / Alkali</div>
-                </div>
-                <div class="app-icon" data-app="effluent" onclick="openWindow('effluent')">
-                    <div class="icon">🌊</div>
-                    <div class="app-name" data-i18n="pt.effluent">Effluent Tools</div>
-                </div>
-                <div class="app-icon" data-app="servicereport" onclick="openWindow('servicereport')">
-                    <div class="icon">📝</div>
-                    <div class="app-name" data-i18n="pt.servicereport">Service Report</div>
-                </div>
-                <div class="app-icon" data-app="customers" onclick="openWindow('customers')">
-                    <div class="icon">👥</div>
-                    <div class="app-name">Customers</div>
-                </div>
-                <div class="app-icon" data-app="assets" onclick="openWindow('assets')">
-                    <div class="icon">🏷️</div>
-                    <div class="app-name" data-i18n="pt.assets">Assets</div>
-                </div>
-                <div class="app-icon" data-app="safety" onclick="openWindow('safety')">
-                    <div class="icon">🦺</div>
-                    <div class="app-name" data-i18n="pt.safety">Safety</div>
-                </div>
-                <div class="app-icon" data-app="catalogue" onclick="openWindow('catalogue')">
-                    <div class="icon">📦</div>
-                    <div class="app-name" data-i18n="pt.catalogue">Catalogue</div>
-                </div>
-                <div class="app-icon" data-app="troubleshoot" onclick="openWindow('troubleshoot')">
-                    <div class="icon">🛠️</div>
-                    <div class="app-name" data-i18n="pt.troubleshoot">Troubleshoot</div>
-                </div>
-                <div class="app-icon" data-app="jobs" onclick="openWindow('jobs')">
-                    <div class="icon">📒</div>
-                    <div class="app-name" data-i18n="pt.jobs">Jobs</div>
-                </div>
-                <div class="app-icon" data-app="trends" onclick="openWindow('trends')">
-                    <div class="icon">📈</div>
-                    <div class="app-name" data-i18n="pt.trends">Trends</div>
-                </div>
-                <div class="app-icon" data-app="sops" onclick="openWindow('sops')">
-                    <div class="icon">📚</div>
-                    <div class="app-name" data-i18n="pt.sops">SOPs</div>
-                </div>
-                <div class="app-icon" data-app="calibration" onclick="openWindow('calibration')">
-                    <div class="icon">⏰</div>
-                    <div class="app-name" data-i18n="pt.calibration">Calibration</div>
-                </div>
-                <div class="app-icon" data-app="lims" onclick="openWindow('lims')">
-                    <div class="icon">🧬</div>
-                    <div class="app-name" data-i18n="app.lims">LIMS</div>
-                </div>
-                <div class="app-icon" data-app="qr" onclick="openWindow('qr')">
-                    <div class="icon">⬛</div>
-                    <div class="app-name" data-i18n="app.qr">QR Builder</div>
-                </div>
-                <div class="app-icon" data-app="pool" onclick="openWindow('pool')">
-                    <div class="icon">🏊</div>
-                    <div class="app-name" data-i18n="app.pool">Pool Water</div>
-                </div>
-                <div class="app-icon" data-app="academy" onclick="openWindow('academy')">
-                    <div class="icon">🎓</div>
-                    <div class="app-name" data-i18n="app.academy">Hadron Academy</div>
-                </div>
-                <div class="app-icon" data-app="jartest-dss" onclick="openWindow('jartest-dss')">
-                    <div class="icon" style="background: linear-gradient(135deg, #00e5c0 0%, #009999 100%);">🧫</div>
-                    <div class="app-name">Jar Test DSS</div>
-                </div>
-                <div class="app-icon" data-app="data" data-roles="admin" onclick="openDataManager && openDataManager()">
-                    <div class="icon" style="background: linear-gradient(135deg, #1a3d9e 0%, #3AAEDB 100%);">📊</div>
-                    <div class="app-name">Data Manager</div>
-                </div>
+            <div class="hg-home-search" role="search">
+                <label for="hgHomeSearch" class="hg-sr-only" data-i18n="home.search">Search tools</label>
+                <span class="hg-home-search-ico" aria-hidden="true"></span>
+                <input id="hgHomeSearch" type="search" autocomplete="off" spellcheck="false" enterkeyhint="go" placeholder="Search tools" data-i18n="home.search" data-i18n-attr="placeholder">
+                <button type="button" id="hgHomeSearchClear" class="hg-home-search-clear" aria-label="Clear search" data-i18n="home.searchClear" data-i18n-attr="aria-label" hidden>×</button>
             </div>
+            <p id="hgHomeSearchStatus" class="hg-sr-only" role="status" aria-live="polite"></p>
+            <div id="hgHomeResults" class="hg-home-results" role="list" hidden></div>
+            <section class="hg-home-sec" data-home-sec="calculators" aria-labelledby="hgSec-calculators">
+                <h2 class="hg-home-sec-title" id="hgSec-calculators" data-i18n="home.sec.calculators">Calculators</h2>
+                <div class="apps-grid" data-home-grid>
+                    <div class="app-icon" data-app="dosage" onclick="openWindow('dosage')">
+                        <div class="icon">💊</div>
+                        <div class="app-name" data-i18n="app.dosage">Dosage Calculator</div>
+                    </div>
+                    <div class="app-icon" data-app="waterindex" onclick="openWindow('waterindex')">
+                        <div class="icon">🧮</div>
+                        <div class="app-name" data-i18n="app.waterindex">LSI &amp; RSI Index</div>
+                    </div>
+                    <div class="app-icon" data-app="coolingtower" onclick="openWindow('coolingtower')">
+                        <div class="icon">🏭</div>
+                        <div class="app-name" data-i18n="pt.coolingtower">Cooling Tower</div>
+                    </div>
+                    <div class="app-icon" data-app="boiler" onclick="openWindow('boiler')">
+                        <div class="icon">🔥</div>
+                        <div class="app-name">Boiler / Steam</div>
+                    </div>
+                    <div class="app-icon" data-app="softener" onclick="openWindow('softener')">
+                        <div class="icon">🧂</div>
+                        <div class="app-name">Softener Sizing</div>
+                    </div>
+                    <div class="app-icon" data-app="rocalc" onclick="openWindow('rocalc')">
+                        <div class="icon">💧</div>
+                        <div class="app-name" data-i18n="pt.rocalc">RO Performance</div>
+                    </div>
+                    <div class="app-icon" data-app="converters" onclick="openWindow('converters')">
+                        <div class="icon">🔁</div>
+                        <div class="app-name" data-i18n="pt.converters">Converters</div>
+                    </div>
+                    <div class="app-icon" data-app="neutralise" onclick="openWindow('neutralise')">
+                        <div class="icon">⚗️</div>
+                        <div class="app-name" data-i18n="pt.neutralise">Acid / Alkali</div>
+                    </div>
+                    <div class="app-icon" data-app="effluent" onclick="openWindow('effluent')">
+                        <div class="icon">🌊</div>
+                        <div class="app-name" data-i18n="pt.effluent">Effluent Tools</div>
+                    </div>
+                    <div class="app-icon" data-app="pool" onclick="openWindow('pool')">
+                        <div class="icon">🏊</div>
+                        <div class="app-name" data-i18n="app.pool">Pool Water</div>
+                    </div>
+                    <div class="app-icon" data-app="jartest-dss" onclick="openWindow('jartest-dss')">
+                        <div class="icon" style="background: linear-gradient(135deg, #00e5c0 0%, #009999 100%);">🧫</div>
+                        <div class="app-name">Jar Test DSS</div>
+                    </div>
+                    <div class="app-icon" data-app="history" onclick="openWindow('history')">
+                        <div class="icon">📋</div>
+                        <div class="app-name" data-i18n="app.history">History</div>
+                    </div>
+                </div>
+            </section>
+            <section class="hg-home-sec" data-home-sec="field" aria-labelledby="hgSec-field">
+                <h2 class="hg-home-sec-title" id="hgSec-field" data-i18n="home.sec.field">Field service</h2>
+                <div class="apps-grid" data-home-grid>
+                    <div class="app-icon" data-app="servicereport" onclick="openWindow('servicereport')">
+                        <div class="icon">📝</div>
+                        <div class="app-name" data-i18n="pt.servicereport">Service Report</div>
+                    </div>
+                    <div class="app-icon" data-app="jobs" onclick="openWindow('jobs')">
+                        <div class="icon">📒</div>
+                        <div class="app-name" data-i18n="pt.jobs">Jobs</div>
+                    </div>
+                    <div class="app-icon" data-app="customers" onclick="openWindow('customers')">
+                        <div class="icon">👥</div>
+                        <div class="app-name">Customers</div>
+                    </div>
+                    <div class="app-icon" data-app="assets" onclick="openWindow('assets')">
+                        <div class="icon">🏷️</div>
+                        <div class="app-name" data-i18n="pt.assets">Assets</div>
+                    </div>
+                    <div class="app-icon" data-app="safety" onclick="openWindow('safety')">
+                        <div class="icon">🦺</div>
+                        <div class="app-name" data-i18n="pt.safety">Safety</div>
+                    </div>
+                    <div class="app-icon" data-app="trends" onclick="openWindow('trends')">
+                        <div class="icon">📈</div>
+                        <div class="app-name" data-i18n="pt.trends">Trends</div>
+                    </div>
+                    <div class="app-icon" data-app="catalogue" onclick="openWindow('catalogue')">
+                        <div class="icon">📦</div>
+                        <div class="app-name" data-i18n="pt.catalogue">Catalogue</div>
+                    </div>
+                    <div class="app-icon" data-app="qr" onclick="openWindow('qr')">
+                        <div class="icon">⬛</div>
+                        <div class="app-name" data-i18n="app.qr">QR Builder</div>
+                    </div>
+                </div>
+            </section>
+            <section class="hg-home-sec" data-home-sec="lab" aria-labelledby="hgSec-lab">
+                <h2 class="hg-home-sec-title" id="hgSec-lab" data-i18n="home.sec.lab">Lab</h2>
+                <div class="apps-grid" data-home-grid>
+                    <div class="app-icon" data-app="lims" onclick="openWindow('lims')">
+                        <div class="icon">🧬</div>
+                        <div class="app-name" data-i18n="app.lims">LIMS</div>
+                    </div>
+                    <div class="app-icon" data-app="calibration" onclick="openWindow('calibration')">
+                        <div class="icon">⏰</div>
+                        <div class="app-name" data-i18n="pt.calibration">Calibration</div>
+                    </div>
+                </div>
+            </section>
+            <section class="hg-home-sec" data-home-sec="learn" aria-labelledby="hgSec-learn">
+                <h2 class="hg-home-sec-title" id="hgSec-learn" data-i18n="home.sec.learn">Learn</h2>
+                <div class="apps-grid" data-home-grid>
+                    <div class="app-icon" data-app="academy" onclick="openWindow('academy')">
+                        <div class="icon">🎓</div>
+                        <div class="app-name" data-i18n="app.academy">Hadron Academy</div>
+                    </div>
+                    <div class="app-icon" data-app="sops" onclick="openWindow('sops')">
+                        <div class="icon">📚</div>
+                        <div class="app-name" data-i18n="pt.sops">SOPs</div>
+                    </div>
+                    <div class="app-icon" data-app="troubleshoot" onclick="openWindow('troubleshoot')">
+                        <div class="icon">🛠️</div>
+                        <div class="app-name" data-i18n="pt.troubleshoot">Troubleshoot</div>
+                    </div>
+                </div>
+            </section>
+            <section class="hg-home-sec" data-home-sec="more" aria-labelledby="hgSec-more">
+                <h2 class="hg-home-sec-title" id="hgSec-more" data-i18n="home.sec.more">More</h2>
+                <div class="apps-grid" data-home-grid>
+                    <div class="app-icon" data-app="profile" onclick="openWindow('profile')">
+                        <div class="icon">👤</div>
+                        <div class="app-name" data-i18n="app.profile">Profile</div>
+                    </div>
+                    <div class="app-icon" data-app="settings" onclick="openWindow('settings')">
+                        <div class="icon">⚙️</div>
+                        <div class="app-name" data-i18n="app.settings">Settings</div>
+                    </div>
+                    <div class="app-icon" data-app="files" onclick="openWindow('files')">
+                        <div class="icon">📁</div>
+                        <div class="app-name" data-i18n="app.files">Files</div>
+                    </div>
+                    <div class="app-icon" data-app="support" onclick="openWindow('support')">
+                        <div class="icon">🎧</div>
+                        <div class="app-name" data-i18n="app.support">Support</div>
+                    </div>
+                    <div class="app-icon" data-app="data" data-roles="admin" onclick="openDataManager && openDataManager()">
+                        <div class="icon" style="background: linear-gradient(135deg, #1a3d9e 0%, #3AAEDB 100%);">📊</div>
+                        <div class="app-name">Data Manager</div>
+                    </div>
+                    <!-- Messages hidden until it is a real feature. Today it is a static
+                         "No messages yet" placeholder — nothing reads/writes the messages
+                         table. To re-enable, restore this tile (window markup + HG_DB.messages
+                         are still in place):
+                    <div class="app-icon" data-app="messages" onclick="openWindow('messages')">
+                        <div class="icon">💬</div>
+                        <div class="app-name" data-i18n="app.messages">Messages</div>
+                    </div>
+                    -->
+                    <!-- LabCom hidden until it has real use. To re-enable, restore this tile:
+                    <div class="app-icon" data-app="labcom" onclick="openLabCom()">
+                        <div class="icon icon-image"><img src="LabCom_Logo.svg" alt="LabCom"></div>
+                        <div class="app-name" data-i18n="app.labcom">LabCom</div>
+                    </div>
+                    -->
+                    <!-- Store hidden until it has real use. To re-enable, restore this tile:
+                    <div class="app-icon" data-app="store" onclick="openWindow('store')">
+                        <div class="icon">🛒</div>
+                        <div class="app-name" data-i18n="app.store">Store</div>
+                    </div>
+                    -->
+                </div>
+            </section>
         </div>
 
         <!-- Taskbar -->
@@ -2718,7 +2776,7 @@
                 <div class="hg-section-title">About</div>
                 <div class="hg-kvgrid">
                     <div class="hg-kv"><div class="k">App</div><div class="v">Hadron Group</div></div>
-                    <div class="hg-kv"><div class="k">Version</div><div class="v">v157</div></div>
+                    <div class="hg-kv"><div class="k">Version</div><div class="v">v158</div></div>
                     <div class="hg-kv"><div class="k">Platform</div><div class="v">PWA</div></div>
                 </div>
             </div>
@@ -5021,7 +5079,7 @@
             trends:'trend_up', sops:'sops', calibration:'calibration',
             lims:'lims', qr:'qr_builder', pool:'pool', academy:'academy',
             'jartest-dss':'jar_test', data:'data_manager', customers:'customers',
-            boiler:'boiler', softener:'softener', team:'customers',
+            boiler:'boiler', softener:'softener', team:'customers', portal:'dashboard',
             // in-window sub-tiles (effluent / assets / safety grids) — without these
             // they fell through to the tiny emoji-swap path or stayed raw emoji.
             removalcalc:'reports', fmcalc:'reports', srtcalc:'hourglass', jartest:'jar_test',

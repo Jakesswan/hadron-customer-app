@@ -20,7 +20,7 @@
   const SORTABLE_CDN = 'https://cdn.jsdelivr.net/npm/sortablejs@1.15.2/Sortable.min.js';
   const LONG_PRESS_MS = 550;
 
-  let sortable = null;
+  let sortables = [];
   let editing = false;
   let donePill = null;
 
@@ -76,7 +76,7 @@
     // Cloud takes priority if a profile is loaded with a saved order.
     const cloud = window.HG_PROFILE?.preferences?.home_order;
     if (Array.isArray(cloud) && cloud.length) return cloud;
-    try { return JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]'); }
+    try { const v = JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]'); return Array.isArray(v) ? v : []; }   // never let a bad value stop Portal / Team from being placed and role-gated
     catch { return []; }
   }
   function saveOrder(order) {
@@ -97,70 +97,67 @@
     }
   }
 
-  function getGrid() {
-    return document.querySelector('.apps-grid');
+  // The home's section grids (home.js); one grid on an older page.
+  function getGrids() {
+    const grids = Array.from(document.querySelectorAll('[data-home-grid]'));
+    if (grids.length) return grids;
+    const g = document.querySelector('.apps-grid');
+    return g ? [g] : [];
   }
 
+  // One flat order across the sections (the saved format since v1, so existing layouts carry over).
   function readCurrentOrder() {
-    const grid = getGrid();
-    if (!grid) return [];
-    return Array.from(grid.children)
-      .map(el => el.getAttribute('data-app'))
-      .filter(Boolean);
+    const out = [];
+    getGrids().forEach(grid => Array.from(grid.children).forEach(el => { const id = el.getAttribute && el.getAttribute('data-app'); if (id) out.push(id); }));
+    return out;
   }
 
   // ── Apply stored order on load ──────────────────────────
-  // Tiles in stored order go first (in order), then any tile not in the
-  // stored order (e.g. newly added tiles) is appended in its current
-  // DOM position relative to other unsaved tiles.
+  // Within each section: tiles in the stored order first, then any tile not in it (e.g. newly added
+  // tiles) in their current relative DOM order. Tiles never move between sections.
   function applyStoredOrder() {
-    const grid = getGrid();
-    if (!grid) return;
     const stored = loadOrder();
     if (!stored.length) return;
-
-    const present = new Map();
-    Array.from(grid.children).forEach(el => {
-      const id = el.getAttribute('data-app');
-      if (id) present.set(id, el);
+    const rank = new Map(stored.map((id, i) => [id, i]));
+    getGrids().forEach(grid => {
+      const tiles = Array.from(grid.children).filter(el => el.getAttribute && el.getAttribute('data-app'));
+      const known = tiles.filter(el => rank.has(el.getAttribute('data-app')))
+        .sort((a, b) => rank.get(a.getAttribute('data-app')) - rank.get(b.getAttribute('data-app')));
+      const rest = tiles.filter(el => !rank.has(el.getAttribute('data-app')));
+      // a tile placed first (Portal) stays first until the user moves it
+      const front = rest.filter(el => el.hasAttribute('data-home-first'));
+      front.concat(known, rest.filter(el => !el.hasAttribute('data-home-first'))).forEach(el => grid.appendChild(el));
     });
-
-    // First, tiles in stored order (that still exist in the DOM).
-    stored.forEach(id => {
-      const el = present.get(id);
-      if (el) {
-        grid.appendChild(el);
-        present.delete(id);
-      }
-    });
-    // Then any leftover (new) tiles, kept in their original relative DOM order.
-    present.forEach(el => grid.appendChild(el));
   }
 
   // ── Edit mode ───────────────────────────────────────────
   async function enterEditMode() {
     if (editing) return;
-    const grid = getGrid();
-    if (!grid) return;
+    const grids = getGrids();
+    if (!grids.length) return;
+    // an open search hides the sections: clear it, the tiles are what's being arranged
+    const search = document.getElementById('hgHomeSearch');
+    if (search && search.value) { search.value = ''; search.dispatchEvent(new Event('input', { bubbles: true })); }
     await loadSortable();
     if (!window.Sortable) {
       console.warn('[HG_CUSTOMIZE] Sortable.js failed to load');
       return;
     }
     editing = true;
-    grid.classList.add('is-editing');
-
-    sortable = window.Sortable.create(grid, {
-      animation: 180,
-      delay: 0,
-      filter: '[data-no-reorder]',     // tiles with this attr stay put
-      forceFallback: true,             // consistent UX across desktop+mobile
-      fallbackTolerance: 5,
-      onEnd: () => saveOrder(readCurrentOrder())
+    // One sortable list per section: tiles move within their section only.
+    sortables = grids.map(grid => {
+      grid.classList.add('is-editing');
+      // While editing, intercept clicks so users don't open windows by accident
+      grid.addEventListener('click', blockClickWhileEditing, true);
+      return window.Sortable.create(grid, {
+        animation: 180,
+        delay: 0,
+        filter: '[data-no-reorder]',     // tiles with this attr stay put
+        forceFallback: true,             // consistent UX across desktop+mobile
+        fallbackTolerance: 5,
+        onEnd: () => saveOrder(readCurrentOrder())
+      });
     });
-
-    // While editing, intercept clicks so users don't open windows by accident
-    grid.addEventListener('click', blockClickWhileEditing, true);
 
     showDonePill();
   }
@@ -168,12 +165,12 @@
   function exitEditMode() {
     if (!editing) return;
     editing = false;
-    const grid = getGrid();
-    if (grid) {
+    getGrids().forEach(grid => {
       grid.classList.remove('is-editing');
       grid.removeEventListener('click', blockClickWhileEditing, true);
-    }
-    if (sortable) { sortable.destroy(); sortable = null; }
+    });
+    sortables.forEach(s => { try { s.destroy(); } catch (_) {} });
+    sortables = [];
     hideDonePill();
   }
 
@@ -199,8 +196,9 @@
   // ── Long-press detection on any tile ────────────────────
   let pressTimer = null;
   function attachLongPress() {
-    const grid = getGrid();
-    if (!grid) return;
+    getGrids().forEach(attachLongPressTo);
+  }
+  function attachLongPressTo(grid) {
     grid.addEventListener('pointerdown', (e) => {
       if (editing) return;
       const tile = e.target.closest('.app-icon');
@@ -224,6 +222,7 @@
     enterEditMode,
     exitEditMode,
     isEditing: () => editing,
+    applyOrder: applyStoredOrder,
     resetOrder: () => {
       clearOrder();
       // Force a clean reload so the original DOM order takes effect.

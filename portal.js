@@ -224,11 +224,12 @@
     tile.setAttribute('data-roles', 'customer_admin,viewer');
     tile.setAttribute('onclick', "openWindow('portal')");
     tile.innerHTML = `
-      <div class="icon" style="background: linear-gradient(135deg, #3AAEDB 0%, #1a3d9e 100%);">🌊</div>
+      <div class="icon">🌊</div>
       <div class="app-name">Portal</div>
     `;
     // Insert at the very front so it's the first thing the customer sees.
-    grid.insertBefore(tile, grid.firstChild);
+    if (!(window.hgHomePlace && window.hgHomePlace(tile))) grid.insertBefore(tile, grid.firstChild);
+    if (typeof window.paintHadronIcons === 'function') window.paintHadronIcons();   // the same icon style as the other tiles
   }
 
   // Hook openWindow to render content when portal opens.

@@ -181,7 +181,7 @@
     tile.setAttribute('data-roles', 'admin,customer_admin');
     tile.setAttribute('onclick', "openWindow('team')");
     tile.innerHTML = '<div class="icon">👥</div><div class="app-name">Team</div>';
-    grid.appendChild(tile);
+    if (!(window.hgHomePlace && window.hgHomePlace(tile))) grid.appendChild(tile);   // into the More section (home.js)
     if (typeof window.paintHadronIcons === 'function') window.paintHadronIcons();   // the same icon style as the other tiles
   }
 
