@@ -1,4 +1,5 @@
--- 0019_lims_soft_delete_triggers.sql — deletion marks for the lab records, step 2 of 2 (after app v157 is live)
+-- 0019_lims_soft_delete_triggers.sql  (applied to prod flttrqcstzprtxcdvexx 2026-10-02)
+-- Deletion marks for the lab records, step 2 of 2 (after app v157 is live).
 --
 -- Problem: lims-sync's start-up push sends the local records the server doesn't have (before v154 it sent
 -- every record). A record deleted on the server is simply absent, so a phone that missed the delete saw it
