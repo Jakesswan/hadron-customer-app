@@ -247,7 +247,7 @@
     try {
       const raw = localStorage.getItem('hadron_sites');
       const list = raw ? JSON.parse(raw) : [];
-      return Array.isArray(list) ? list.map(s => ({ id:s.id, name:s.name||'(unnamed site)', equipment: s.equipment||[] })) : [];
+      return Array.isArray(list) ? list.map(s => ({ id:s.id, name:s.name||'(unnamed site)', equipment: Array.isArray(s.equipment) ? s.equipment : [] })) : [];
     } catch (e) { return []; }
   }
   async function preloadLIMS() {

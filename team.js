@@ -14,6 +14,9 @@
 
   let mounted = false;
 
+  // A value inside a JS string in an inline handler (onclick="f('…')"): hex escapes, which HTML decoding leaves alone
+  // (esc() is wrong there: the browser turns &#39; back into a quote before the JS runs).
+  const escJs = (v) => String(v == null ? '' : v).replace(/[\\'"<>&\r\n\t]/g, (c) => '\\x' + c.charCodeAt(0).toString(16).padStart(2, '0'));
   function esc(s) {
     return (s == null ? '' : String(s)).replace(/[&<>"']/g,
       m => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[m]));
@@ -85,7 +88,7 @@
       const isMe = m.id === me;
       const editable = !isMe && (m.role === 'operator' || m.role === 'viewer');
       const rightSide = editable
-        ? `<select onchange="hgTeamSetRole('${esc(m.id)}', this.value)" aria-label="Role" style="padding:6px 8px;border-radius:8px;border:1px solid var(--border);background:var(--surface);color:var(--text);">
+        ? `<select onchange="hgTeamSetRole('${escJs(m.id)}', this.value)" aria-label="Role" style="padding:6px 8px;border-radius:8px;border:1px solid var(--border);background:var(--surface);color:var(--text);">
              <option value="operator"${m.role === 'operator' ? ' selected' : ''}>Operator</option>
              <option value="viewer"${m.role === 'viewer' ? ' selected' : ''}>Viewer</option>
            </select>`
@@ -111,7 +114,7 @@
           <div style="font-weight:600;overflow:hidden;text-overflow:ellipsis;">${esc(i.email)}</div>
           <div style="font-size:12px;color:var(--muted);">Invited as ${esc(roleName[i.role] || i.role)}</div>
         </div>
-        <button class="hg-btn ghost" style="flex:none;" onclick="hgTeamRevoke('${esc(i.id)}')">Revoke</button>
+        <button class="hg-btn ghost" style="flex:none;" onclick="hgTeamRevoke('${escJs(i.id)}')">Revoke</button>
       </div>`).join('') : '<p style="color:var(--muted);">No pending invites.</p>';
   }
 

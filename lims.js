@@ -103,6 +103,9 @@
 
   /* ---------- Utilities ---------- */
   const esc = (s) => (s==null?'':String(s)).replace(/[&<>"']/g, m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+  // A value inside a JS string in an inline handler (onclick="f('…')"): hex escapes, which HTML decoding leaves alone
+  // (esc() is wrong there: the browser turns &#39; back into a quote before the JS runs).
+  const escJs = (v) => String(v == null ? '' : v).replace(/[\\'"<>&\r\n\t]/g, (c) => '\\x' + c.charCodeAt(0).toString(16).padStart(2, '0'));
   const uid = (p) => p + '-' + Date.now().toString(36) + '-' + Math.random().toString(36).slice(2,6);
   const nowISO = () => new Date().toISOString();
   const fmtDate = (iso) => { if(!iso) return '—'; const d=new Date(iso); return d.toLocaleDateString(); };
@@ -179,7 +182,7 @@
     // path: array of {label, view, params}
     const items = path.map((p,i) => {
       if (i === path.length-1) return `<span class="current">${esc(p.label)}</span>`;
-      return `<a href="#" onclick="event.preventDefault();limsGo('${p.view}',${JSON.stringify(p.params||{}).replace(/'/g,"&#39;")})">${esc(p.label)}</a><span class="sep">›</span>`;
+      return `<a href="#" onclick="event.preventDefault();limsGo('${escJs(p.view)}',${esc(JSON.stringify(p.params||{}))})">${esc(p.label)}</a><span class="sep">›</span>`;
     });
     return `<div class="lims-breadcrumb">${items.join('')}</div>`;
   }
@@ -532,7 +535,7 @@
 
       <div class="lims-apps">
         ${MODULES.map(m => `
-          <div class="lims-app" style="--g:${m.g};--c:${m.g.split(',')[1].trim().split(' ')[0]}" onclick="limsGo('${m.key}')">
+          <div class="lims-app" style="--g:${m.g};--c:${m.g.split(',')[1].trim().split(' ')[0]}" onclick="limsGo('${escJs(m.key)}')">
             <div class="ribbon"></div>
             <div class="appicon">${m.icon}</div>
             <div class="appname">${esc(tt('lims.'+m.key, m.label))}</div>
@@ -604,10 +607,10 @@
               <div class="lims-kcol">
                 <div class="lims-kcol-head">${st.replace('-',' ')} <span>(${samples.filter(s=>s.status===st).length})</span></div>
                 ${samples.filter(s=>s.status===st).slice(0,5).map(s => `
-                  <div class="lims-kcard" onclick="limsGo('sample',{id:'${s.id}'})">
+                  <div class="lims-kcard" onclick="limsGo('sample',{id:'${escJs(s.id)}'})">
                     <div class="kcard-title">${esc(s.barcode)}</div>
                     <div class="kcard-sub">${esc(s.description)}</div>
-                    <div class="kcard-meta">${chip(s.priority,'neutral')} · ${s.tests.length} tests</div>
+                    <div class="kcard-meta">${chip(s.priority,'neutral')} · ${esc(s.tests.length)} tests</div>
                   </div>
                 `).join('') || '<div class="kcard-empty">—</div>'}
               </div>
@@ -618,8 +621,8 @@
         <div class="lims-dashcard">
           <div class="lims-section-title">Alerts</div>
           <ul class="lims-alerts">
-            ${calOverdue.map(i => `<li class="alert-fail">⚠️ <strong>Cal overdue:</strong> ${esc(i.name)} (by ${Math.abs(daysBetween(now,i.nextCal))}d) <a href="#" onclick="event.preventDefault();limsGo('instrument',{id:'${i.id}'})">open</a></li>`).join('')}
-            ${calDue14.map(i => `<li class="alert-warn">🔔 <strong>Cal due ${daysBetween(now,i.nextCal)}d:</strong> ${esc(i.name)} <a href="#" onclick="event.preventDefault();limsGo('instrument',{id:'${i.id}'})">open</a></li>`).join('')}
+            ${calOverdue.map(i => `<li class="alert-fail">⚠️ <strong>Cal overdue:</strong> ${esc(i.name)} (by ${Math.abs(daysBetween(now,i.nextCal))}d) <a href="#" onclick="event.preventDefault();limsGo('instrument',{id:'${escJs(i.id)}'})">open</a></li>`).join('')}
+            ${calDue14.map(i => `<li class="alert-warn">🔔 <strong>Cal due ${daysBetween(now,i.nextCal)}d:</strong> ${esc(i.name)} <a href="#" onclick="event.preventDefault();limsGo('instrument',{id:'${escJs(i.id)}'})">open</a></li>`).join('')}
             ${invExpired.map(it => `<li class="alert-fail">🛑 <strong>Reagent expired:</strong> ${esc(it.name)} (lot ${esc(it.lot)}) <a href="#" onclick="event.preventDefault();limsGo('inventory')">open</a></li>`).join('')}
             ${invExpSoon.map(it => `<li class="alert-warn">⏳ <strong>Expiring in ${daysBetween(now,it.expiry)}d:</strong> ${esc(it.name)} (lot ${esc(it.lot)})</li>`).join('')}
             ${ncsOpen.map(n => `<li class="alert-warn">📌 <strong>Open NC:</strong> ${esc(n.type)} — ${esc(n.ref)}</li>`).join('')}
@@ -648,8 +651,8 @@
         <h2 class="lims-title">Samples <span class="lims-count">${list.length}</span></h2>
         <div style="flex:1"></div>
         <div class="lims-viewtoggle">
-          <button class="lims-btn ${view==='kanban'?'primary':''}" onclick="limsGo('samples',{view:'kanban',filter:'${filter||''}'})">⊞ Kanban</button>
-          <button class="lims-btn ${view==='list'?'primary':''}" onclick="limsGo('samples',{view:'list',filter:'${filter||''}'})">☰ List</button>
+          <button class="lims-btn ${view==='kanban'?'primary':''}" onclick="limsGo('samples',{view:'kanban',filter:'${escJs(filter||'')}'})">⊞ Kanban</button>
+          <button class="lims-btn ${view==='list'?'primary':''}" onclick="limsGo('samples',{view:'list',filter:'${escJs(filter||'')}'})">☰ List</button>
         </div>
         <button class="lims-btn primary" onclick="limsGo('sample-new')">+ New sample</button>
       </div>
@@ -660,11 +663,11 @@
             <div class="lims-kcol">
               <div class="lims-kcol-head">${st.replace('-',' ')} <span>(${byStatus(st).length})</span></div>
               ${byStatus(st).map(s => `
-                <div class="lims-kcard" onclick="limsGo('sample',{id:'${s.id}'})">
+                <div class="lims-kcard" onclick="limsGo('sample',{id:'${escJs(s.id)}'})">
                   <div class="kcard-title">${esc(s.barcode)} ${s.priority==='urgent'?'🔥':(s.priority==='high'?'⚡':'')}</div>
                   <div class="kcard-sub">${esc(s.description)}</div>
                   <div class="kcard-meta"><span style="color:#6b7684;">${esc(clientMap[s.clientId]||'—').slice(0,28)}</span></div>
-                  <div class="kcard-meta">${s.tests.length} test${s.tests.length!==1?'s':''} · Received ${fmtDate(s.received)}</div>
+                  <div class="kcard-meta">${esc(s.tests.length)} test${s.tests.length!==1?'s':''} · Received ${fmtDate(s.received)}</div>
                 </div>
               `).join('') || '<div class="kcard-empty">No samples</div>'}
             </div>
@@ -675,13 +678,13 @@
           <thead><tr><th>Barcode</th><th>Client</th><th>Description</th><th>Matrix</th><th>Received</th><th>Tests</th><th>Priority</th><th>Status</th></tr></thead>
           <tbody>
             ${list.map(s => `
-              <tr onclick="limsGo('sample',{id:'${s.id}'})">
+              <tr onclick="limsGo('sample',{id:'${escJs(s.id)}'})">
                 <td><strong>${esc(s.barcode)}</strong></td>
                 <td>${esc(clientMap[s.clientId]||'—')}</td>
                 <td>${esc(s.description)}</td>
                 <td>${esc(s.matrix)}</td>
                 <td>${fmtDate(s.received)}</td>
-                <td>${s.tests.length}</td>
+                <td>${esc(s.tests.length)}</td>
                 <td>${chip(s.priority, s.priority==='urgent'?'fail':(s.priority==='high'?'warn':'neutral'))}</td>
                 <td>${chip(s.status, statusChipClass(s.status))}</td>
               </tr>
@@ -730,9 +733,9 @@
         <h2 class="lims-title">${esc(s.barcode)}</h2>
         <span class="lims-badge-row">${chip(s.status,statusChipClass(s.status))} ${chip(s.priority, s.priority==='urgent'?'fail':'neutral')}</span>
         <div style="flex:1"></div>
-        <button class="lims-btn" onclick="limsSampleAddCustody('${s.id}')">+ Custody event</button>
-        <button class="lims-btn" onclick="limsSampleAdvance('${s.id}')">⏩ Advance status</button>
-        <button class="lims-btn primary" onclick="limsSampleGenerateCOA('${s.id}')">📄 Generate COA</button>
+        <button class="lims-btn" onclick="limsSampleAddCustody('${escJs(s.id)}')">+ Custody event</button>
+        <button class="lims-btn" onclick="limsSampleAdvance('${escJs(s.id)}')">⏩ Advance status</button>
+        <button class="lims-btn primary" onclick="limsSampleGenerateCOA('${escJs(s.id)}')">📄 Generate COA</button>
       </div>
 
       <div class="lims-detail-grid">
@@ -753,13 +756,13 @@
           </div>
 
           <div class="lims-card">
-            <div class="lims-section-title">Tests requested (${s.tests.length})</div>
+            <div class="lims-section-title">Tests requested (${esc(s.tests.length)})</div>
             <table class="lims-table compact">
               <thead><tr><th>Test</th><th>Result</th><th>Spec</th><th>Flag</th><th>Status</th><th>Analyst</th></tr></thead>
               <tbody>${testRows || '<tr><td colspan="6">No tests</td></tr>'}</tbody>
             </table>
             <div style="margin-top:10px;">
-              <button class="lims-btn" onclick="limsSampleOpenResults('${s.id}')">Open result entry →</button>
+              <button class="lims-btn" onclick="limsSampleOpenResults('${escJs(s.id)}')">Open result entry →</button>
             </div>
           </div>
         </div>
@@ -788,10 +791,10 @@
               <div class="sticker-client">${esc(client?client.name:'')}</div>
               <div class="sticker-desc">${esc(s.description).slice(0,40)}</div>
               <div style="display:flex;gap:6px;justify-content:center;flex-wrap:wrap;margin-top:4px;">
-                <button class="lims-btn" onclick="limsQrPrint('sample','${s.id}','${esc(s.barcode)}','${esc(s.description).replace(/'/g,'')}')">🖨 Sticker</button>
-                <button class="lims-btn ghost" onclick="limsQrBuilder('sample','${s.id}')">⬛ QR Builder</button>
+                <button class="lims-btn" onclick="limsQrPrint('sample','${escJs(s.id)}','${escJs(s.barcode)}','${escJs(s.description)}')">🖨 Sticker</button>
+                <button class="lims-btn ghost" onclick="limsQrBuilder('sample','${escJs(s.id)}')">⬛ QR Builder</button>
               </div>
-              <div style="font-size:10px;color:#6b7684;margin-top:6px;word-break:break-all;">${qrURL('sample', s.id)}</div>
+              <div style="font-size:10px;color:#6b7684;margin-top:6px;word-break:break-all;">${esc(qrURL('sample', s.id))}</div>
             </div>
           </div>
         </div>
@@ -842,7 +845,7 @@
   <div class="meta">
     <div class="lbl">${safeLabel}</div>
     <div class="sub">${safeSub}</div>
-    <div class="url">${url}</div>
+    <div class="url">${esc(url)}</div>
   </div>
 </div>
 <script>window.onload = function(){ setTimeout(function(){ window.print(); }, 200); };<\/script>
@@ -915,24 +918,24 @@
       <div class="lims-toolbar"><h2 class="lims-title">Login new sample</h2></div>
       <form class="lims-form" id="limsSampleForm" onsubmit="event.preventDefault();limsSampleSave();">
         <div class="lims-fieldgrid">
-          <div class="lims-field"><label>Barcode</label><input id="f_barcode" value="${defaultBarcode}" required></div>
-          <div class="lims-field"><label>Client</label><select id="f_client">${clients.map(c=>`<option value="${c.id}">${esc(c.name)}${c.source==='erp'?' (ERP)':''}</option>`).join('')}</select></div>
+          <div class="lims-field"><label>Barcode</label><input id="f_barcode" value="${esc(defaultBarcode)}" required></div>
+          <div class="lims-field"><label>Client</label><select id="f_client">${clients.map(c=>`<option value="${esc(c.id)}">${esc(c.name)}${c.source==='erp'?' (ERP)':''}</option>`).join('')}</select></div>
           <div class="lims-field lims-field-wide"><label>Description</label><input id="f_desc" placeholder="e.g. Reservoir outlet — Sample point 3" required></div>
           <div class="lims-field"><label>Matrix</label><select id="f_matrix"><option>Drinking Water</option><option>Groundwater</option><option>Surface Water</option><option>Waste Water</option><option>Process Water</option><option>Soil</option><option>Other</option></select></div>
           <div class="lims-field"><label>Priority</label><select id="f_pri"><option value="normal">Normal</option><option value="high">High</option><option value="urgent">Urgent</option></select></div>
           <div class="lims-field"><label>Sampled at</label><input type="datetime-local" id="f_samp" value="${new Date(Date.now()-86400000).toISOString().slice(0,16)}"></div>
-          <div class="lims-field"><label>Sampled by</label><select id="f_sby">${users.map(u=>`<option value="${u.id}">${esc(u.name)}</option>`).join('')}</select></div>
+          <div class="lims-field"><label>Sampled by</label><select id="f_sby">${users.map(u=>`<option value="${esc(u.id)}">${esc(u.name)}</option>`).join('')}</select></div>
           <div class="lims-field"><label>Received at</label><input type="datetime-local" id="f_rec" value="${new Date().toISOString().slice(0,16)}"></div>
           <div class="lims-field"><label>Temperature on receipt (°C)</label><input type="number" step="0.1" id="f_temp" value="6.0"></div>
           <div class="lims-field"><label>Storage</label><input id="f_store" value="+4°C Fridge B"></div>
-          <div class="lims-field"><label>Profile</label><select id="f_prof" onchange="limsProfileChanged()"><option value="">— pick tests manually —</option>${profiles.map(p=>`<option value="${p.id}">${esc(p.name)}</option>`).join('')}</select></div>
+          <div class="lims-field"><label>Profile</label><select id="f_prof" onchange="limsProfileChanged()"><option value="">— pick tests manually —</option>${profiles.map(p=>`<option value="${esc(p.id)}">${esc(p.name)}</option>`).join('')}</select></div>
           <div class="lims-field lims-field-wide"><label>Notes</label><textarea id="f_notes" rows="2"></textarea></div>
         </div>
 
         <div class="lims-section-title">Tests</div>
         <div class="lims-checkgrid" id="f_tests">
           ${tests.map(t => `
-            <label class="lims-check"><input type="checkbox" value="${t.id}"> <strong>${esc(t.code)}</strong> ${esc(t.name)} <span style="color:#888;">${esc(t.unit||'')}</span></label>
+            <label class="lims-check"><input type="checkbox" value="${esc(t.id)}"> <strong>${esc(t.code)}</strong> ${esc(t.name)} <span style="color:#888;">${esc(t.unit||'')}</span></label>
           `).join('')}
         </div>
 
@@ -950,7 +953,7 @@
     const pid = document.getElementById('f_prof').value;
     const p = (window._limsProfiles||[]).find(x=>x.id===pid);
     document.querySelectorAll('#f_tests input[type=checkbox]').forEach(cb => { cb.checked = false; });
-    if (p) p.tests.forEach(tid => { const cb = document.querySelector(`#f_tests input[value="${tid}"]`); if(cb) cb.checked = true; });
+    if (p) (p.testIds || p.tests || []).forEach(tid => { const cb = document.querySelector(`#f_tests input[value="${CSS.escape(tid)}"]`); if(cb) cb.checked = true; });
   };
 
   window.limsSampleSave = async function() {
@@ -1008,19 +1011,19 @@
             <tbody>
               ${tests.filter(t=>t.category===cat).map(t => `
                 <tr>
-                  <td onclick="limsGo('test',{id:'${t.id}'})"><strong>${esc(t.code)}</strong></td>
-                  <td onclick="limsGo('test',{id:'${t.id}'})">${esc(t.name)}</td>
-                  <td onclick="limsGo('test',{id:'${t.id}'})">${esc(t.method)}</td>
-                  <td onclick="limsGo('test',{id:'${t.id}'})">${esc(t.methodVer)}</td>
-                  <td onclick="limsGo('test',{id:'${t.id}'})">${esc(t.unit)}</td>
-                  <td onclick="limsGo('test',{id:'${t.id}'})">${esc(t.lod)} / ${esc(t.loq)}</td>
-                  <td onclick="limsGo('test',{id:'${t.id}'})">${t.specMin!=null?esc(t.specMin+'–'+t.specMax):'—'}</td>
-                  <td onclick="limsGo('test',{id:'${t.id}'})">${esc(t.sans241||'—')}</td>
-                  <td onclick="limsGo('test',{id:'${t.id}'})">${t.tat||'—'}d</td>
-                  <td onclick="limsGo('test',{id:'${t.id}'})">${limsLab().accredited ? (t.accredited?chip('SANAS','ok'):chip('Non-accred','warn')) : '—'}</td>
+                  <td onclick="limsGo('test',{id:'${escJs(t.id)}'})"><strong>${esc(t.code)}</strong></td>
+                  <td onclick="limsGo('test',{id:'${escJs(t.id)}'})">${esc(t.name)}</td>
+                  <td onclick="limsGo('test',{id:'${escJs(t.id)}'})">${esc(t.method)}</td>
+                  <td onclick="limsGo('test',{id:'${escJs(t.id)}'})">${esc(t.methodVer)}</td>
+                  <td onclick="limsGo('test',{id:'${escJs(t.id)}'})">${esc(t.unit)}</td>
+                  <td onclick="limsGo('test',{id:'${escJs(t.id)}'})">${esc(t.lod)} / ${esc(t.loq)}</td>
+                  <td onclick="limsGo('test',{id:'${escJs(t.id)}'})">${t.specMin!=null?esc(t.specMin+'–'+t.specMax):'—'}</td>
+                  <td onclick="limsGo('test',{id:'${escJs(t.id)}'})">${esc(t.sans241||'—')}</td>
+                  <td onclick="limsGo('test',{id:'${escJs(t.id)}'})">${esc(t.tat||'—')}d</td>
+                  <td onclick="limsGo('test',{id:'${escJs(t.id)}'})">${limsLab().accredited ? (t.accredited?chip('SANAS','ok'):chip('Non-accred','warn')) : '—'}</td>
                   <td style="white-space:nowrap;">
-                    <button class="lims-btn ghost" onclick="event.stopPropagation();limsGo('test-form',{id:'${t.id}'})">✏️</button>
-                    <button class="lims-btn ghost" onclick="event.stopPropagation();limsDeleteTest('${t.id}')">🗑️</button>
+                    <button class="lims-btn ghost" onclick="event.stopPropagation();limsGo('test-form',{id:'${escJs(t.id)}'})">✏️</button>
+                    <button class="lims-btn ghost" onclick="event.stopPropagation();limsDeleteTest('${escJs(t.id)}')">🗑️</button>
                   </td>
                 </tr>`).join('')}
             </tbody>
@@ -1051,7 +1054,7 @@
           <div class="lims-field"><label>LOQ</label><div>${esc(t.loq)}</div></div>
           <div class="lims-field"><label>Working range</label><div>${esc(t.range)}</div></div>
           <div class="lims-field"><label>Spec (SANS 241)</label><div>${t.specMin!=null?esc(t.specMin+' – '+t.specMax+' '+t.unit):'—'}</div></div>
-          <div class="lims-field"><label>TAT</label><div>${t.tat} day(s)</div></div>
+          <div class="lims-field"><label>TAT</label><div>${esc(t.tat)} day(s)</div></div>
           <div class="lims-field"><label>SANS 241 risk class</label><div>${esc(t.sans241||'—')}</div></div>
         </div>
       </div>
@@ -1081,12 +1084,12 @@
         <thead><tr><th>Code</th><th>Test</th><th>Opened</th><th>Closed</th><th>Samples</th><th>QC</th><th>Status</th></tr></thead>
         <tbody>${ws.map(w => {
           const qcpass = w.qc.filter(q=>q.status==='pass').length; const qctot = w.qc.length;
-          return `<tr onclick="limsGo('worksheet',{id:'${w.id}'})">
+          return `<tr onclick="limsGo('worksheet',{id:'${escJs(w.id)}'})">
             <td><strong>${esc(w.code)}</strong></td>
             <td>${esc(testMap[w.test]||w.test)}</td>
             <td>${fmtDate(w.opened)}</td>
             <td>${w.closed?fmtDate(w.closed):'—'}</td>
-            <td>${w.samples.length}</td>
+            <td>${esc(w.samples.length)}</td>
             <td>${chip(qcpass+'/'+qctot+' pass', qcpass===qctot?'ok':'warn')}</td>
             <td>${chip(w.status, w.status==='closed'?'authorised':'in-progress')}</td>
           </tr>`;
@@ -1131,7 +1134,7 @@
         <h2 class="lims-title">${esc(w.code)}</h2>
         ${chip(w.status, w.status==='closed'?'authorised':'in-progress')}
         <div style="flex:1"></div>
-        ${w.status==='open'?`<button class="lims-btn primary" onclick="limsWorksheetClose('${w.id}')">Close worksheet</button>`:''}
+        ${w.status==='open'?`<button class="lims-btn primary" onclick="limsWorksheetClose('${escJs(w.id)}')">Close worksheet</button>`:''}
       </div>
 
       <div class="lims-detail-grid">
@@ -1144,7 +1147,7 @@
               <div class="lims-field"><label>Analyst</label><div>${esc(userMap[w.analyst]||w.analyst)}</div></div>
               <div class="lims-field"><label>Opened</label><div>${fmtDT(w.opened)}</div></div>
               <div class="lims-field"><label>Closed</label><div>${w.closed?fmtDT(w.closed):'—'}</div></div>
-              <div class="lims-field"><label>Samples on plate</label><div>${w.samples.length}</div></div>
+              <div class="lims-field"><label>Samples on plate</label><div>${esc(w.samples.length)}</div></div>
             </div>
           </div>
 
@@ -1223,7 +1226,7 @@
           const flagChip = r.flag === 'fail' ? chip('Out-of-spec','fail') : (r.flag === 'ok' ? chip('In spec','ok') : chip(r.flag||'—','neutral'));
           const statCls = r.status==='authorised'?'authorised':(r.status==='pending-review'?'review':'in-progress');
           return `<tr>
-            <td><a href="#" onclick="event.preventDefault();limsGo('sample',{id:'${r.sampleId}'})"><strong>${esc(sp?sp.barcode:r.sampleId)}</strong></a></td>
+            <td><a href="#" onclick="event.preventDefault();limsGo('sample',{id:'${escJs(r.sampleId)}'})"><strong>${esc(sp?sp.barcode:r.sampleId)}</strong></a></td>
             <td>${esc(t?t.code:r.testId)}</td>
             <td>${esc(r.value)} ${esc(r.unit)}</td>
             <td>${flagChip}</td>
@@ -1232,9 +1235,9 @@
             <td>${esc(userMap[r.reviewer]||'—')}</td>
             <td>${esc(userMap[r.authoriser]||'—')}</td>
             <td>
-              ${r.status==='entered'?`<button class="lims-btn" onclick="limsResultSubmit('${r.id}')">Submit</button>`:''}
-              ${r.status==='pending-review'?`<button class="lims-btn" onclick="limsResultReview('${r.id}',true)">✓ Review</button>`:''}
-              ${r.status==='reviewed'?`<button class="lims-btn primary" onclick="limsResultAuthorise('${r.id}')">🔒 Authorise</button>`:''}
+              ${r.status==='entered'?`<button class="lims-btn" onclick="limsResultSubmit('${escJs(r.id)}')">Submit</button>`:''}
+              ${r.status==='pending-review'?`<button class="lims-btn" onclick="limsResultReview('${escJs(r.id)}',true)">✓ Review</button>`:''}
+              ${r.status==='reviewed'?`<button class="lims-btn primary" onclick="limsResultAuthorise('${escJs(r.id)}')">🔒 Authorise</button>`:''}
             </td>
           </tr>`;
         }).join('')}</tbody>
@@ -1252,13 +1255,13 @@
           <tbody>${sample.tests.map(tid => {
             const t = testMap[tid]; if(!t) return '';
             const r = existMap[tid];
-            return `<tr data-tid="${tid}">
+            return `<tr data-tid="${esc(tid)}">
               <td><strong>${esc(t.code)}</strong> ${esc(t.name)}</td>
               <td><input class="res-val" type="number" step="any" value="${r?esc(r.value):''}" ${r&&r.status==='authorised'?'disabled':''}></td>
               <td>${esc(t.unit)}</td>
               <td>${t.specMin!=null?esc(t.specMin+' – '+t.specMax):'—'}</td>
               <td><input class="res-inst" value="${r?esc(r.instrumentId||''):''}" placeholder="instrument id" style="width:120px;"></td>
-              <td><button class="lims-btn primary" onclick="limsResultSave('${sample.id}','${tid}', this)" ${r&&r.status==='authorised'?'disabled':''}>${r?'Update':'Save'}</button></td>
+              <td><button class="lims-btn primary" onclick="limsResultSave('${escJs(sample.id)}','${escJs(tid)}', this)" ${r&&r.status==='authorised'?'disabled':''}>${r?'Update':'Save'}</button></td>
             </tr>`;
           }).join('')}</tbody>
         </table>
@@ -1339,17 +1342,17 @@
           const d = i.nextCal ? daysBetween(now, i.nextCal) : null;
           const calChip = d == null ? chip('No date','warn') : (d < 0 ? chip(Math.abs(d)+'d overdue','fail') : (d <= 14 ? chip(d+'d left','warn') : chip(d+'d left','ok')));
           return `<tr>
-            <td onclick="limsGo('instrument',{id:'${i.id}'})"><strong>${esc(i.name)}</strong></td>
-            <td onclick="limsGo('instrument',{id:'${i.id}'})">${esc(i.model)}</td>
-            <td onclick="limsGo('instrument',{id:'${i.id}'})">${esc(i.serial)}</td>
-            <td onclick="limsGo('instrument',{id:'${i.id}'})">${esc(i.location)}</td>
-            <td onclick="limsGo('instrument',{id:'${i.id}'})">${i.calIntDays||'—'}d</td>
-            <td onclick="limsGo('instrument',{id:'${i.id}'})">${fmtDate(i.lastCal)}</td>
-            <td onclick="limsGo('instrument',{id:'${i.id}'})">${fmtDate(i.nextCal)} ${calChip}</td>
-            <td onclick="limsGo('instrument',{id:'${i.id}'})">${chip(i.status, i.status==='active'?'ok':'warn')}</td>
+            <td onclick="limsGo('instrument',{id:'${escJs(i.id)}'})"><strong>${esc(i.name)}</strong></td>
+            <td onclick="limsGo('instrument',{id:'${escJs(i.id)}'})">${esc(i.model)}</td>
+            <td onclick="limsGo('instrument',{id:'${escJs(i.id)}'})">${esc(i.serial)}</td>
+            <td onclick="limsGo('instrument',{id:'${escJs(i.id)}'})">${esc(i.location)}</td>
+            <td onclick="limsGo('instrument',{id:'${escJs(i.id)}'})">${esc(i.calIntDays||'—')}d</td>
+            <td onclick="limsGo('instrument',{id:'${escJs(i.id)}'})">${fmtDate(i.lastCal)}</td>
+            <td onclick="limsGo('instrument',{id:'${escJs(i.id)}'})">${fmtDate(i.nextCal)} ${calChip}</td>
+            <td onclick="limsGo('instrument',{id:'${escJs(i.id)}'})">${chip(i.status, i.status==='active'?'ok':'warn')}</td>
             <td style="white-space:nowrap;">
-              <button class="lims-btn ghost" onclick="event.stopPropagation();limsGo('instrument-form',{id:'${i.id}'})">✏️</button>
-              <button class="lims-btn ghost" onclick="event.stopPropagation();limsDeleteInstrument('${i.id}')">🗑️</button>
+              <button class="lims-btn ghost" onclick="event.stopPropagation();limsGo('instrument-form',{id:'${escJs(i.id)}'})">✏️</button>
+              <button class="lims-btn ghost" onclick="event.stopPropagation();limsDeleteInstrument('${escJs(i.id)}')">🗑️</button>
             </td>
           </tr>`;
         }).join('') : '<tr><td colspan="9" class="lims-empty">No instruments yet — click ➕ Add instrument to register one.</td></tr>'}</tbody>
@@ -1372,7 +1375,7 @@
         <h2 class="lims-title">${esc(i.name)}</h2>
         ${chip(i.status, i.status==='active'?'ok':'warn')}
         <div style="flex:1"></div>
-        <button class="lims-btn primary" onclick="limsInstCalibrate('${i.id}')">🧰 Log calibration</button>
+        <button class="lims-btn primary" onclick="limsInstCalibrate('${escJs(i.id)}')">🧰 Log calibration</button>
       </div>
       <div class="lims-detail-grid">
         <div class="lims-detail-main">
@@ -1382,7 +1385,7 @@
               <div class="lims-field"><label>Model</label><div>${esc(i.model)}</div></div>
               <div class="lims-field"><label>Serial</label><div>${esc(i.serial)}</div></div>
               <div class="lims-field"><label>Location</label><div>${esc(i.location)}</div></div>
-              <div class="lims-field"><label>Calibration interval</label><div>${i.calIntDays} days</div></div>
+              <div class="lims-field"><label>Calibration interval</label><div>${esc(i.calIntDays)} days</div></div>
               <div class="lims-field"><label>Last calibration</label><div>${fmtDate(i.lastCal)}</div></div>
               <div class="lims-field"><label>Next due</label><div>${fmtDate(i.nextCal)} · <strong style="color:${d<0?'#e53935':(d<14?'#c59d2b':'#2a9d3f')};">${d<0?Math.abs(d)+'d overdue':d+'d left'}</strong></div></div>
               <div class="lims-field lims-field-wide"><label>Tests performed on this instrument</label><div>${i.tests.length?i.tests.map(t=>chip(testMap[t]||t,'neutral')).join(' '):'—'}</div></div>
@@ -1405,10 +1408,10 @@
               <div class="sticker-client">${esc(i.name)}</div>
               <div class="sticker-desc">${esc(i.model)} · ${esc(i.location)}</div>
               <div style="display:flex;gap:6px;justify-content:center;flex-wrap:wrap;margin-top:4px;">
-                <button class="lims-btn" onclick="limsQrPrint('instrument','${i.id}','${esc(i.name).replace(/'/g,'')}','${esc(i.model).replace(/'/g,'')} · SN ${esc(i.serial).replace(/'/g,'')}')">🖨 Sticker</button>
-                <button class="lims-btn ghost" onclick="limsQrBuilder('instrument','${i.id}')">⬛ QR Builder</button>
+                <button class="lims-btn" onclick="limsQrPrint('instrument','${escJs(i.id)}','${escJs(i.name)}','${escJs(i.model)} · SN ${escJs(i.serial)}')">🖨 Sticker</button>
+                <button class="lims-btn ghost" onclick="limsQrBuilder('instrument','${escJs(i.id)}')">⬛ QR Builder</button>
               </div>
-              <div style="font-size:10px;color:#6b7684;margin-top:6px;word-break:break-all;">${qrURL('instrument', i.id)}</div>
+              <div style="font-size:10px;color:#6b7684;margin-top:6px;word-break:break-all;">${esc(qrURL('instrument', i.id))}</div>
             </div>
           </div>
         </div>
@@ -1448,8 +1451,8 @@
           const exp = it.expiry ? daysBetween(now, it.expiry) : null;
           const statusC = exp == null ? chip('No date','warn') : (exp < 0 ? chip('Expired','fail') : (exp <= 30 ? chip('Expires '+exp+'d','warn') : chip('OK','ok')));
           const lowC = (it.qty != null && it.min != null && it.qty < it.min) ? chip('Low stock','warn') : '';
-          const safeName = esc(it.name).replace(/'/g,'');
-          const safeLot = esc(it.lot||'').replace(/'/g,'');
+          const safeName = it.name == null ? '' : String(it.name);   // raw: the sticker button passes it through escJs
+          const safeLot = it.lot == null ? '' : String(it.lot);
           return `<tr>
             <td><strong>${esc(it.name)}</strong></td>
             <td>${esc(it.lot)}</td>
@@ -1460,10 +1463,10 @@
             <td>${esc(it.storage)}</td>
             <td>${statusC}</td>
             <td style="white-space:nowrap;">
-              <button class="lims-btn" title="Print sticker" onclick="event.stopPropagation();limsQrPrint('inventory','${it.id}','${safeName}','Lot ${safeLot} · Exp ${fmtDate(it.expiry)}')">🖨</button>
-              <button class="lims-btn ghost" title="QR Builder" onclick="event.stopPropagation();limsQrBuilder('inventory','${it.id}')">⬛</button>
-              <button class="lims-btn ghost" title="Edit" onclick="event.stopPropagation();limsGo('inventory-form',{id:'${it.id}'})">✏️</button>
-              <button class="lims-btn ghost" title="Delete" onclick="event.stopPropagation();limsDeleteInventory('${it.id}')">🗑️</button>
+              <button class="lims-btn" title="Print sticker" onclick="event.stopPropagation();limsQrPrint('inventory','${escJs(it.id)}','${escJs(safeName)}','Lot ${escJs(safeLot)} · Exp ${escJs(fmtDate(it.expiry))}')">🖨</button>
+              <button class="lims-btn ghost" title="QR Builder" onclick="event.stopPropagation();limsQrBuilder('inventory','${escJs(it.id)}')">⬛</button>
+              <button class="lims-btn ghost" title="Edit" onclick="event.stopPropagation();limsGo('inventory-form',{id:'${escJs(it.id)}'})">✏️</button>
+              <button class="lims-btn ghost" title="Delete" onclick="event.stopPropagation();limsDeleteInventory('${escJs(it.id)}')">🗑️</button>
             </td>
           </tr>`;
         }).join('') : '<tr><td colspan="9" class="lims-empty">No reagents in inventory yet — click ➕ Add reagent to register one.</td></tr>'}</tbody>
@@ -1489,7 +1492,7 @@
             const vals = byTest[t.id].map(r=>Number(r.value)).filter(x=>!isNaN(x));
             const mean = vals.reduce((a,b)=>a+b,0)/vals.length;
             const sd = Math.sqrt(vals.reduce((a,b)=>a+(b-mean)**2,0)/vals.length);
-            return `<div class="lims-testcard" onclick="limsGo('qc-chart',{testId:'${t.id}'})">
+            return `<div class="lims-testcard" onclick="limsGo('qc-chart',{testId:'${escJs(t.id)}'})">
               <div style="font-weight:700;">${esc(t.code)} · ${esc(t.name)}</div>
               <div style="color:#6b7684;font-size:12px;margin:4px 0;">n=${vals.length} · x̄=${mean.toFixed(2)} · s=${sd.toFixed(3)}</div>
               <div class="lims-sparkline">${sparkline(vals, t.specMin, t.specMax)}</div>
@@ -1603,15 +1606,15 @@
           const auth = mine.filter(c=>c.status==='authorised');
           const train = mine.filter(c=>c.status==='training');
           return `<tr>
-            <td onclick="limsGo('person',{id:'${u.id}'})"><strong>${esc(u.name)}</strong></td>
-            <td onclick="limsGo('person',{id:'${u.id}'})">${chip(u.role,'neutral')}</td>
-            <td onclick="limsGo('person',{id:'${u.id}'})">${esc(u.email)}</td>
-            <td onclick="limsGo('person',{id:'${u.id}'})">${auth.length?auth.map(c=>chip(testMap[c.testId]?testMap[c.testId].code:'?','ok')).join(' '):'—'}</td>
-            <td onclick="limsGo('person',{id:'${u.id}'})">${train.length?train.map(c=>chip(testMap[c.testId]?testMap[c.testId].code:'?','warn')).join(' '):'—'}</td>
-            <td onclick="limsGo('person',{id:'${u.id}'})">${chip(u.active?'active':'inactive', u.active?'ok':'neutral')}</td>
+            <td onclick="limsGo('person',{id:'${escJs(u.id)}'})"><strong>${esc(u.name)}</strong></td>
+            <td onclick="limsGo('person',{id:'${escJs(u.id)}'})">${chip(u.role,'neutral')}</td>
+            <td onclick="limsGo('person',{id:'${escJs(u.id)}'})">${esc(u.email)}</td>
+            <td onclick="limsGo('person',{id:'${escJs(u.id)}'})">${auth.length?auth.map(c=>chip(testMap[c.testId]?testMap[c.testId].code:'?','ok')).join(' '):'—'}</td>
+            <td onclick="limsGo('person',{id:'${escJs(u.id)}'})">${train.length?train.map(c=>chip(testMap[c.testId]?testMap[c.testId].code:'?','warn')).join(' '):'—'}</td>
+            <td onclick="limsGo('person',{id:'${escJs(u.id)}'})">${chip(u.active?'active':'inactive', u.active?'ok':'neutral')}</td>
             <td style="white-space:nowrap;">
-              <button class="lims-btn ghost" onclick="event.stopPropagation();limsGo('person-form',{id:'${u.id}'})">✏️</button>
-              <button class="lims-btn ghost" onclick="event.stopPropagation();limsDeleteUser('${u.id}')">🗑️</button>
+              <button class="lims-btn ghost" onclick="event.stopPropagation();limsGo('person-form',{id:'${escJs(u.id)}'})">✏️</button>
+              <button class="lims-btn ghost" onclick="event.stopPropagation();limsDeleteUser('${escJs(u.id)}')">🗑️</button>
             </td>
           </tr>`;
         }).join('') : '<tr><td colspan="7" class="lims-empty">No operators yet — click ➕ Add operator to create one</td></tr>'}</tbody>
@@ -1667,15 +1670,15 @@
                     return `<tr>
                       <td><strong>${esc(t.code)}</strong> · ${esc(t.name)}</td>
                       <td>
-                        <select class="lims-search cf_status" data-test-id="${t.id}" data-existing-id="${c.id||''}" style="padding:6px 8px;font-size:13px;">
+                        <select class="lims-search cf_status" data-test-id="${esc(t.id)}" data-existing-id="${esc(c.id||'')}" style="padding:6px 8px;font-size:13px;">
                           <option value="none"       ${c.status==='none'      ?'selected':''}>Not authorised</option>
                           <option value="training"   ${c.status==='training'  ?'selected':''}>In training</option>
                           <option value="witnessed"  ${c.status==='witnessed' ?'selected':''}>Witnessed</option>
                           <option value="authorised" ${c.status==='authorised'?'selected':''}>Authorised</option>
                         </select>
                       </td>
-                      <td><input type="date" class="lims-search cf_assessed" data-test-id="${t.id}" value="${(c.assessed||'').slice(0,10)}" style="padding:6px 8px;font-size:13px;"></td>
-                      <td><input type="date" class="lims-search cf_review" data-test-id="${t.id}" value="${(c.nextReview||'').slice(0,10)}" style="padding:6px 8px;font-size:13px;"></td>
+                      <td><input type="date" class="lims-search cf_assessed" data-test-id="${esc(t.id)}" value="${esc((c.assessed||'').slice(0,10))}" style="padding:6px 8px;font-size:13px;"></td>
+                      <td><input type="date" class="lims-search cf_review" data-test-id="${esc(t.id)}" value="${esc((c.nextReview||'').slice(0,10))}" style="padding:6px 8px;font-size:13px;"></td>
                     </tr>`;
                   }).join('')}
                 </tbody>
@@ -1695,7 +1698,7 @@
           <div class="lims-field lims-field-wide"><label>Full name *</label><input id="pf_name" class="lims-search" value="${esc(u.name)}" placeholder="e.g. Dr. J. Smith"></div>
           <div class="lims-field"><label>Role *</label>
             <select id="pf_role" class="lims-search">
-              ${roles.map(r=>`<option value="${r.v}" ${u.role===r.v?'selected':''}>${r.label}</option>`).join('')}
+              ${roles.map(r=>`<option value="${esc(r.v)}" ${u.role===r.v?'selected':''}>${r.label}</option>`).join('')}
             </select>
           </div>
           <div class="lims-field"><label>Signature initials</label><input id="pf_sig" class="lims-search" value="${esc(u.signature)}" placeholder="e.g. JS" maxlength="6"></div>
@@ -1712,7 +1715,7 @@
       ${competencyEditor}
       <div class="lims-card">
         <div style="display:flex;gap:8px;flex-wrap:wrap;">
-          <button class="lims-btn primary" onclick="limsSaveUser(${isNew?'null':"'"+id+"'"})">💾 Save operator${isNew?'':' &amp; competencies'}</button>
+          <button class="lims-btn primary" onclick="limsSaveUser(${isNew?'null':"'"+escJs(id)+"'"})">💾 Save operator${isNew?'':' &amp; competencies'}</button>
           <button class="lims-btn ghost" onclick="limsBack()">Cancel</button>
         </div>
       </div>
@@ -1749,8 +1752,8 @@
         const testId   = sel.getAttribute('data-test-id');
         const existing = sel.getAttribute('data-existing-id') || '';
         const status   = sel.value;
-        const assessed = (document.querySelector(`.cf_assessed[data-test-id="${testId}"]`) || {}).value || '';
-        const review   = (document.querySelector(`.cf_review[data-test-id="${testId}"]`)   || {}).value || '';
+        const assessed = (document.querySelector(`.cf_assessed[data-test-id="${CSS.escape(testId)}"]`) || {}).value || '';
+        const review   = (document.querySelector(`.cf_review[data-test-id="${CSS.escape(testId)}"]`)   || {}).value || '';
         if (status === 'none') {
           // Remove any existing competency record.
           if (existing) {
@@ -1802,7 +1805,7 @@
       ${breadcrumb([{label:'LIMS',view:'hub'},{label:'Personnel',view:'personnel'},{label:u.name,view:'person',params:{id:u.id}}])}
       <div class="lims-toolbar">
         <h2 class="lims-title">${esc(u.name)}</h2>${chip(u.role,'neutral')}
-        <button class="lims-btn primary" onclick="limsGo('person-form',{id:'${u.id}'})">✏️ Edit</button>
+        <button class="lims-btn primary" onclick="limsGo('person-form',{id:'${escJs(u.id)}'})">✏️ Edit</button>
       </div>
       <div class="lims-card">
         <div class="lims-section-title">Contact</div>
@@ -1847,17 +1850,17 @@
           const revChip = rd == null ? chip('No date','warn') : (rd < 0 ? chip('Overdue','fail') : (rd < 90 ? chip('Due '+rd+'d','warn') : chip('OK','ok')));
           const hasContent = d.content && d.content.trim().length > 0;
           return `<tr>
-            <td onclick="limsGo('document',{id:'${d.id}'})"><strong>${esc(d.title)}</strong>${hasContent?' <span style="font-size:11px;opacity:0.6;">📄</span>':''}</td>
-            <td onclick="limsGo('document',{id:'${d.id}'})">${esc(d.type)}</td>
-            <td onclick="limsGo('document',{id:'${d.id}'})">${esc(d.ver)}</td>
-            <td onclick="limsGo('document',{id:'${d.id}'})">${fmtDate(d.effective)}</td>
-            <td onclick="limsGo('document',{id:'${d.id}'})">${fmtDate(d.review)} ${revChip}</td>
-            <td onclick="limsGo('document',{id:'${d.id}'})">${esc(userMap[d.owner]||'—')}</td>
-            <td onclick="limsGo('document',{id:'${d.id}'})">${chip(d.status, d.status==='approved'?'ok':'warn')}</td>
+            <td onclick="limsGo('document',{id:'${escJs(d.id)}'})"><strong>${esc(d.title)}</strong>${hasContent?' <span style="font-size:11px;opacity:0.6;">📄</span>':''}</td>
+            <td onclick="limsGo('document',{id:'${escJs(d.id)}'})">${esc(d.type)}</td>
+            <td onclick="limsGo('document',{id:'${escJs(d.id)}'})">${esc(d.ver)}</td>
+            <td onclick="limsGo('document',{id:'${escJs(d.id)}'})">${fmtDate(d.effective)}</td>
+            <td onclick="limsGo('document',{id:'${escJs(d.id)}'})">${fmtDate(d.review)} ${revChip}</td>
+            <td onclick="limsGo('document',{id:'${escJs(d.id)}'})">${esc(userMap[d.owner]||'—')}</td>
+            <td onclick="limsGo('document',{id:'${escJs(d.id)}'})">${chip(d.status, d.status==='approved'?'ok':'warn')}</td>
             <td style="white-space:nowrap;">
-              ${hasContent?`<button class="lims-btn ghost" onclick="event.stopPropagation();limsDocumentPdf('${d.id}')">🖨️</button>`:''}
-              <button class="lims-btn ghost" onclick="event.stopPropagation();limsGo('document-form',{id:'${d.id}'})">✏️</button>
-              <button class="lims-btn ghost" onclick="event.stopPropagation();limsDeleteDocument('${d.id}')">🗑️</button>
+              ${hasContent?`<button class="lims-btn ghost" onclick="event.stopPropagation();limsDocumentPdf('${escJs(d.id)}')">🖨️</button>`:''}
+              <button class="lims-btn ghost" onclick="event.stopPropagation();limsGo('document-form',{id:'${escJs(d.id)}'})">✏️</button>
+              <button class="lims-btn ghost" onclick="event.stopPropagation();limsDeleteDocument('${escJs(d.id)}')">🗑️</button>
             </td>
           </tr>`;
         }).join('') : '<tr><td colspan="8" class="lims-empty">No documents yet — click ➕ Add document to register one.</td></tr>'}</tbody>
@@ -1885,7 +1888,7 @@
             <td>${esc(clientMap[s.clientId]||'—')}</td>
             <td>${esc(s.description)}</td>
             <td>${chip(s.status, statusChipClass(s.status))}</td>
-            <td>${(s.status==='authorised'||s.status==='released')?`<button class="lims-btn primary" onclick="limsGenerateCOA('${s.id}')">📄 Download PDF</button>`:`<span style="color:#888;font-size:12px;">Not yet authorised</span>`}</td>
+            <td>${(s.status==='authorised'||s.status==='released')?`<button class="lims-btn primary" onclick="limsGenerateCOA('${escJs(s.id)}')">📄 Download PDF</button>`:`<span style="color:#888;font-size:12px;">Not yet authorised</span>`}</td>
           </tr>`).join('')}</tbody>
         </table>
       </div>
@@ -2018,16 +2021,16 @@
           const actions = (c.source === 'erp')
             ? '<span class="lims-chip neutral" title="Synced from the ERP — read-only">🔗 ERP</span>'
             : (limsCanManageClients()
-                ? `<button class="lims-btn ghost" onclick="event.stopPropagation();limsGo('client-form',{id:'${c.id}'})">✏️</button>
-                   <button class="lims-btn ghost" onclick="event.stopPropagation();limsDeleteClient('${c.id}')">🗑️</button>`
+                ? `<button class="lims-btn ghost" onclick="event.stopPropagation();limsGo('client-form',{id:'${escJs(c.id)}'})">✏️</button>
+                   <button class="lims-btn ghost" onclick="event.stopPropagation();limsDeleteClient('${escJs(c.id)}')">🗑️</button>`
                 : '');
           return `<tr>
-            <td onclick="limsGo('client',{id:'${c.id}'})"><strong>${esc(c.name)}</strong></td>
-            <td onclick="limsGo('client',{id:'${c.id}'})">${chip(c.industry,'neutral')}</td>
-            <td onclick="limsGo('client',{id:'${c.id}'})">${esc(c.contact)}</td>
-            <td onclick="limsGo('client',{id:'${c.id}'})">${esc(c.email)}</td>
-            <td onclick="limsGo('client',{id:'${c.id}'})">${sc}</td>
-            <td onclick="limsGo('client',{id:'${c.id}'})">${qc}</td>
+            <td onclick="limsGo('client',{id:'${escJs(c.id)}'})"><strong>${esc(c.name)}</strong></td>
+            <td onclick="limsGo('client',{id:'${escJs(c.id)}'})">${chip(c.industry,'neutral')}</td>
+            <td onclick="limsGo('client',{id:'${escJs(c.id)}'})">${esc(c.contact)}</td>
+            <td onclick="limsGo('client',{id:'${escJs(c.id)}'})">${esc(c.email)}</td>
+            <td onclick="limsGo('client',{id:'${escJs(c.id)}'})">${sc}</td>
+            <td onclick="limsGo('client',{id:'${escJs(c.id)}'})">${qc}</td>
             <td style="white-space:nowrap;">${actions}</td>
           </tr>`;
         }).join('') : '<tr><td colspan="7" class="lims-empty">No clients yet — click ➕ Add client to create one</td></tr>'}</tbody>
@@ -2060,7 +2063,7 @@
           <div class="lims-field lims-field-wide"><label>Company name *</label><input id="cf_name" class="lims-search" value="${esc(c.name)}" placeholder="e.g. ACME Industries (Pty) Ltd"></div>
           <div class="lims-field"><label>Industry</label>
             <select id="cf_industry" class="lims-search">
-              ${industries.map(i=>`<option value="${i}" ${c.industry===i?'selected':''}>${i}</option>`).join('')}
+              ${industries.map(i=>`<option value="${esc(i)}" ${c.industry===i?'selected':''}>${i}</option>`).join('')}
             </select>
           </div>
           <div class="lims-field"><label>Contact person</label><input id="cf_contact" class="lims-search" value="${esc(c.contact)}" placeholder="e.g. Mr. J. Smith"></div>
@@ -2069,7 +2072,7 @@
           <div class="lims-field lims-field-wide"><label>Address</label><input id="cf_address" class="lims-search" value="${esc(c.address)}" placeholder="Street, City, Province"></div>
         </div>
         <div style="margin-top:14px;display:flex;gap:8px;flex-wrap:wrap;">
-          <button class="lims-btn primary" onclick="limsSaveClient(${isNew?'null':"'"+id+"'"})">💾 Save client</button>
+          <button class="lims-btn primary" onclick="limsSaveClient(${isNew?'null':"'"+escJs(id)+"'"})">💾 Save client</button>
           <button class="lims-btn ghost" onclick="limsBack()">Cancel</button>
         </div>
       </div>
@@ -2145,7 +2148,7 @@
     const editBtn = (c.source === 'erp')
       ? '<span class="lims-chip neutral" title="Synced from the ERP — read-only">🔗 Managed in ERP</span>'
       : (limsCanManageClients()
-          ? `<button class="lims-btn primary" onclick="limsGo('client-form',{id:'${c.id}'})">✏️ Edit</button>`
+          ? `<button class="lims-btn primary" onclick="limsGo('client-form',{id:'${escJs(c.id)}'})">✏️ Edit</button>`
           : '');
     root.innerHTML = `
       ${breadcrumb([{label:'LIMS',view:'hub'},{label:'Clients',view:'clients'},{label:c.name,view:'client',params:{id:c.id}}])}
@@ -2166,7 +2169,7 @@
         <div class="lims-section-title">Recent samples (${samples.length})</div>
         <table class="lims-table compact">
           <thead><tr><th>Barcode</th><th>Description</th><th>Received</th><th>Status</th></tr></thead>
-          <tbody>${samples.slice(-10).reverse().map(s=>`<tr onclick="limsGo('sample',{id:'${s.id}'})"><td><strong>${esc(s.barcode)}</strong></td><td>${esc(s.description)}</td><td>${fmtDate(s.received)}</td><td>${chip(s.status,statusChipClass(s.status))}</td></tr>`).join('') || '<tr><td colspan="4">None yet</td></tr>'}</tbody>
+          <tbody>${samples.slice(-10).reverse().map(s=>`<tr onclick="limsGo('sample',{id:'${escJs(s.id)}'})"><td><strong>${esc(s.barcode)}</strong></td><td>${esc(s.description)}</td><td>${fmtDate(s.received)}</td><td>${chip(s.status,statusChipClass(s.status))}</td></tr>`).join('') || '<tr><td colspan="4">None yet</td></tr>'}</tbody>
         </table>
       </div>
       <div class="lims-card">
@@ -2175,7 +2178,7 @@
           <thead><tr><th>Date</th><th>Items requested</th><th>Status</th></tr></thead>
           <tbody>${quotes.map(q=>`<tr>
             <td>${fmtDate(q.date)}</td>
-            <td>${q.items.map(it=>(it.profileId?(profMap[it.profileId]?profMap[it.profileId].name:it.profileId):it.testId)+' ×'+it.qty).join(', ')}</td>
+            <td>${esc(q.items.map(it=>(it.profileId?(profMap[it.profileId]?profMap[it.profileId].name:it.profileId):it.testId)+' ×'+it.qty).join(', '))}</td>
             <td>${chip(q.status, q.status==='accepted'?'ok':(q.status==='draft'?'neutral':'warn'))}</td>
           </tr>`).join('') || '<tr><td colspan="3">No bookings yet</td></tr>'}</tbody>
         </table>
@@ -2195,7 +2198,7 @@
         <div class="lims-section-title">Current operator</div>
         <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;">
           <select id="limsUserSwitch" class="lims-search" style="max-width:360px;">
-            ${users.map(u=>`<option value="${u.id}" ${S.currentUser&&S.currentUser.id===u.id?'selected':''}>${esc(u.name)} (${esc(u.role)})</option>`).join('')}
+            ${users.map(u=>`<option value="${esc(u.id)}" ${S.currentUser&&S.currentUser.id===u.id?'selected':''}>${esc(u.name)} (${esc(u.role)})</option>`).join('')}
           </select>
           <button class="lims-btn primary" onclick="limsSwitchUser()">Switch user</button>
         </div>
@@ -2216,8 +2219,8 @@
             <td>${esc(u.signature)}</td>
             <td>${chip(u.active?'yes':'no', u.active?'ok':'neutral')}</td>
             <td style="white-space:nowrap;">
-              <button class="lims-btn ghost" onclick="limsGo('person-form',{id:'${u.id}'})">✏️</button>
-              <button class="lims-btn ghost" onclick="limsDeleteUser('${u.id}')">🗑️</button>
+              <button class="lims-btn ghost" onclick="limsGo('person-form',{id:'${escJs(u.id)}'})">✏️</button>
+              <button class="lims-btn ghost" onclick="limsDeleteUser('${escJs(u.id)}')">🗑️</button>
             </td>
           </tr>`).join('')}</tbody>
         </table>
@@ -2308,14 +2311,14 @@
           <div class="lims-field"><label>LOD</label><input id="tf_lod" class="lims-search" value="${esc(t.lod)}" placeholder="Limit of detection"></div>
           <div class="lims-field"><label>LOQ</label><input id="tf_loq" class="lims-search" value="${esc(t.loq)}" placeholder="Limit of quantitation"></div>
           <div class="lims-field"><label>Working range</label><input id="tf_range" class="lims-search" value="${esc(t.range)}" placeholder="e.g. 0.1 – 10 mg/L"></div>
-          <div class="lims-field"><label>Spec min (SANS 241)</label><input id="tf_specMin" type="number" step="any" class="lims-search" value="${t.specMin!=null?t.specMin:''}" placeholder="optional"></div>
-          <div class="lims-field"><label>Spec max (SANS 241)</label><input id="tf_specMax" type="number" step="any" class="lims-search" value="${t.specMax!=null?t.specMax:''}" placeholder="optional"></div>
+          <div class="lims-field"><label>Spec min (SANS 241)</label><input id="tf_specMin" type="number" step="any" class="lims-search" value="${esc(t.specMin!=null?t.specMin:'')}" placeholder="optional"></div>
+          <div class="lims-field"><label>Spec max (SANS 241)</label><input id="tf_specMax" type="number" step="any" class="lims-search" value="${esc(t.specMax!=null?t.specMax:'')}" placeholder="optional"></div>
           <div class="lims-field"><label>SANS 241 risk class</label>
             <select id="tf_sans241" class="lims-search">
               ${sansClasses.map(c=>`<option value="${esc(c)}" ${(t.sans241||'')===c?'selected':''}>${esc(c||'— none —')}</option>`).join('')}
             </select>
           </div>
-          <div class="lims-field"><label>Turnaround (days)</label><input id="tf_tat" type="number" min="0" class="lims-search" value="${t.tat!=null?t.tat:1}"></div>
+          <div class="lims-field"><label>Turnaround (days)</label><input id="tf_tat" type="number" min="0" class="lims-search" value="${esc(t.tat!=null?t.tat:1)}"></div>
           <div class="lims-field"><label>Accredited${limsLab().accredited ? ' (SANAS)' : ''}</label>
             <select id="tf_accredited" class="lims-search">
               <option value="false" ${!t.accredited?'selected':''}>No</option>
@@ -2324,7 +2327,7 @@
           </div>
         </div>
         <div style="margin-top:14px;display:flex;gap:8px;flex-wrap:wrap;">
-          <button class="lims-btn primary" onclick="limsSaveTest(${isNew?'null':"'"+id+"'"})">💾 Save test</button>
+          <button class="lims-btn primary" onclick="limsSaveTest(${isNew?'null':"'"+escJs(id)+"'"})">💾 Save test</button>
           <button class="lims-btn ghost" onclick="limsBack()">Cancel</button>
         </div>
       </div>
@@ -2388,9 +2391,9 @@
           <div class="lims-field"><label>Model</label><input id="if_model" class="lims-search" value="${esc(i.model)}" placeholder="e.g. Hanna HI-5522"></div>
           <div class="lims-field"><label>Serial number</label><input id="if_serial" class="lims-search" value="${esc(i.serial)}" placeholder="e.g. HI25501"></div>
           <div class="lims-field"><label>Location</label><input id="if_location" class="lims-search" value="${esc(i.location)}" placeholder="e.g. Lab A — Bench 1"></div>
-          <div class="lims-field"><label>Calibration interval (days)</label><input id="if_calIntDays" type="number" min="1" class="lims-search" value="${i.calIntDays||90}"></div>
-          <div class="lims-field"><label>Last calibration</label><input id="if_lastCal" type="date" class="lims-search" value="${(i.lastCal||'').slice(0,10)}"></div>
-          <div class="lims-field"><label>Next calibration</label><input id="if_nextCal" type="date" class="lims-search" value="${(i.nextCal||'').slice(0,10)}" placeholder="auto from interval"></div>
+          <div class="lims-field"><label>Calibration interval (days)</label><input id="if_calIntDays" type="number" min="1" class="lims-search" value="${esc(i.calIntDays||90)}"></div>
+          <div class="lims-field"><label>Last calibration</label><input id="if_lastCal" type="date" class="lims-search" value="${esc((i.lastCal||'').slice(0,10))}"></div>
+          <div class="lims-field"><label>Next calibration</label><input id="if_nextCal" type="date" class="lims-search" value="${esc((i.nextCal||'').slice(0,10))}" placeholder="auto from interval"></div>
           <div class="lims-field"><label>Status</label>
             <select id="if_status" class="lims-search">
               <option value="active"  ${i.status==='active' ?'selected':''}>Active</option>
@@ -2404,12 +2407,12 @@
         <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:6px;max-height:280px;overflow-y:auto;border:1px solid var(--border,rgba(0,0,0,0.08));padding:10px;border-radius:8px;">
           ${allTests.length ? allTests.map(t => `
             <label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer;">
-              <input type="checkbox" class="if_test" value="${t.id}" ${linkedTests.has(t.id)?'checked':''}>
+              <input type="checkbox" class="if_test" value="${esc(t.id)}" ${linkedTests.has(t.id)?'checked':''}>
               <span><strong>${esc(t.code)}</strong> · ${esc(t.name)}</span>
             </label>`).join('') : '<div style="opacity:0.6;font-size:12px;">No tests in catalogue yet — add some under Tests first.</div>'}
         </div>
         <div style="margin-top:14px;display:flex;gap:8px;flex-wrap:wrap;">
-          <button class="lims-btn primary" onclick="limsSaveInstrument(${isNew?'null':"'"+id+"'"})">💾 Save instrument</button>
+          <button class="lims-btn primary" onclick="limsSaveInstrument(${isNew?'null':"'"+escJs(id)+"'"})">💾 Save instrument</button>
           <button class="lims-btn ghost" onclick="limsBack()">Cancel</button>
         </div>
       </div>
@@ -2477,21 +2480,21 @@
           <div class="lims-field lims-field-wide"><label>Title *</label><input id="df_title" class="lims-search" value="${esc(d.title)}" placeholder="e.g. Sample receipt and chain of custody"></div>
           <div class="lims-field"><label>Type</label>
             <select id="df_type" class="lims-search">
-              ${types.map(t=>`<option value="${t}" ${d.type===t?'selected':''}>${t}</option>`).join('')}
+              ${types.map(t=>`<option value="${esc(t)}" ${d.type===t?'selected':''}>${t}</option>`).join('')}
             </select>
           </div>
           <div class="lims-field"><label>Version</label><input id="df_ver" class="lims-search" value="${esc(d.ver)}" placeholder="e.g. 1.0"></div>
-          <div class="lims-field"><label>Effective date</label><input id="df_effective" type="date" class="lims-search" value="${(d.effective||'').slice(0,10)}"></div>
-          <div class="lims-field"><label>Review by</label><input id="df_review" type="date" class="lims-search" value="${(d.review||'').slice(0,10)}"></div>
+          <div class="lims-field"><label>Effective date</label><input id="df_effective" type="date" class="lims-search" value="${esc((d.effective||'').slice(0,10))}"></div>
+          <div class="lims-field"><label>Review by</label><input id="df_review" type="date" class="lims-search" value="${esc((d.review||'').slice(0,10))}"></div>
           <div class="lims-field"><label>Owner</label>
             <select id="df_owner" class="lims-search">
               <option value="">— unassigned —</option>
-              ${users.map(u=>`<option value="${u.id}" ${d.owner===u.id?'selected':''}>${esc(u.name)}</option>`).join('')}
+              ${users.map(u=>`<option value="${esc(u.id)}" ${d.owner===u.id?'selected':''}>${esc(u.name)}</option>`).join('')}
             </select>
           </div>
           <div class="lims-field"><label>Status</label>
             <select id="df_status" class="lims-search">
-              ${statuses.map(s=>`<option value="${s}" ${d.status===s?'selected':''}>${s}</option>`).join('')}
+              ${statuses.map(s=>`<option value="${esc(s)}" ${d.status===s?'selected':''}>${s}</option>`).join('')}
             </select>
           </div>
         </div>
@@ -2511,8 +2514,8 @@
       </div>
       <div class="lims-card">
         <div style="display:flex;gap:8px;flex-wrap:wrap;">
-          <button class="lims-btn primary" onclick="limsSaveDocument(${isNew?'null':"'"+id+"'"})">💾 Save document</button>
-          ${isNew?'':`<button class="lims-btn ghost" onclick="limsDocumentPdf('${id}')">🖨️ Print PDF</button>`}
+          <button class="lims-btn primary" onclick="limsSaveDocument(${isNew?'null':"'"+escJs(id)+"'"})">💾 Save document</button>
+          ${isNew?'':`<button class="lims-btn ghost" onclick="limsDocumentPdf('${escJs(id)}')">🖨️ Print PDF</button>`}
           <button class="lims-btn ghost" onclick="limsBack()">Cancel</button>
         </div>
       </div>
@@ -2563,8 +2566,8 @@
         <h2 class="lims-title">${esc(d.code?d.code+' · ':'')}${esc(d.title)}</h2>
         ${chip(d.status, d.status==='approved'?'ok':'warn')}
         <div style="flex:1"></div>
-        ${d.content?`<button class="lims-btn primary" onclick="limsDocumentPdf('${d.id}')">🖨️ Print PDF</button>`:''}
-        <button class="lims-btn ghost" onclick="limsGo('document-form',{id:'${d.id}'})">✏️ Edit</button>
+        ${d.content?`<button class="lims-btn primary" onclick="limsDocumentPdf('${escJs(d.id)}')">🖨️ Print PDF</button>`:''}
+        <button class="lims-btn ghost" onclick="limsGo('document-form',{id:'${escJs(d.id)}'})">✏️ Edit</button>
       </div>
       <div class="lims-card">
         <div class="lims-fieldgrid">
@@ -2771,15 +2774,15 @@
           <div class="lims-field lims-field-wide"><label>Name *</label><input id="rf_name" class="lims-search" value="${esc(it.name)}" placeholder="e.g. pH Buffer 7.00"></div>
           <div class="lims-field"><label>Lot / batch</label><input id="rf_lot" class="lims-search" value="${esc(it.lot)}" placeholder="e.g. PH7-2025-118"></div>
           <div class="lims-field"><label>Supplier</label><input id="rf_supplier" class="lims-search" value="${esc(it.supplier)}" placeholder="e.g. Hanna, Hach, Merck"></div>
-          <div class="lims-field"><label>Received</label><input id="rf_received" type="date" class="lims-search" value="${(it.received||'').slice(0,10)}"></div>
-          <div class="lims-field"><label>Expiry</label><input id="rf_expiry" type="date" class="lims-search" value="${(it.expiry||'').slice(0,10)}"></div>
-          <div class="lims-field"><label>Quantity</label><input id="rf_qty" type="number" step="any" min="0" class="lims-search" value="${it.qty!=null?it.qty:0}"></div>
+          <div class="lims-field"><label>Received</label><input id="rf_received" type="date" class="lims-search" value="${esc((it.received||'').slice(0,10))}"></div>
+          <div class="lims-field"><label>Expiry</label><input id="rf_expiry" type="date" class="lims-search" value="${esc((it.expiry||'').slice(0,10))}"></div>
+          <div class="lims-field"><label>Quantity</label><input id="rf_qty" type="number" step="any" min="0" class="lims-search" value="${esc(it.qty!=null?it.qty:0)}"></div>
           <div class="lims-field"><label>Unit</label>
             <select id="rf_unit" class="lims-search">
               ${units.map(u=>`<option value="${esc(u)}" ${it.unit===u?'selected':''}>${esc(u)}</option>`).join('')}
             </select>
           </div>
-          <div class="lims-field"><label>Min stock (re-order trigger)</label><input id="rf_min" type="number" step="any" min="0" class="lims-search" value="${it.min!=null?it.min:0}"></div>
+          <div class="lims-field"><label>Min stock (re-order trigger)</label><input id="rf_min" type="number" step="any" min="0" class="lims-search" value="${esc(it.min!=null?it.min:0)}"></div>
           <div class="lims-field"><label>Storage</label>
             <select id="rf_storage" class="lims-search">
               ${storages.map(s=>`<option value="${esc(s)}" ${it.storage===s?'selected':''}>${esc(s)}</option>`).join('')}
@@ -2794,7 +2797,7 @@
           <div class="lims-field lims-field-wide"><label>Notes</label><input id="rf_notes" class="lims-search" value="${esc(it.notes||'')}" placeholder="Anything operators should know"></div>
         </div>
         <div style="margin-top:14px;display:flex;gap:8px;flex-wrap:wrap;">
-          <button class="lims-btn primary" onclick="limsSaveInventory(${isNew?'null':"'"+id+"'"})">💾 Save reagent</button>
+          <button class="lims-btn primary" onclick="limsSaveInventory(${isNew?'null':"'"+escJs(id)+"'"})">💾 Save reagent</button>
           <button class="lims-btn ghost" onclick="limsBack()">Cancel</button>
         </div>
         <p style="font-size:12px;color:#6b7684;margin-top:10px;">When stock drops below the min, it'll show a "Low stock" chip on the Inventory list and trigger an alert on the LIMS Dashboard. When expiry is within 30 days, the same happens with a yellow "Expires Xd" chip.</p>
@@ -2848,12 +2851,12 @@
         <thead><tr><th>Name</th><th>Description</th><th>Tests</th><th></th></tr></thead>
         <tbody>${profiles.length ? profiles.map(p=>`
           <tr>
-            <td onclick="limsGo('profile',{id:'${p.id}'})"><strong>${esc(p.name)}</strong></td>
-            <td onclick="limsGo('profile',{id:'${p.id}'})">${esc(p.description||'')}</td>
-            <td onclick="limsGo('profile',{id:'${p.id}'})">${(p.testIds||[]).length} tests</td>
+            <td onclick="limsGo('profile',{id:'${escJs(p.id)}'})"><strong>${esc(p.name)}</strong></td>
+            <td onclick="limsGo('profile',{id:'${escJs(p.id)}'})">${esc(p.description||'')}</td>
+            <td onclick="limsGo('profile',{id:'${escJs(p.id)}'})">${esc((p.testIds||p.tests||[]).length)} tests</td>
             <td style="white-space:nowrap;">
-              <button class="lims-btn ghost" onclick="event.stopPropagation();limsGo('profile-form',{id:'${p.id}'})">✏️</button>
-              <button class="lims-btn ghost" onclick="event.stopPropagation();limsDeleteTestProfile('${p.id}')">🗑️</button>
+              <button class="lims-btn ghost" onclick="event.stopPropagation();limsGo('profile-form',{id:'${escJs(p.id)}'})">✏️</button>
+              <button class="lims-btn ghost" onclick="event.stopPropagation();limsDeleteTestProfile('${escJs(p.id)}')">🗑️</button>
             </td>
           </tr>`).join('') : '<tr><td colspan="4" class="lims-empty">No profiles yet — click ➕ Add profile to bundle some tests together.</td></tr>'}</tbody>
       </table>
@@ -2865,12 +2868,12 @@
     if (!p) { root.innerHTML = `<div class="lims-empty">Profile not found</div>`; return; }
     const tests = await DB.all('tests');
     const testMap = Object.fromEntries(tests.map(t=>[t.id,t]));
-    const linked = (p.testIds||[]).map(id=>testMap[id]).filter(Boolean);
+    const linked = (p.testIds||p.tests||[]).map(id=>testMap[id]).filter(Boolean);
     root.innerHTML = `
       ${breadcrumb([{label:'LIMS',view:'hub'},{label:'Test Profiles',view:'profiles'},{label:p.name,view:'profile',params:{id:p.id}}])}
       <div class="lims-toolbar">
         <h2 class="lims-title">${esc(p.name)}</h2>
-        <button class="lims-btn primary" onclick="limsGo('profile-form',{id:'${p.id}'})">✏️ Edit</button>
+        <button class="lims-btn primary" onclick="limsGo('profile-form',{id:'${escJs(p.id)}'})">✏️ Edit</button>
       </div>
       <div class="lims-card">
         <div class="lims-section-title">Description</div>
@@ -2881,7 +2884,7 @@
         <table class="lims-table compact">
           <thead><tr><th>Code</th><th>Name</th><th>Method</th><th>Unit</th><th>Risk class</th></tr></thead>
           <tbody>${linked.length ? linked.map(t=>`
-            <tr onclick="limsGo('test',{id:'${t.id}'})">
+            <tr onclick="limsGo('test',{id:'${escJs(t.id)}'})">
               <td><strong>${esc(t.code)}</strong></td>
               <td>${esc(t.name)}</td>
               <td>${esc(t.method)}</td>
@@ -2900,7 +2903,7 @@
     if (id && !p) { root.innerHTML = `<div class="lims-empty">Profile not found</div>`; return; }
     const tests = await DB.all('tests');
     const cats = [...new Set(tests.map(t=>t.category).filter(Boolean))].sort();
-    const linked = new Set(p.testIds || []);
+    const linked = new Set(p.testIds || p.tests || []);
     root.innerHTML = `
       ${breadcrumb([{label:'LIMS',view:'hub'},{label:'Test Profiles',view:'profiles'},{label:isNew?'Add profile':'Edit '+p.name,view:'profile-form'}])}
       <div class="lims-toolbar"><h2 class="lims-title">${isNew?'Add test profile':'Edit '+esc(p.name)}</h2></div>
@@ -2923,7 +2926,7 @@
               <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:6px;">
                 ${tests.filter(t=>t.category===cat).map(t=>`
                   <label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer;">
-                    <input type="checkbox" class="pf_test" value="${t.id}" ${linked.has(t.id)?'checked':''}>
+                    <input type="checkbox" class="pf_test" value="${esc(t.id)}" ${linked.has(t.id)?'checked':''}>
                     <span><strong>${esc(t.code)}</strong> · ${esc(t.name)}</span>
                   </label>`).join('')}
               </div>
@@ -2931,7 +2934,7 @@
           `).join('') || '<div style="opacity:0.6;">No tests in catalogue yet — add some under Tests first.</div>'}
         </div>
         <div style="margin-top:14px;display:flex;gap:8px;flex-wrap:wrap;">
-          <button class="lims-btn primary" onclick="limsSaveTestProfile(${isNew?'null':"'"+id+"'"})">💾 Save profile</button>
+          <button class="lims-btn primary" onclick="limsSaveTestProfile(${isNew?'null':"'"+escJs(id)+"'"})">💾 Save profile</button>
           <button class="lims-btn ghost" onclick="limsBack()">Cancel</button>
         </div>
       </div>

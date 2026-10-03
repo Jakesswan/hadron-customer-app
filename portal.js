@@ -38,7 +38,7 @@
       cancelled:   { color: '#4b5b6d', label: 'Cancelled' }
     };
     const m = map[status] || { color:'#888', label: status || '—' };
-    return `<span style="display:inline-block;padding:2px 8px;border-radius:999px;background:${m.color}1f;color:${m.color};font-size:11px;font-weight:600;">${m.label}</span>`;
+    return `<span style="display:inline-block;padding:2px 8px;border-radius:999px;background:${m.color}1f;color:${m.color};font-size:11px;font-weight:600;">${esc(m.label)}</span>`;
   }
 
   function emptyState(emoji, title, body) {
@@ -116,7 +116,7 @@
           <div class="hg-section-title">Open samples</div>
           <div style="display:flex;flex-direction:column;gap:8px;">
             ${openSamples.map(s => `
-              <div style="display:flex;justify-content:space-between;align-items:center;padding:10px 12px;border:1px solid var(--border,rgba(0,0,0,0.08));border-radius:10px;cursor:pointer;" onclick="if (window.hgOpenRoute) window.hgOpenRoute('lims/sample/${esc(s.id)}'); else { location.hash='#lims/sample/${esc(s.id)}'; openWindow('lims'); }">
+              <div style="display:flex;justify-content:space-between;align-items:center;padding:10px 12px;border:1px solid var(--border,rgba(0,0,0,0.08));border-radius:10px;cursor:pointer;" onclick="if (window.hgOpenRoute) window.hgOpenRoute('lims/sample/${escJs(s.id)}'); else { location.hash='#lims/sample/${escJs(s.id)}'; openWindow('lims'); }">
                 <div>
                   <div style="font-weight:600;">${esc(s.sample_no || s.id)}</div>
                   <div style="font-size:12px;opacity:0.7;">${esc(s.matrix||'—')} · ${esc(s.sample_point||'')} · ${fmtDate(s.sampled_at)}</div>
@@ -189,6 +189,9 @@
   }
 
   // simple esc helper
+  // A value inside a JS string in an inline handler (onclick="f('…')"): hex escapes, which HTML decoding leaves alone
+  // (esc() is wrong there: the browser turns &#39; back into a quote before the JS runs).
+  const escJs = (v) => String(v == null ? '' : v).replace(/[\\'"<>&\r\n\t]/g, (c) => '\\x' + c.charCodeAt(0).toString(16).padStart(2, '0'));
   function esc(s) {
     return (s == null ? '' : String(s)).replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
   }

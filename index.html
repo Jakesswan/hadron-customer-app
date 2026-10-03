@@ -52,60 +52,60 @@
     <!-- Supabase JS SDK (auth + cloud sync), pinned 2.117.2 and served by the app itself so sign-in
          works offline from the precache (it used to be the floating @2 from a CDN). See
          THIRD_PARTY_NOTICES.md. To upgrade: replace the file, rename it, update this tag + sw.js. -->
-    <script src="supabase-js-2.117.2.js?v=166"></script>
+    <script src="supabase-js-2.117.2.js?v=167"></script>
 
     <!-- Hadron Supabase bridge -->
-    <script src="supabase-client.js?v=166"></script>
+    <script src="supabase-client.js?v=167"></script>
 
     <!-- Shared UI primitives (in-app sheets) — loaded before auth-ui, which uses them -->
-    <script src="hg-ui.js?v=166" defer></script>
+    <script src="hg-ui.js?v=167" defer></script>
     <!-- Auth UI (login/signup gate, profile binding) -->
-    <script src="auth-ui.js?v=166" defer></script>
+    <script src="auth-ui.js?v=167" defer></script>
 
     <!-- Push notifications -->
-    <script src="push.js?v=166" defer></script>
+    <script src="push.js?v=167" defer></script>
 
     <!-- Translation bundle -->
-    <script src="i18n.js?v=166"></script>
+    <script src="i18n.js?v=167"></script>
 
     <!-- Hadron Tristroke icon system (matches the ERP) -->
-    <script src="hadron-icons.js?v=166" defer></script>
+    <script src="hadron-icons.js?v=167" defer></script>
 
     <!-- Emoji the app has an icon for become Tristroke icons (the rest stay the phone's own emoji) -->
-    <script src="emoji.js?v=166" defer></script>
+    <script src="emoji.js?v=167" defer></script>
 
     <!-- Customizable home grid (drag-to-reorder) -->
-    <script src="home.js?v=166" defer></script>
-    <script src="customize.js?v=166" defer></script>
+    <script src="home.js?v=167" defer></script>
+    <script src="customize.js?v=167" defer></script>
 
     <!-- Data Manager (Excel import/export) -->
-    <script src="data-manager.js?v=166" defer></script>
+    <script src="data-manager.js?v=167" defer></script>
 
     <!-- QR encoder (MIT, Kazuhiko Arase) -->
-    <script src="qr.js?v=166"></script>
+    <script src="qr.js?v=167"></script>
 
     <!-- QR Builder app -->
-    <script src="qr-app.js?v=166" defer></script>
+    <script src="qr-app.js?v=167" defer></script>
 
     <!-- Pool Water module -->
-    <script src="pool.js?v=166" defer></script>
+    <script src="pool.js?v=167" defer></script>
     <!-- Cooling Tower field calculator -->
-    <script src="coolingtower.js?v=166" defer></script>
+    <script src="coolingtower.js?v=167" defer></script>
     <!-- Boiler / Steam field calculator -->
-    <script src="boiler.js?v=166" defer></script>
+    <script src="boiler.js?v=167" defer></script>
     <!-- Water softener sizing calculator -->
-    <script src="softener.js?v=166" defer></script>
-    <script src="academy-content.js?v=166" defer></script>
-    <script src="academy.js?v=166" defer></script>
+    <script src="softener.js?v=167" defer></script>
+    <script src="academy-content.js?v=167" defer></script>
+    <script src="academy.js?v=167" defer></script>
 
-    <script src="searchable-select.js?v=166" defer></script>
-    <script src="trends.js?v=166" defer></script>
+    <script src="searchable-select.js?v=167" defer></script>
+    <script src="trends.js?v=167" defer></script>
 
     <!-- LIMS module (loaded at end of body via defer) -->
-    <script src="lims.js?v=166" defer></script>
-    <script src="lims-sync.js?v=166" defer></script>
-    <script src="portal.js?v=166" defer></script>
-    <script src="team.js?v=166" defer></script>
+    <script src="lims.js?v=167" defer></script>
+    <script src="lims-sync.js?v=167" defer></script>
+    <script src="portal.js?v=167" defer></script>
+    <script src="team.js?v=167" defer></script>
 
 
     <style>
@@ -2834,7 +2834,7 @@
                 <div class="hg-section-title">About</div>
                 <div class="hg-kvgrid">
                     <div class="hg-kv"><div class="k">App</div><div class="v">Hadron Group</div></div>
-                    <div class="hg-kv"><div class="k">Version</div><div class="v">v166</div></div>
+                    <div class="hg-kv"><div class="k">Version</div><div class="v">v167</div></div>
                     <div class="hg-kv"><div class="k">Platform</div><div class="v">PWA</div></div>
                 </div>
             </div>
@@ -6967,20 +6967,20 @@
                         <div style="font-weight:600;font-size:14px;color:var(--text);">${esc(t.name)} <span style="color:var(--muted);font-weight:400;">${esc(t.unit || '')}</span></div>
                         <div style="margin-top:3px;display:flex;align-items:center;gap:10px;">
                             <span id="sr_chip_${esc(t.id)}">${srChip(t)}</span>
-                            <button type="button" onclick="srToggleLimitEditor('${esc(t.id)}')" title="Set your own pass/fail limit" style="border:none;background:transparent;color:var(--accent-ink);font-size:12px;cursor:pointer;padding:0;">✎ limit</button>
+                            <button type="button" onclick="srToggleLimitEditor('${escJs(t.id)}')" title="Set your own pass/fail limit" style="border:none;background:transparent;color:var(--accent-ink);font-size:12px;cursor:pointer;padding:0;">✎ limit</button>
                             ${spark}
                         </div>
                     </div>
                     <div style="display:flex;align-items:center;gap:6px;">
-                        <input type="number" step="any" inputmode="decimal" value="${esc(t.value == null ? '' : t.value)}" oninput="srSetVal('${esc(t.id)}', this.value)" placeholder="value" style="width:86px;padding:8px;border:1px solid var(--border);border-radius:8px;font-size:15px;background:var(--surface);color:var(--text);">
-                        <button type="button" title="Read value from a photo" onclick="srOcrPhoto('${esc(t.id)}')" style="border:1px solid var(--border);background:var(--surface);color:var(--text);border-radius:8px;width:38px;height:38px;font-size:16px;cursor:pointer;">📷</button>
-                        <button type="button" title="Remove test" onclick="srRemoveTest('${esc(t.id)}')" style="border:none;background:transparent;color:var(--danger);font-size:20px;cursor:pointer;width:24px;">×</button>
+                        <input type="number" step="any" inputmode="decimal" value="${esc(t.value == null ? '' : t.value)}" oninput="srSetVal('${escJs(t.id)}', this.value)" placeholder="value" style="width:86px;padding:8px;border:1px solid var(--border);border-radius:8px;font-size:15px;background:var(--surface);color:var(--text);">
+                        <button type="button" title="Read value from a photo" onclick="srOcrPhoto('${escJs(t.id)}')" style="border:1px solid var(--border);background:var(--surface);color:var(--text);border-radius:8px;width:38px;height:38px;font-size:16px;cursor:pointer;">📷</button>
+                        <button type="button" title="Remove test" onclick="srRemoveTest('${escJs(t.id)}')" style="border:none;background:transparent;color:var(--danger);font-size:20px;cursor:pointer;width:24px;">×</button>
                     </div>
                     <div id="sr_lim_${esc(t.id)}" style="display:none;grid-column:1/-1;margin-top:8px;padding:9px 10px;background:var(--surface);border:1px solid var(--border);border-radius:8px;font-size:13px;align-items:center;gap:8px;flex-wrap:wrap;">
                         <span style="color:var(--muted);">Pass range —</span>
-                        <label style="display:flex;align-items:center;gap:5px;color:var(--text);">min <input type="number" step="any" inputmode="decimal" value="${esc(t.specMin == null ? '' : t.specMin)}" oninput="srEditLimit('${esc(t.id)}','min',this.value)" placeholder="—" style="width:72px;padding:6px;border:1px solid var(--border);border-radius:6px;font-size:14px;background:var(--bg-soft);color:var(--text);"></label>
-                        <label style="display:flex;align-items:center;gap:5px;color:var(--text);">max <input type="number" step="any" inputmode="decimal" value="${esc(t.specMax == null ? '' : t.specMax)}" oninput="srEditLimit('${esc(t.id)}','max',this.value)" placeholder="—" style="width:72px;padding:6px;border:1px solid var(--border);border-radius:6px;font-size:14px;background:var(--bg-soft);color:var(--text);"></label>
-                        <button type="button" onclick="srResetLimitRow('${esc(t.id)}')" style="border:1px solid var(--border);background:var(--bg-soft);color:var(--text);border-radius:6px;padding:6px 11px;cursor:pointer;font-size:12px;">Reset to default</button>
+                        <label style="display:flex;align-items:center;gap:5px;color:var(--text);">min <input type="number" step="any" inputmode="decimal" value="${esc(t.specMin == null ? '' : t.specMin)}" oninput="srEditLimit('${escJs(t.id)}','min',this.value)" placeholder="—" style="width:72px;padding:6px;border:1px solid var(--border);border-radius:6px;font-size:14px;background:var(--bg-soft);color:var(--text);"></label>
+                        <label style="display:flex;align-items:center;gap:5px;color:var(--text);">max <input type="number" step="any" inputmode="decimal" value="${esc(t.specMax == null ? '' : t.specMax)}" oninput="srEditLimit('${escJs(t.id)}','max',this.value)" placeholder="—" style="width:72px;padding:6px;border:1px solid var(--border);border-radius:6px;font-size:14px;background:var(--bg-soft);color:var(--text);"></label>
+                        <button type="button" onclick="srResetLimitRow('${escJs(t.id)}')" style="border:1px solid var(--border);background:var(--bg-soft);color:var(--text);border-radius:6px;padding:6px 11px;cursor:pointer;font-size:12px;">Reset to default</button>
                     </div>
                     ${srSafeImg(t.photo) ? `<div style="grid-column:1/-1;"><img src="${srSafeImg(t.photo)}" style="height:50px;border-radius:6px;border:1px solid var(--border);"></div>` : ''}
                 </div>`;
@@ -8172,7 +8172,7 @@
                     <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
                         <strong style="font-size:15px;">${esc(s.name)}</strong>
                         ${cName ? `<span class="hg-chip" style="background:#e8f4ff;color:#1a3d9e;">🏢 ${esc(cName)}</span>` : ''}
-                        <span class="hg-chip neutral">${(s.equipment||[]).length} asset${(s.equipment||[]).length===1?'':'s'}</span>
+                        <span class="hg-chip neutral">${esc((s.equipment||[]).length)} asset${(s.equipment||[]).length===1?'':'s'}</span>
                     </div>
                     <div style="margin-top:10px;display:flex;gap:6px;flex-wrap:wrap;">
                         <button class="hg-btn owner-only" onclick="addAsset('${escJs(s.id)}')">+ Add asset</button>
@@ -8224,8 +8224,8 @@
             return `<div style="border:1px solid var(--border);border-radius:10px;padding:10px 12px;margin-bottom:8px;background:var(--bg-soft);">
                 <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
                     <strong style="font-size:14px;color:var(--text);">📍 ${esc(s.name)}</strong>
-                    <span class="hg-chip neutral">${pts.length} point${pts.length===1?'':'s'}</span>
-                    ${eq.length ? `<span class="hg-chip neutral">${eq.length} asset${eq.length===1?'':'s'}</span>` : ''}
+                    <span class="hg-chip neutral">${esc(pts.length)} point${pts.length===1?'':'s'}</span>
+                    ${eq.length ? `<span class="hg-chip neutral">${esc(eq.length)} asset${eq.length===1?'':'s'}</span>` : ''}
                     <span style="flex:1;"></span>
                     <button class="hg-btn ghost owner-only" style="padding:4px 9px;font-size:12px;" onclick="renameSite('${escJs(s.id)}')" title="Rename site">✏️</button>
                     <button class="hg-btn warn owner-only" style="padding:4px 9px;font-size:12px;" onclick="deleteSite('${escJs(s.id)}')" title="Delete site">🗑</button>
@@ -8262,7 +8262,7 @@
                         <span id="cust-caret-${esc(c.id)}" style="color:var(--muted);">${open ? '▾' : '▸'}</span>
                         <strong style="font-size:15px;color:var(--text);">${esc(c.name)}</strong>
                         <span class="hg-chip neutral">${cs.length} site${cs.length === 1 ? '' : 's'}</span>
-                        ${nPts ? `<span class="hg-chip neutral">${nPts} point${nPts === 1 ? '' : 's'}</span>` : ''}
+                        ${nPts ? `<span class="hg-chip neutral">${esc(nPts)} point${nPts === 1 ? '' : 's'}</span>` : ''}
                     </div>
                     <div id="cust-body-${esc(c.id)}" style="display:${open ? 'block' : 'none'};margin-top:10px;">
                         ${cs.length ? cs.map(custSiteHtml).join('') : '<p style="color:var(--muted);font-size:13px;margin:2px 0;">No sites yet for this customer.</p>'}
@@ -8827,7 +8827,7 @@
             if (!rows) return;                                                                      // abort on a masked/partial fetch — never wipe local on a bad read
             hgPendingKeys().forEach(k => pending.add(k));
             const byId = {}, deleted = {};
-            rows.forEach(r => { const s = r && r.payload; if (!s || !s.id) return; if (r.deleted_at) deleted[s.id] = true; else if (!pending.has('sites:' + s.id)) byId[s.id] = s; });
+            rows.forEach(r => { const s = r && r.payload; if (!s || !s.id) return; s.equipment = Array.isArray(s.equipment) ? s.equipment.filter(x => x && typeof x === 'object') : []; s.samplePoints = Array.isArray(s.samplePoints) ? s.samplePoints.filter(x => x && typeof x === 'object') : []; if (r.deleted_at) deleted[s.id] = true; else if (!pending.has('sites:' + s.id)) byId[s.id] = s; });
             LS.get('hadron_sites', []).forEach(s => {
                 if (!s || !s.id || deleted[s.id]) return;                                           // tombstoned -> drop + never resurrect
                 if (pending.has('sites:' + s.id)) { byId[s.id] = s; return; }                       // changed here, change still on its way up -> keep it
