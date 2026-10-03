@@ -116,7 +116,7 @@
           <div class="hg-section-title">Open samples</div>
           <div style="display:flex;flex-direction:column;gap:8px;">
             ${openSamples.map(s => `
-              <div style="display:flex;justify-content:space-between;align-items:center;padding:10px 12px;border:1px solid var(--border,rgba(0,0,0,0.08));border-radius:10px;cursor:pointer;" onclick="if (window.hgOpenRoute) window.hgOpenRoute('lims/sample/${escJs(s.id)}'); else { location.hash='#lims/sample/${escJs(s.id)}'; openWindow('lims'); }">
+              <div style="display:flex;justify-content:space-between;align-items:center;padding:10px 12px;border:1px solid var(--border,rgba(0,0,0,0.08));border-radius:10px;cursor:pointer;" onclick="if (window.hgOpenRoute) window.hgOpenRoute('lims/sample/${escJs(encodeURIComponent(s.id))}'); else { location.hash='#lims/sample/${escJs(encodeURIComponent(s.id))}'; openWindow('lims'); }">
                 <div>
                   <div style="font-weight:600;">${esc(s.sample_no || s.id)}</div>
                   <div style="font-size:12px;opacity:0.7;">${esc(s.matrix||'—')} · ${esc(s.sample_point||'')} · ${fmtDate(s.sampled_at)}</div>

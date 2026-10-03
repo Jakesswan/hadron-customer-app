@@ -52,60 +52,60 @@
     <!-- Supabase JS SDK (auth + cloud sync), pinned 2.117.2 and served by the app itself so sign-in
          works offline from the precache (it used to be the floating @2 from a CDN). See
          THIRD_PARTY_NOTICES.md. To upgrade: replace the file, rename it, update this tag + sw.js. -->
-    <script src="supabase-js-2.117.2.js?v=167"></script>
+    <script src="supabase-js-2.117.2.js?v=168"></script>
 
     <!-- Hadron Supabase bridge -->
-    <script src="supabase-client.js?v=167"></script>
+    <script src="supabase-client.js?v=168"></script>
 
     <!-- Shared UI primitives (in-app sheets) — loaded before auth-ui, which uses them -->
-    <script src="hg-ui.js?v=167" defer></script>
+    <script src="hg-ui.js?v=168" defer></script>
     <!-- Auth UI (login/signup gate, profile binding) -->
-    <script src="auth-ui.js?v=167" defer></script>
+    <script src="auth-ui.js?v=168" defer></script>
 
     <!-- Push notifications -->
-    <script src="push.js?v=167" defer></script>
+    <script src="push.js?v=168" defer></script>
 
     <!-- Translation bundle -->
-    <script src="i18n.js?v=167"></script>
+    <script src="i18n.js?v=168"></script>
 
     <!-- Hadron Tristroke icon system (matches the ERP) -->
-    <script src="hadron-icons.js?v=167" defer></script>
+    <script src="hadron-icons.js?v=168" defer></script>
 
     <!-- Emoji the app has an icon for become Tristroke icons (the rest stay the phone's own emoji) -->
-    <script src="emoji.js?v=167" defer></script>
+    <script src="emoji.js?v=168" defer></script>
 
     <!-- Customizable home grid (drag-to-reorder) -->
-    <script src="home.js?v=167" defer></script>
-    <script src="customize.js?v=167" defer></script>
+    <script src="home.js?v=168" defer></script>
+    <script src="customize.js?v=168" defer></script>
 
     <!-- Data Manager (Excel import/export) -->
-    <script src="data-manager.js?v=167" defer></script>
+    <script src="data-manager.js?v=168" defer></script>
 
     <!-- QR encoder (MIT, Kazuhiko Arase) -->
-    <script src="qr.js?v=167"></script>
+    <script src="qr.js?v=168"></script>
 
     <!-- QR Builder app -->
-    <script src="qr-app.js?v=167" defer></script>
+    <script src="qr-app.js?v=168" defer></script>
 
     <!-- Pool Water module -->
-    <script src="pool.js?v=167" defer></script>
+    <script src="pool.js?v=168" defer></script>
     <!-- Cooling Tower field calculator -->
-    <script src="coolingtower.js?v=167" defer></script>
+    <script src="coolingtower.js?v=168" defer></script>
     <!-- Boiler / Steam field calculator -->
-    <script src="boiler.js?v=167" defer></script>
+    <script src="boiler.js?v=168" defer></script>
     <!-- Water softener sizing calculator -->
-    <script src="softener.js?v=167" defer></script>
-    <script src="academy-content.js?v=167" defer></script>
-    <script src="academy.js?v=167" defer></script>
+    <script src="softener.js?v=168" defer></script>
+    <script src="academy-content.js?v=168" defer></script>
+    <script src="academy.js?v=168" defer></script>
 
-    <script src="searchable-select.js?v=167" defer></script>
-    <script src="trends.js?v=167" defer></script>
+    <script src="searchable-select.js?v=168" defer></script>
+    <script src="trends.js?v=168" defer></script>
 
     <!-- LIMS module (loaded at end of body via defer) -->
-    <script src="lims.js?v=167" defer></script>
-    <script src="lims-sync.js?v=167" defer></script>
-    <script src="portal.js?v=167" defer></script>
-    <script src="team.js?v=167" defer></script>
+    <script src="lims.js?v=168" defer></script>
+    <script src="lims-sync.js?v=168" defer></script>
+    <script src="portal.js?v=168" defer></script>
+    <script src="team.js?v=168" defer></script>
 
 
     <style>
@@ -2834,7 +2834,7 @@
                 <div class="hg-section-title">About</div>
                 <div class="hg-kvgrid">
                     <div class="hg-kv"><div class="k">App</div><div class="v">Hadron Group</div></div>
-                    <div class="hg-kv"><div class="k">Version</div><div class="v">v167</div></div>
+                    <div class="hg-kv"><div class="k">Version</div><div class="v">v168</div></div>
                     <div class="hg-kv"><div class="k">Platform</div><div class="v">PWA</div></div>
                 </div>
             </div>
@@ -4267,6 +4267,10 @@
 
         // Window management
         const openWindows = new Set();
+        // Service report loads in flight (openServiceReport, srOpenSubmitted): every open, a new report, the Continue card and
+        // closing the report window count, so a load that finishes after any of them doesn't show. _srLoadToast: the open
+        // whose "Loading…" toast is up (an overtaken load only hides its own).
+        let _srOpenSeq = 0, _srLoadToast = 0;
 
         // Android's status bar takes the colour of what is right under it: the gold top bar on the home
         // screen (and behind the sign-in card), the window header (teal ink) while a window is open.
@@ -4488,6 +4492,7 @@
             const window = document.getElementById(`window-${appName}`);
             window.classList.remove('active');
             openWindows.delete(appName);
+            if (appName === 'servicereport') _srOpenSeq++;   // a report still loading doesn't open into it later (even if reopened)
             updateTaskbar();
             hgDisarmBack();   // last thing on screen closed with ←: drop the Back entry again
             hgStatusBar();
@@ -5857,6 +5862,13 @@
                 el.classList.remove('visible');
             }, ms || 2200);
         }
+        // Hides the toast while it still shows this message (a "Loading…" toast once the load is done).
+        function hideToastIf(message) {
+            const el = document.getElementById('toast');
+            if (!el || el.textContent !== message) return;
+            el.classList.remove('visible');
+            clearTimeout(toastTimer);
+        }
 
         /* =========================================================
            PRO TOOLS — JavaScript
@@ -6328,6 +6340,7 @@
 
         async function newServiceReport() {
             srEnsureAutosaveWired();
+            _srOpenSeq++;   // a report still loading doesn't replace the new (or resumed) one
             srFlushDraft();   // an edit still waiting to be autosaved is in the draft before it is offered
             try { srLoadLogo(); } catch (_) {}   // warm the PDF logo cache so Share doesn't await a fetch (keeps the tap gesture valid)
             // Recover an unfinished report from a crash / reload / accidental close before starting fresh.
@@ -6380,6 +6393,15 @@
         // Only the owner reaches this (the Edit button is gated); RLS blocks anyone else's write.
         async function openServiceReport(id, readOnly) {
             srEnsureAutosaveWired();
+            // What the report window shows now. A copy loaded from the cloud (up to 4 s) doesn't replace it if meanwhile the
+            // window was closed, another report was opened or a new one started, or this one was tapped again.
+            const seq = ++_srOpenSeq;
+            const formEl = document.getElementById('sr_form');
+            const shows = () => sr_reportId + '|' + (formEl && formEl.style.display);
+            const was = shows(), wasOpen = openWindows.has('servicereport');
+            let loading = '';   // the "Loading…" toast, while a copy is fetched
+            const overtaken = () => !!loading && (seq !== _srOpenSeq || (wasOpen && !openWindows.has('servicereport')) || shows() !== was);
+            const dropLoading = () => { if (_srLoadToast === seq) hideToastIf(loading); };
             // Resuming: the unsaved draft, which is newer than a saved copy of the same report.
             let r = (window._srResumeDraft && window._srResumeDraft.id === id ? window._srResumeDraft : null)
                  || LS.get('hadron_sr', []).find(x => x.id === id);
@@ -6393,16 +6415,34 @@
                     // only with a connection, and for at most 4 s: offline (or no answer) this phone's copy opens at once
                     if (srCloudFresher(r, meta)) {
                         let row = null;
-                        if (!window.__hgOfflineSession && navigator.onLine !== false) row = await Promise.race([window.HG_DB.service_reports.get(id), new Promise(res => setTimeout(() => res(null), 4000))]);
+                        if (!window.__hgOfflineSession && navigator.onLine !== false) {
+                            loading = srCloudSubmittedElsewhere(r, meta) ? 'Loading the submitted copy…' : 'Loading the newer copy…';
+                            showToast(loading, 4000); _srLoadToast = seq;
+                            row = await Promise.race([window.HG_DB.service_reports.get(id), new Promise(res => setTimeout(() => res(null), 4000))]);
+                        }
                         if (row && row.payload && row.payload.id === id) r = row.payload;
                         else if (srCloudSubmittedElsewhere(r, meta)) submittedMissed = true;
                     }
                 } catch (_) {}
             }
-            if (!r) {   // cloud-only report (from another device) — pull its full payload
-                try { const row = window.HG_DB && window.HG_DB.service_reports && await window.HG_DB.service_reports.get(id); r = row && row.payload; } catch (_) {}
+            if (!r) {   // cloud-only report (from another device): its full payload, at most 4 s (then a later tap tries again)
+                const cloud = !!(window.HG_DB && window.HG_DB.service_reports);
+                let row = null, late = cloud;   // offline or no answer: it may well be there
+                if (cloud && !window.__hgOfflineSession && navigator.onLine !== false) {
+                    loading = 'Loading the report…';
+                    showToast(loading, 4000); _srLoadToast = seq;
+                    const TIMEOUT = {};
+                    try { row = await Promise.race([window.HG_DB.service_reports.get(id), new Promise(res => setTimeout(() => res(TIMEOUT), 4000))]); } catch (_) { row = TIMEOUT; }
+                    late = row === TIMEOUT; if (late) row = null;
+                }
+                r = row && row.payload && row.payload.id === id ? row.payload : null;
+                if (!r) {
+                    if (overtaken()) dropLoading();
+                    else showToast(late ? 'This report isn’t on this phone and couldn’t be loaded just now: try again with a connection.' : 'Report not found', 4000);
+                    return;
+                }
             }
-            if (!r) { showToast('Report not found'); return; }
+            if (overtaken()) { dropLoading(); return; }   // something else is showing now: leave it
 
             _srDirty = false;     // as opened: nothing unsaved (a resumed draft stays in its slot). Set before the form shows,
                                   // so an edit made while it loads (the awaits below) still counts; nothing below fires input/change.
@@ -7533,8 +7573,11 @@
             // The copy the check found submitted, fetched by id: not whichever copy looks newer by comparing this phone's
             // clock with the server's (with this phone's clock ahead, that kept the older local copy, still a draft).
             // Bounded like the check; not in time, the changes here are kept and nothing opens.
+            const seq = ++_srOpenSeq, loading = 'Loading the submitted report…';
+            showToast(loading, 4000); _srLoadToast = seq;
             let row = null;
             try { row = await Promise.race([window.HG_DB.service_reports.get(d.id), new Promise(res => setTimeout(() => res(null), 4000))]); } catch (_) {}
+            if (seq !== _srOpenSeq) { if (_srLoadToast === seq) hideToastIf(loading); return false; }   // overtaken: nothing opens, the changes here are kept
             const r = row && row.payload && row.payload.id === d.id ? row.payload : null;
             if (!r) { showToast('The submitted report couldn’t be loaded just now. Your changes are kept: try again in a moment.'); return false; }
             srClearDraft();   // chosen: the older unsaved changes go
@@ -7553,6 +7596,7 @@
             flush: srFlushDraft,
             resume: async function () {
                 srFlushDraft();
+                _srOpenSeq++;   // a report still loading doesn't replace the resumed one
                 const d = window.hgSrDraft.get();
                 if (!d) return false;
                 openWindow('servicereport');
@@ -7650,12 +7694,14 @@
             generateSrPdf(r, share);
         }
         function shareServiceReportPdf() { exportServiceReportPdf(true); }
-        // One PDF per report at a time: a second tap while the first is still loading does nothing.
+        // One PDF and one Share per report at a time: a second tap on the same button while the first is still loading
+        // does nothing (a Share tapped while that report's PDF loads still shares).
         const _srPdfBusy = {};
         function exportStoredSrPdf(id, share) {
-            if (_srPdfBusy[id]) return Promise.resolve();
-            _srPdfBusy[id] = true;
-            return srExportStoredPdf(id, share).finally(() => { delete _srPdfBusy[id]; });
+            const key = (share ? 'share:' : 'pdf:') + id;
+            if (_srPdfBusy[key]) return Promise.resolve();
+            _srPdfBusy[key] = true;
+            return srExportStoredPdf(id, share).finally(() => { delete _srPdfBusy[key]; });
         }
         async function srExportStoredPdf(id, share) {
             let r = LS.get('hadron_sr', []).find(x => x.id === id);
@@ -7669,12 +7715,13 @@
                     showToast('Loading the submitted copy…', 3000);
                     try { row = await Promise.race([window.HG_DB.service_reports.get(id), new Promise(res => setTimeout(() => res(null), 3000))]); } catch (_) {}
                 }
-                if (row && row.payload && row.payload.id === id) r = row.payload;
+                if (row && row.payload && row.payload.id === id) { r = row.payload; hideToastIf('Loading the submitted copy…'); }
                 else showToast('The submitted copy of this report couldn’t be loaded: this PDF is of the copy on this phone.', 4000);
             }
             if (!r) {   // cloud-only report (from another device) — fetch its full payload, at most 4 s (then a later tap tries again)
-                let row = null, late = true;
-                if (window.HG_DB && window.HG_DB.service_reports && !window.__hgOfflineSession && navigator.onLine !== false) {
+                const cloud = !!(window.HG_DB && window.HG_DB.service_reports);
+                let row = null, late = cloud;   // offline or no answer: it may well be there
+                if (cloud && !window.__hgOfflineSession && navigator.onLine !== false) {
                     showToast('Loading the report…', 4000);
                     const TIMEOUT = {};
                     try { row = await Promise.race([window.HG_DB.service_reports.get(id), new Promise(res => setTimeout(() => res(TIMEOUT), 4000))]); } catch (_) { row = TIMEOUT; }
@@ -7682,18 +7729,21 @@
                 }
                 r = row && row.payload && row.payload.id === id ? row.payload : null;
                 if (!r) { showToast(late ? 'This report isn’t on this phone and couldn’t be loaded just now: try again with a connection.' : 'Report not found', 4000); return; }
+                hideToastIf('Loading the report…');
             }
             generateSrPdf(r, share);
         }
-        let _srLogoData = null, _srLogoTried = false;
-        async function srLoadLogo() {
-            if (_srLogoData || _srLogoTried) return _srLogoData;
-            _srLogoTried = true;
-            try {
-                const res = await fetch('./Hadron_Logo.png'); const blob = await res.blob();
-                _srLogoData = await new Promise((resolve) => { const rd = new FileReader(); rd.onload = e => resolve(e.target.result); rd.onerror = () => resolve(null); rd.readAsDataURL(blob); });
-            } catch (_) {}
-            return _srLogoData;
+        let _srLogoData = null, _srLogoLoad = null;
+        // Loaded once (a failure isn't retried); a PDF built while it loads (PDF + Share at the same time) waits for it too.
+        function srLoadLogo() {
+            if (!_srLogoLoad) _srLogoLoad = (async () => {
+                try {
+                    const res = await fetch('./Hadron_Logo.png'); const blob = await res.blob();
+                    _srLogoData = await new Promise((resolve) => { const rd = new FileReader(); rd.onload = e => resolve(e.target.result); rd.onerror = () => resolve(null); rd.readAsDataURL(blob); });
+                } catch (_) {}
+                return _srLogoData;
+            })();
+            return _srLogoLoad;
         }
         async function generateSrPdf(r, share) {
             if (!window.jspdf) { showToast('PDF lib still loading'); return; }

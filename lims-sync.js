@@ -109,9 +109,26 @@
   // ── Mappers: cloud row → local row ──────────────────────
   // We trust the payload jsonb for everything (LIMS schema is the source of
   // truth), and only fall back to typed columns when payload is absent.
+  // The lists the LIMS views rely on (s.tests.length, w.qc.filter …). A row from the cloud without one, or with
+  // something else in its place (any member can write a row), gets an empty list: one malformed row mustn't blank a
+  // shared view for the whole company. A profile's tests are in testIds (the profile form) or tests (the catalogue),
+  // and the views fall back from one to the other: whichever isn't a list goes.
+  const LIST_FIELDS = { samples: ['tests', 'custody'], worksheets: ['samples', 'qc'], instruments: ['tests'], quotes: ['items'] };
+  // Of those, the lists of records the views read fields of (c.event, q.status, it.profileId): a null or a bare value in one goes.
+  const RECORD_LISTS = { samples: ['custody'], worksheets: ['qc'], quotes: ['items'] };
   function mapIn(localStore, cloudRow) {
+    const obj = mapInRow(localStore, cloudRow);
+    if (!obj || typeof obj !== 'object') return obj;
+    (LIST_FIELDS[localStore] || []).forEach(f => { if (!Array.isArray(obj[f])) obj[f] = []; });
+    (RECORD_LISTS[localStore] || []).forEach(f => { obj[f] = obj[f].filter(x => x && typeof x === 'object'); });
+    if (localStore === 'profiles') ['testIds', 'tests'].forEach(f => { if (obj[f] != null && !Array.isArray(obj[f])) delete obj[f]; });
+    return obj;
+  }
+  function mapInRow(localStore, cloudRow) {
     if (cloudRow && cloudRow.payload && typeof cloudRow.payload === 'object') {
-      const obj = Object.assign({ id: cloudRow.id }, cloudRow.payload);
+      // The row's own id, not the payload's: a row inserted with another record's id in its payload (operators may insert
+      // rows, not update them) mustn't replace that record on every phone.
+      const obj = Object.assign({}, cloudRow.payload, { id: cloudRow.id });
       // Always trust the typed provenance columns over whatever is in payload,
       // so ERP-bridged clients stay flagged read-only locally.
       if (localStore === 'clients') {

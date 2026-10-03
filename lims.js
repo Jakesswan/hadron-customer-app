@@ -1677,8 +1677,8 @@
                           <option value="authorised" ${c.status==='authorised'?'selected':''}>Authorised</option>
                         </select>
                       </td>
-                      <td><input type="date" class="lims-search cf_assessed" data-test-id="${esc(t.id)}" value="${esc((c.assessed||'').slice(0,10))}" style="padding:6px 8px;font-size:13px;"></td>
-                      <td><input type="date" class="lims-search cf_review" data-test-id="${esc(t.id)}" value="${esc((c.nextReview||'').slice(0,10))}" style="padding:6px 8px;font-size:13px;"></td>
+                      <td><input type="date" class="lims-search cf_assessed" data-test-id="${esc(t.id)}" value="${esc(String(c.assessed||'').slice(0,10))}" style="padding:6px 8px;font-size:13px;"></td>
+                      <td><input type="date" class="lims-search cf_review" data-test-id="${esc(t.id)}" value="${esc(String(c.nextReview||'').slice(0,10))}" style="padding:6px 8px;font-size:13px;"></td>
                     </tr>`;
                   }).join('')}
                 </tbody>
@@ -1930,12 +1930,15 @@
     doc.setFont('helvetica','bold'); doc.setFontSize(10);
     doc.text('Client', 12, 48); doc.text('Sample', 110, 48);
     doc.setFont('helvetica','normal'); doc.setFontSize(9);
-    doc.text((client?client.name:'—').slice(0,50), 12, 54);
-    doc.text((client?client.contact:'').slice(0,50), 12, 59);
-    doc.text((client?client.address:'').slice(0,50), 12, 64);
-    doc.text('Barcode: '+s.barcode, 110, 54);
-    doc.text(('Description: '+s.description).slice(0,55), 110, 59);
-    doc.text('Matrix: '+s.matrix, 110, 64);
+    // every text a string: a client without a contact or address (an ERP customer), a test without a method or unit,
+    // made jsPDF throw and the PDF silently didn't come
+    const str = (v) => (v == null ? '' : String(v));
+    doc.text((str(client && client.name) || '—').slice(0,50), 12, 54);
+    doc.text(str(client && client.contact).slice(0,50), 12, 59);
+    doc.text(str(client && client.address).slice(0,50), 12, 64);
+    doc.text('Barcode: '+str(s.barcode), 110, 54);
+    doc.text(('Description: '+str(s.description)).slice(0,55), 110, 59);
+    doc.text('Matrix: '+str(s.matrix), 110, 64);
     doc.text('Sampled: '+fmtDT(s.sampledAt), 12, 74);
     doc.text('Received: '+fmtDT(s.received), 110, 74);
 
@@ -1954,10 +1957,10 @@
       const t = testMap[tid]; const r = results.find(x=>x.testId===tid);
       if (!t || !r) return;
       if (r.flag === 'fail') anyFail = true;
-      doc.text(t.name.slice(0,22), 12, y+4);
-      doc.text(t.method.slice(0,22), 50, y+4);
-      doc.text(String(r.value), 100, y+4);
-      doc.text(t.unit, 125, y+4);
+      doc.text(str(t.name).slice(0,22), 12, y+4);
+      doc.text(str(t.method).slice(0,22), 50, y+4);
+      doc.text(str(r.value), 100, y+4);
+      doc.text(str(t.unit), 125, y+4);
       doc.text(t.specMin!=null?(t.specMin+'–'+t.specMax):'—', 145, y+4);
       if (r.flag === 'fail') { doc.setTextColor(220,38,38); doc.text('FAIL', 180, y+4); doc.setTextColor(0,0,0); }
       else { doc.setTextColor(42,157,63); doc.text('PASS', 180, y+4); doc.setTextColor(0,0,0); }
@@ -1978,9 +1981,9 @@
     // Signature
     const auth = users.find(u => results[0] && u.id === results[0].authoriser) || userMap['u-mgr'];
     doc.setFont('helvetica','bold'); doc.text('Authorised by', 10, y);
-    doc.setFont('helvetica','normal'); doc.text((auth?auth.name:''), 10, y+5);
+    doc.setFont('helvetica','normal'); doc.text(str(auth && auth.name), 10, y+5);
     doc.text('Electronically signed: '+new Date().toLocaleString(), 10, y+10);
-    doc.text('Signature: '+(auth?auth.signature:''), 10, y+15);
+    doc.text('Signature: '+str(auth && auth.signature), 10, y+15);
 
     doc.setFontSize(7); doc.setTextColor(100,100,100);
     doc.text('Results apply only to items tested as received. Report may not be reproduced, except in full, without written approval of the laboratory.', 10, 285);
@@ -2392,8 +2395,8 @@
           <div class="lims-field"><label>Serial number</label><input id="if_serial" class="lims-search" value="${esc(i.serial)}" placeholder="e.g. HI25501"></div>
           <div class="lims-field"><label>Location</label><input id="if_location" class="lims-search" value="${esc(i.location)}" placeholder="e.g. Lab A — Bench 1"></div>
           <div class="lims-field"><label>Calibration interval (days)</label><input id="if_calIntDays" type="number" min="1" class="lims-search" value="${esc(i.calIntDays||90)}"></div>
-          <div class="lims-field"><label>Last calibration</label><input id="if_lastCal" type="date" class="lims-search" value="${esc((i.lastCal||'').slice(0,10))}"></div>
-          <div class="lims-field"><label>Next calibration</label><input id="if_nextCal" type="date" class="lims-search" value="${esc((i.nextCal||'').slice(0,10))}" placeholder="auto from interval"></div>
+          <div class="lims-field"><label>Last calibration</label><input id="if_lastCal" type="date" class="lims-search" value="${esc(String(i.lastCal||'').slice(0,10))}"></div>
+          <div class="lims-field"><label>Next calibration</label><input id="if_nextCal" type="date" class="lims-search" value="${esc(String(i.nextCal||'').slice(0,10))}" placeholder="auto from interval"></div>
           <div class="lims-field"><label>Status</label>
             <select id="if_status" class="lims-search">
               <option value="active"  ${i.status==='active' ?'selected':''}>Active</option>
@@ -2484,8 +2487,8 @@
             </select>
           </div>
           <div class="lims-field"><label>Version</label><input id="df_ver" class="lims-search" value="${esc(d.ver)}" placeholder="e.g. 1.0"></div>
-          <div class="lims-field"><label>Effective date</label><input id="df_effective" type="date" class="lims-search" value="${esc((d.effective||'').slice(0,10))}"></div>
-          <div class="lims-field"><label>Review by</label><input id="df_review" type="date" class="lims-search" value="${esc((d.review||'').slice(0,10))}"></div>
+          <div class="lims-field"><label>Effective date</label><input id="df_effective" type="date" class="lims-search" value="${esc(String(d.effective||'').slice(0,10))}"></div>
+          <div class="lims-field"><label>Review by</label><input id="df_review" type="date" class="lims-search" value="${esc(String(d.review||'').slice(0,10))}"></div>
           <div class="lims-field"><label>Owner</label>
             <select id="df_owner" class="lims-search">
               <option value="">— unassigned —</option>
@@ -2774,8 +2777,8 @@
           <div class="lims-field lims-field-wide"><label>Name *</label><input id="rf_name" class="lims-search" value="${esc(it.name)}" placeholder="e.g. pH Buffer 7.00"></div>
           <div class="lims-field"><label>Lot / batch</label><input id="rf_lot" class="lims-search" value="${esc(it.lot)}" placeholder="e.g. PH7-2025-118"></div>
           <div class="lims-field"><label>Supplier</label><input id="rf_supplier" class="lims-search" value="${esc(it.supplier)}" placeholder="e.g. Hanna, Hach, Merck"></div>
-          <div class="lims-field"><label>Received</label><input id="rf_received" type="date" class="lims-search" value="${esc((it.received||'').slice(0,10))}"></div>
-          <div class="lims-field"><label>Expiry</label><input id="rf_expiry" type="date" class="lims-search" value="${esc((it.expiry||'').slice(0,10))}"></div>
+          <div class="lims-field"><label>Received</label><input id="rf_received" type="date" class="lims-search" value="${esc(String(it.received||'').slice(0,10))}"></div>
+          <div class="lims-field"><label>Expiry</label><input id="rf_expiry" type="date" class="lims-search" value="${esc(String(it.expiry||'').slice(0,10))}"></div>
           <div class="lims-field"><label>Quantity</label><input id="rf_qty" type="number" step="any" min="0" class="lims-search" value="${esc(it.qty!=null?it.qty:0)}"></div>
           <div class="lims-field"><label>Unit</label>
             <select id="rf_unit" class="lims-search">
