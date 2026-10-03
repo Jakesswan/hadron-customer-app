@@ -18,7 +18,8 @@
 
   const tr = (k, en) => { const v = (typeof window.t === 'function') ? window.t(k) : null; return v && v !== k ? v : en; };
   const STORAGE_KEY = 'hg_home_order_v1';
-  const SORTABLE_CDN = 'https://cdn.jsdelivr.net/npm/sortablejs@1.15.2/Sortable.min.js';
+  // SortableJS 1.15.2, served by the app itself and precached (sw.js), so moving tiles works offline too.
+  const SORTABLE_SRC = './sortable-1.15.2.min.js';
   const LONG_PRESS_MS = 550;
 
   let sortables = [];
@@ -64,7 +65,7 @@
     if (window.__hgSortableLoading) return window.__hgSortableLoading;
     window.__hgSortableLoading = new Promise((res, rej) => {
       const s = document.createElement('script');
-      s.src = SORTABLE_CDN;
+      s.src = SORTABLE_SRC;
       s.async = true;
       s.onload = res;
       s.onerror = (e) => { window.__hgSortableLoading = null; s.remove(); rej(e); };   // a later try (back online) loads it again
@@ -94,11 +95,13 @@
       });
     }
   }
+  // Resolves once the cloud's order is cleared (or the write has failed).
   function clearOrder() {
     localStorage.removeItem(STORAGE_KEY);
     if (window.HG_AUTH && window.HG_AUTH.configured && typeof window.HG_AUTH.setPreference === 'function') {
-      window.HG_AUTH.setPreference('home_order', null).catch(() => {});
+      return Promise.resolve(window.HG_AUTH.setPreference('home_order', null)).catch(() => null);
     }
+    return Promise.resolve(null);
   }
 
   // The home's section grids (home.js); one grid on an older page.
@@ -244,9 +247,13 @@
     isEditing: () => editing,
     applyOrder: applyStoredOrder,
     resetOrder: () => {
-      clearOrder();
-      // Force a clean reload so the original DOM order takes effect.
-      location.reload();
+      // Force a clean reload so the original DOM order takes effect. Not before the cloud's order is cleared: the
+      // write reads the profile first (supabase-client setPreference), and the profile loaded after the reload would
+      // bring the old order back. Offline (or a write that doesn't answer within 5 s): reloaded anyway.
+      const done = clearOrder();
+      const go = () => location.reload();
+      if (navigator.onLine === false) { go(); return; }
+      Promise.race([done, new Promise((res) => setTimeout(res, 5000))]).then(go, go);
     },
     saveCurrentOrder: () => saveOrder(readCurrentOrder())
   };

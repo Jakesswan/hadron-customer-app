@@ -149,7 +149,51 @@
   }
   function savePins(list) {
     if (window.__hgTenantFrozen) return false;
-    try { localStorage.setItem(PINS_KEY, JSON.stringify(list)); return true; } catch (_) { return false; }
+    try { localStorage.setItem(PINS_KEY, JSON.stringify(list)); } catch (_) { return false; }
+    setSyncState('pending'); pushPins();   // to the person's other phones
+    return true;
+  }
+  // ── Pins follow the person to their other phones: profiles.preferences.home_pins, like the home order ──
+  // hg_home_pins_sync_v1 (this person's data on the phone, like the pins): 'pending' while a change made here
+  // hasn't reached the cloud (offline: it goes later), 'ok' once it has; not there on a phone that hasn't synced
+  // its pins yet, whose pins are then merged with the cloud's (pins made on two phones before v165 are both kept).
+  const PINS_SYNC_KEY = 'hg_home_pins_sync_v1';
+  const syncState = () => { try { return localStorage.getItem(PINS_SYNC_KEY); } catch (_) { return null; } };
+  const setSyncState = (v) => { if (window.__hgTenantFrozen) return; try { localStorage.setItem(PINS_SYNC_KEY, v); } catch (_) {} };
+  const cloudOn = () => !!(window.HG_AUTH && window.HG_AUTH.configured && typeof window.HG_AUTH.setPreference === 'function' && window.HG_PROFILE);
+  function pushPins() {
+    if (!cloudOn() || window.__hgOfflineSession || navigator.onLine === false) return;   // stays 'pending': sent later
+    const list = pinList();
+    Promise.resolve(window.HG_AUTH.setPreference('home_pins', list)).then((res) => {
+      // reached the cloud, and nothing was changed here meanwhile: in sync
+      if (res && JSON.stringify(pinList()) === JSON.stringify(list)) setSyncState('ok');
+    }, () => {});
+  }
+  // When the profile loads (sign-in, start-up, refresh) and when back online: send a change still waiting; else
+  // take the cloud's pins (a change made on another phone).
+  function syncPins() {
+    if (!cloudOn() || window.__hgTenantFrozen) return;
+    const state = syncState();
+    if (state === 'pending') { pushPins(); return; }
+    const prefs = (window.HG_PROFILE && window.HG_PROFILE.preferences) || {};
+    const cloud = Array.isArray(prefs.home_pins) ? prefs.home_pins.filter((x, i, a) => typeof x === 'string' && a.indexOf(x) === i) : null;
+    const local = pinList();
+    let next;
+    if (!cloud) next = local;                                    // none in the cloud yet: this phone's go up
+    else if (state !== 'ok') {                                   // first sync here: both kept
+      next = cloud.concat(local.filter((id) => cloud.indexOf(id) === -1));
+      // past twice the limit, pins this person can't open here make way first (as when pinning), not this phone's own
+      const can = new Set(items().map((it) => it.id));
+      for (let i = 0; next.length > PINS_MAX * 2 && i < next.length;) { if (can.has(next[i])) i++; else next.splice(i, 1); }
+      next = next.slice(0, PINS_MAX * 2);
+    }
+    else next = cloud;                                           // in sync before: the cloud's are the latest
+    if (JSON.stringify(next) !== JSON.stringify(local)) {
+      try { localStorage.setItem(PINS_KEY, JSON.stringify(next)); } catch (_) { return; }
+      syncPinToggles(); renderQuick();
+    }
+    if (!cloud || JSON.stringify(next) !== JSON.stringify(cloud)) { setSyncState('pending'); pushPins(); }
+    else setSyncState('ok');
   }
   const toast = (m) => { if (typeof window.showToast === 'function') window.showToast(m); };
   function togglePin(id) {
@@ -427,9 +471,15 @@
     // The language and the tiles' Hadron icons are applied on window load (index.html), after this ran: draw
     // again then, or a start with nothing else to redraw it (offline) keeps English words and emoji icons.
     if (document.readyState === 'complete') renderQuick(); else window.addEventListener('load', () => renderQuick());
+    // The profile can load before this (deferred) script runs; hg:profile:loaded has then been missed. auth-ui sets
+    // __hgOfflineSession to false just before sending it, after the user / organisation / restore checks.
+    if (window.HG_PROFILE && window.__hgOfflineSession === false) setTimeout(syncPins, 0);
   }
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot); else boot();
   // Roles decide which tiles show; a language change renames them (results follow the new names).
-  document.addEventListener('hg:profile:loaded', () => setTimeout(() => { refreshSections(); renderQuick(); if (input && input.value) render(); }, 0));
+  document.addEventListener('hg:profile:loaded', () => setTimeout(() => { refreshSections(); renderQuick(); if (input && input.value) render(); syncPins(); }, 0));
+  // A pin change made offline goes now. Only that: another phone's pins are taken from a profile just loaded (this
+  // page's copy of the profile can be older than another tab's, whose change it would undo).
+  window.addEventListener('online', () => setTimeout(() => { if (syncState() === 'pending') syncPins(); }, 1500));
   document.addEventListener('hg:lang:changed', () => { if (editing()) paintTileStars(); renderQuick(); if (input && input.value) render(); });
 })();

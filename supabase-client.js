@@ -330,19 +330,39 @@
         return data;
       },
 
-      // Patch a single key into profiles.preferences (jsonb merge).
-      async setPreference(key, value) {
+      // Patch a single key into profiles.preferences. The other keys are read from the server just before the write
+      // (another phone may have changed them since this one loaded the profile), and this page's writes go one at a
+      // time, so two keys saved close together (the home order, the pins) don't undo each other.
+      setPreference(key, value) {
+        const uid = (window.HG_PROFILE && window.HG_PROFILE.id) || null;   // whose preference it is, when asked
+        const run = () => this._writePreference(key, value, uid);
+        const p = (this._prefChain || Promise.resolve()).then(run, run);
+        this._prefChain = p.catch(() => null);
+        return p;
+      },
+      async _writePreference(key, value, uid) {
         if (!client) return null;
         const session = await this.getSession();
         if (!session) return null;
-        const current = (window.HG_PROFILE && window.HG_PROFILE.preferences) || {};
+        if (uid && session.user.id !== uid) return null;   // waited behind another write, and someone else signed in since
+        // Each request is given up after 15 s (a connection that never answers): the writes after it must not wait for ever.
+        const limited = async (q) => {
+          const ctrl = typeof AbortController !== 'undefined' ? new AbortController() : null;
+          const timer = ctrl ? setTimeout(() => ctrl.abort(), 15000) : 0;
+          try { return await ((ctrl && typeof q.abortSignal === 'function') ? q.abortSignal(ctrl.signal) : q); } finally { clearTimeout(timer); }
+        };
+        let current = (window.HG_PROFILE && window.HG_PROFILE.preferences) || {};
+        try {
+          const r = await limited(client.from('profiles').select('preferences').eq('id', session.user.id).maybeSingle());
+          if (r && !r.error && r.data && r.data.preferences && typeof r.data.preferences === 'object') current = r.data.preferences;
+        } catch (_) {}
         const next = Object.assign({}, current, { [key]: value });
-        const { data, error } = await client
+        const { data, error } = await limited(client
           .from('profiles')
           .update({ preferences: next })
           .eq('id', session.user.id)
           .select('preferences')
-          .maybeSingle();
+          .maybeSingle());
         if (error) { console.warn('[HG_AUTH] setPreference error', error); return null; }
         if (window.HG_PROFILE) window.HG_PROFILE.preferences = data?.preferences || next;
         return data?.preferences || next;

@@ -404,15 +404,22 @@
     let n = 0;
     try { n = (window.HG_DB && typeof window.HG_DB._queueLen === 'function') ? window.HG_DB._queueLen() : 0; } catch (_) {}
     const toSync = word('sync.pending', '{n} to sync').replace('{n}', String(n));
-    let state, words;
-    // With changes waiting the count comes first: it stays visible when a small phone cuts the chip short.
-    if (navigator.onLine === false) { state = 'offline'; words = (n ? toSync + ' · ' : '') + word('sync.offline', 'Offline'); }
-    else if (!window.HG_PROFILE) { state = 'offline'; words = (n ? toSync + ' · ' : '') + word('sync.connecting', 'Connecting…'); }
+    let state, words, more = '';
+    // With changes waiting the count comes first, then the state word ("2 to sync · Offline").
+    if (navigator.onLine === false) { state = 'offline'; if (n) { words = toSync; more = ' · ' + word('sync.offline', 'Offline'); } else words = word('sync.offline', 'Offline'); }
+    else if (!window.HG_PROFILE) { state = 'offline'; if (n) { words = toSync; more = ' · ' + word('sync.connecting', 'Connecting…'); } else words = word('sync.connecting', 'Connecting…'); }
     else if (n) { state = 'pending'; words = toSync; }
     else { state = 'synced'; words = word('sync.synced', 'Synced'); }
     chip.dataset.state = state;
-    if (text.textContent !== words) text.textContent = words;
+    if (text.textContent !== words + more) {
+      text.textContent = words;
+      if (more) { const s = document.createElement('span'); s.className = 'hg-sync-more'; s.textContent = more; text.appendChild(s); }
+    }
     chip.hidden = false;
+    // On a small phone, when the whole text doesn't fit, the state word is left to the dot (a ring = offline) and
+    // to screen readers, instead of being cut off ("2 to sync · Off…").
+    chip.classList.remove('hg-sync-compact');
+    if (more && text.clientWidth && text.scrollWidth > text.clientWidth + 1) chip.classList.add('hg-sync-compact');
   }
   let chipTimer = 0;
   function refreshSyncChipSoon() {
@@ -420,7 +427,9 @@
     chipTimer = setTimeout(function () { chipTimer = 0; refreshSyncChip(); }, 300);
   }
   window.hgRefreshSyncChip = refreshSyncChip;
-  ['hg:sync:flushed', 'hg:sync:queued', 'hg:profile:loaded', 'hg:auth:changed'].forEach(function (ev) { document.addEventListener(ev, refreshSyncChipSoon); });
+  ['hg:sync:flushed', 'hg:sync:queued', 'hg:profile:loaded', 'hg:auth:changed', 'hg:lang:changed'].forEach(function (ev) { document.addEventListener(ev, refreshSyncChipSoon); });
+  window.addEventListener('resize', refreshSyncChipSoon);   // turned, or a window resized: does the whole text fit now?
+  try { if (document.fonts && document.fonts.addEventListener) document.fonts.addEventListener('loadingdone', refreshSyncChipSoon); } catch (_) {}   // measured again in the app's own font
   window.addEventListener('online', refreshSyncChipSoon);
   window.addEventListener('offline', refreshSyncChipSoon);
   window.addEventListener('storage', function (e) { if (e.key === 'hg_sync_queue_v1' || e.key === null) refreshSyncChipSoon(); });   // another tab
@@ -463,6 +472,7 @@
     const desktop = document.getElementById('desktop');
     if (desktop) desktop.classList[visible ? 'add' : 'remove']('visible');
     document.body.classList[visible ? 'add' : 'remove']('hg-app-ready');
+    if (visible) refreshSyncChipSoon();   // the chip can only be measured once it is on screen
   }
 
   // The sign-in library is served by the app itself (and precached), so failing to load it means a
