@@ -52,60 +52,60 @@
     <!-- Supabase JS SDK (auth + cloud sync), pinned 2.117.2 and served by the app itself so sign-in
          works offline from the precache (it used to be the floating @2 from a CDN). See
          THIRD_PARTY_NOTICES.md. To upgrade: replace the file, rename it, update this tag + sw.js. -->
-    <script src="supabase-js-2.117.2.js?v=169"></script>
+    <script src="supabase-js-2.117.2.js?v=170"></script>
 
     <!-- Hadron Supabase bridge -->
-    <script src="supabase-client.js?v=169"></script>
+    <script src="supabase-client.js?v=170"></script>
 
     <!-- Shared UI primitives (in-app sheets) — loaded before auth-ui, which uses them -->
-    <script src="hg-ui.js?v=169" defer></script>
+    <script src="hg-ui.js?v=170" defer></script>
     <!-- Auth UI (login/signup gate, profile binding) -->
-    <script src="auth-ui.js?v=169" defer></script>
+    <script src="auth-ui.js?v=170" defer></script>
 
     <!-- Push notifications -->
-    <script src="push.js?v=169" defer></script>
+    <script src="push.js?v=170" defer></script>
 
     <!-- Translation bundle -->
-    <script src="i18n.js?v=169"></script>
+    <script src="i18n.js?v=170"></script>
 
     <!-- Hadron Tristroke icon system (matches the ERP) -->
-    <script src="hadron-icons.js?v=169" defer></script>
+    <script src="hadron-icons.js?v=170" defer></script>
 
     <!-- Emoji the app has an icon for become Tristroke icons (the rest stay the phone's own emoji) -->
-    <script src="emoji.js?v=169" defer></script>
+    <script src="emoji.js?v=170" defer></script>
 
     <!-- Customizable home grid (drag-to-reorder) -->
-    <script src="home.js?v=169" defer></script>
-    <script src="customize.js?v=169" defer></script>
+    <script src="home.js?v=170" defer></script>
+    <script src="customize.js?v=170" defer></script>
 
     <!-- Data Manager (Excel import/export) -->
-    <script src="data-manager.js?v=169" defer></script>
+    <script src="data-manager.js?v=170" defer></script>
 
     <!-- QR encoder (MIT, Kazuhiko Arase) -->
-    <script src="qr.js?v=169"></script>
+    <script src="qr.js?v=170"></script>
 
     <!-- QR Builder app -->
-    <script src="qr-app.js?v=169" defer></script>
+    <script src="qr-app.js?v=170" defer></script>
 
     <!-- Pool Water module -->
-    <script src="pool.js?v=169" defer></script>
+    <script src="pool.js?v=170" defer></script>
     <!-- Cooling Tower field calculator -->
-    <script src="coolingtower.js?v=169" defer></script>
+    <script src="coolingtower.js?v=170" defer></script>
     <!-- Boiler / Steam field calculator -->
-    <script src="boiler.js?v=169" defer></script>
+    <script src="boiler.js?v=170" defer></script>
     <!-- Water softener sizing calculator -->
-    <script src="softener.js?v=169" defer></script>
-    <script src="academy-content.js?v=169" defer></script>
-    <script src="academy.js?v=169" defer></script>
+    <script src="softener.js?v=170" defer></script>
+    <script src="academy-content.js?v=170" defer></script>
+    <script src="academy.js?v=170" defer></script>
 
-    <script src="searchable-select.js?v=169" defer></script>
-    <script src="trends.js?v=169" defer></script>
+    <script src="searchable-select.js?v=170" defer></script>
+    <script src="trends.js?v=170" defer></script>
 
     <!-- LIMS module (loaded at end of body via defer) -->
-    <script src="lims.js?v=169" defer></script>
-    <script src="lims-sync.js?v=169" defer></script>
-    <script src="portal.js?v=169" defer></script>
-    <script src="team.js?v=169" defer></script>
+    <script src="lims.js?v=170" defer></script>
+    <script src="lims-sync.js?v=170" defer></script>
+    <script src="portal.js?v=170" defer></script>
+    <script src="team.js?v=170" defer></script>
 
 
     <style>
@@ -2834,7 +2834,7 @@
                 <div class="hg-section-title">About</div>
                 <div class="hg-kvgrid">
                     <div class="hg-kv"><div class="k">App</div><div class="v">Hadron Group</div></div>
-                    <div class="hg-kv"><div class="k">Version</div><div class="v">v169</div></div>
+                    <div class="hg-kv"><div class="k">Version</div><div class="v">v170</div></div>
                     <div class="hg-kv"><div class="k">Platform</div><div class="v">PWA</div></div>
                 </div>
             </div>
@@ -4182,7 +4182,7 @@
             </div>
         </div>
     </div>
-    <div id="limsToastHost"></div>
+    <div id="limsToastHost" role="status" aria-live="polite"></div>
 
     <!-- ================ QR Builder ================ -->
     <div class="window" id="window-qr">
@@ -4228,7 +4228,7 @@
     </div>
 
     <!-- Transient toast notifications -->
-    <div id="toast" class="toast"></div>
+    <div id="toast" class="toast" role="status" aria-live="polite" aria-atomic="true"></div>
 
     <!-- Onboarding overlay -->
     <div id="onboardingOverlay" class="onboarding-overlay" aria-hidden="true">
@@ -5860,7 +5860,8 @@
             clearTimeout(toastTimer);
             toastTimer = setTimeout(function () {
                 el.classList.remove('visible');
-            }, ms || 2200);
+                toastTimer = setTimeout(function () { el.textContent = ''; }, 300);   // faded: out of the accessibility tree too (a screen
+            }, ms || 2200);                                                          // reader moving through the page doesn't find an old message)
         }
         // Hides the toast while it still shows this message (a "Loading…" toast once the load is done).
         function hideToastIf(message) {
@@ -5868,6 +5869,7 @@
             if (!el || el.textContent !== message) return;
             el.classList.remove('visible');
             clearTimeout(toastTimer);
+            toastTimer = setTimeout(function () { el.textContent = ''; }, 300);
         }
 
         /* =========================================================
@@ -6391,6 +6393,14 @@
         // Rebuilds every field (customer/site, sample points + test values, photos, signature)
         // and reuses sr_reportId, so a save upserts THIS report rather than creating a new one.
         // Only the owner reaches this (the Edit button is gated); RLS blocks anyone else's write.
+        // A report that isn't on this phone and didn't come from the cloud: offline, or with no answer in time, it may well be
+        // there (so: try again); an answer without it, it isn't.
+        function srNotHereMsg(late) {
+            if (!late) return 'Report not found';
+            return (window.__hgOfflineSession || navigator.onLine === false)
+                ? 'This report isn’t on this phone, and it can’t be loaded offline: try again with a connection.'
+                : 'This report isn’t on this phone and couldn’t be loaded just now: try again in a moment.';
+        }
         async function openServiceReport(id, readOnly) {
             srEnsureAutosaveWired();
             // What the report window shows now. A copy loaded from the cloud (up to 4 s) doesn't replace it if meanwhile the
@@ -6438,7 +6448,7 @@
                 r = row && row.payload && row.payload.id === id ? row.payload : null;
                 if (!r) {
                     if (overtaken()) dropLoading();
-                    else showToast(late ? 'This report isn’t on this phone and couldn’t be loaded just now: try again with a connection.' : 'Report not found', 4000);
+                    else showToast(srNotHereMsg(late), 6000);
                     return;
                 }
             }
@@ -7746,10 +7756,10 @@
                     late = row === TIMEOUT; if (late) row = null;
                 }
                 r = row && row.payload && row.payload.id === id ? row.payload : null;
-                if (!r) { showToast(late ? 'This report isn’t on this phone and couldn’t be loaded just now: try again with a connection.' : 'Report not found', 4000); return; }
+                if (!r) { showToast(srNotHereMsg(late), 6000); return; }
                 hideToastIf('Loading the report…');
             }
-            generateSrPdf(srCleanReport(r), share);
+            await generateSrPdf(srCleanReport(r), share);   // the busy flag holds until it's made: a double tap made two
         }
         let _srLogoData = null, _srLogoLoad = null;
         // Loaded once (a failure isn't retried); a PDF built while it loads (PDF + Share at the same time) waits for it too.

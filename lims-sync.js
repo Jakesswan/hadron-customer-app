@@ -167,6 +167,22 @@
     }
   }
 
+  // The keys a record can have on this phone. The cloud's ids are text; a record imported from Excel before v170 with a
+  // number as its ID is kept under that number (mapIn keeps it), so an all-digits id may be either.
+  function localKeys(id) {
+    const s = String(id);
+    return /^\d+$/.test(s) && String(Number(s)) === s ? [s, Number(s)] : [id];
+  }
+  // A record just written here from the cloud: a copy under the id's other form (number vs text) is the same record (one
+  // cloud row), left by an older version or written by another phone with the id as text. It goes: else it shows twice,
+  // stale, for good (it is never sent: its id is on the server).
+  async function dropTwin(store, keptId) {
+    if (typeof window.HG_LIMS_DB.get !== 'function') return;
+    for (const k of localKeys(keptId)) {
+      if (k !== keptId && await window.HG_LIMS_DB.get(store, k)) await window.HG_LIMS_DB.delLocal(store, k);
+    }
+  }
+
   // ── State ───────────────────────────────────────────────
   const state = {
     serverIds: {},            // store -> Set of the ids the last pull got (unset: that pull failed)
@@ -256,12 +272,16 @@
             // Deleted on the server (a deletion mark, migration 0018): gone here too. Its id stays in
             // serverIds, so pushAllOnce never sends it back.
             if (r.deleted_at) {
-              const had = typeof window.HG_LIMS_DB.get === 'function' ? await window.HG_LIMS_DB.get(store, r.id) : true;
-              if (had) { await window.HG_LIMS_DB.delLocal(store, r.id); removed++; }
+              // a record imported with a number as its ID is kept under that number here (the row's id is its text)
+              for (const k of localKeys(r.id)) {
+                const had = typeof window.HG_LIMS_DB.get === 'function' ? await window.HG_LIMS_DB.get(store, k) : k === r.id;
+                if (had) { await window.HG_LIMS_DB.delLocal(store, k); removed++; }
+              }
               continue;
             }
             const local = mapIn(store, r);
             await window.HG_LIMS_DB.putLocal(store, local);
+            await dropTwin(store, local.id);
             pulled++;
             byStore[store] = (byStore[store] || 0) + 1;
             if (store === 'clients' && local.source === 'erp') erpClients++;
@@ -300,7 +320,7 @@
       try {
         const rows = await window.HG_LIMS_DB.all(store);
         for (const r of rows) {
-          if (!r || onServer.has(r.id)) continue;
+          if (!r || onServer.has(String(r.id))) continue;   // the cloud's ids are text (a record imported with a number as its ID)
           // One-way bridge: ERP-owned clients are read-only here, never pushed up.
           if (store === 'clients' && r && r.source === 'erp') continue;
           const cloudRow = mapOut(store, r, state.orgId);
@@ -328,7 +348,7 @@
         try {
           if (payload.eventType === 'DELETE') {
             const id = payload.old?.id;
-            if (id) await pause(() => window.HG_LIMS_DB.delLocal(store, id));
+            if (id) for (const k of localKeys(id)) await pause(() => window.HG_LIMS_DB.delLocal(store, k));
           } else {
             const row = payload.new;
             if (!row) return;
@@ -341,10 +361,11 @@
               let pending = new Set();
               try { pending = window.HG_DB._pendingKeys ? window.HG_DB._pendingKeys() : pending; } catch (_) {}
               if (pending.has(cloudTable + ':' + row.id)) return;   // this phone's change, still on its way up, brings it back
-              await pause(() => window.HG_LIMS_DB.delLocal(store, row.id));
+              for (const k of localKeys(row.id)) await pause(() => window.HG_LIMS_DB.delLocal(store, k));   // a number-keyed copy too
             } else {
               const local = mapIn(store, row);
               await pause(() => window.HG_LIMS_DB.putLocal(store, local));
+              await dropTwin(store, local.id);
             }
           }
           // Rerender LIMS only if it's already open; otherwise it'll pick up

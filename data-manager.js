@@ -255,6 +255,8 @@
       requiredFields: ['name'],
       matchKey: 'name',
       uidPrefix: 'inv',
+      // a reagent stored before v170 with a date cell's serial day number exports as its date (as the list shows it)
+      async exportTransform(items) { return items.map(it => Object.assign({}, it, normaliseImported({ received: it.received, expiry: it.expiry }))); },
       async list() {
         if (window.HG_LIMS_DB) {
           try { await window.HG_LIMS_DB.open(); } catch (_) {}
@@ -290,6 +292,22 @@
     });
   }
 
+  // A spreadsheet's numbers where the app keeps text. An ID cell holding a number is kept as text, as the cloud keeps it
+  // (as a number it was pushed again on every start, and came back after being deleted elsewhere). A date cell comes as
+  // Excel's serial day number (45567 = 2024-10-02): kept as the date (yyyy-mm-dd), what the forms show.
+  const IMPORT_DATE_FIELDS = ['received', 'expiry'];
+  function normaliseImported(row) {
+    const out = Object.assign({}, row);
+    if (typeof out.id === 'number' && isFinite(out.id)) out.id = out.id ? String(out.id) : '';   // 0: no ID, a new one is made (as before)
+    IMPORT_DATE_FIELDS.forEach(f => {
+      const v = out[f];
+      if (typeof v === 'number' && isFinite(v) && v > 20000 && v < 2958466) out[f] = new Date(Math.round((v - 25569) * 86400000)).toISOString().slice(0, 10);
+      // a Date (SheetJS 0.18 with cellDates) is the cell's date at LOCAL midnight: its local calendar date (in UTC it is
+      // the day before in SA)
+      else if (v instanceof Date && !isNaN(v)) out[f] = v.getFullYear() + '-' + String(v.getMonth() + 1).padStart(2, '0') + '-' + String(v.getDate()).padStart(2, '0');
+    });
+    return out;
+  }
   function rowsToObjects(adapter, rows) {
     // rows is array of objects with header keys; map to entity field keys
     return rows.map(r => {
@@ -297,7 +315,7 @@
       adapter.columns.forEach(([header, field]) => {
         if (r[header] !== undefined) obj[field] = r[header];
       });
-      return obj;
+      return normaliseImported(obj);
     });
   }
 
@@ -360,7 +378,7 @@
     let added = 0, updated = 0;
     for (const row of rows) {
       // Strip transient validation flags before persisting.
-      const clean = Object.assign({}, row);
+      const clean = normaliseImported(row);
       delete clean.__unresolvedCustomer;
       let target = null;
       if (clean.id && byId[clean.id]) target = byId[clean.id];

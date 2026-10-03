@@ -106,9 +106,16 @@
   // A value inside a JS string in an inline handler (onclick="f('…')"): hex escapes, which HTML decoding leaves alone
   // (esc() is wrong there: the browser turns &#39; back into a quote before the JS runs).
   const escJs = (v) => String(v == null ? '' : v).replace(/[\\'"<>&\r\n\t]/g, (c) => '\\x' + c.charCodeAt(0).toString(16).padStart(2, '0'));
+  // A record's id as a JS literal in an inline handler: a record imported from Excel before v170 with a number as its ID
+  // is kept under that NUMBER ('1001' finds nothing): the number stays a number.
+  const jsId = (v) => (typeof v === 'number' && isFinite(v)) ? String(v) : "'" + escJs(v) + "'";
   const uid = (p) => p + '-' + Date.now().toString(36) + '-' + Math.random().toString(36).slice(2,6);
   const nowISO = () => new Date().toISOString();
   const fmtDate = (iso) => { if(!iso) return '—'; const d=new Date(iso); return d.toLocaleDateString(); };
+  // A reagent's date imported from Excel before v170 can be the spreadsheet's serial day number (45567 = 2024-10-02):
+  // read as that date (not 1/1/1970, not "Expired"; the form showed it empty and saved it empty).
+  const dateOf = (v) => { const n = typeof v === 'number' ? v : (typeof v === 'string' && /^\d{5}(\.\d+)?$/.test(v) ? +v : NaN); return (isFinite(n) && n > 20000 && n < 2958466) ? new Date(Math.round((n - 25569) * 86400000)).toISOString().slice(0, 10) : v; };
+  window.limsDateOf = dateOf;   // the QR Builder's reagent label (qr-app.js)
   const fmtDT = (iso) => { if(!iso) return '—'; const d=new Date(iso); return d.toLocaleString(); };
   const daysBetween = (a,b) => Math.round((new Date(b)-new Date(a))/86400000);
   const daysFromNow = (iso) => daysBetween(new Date(), iso);
@@ -577,8 +584,8 @@
 
     const calDue14 = instruments.filter(i => { const d = daysBetween(now, i.nextCal); return d <= 14 && d >= 0; });
     const calOverdue = instruments.filter(i => daysBetween(now, i.nextCal) < 0);
-    const invExpSoon = inventory.filter(i => { const d = daysBetween(now, i.expiry); return d <= 30 && d >= 0; });
-    const invExpired = inventory.filter(i => daysBetween(now, i.expiry) < 0);
+    const invExpSoon = inventory.filter(i => { const d = daysBetween(now, dateOf(i.expiry)); return d <= 30 && d >= 0; });
+    const invExpired = inventory.filter(i => daysBetween(now, dateOf(i.expiry)) < 0);
     const invLow = inventory.filter(i => i.qty < i.min);
     const ncsOpen = ncs.filter(n => n.status === 'open');
     const failFlags = results.filter(r => r.flag === 'fail').length;
@@ -624,7 +631,7 @@
             ${calOverdue.map(i => `<li class="alert-fail">⚠️ <strong>Cal overdue:</strong> ${esc(i.name)} (by ${Math.abs(daysBetween(now,i.nextCal))}d) <a href="#" onclick="event.preventDefault();limsGo('instrument',{id:'${escJs(i.id)}'})">open</a></li>`).join('')}
             ${calDue14.map(i => `<li class="alert-warn">🔔 <strong>Cal due ${daysBetween(now,i.nextCal)}d:</strong> ${esc(i.name)} <a href="#" onclick="event.preventDefault();limsGo('instrument',{id:'${escJs(i.id)}'})">open</a></li>`).join('')}
             ${invExpired.map(it => `<li class="alert-fail">🛑 <strong>Reagent expired:</strong> ${esc(it.name)} (lot ${esc(it.lot)}) <a href="#" onclick="event.preventDefault();limsGo('inventory')">open</a></li>`).join('')}
-            ${invExpSoon.map(it => `<li class="alert-warn">⏳ <strong>Expiring in ${daysBetween(now,it.expiry)}d:</strong> ${esc(it.name)} (lot ${esc(it.lot)})</li>`).join('')}
+            ${invExpSoon.map(it => `<li class="alert-warn">⏳ <strong>Expiring in ${daysBetween(now,dateOf(it.expiry))}d:</strong> ${esc(it.name)} (lot ${esc(it.lot)})</li>`).join('')}
             ${ncsOpen.map(n => `<li class="alert-warn">📌 <strong>Open NC:</strong> ${esc(n.type)} — ${esc(n.ref)}</li>`).join('')}
             ${(calOverdue.length+calDue14.length+invExpired.length+invExpSoon.length+ncsOpen.length===0) ? '<li class="alert-ok">✅ All clear — no active alerts.</li>':''}
           </ul>
@@ -1438,7 +1445,7 @@
   async function renderInventory(root) {
     const list = await DB.all('inventory');
     const now = new Date();
-    const sorted = list.slice().sort((a,b)=>new Date(a.expiry||0)-new Date(b.expiry||0));
+    const sorted = list.slice().sort((a,b)=>new Date(dateOf(a.expiry)||0)-new Date(dateOf(b.expiry)||0));
     root.innerHTML = `
       ${breadcrumb([{label:'LIMS',view:'hub'},{label:'Inventory',view:'inventory'}])}
       <div class="lims-toolbar">
@@ -1448,7 +1455,7 @@
       <table class="lims-table">
         <thead><tr><th>Item</th><th>Lot</th><th>Supplier</th><th>Received</th><th>Expiry</th><th>Qty</th><th>Storage</th><th>Status</th><th></th></tr></thead>
         <tbody>${sorted.length ? sorted.map(it => {
-          const exp = it.expiry ? daysBetween(now, it.expiry) : null;
+          const exp = it.expiry ? daysBetween(now, dateOf(it.expiry)) : null;
           const statusC = exp == null ? chip('No date','warn') : (exp < 0 ? chip('Expired','fail') : (exp <= 30 ? chip('Expires '+exp+'d','warn') : chip('OK','ok')));
           const lowC = (it.qty != null && it.min != null && it.qty < it.min) ? chip('Low stock','warn') : '';
           const safeName = it.name == null ? '' : String(it.name);   // raw: the sticker button passes it through escJs
@@ -1457,16 +1464,16 @@
             <td><strong>${esc(it.name)}</strong></td>
             <td>${esc(it.lot)}</td>
             <td>${esc(it.supplier)}</td>
-            <td>${fmtDate(it.received)}</td>
-            <td>${fmtDate(it.expiry)}</td>
+            <td>${fmtDate(dateOf(it.received))}</td>
+            <td>${fmtDate(dateOf(it.expiry))}</td>
             <td>${esc(it.qty)} ${esc(it.unit)} ${lowC}</td>
             <td>${esc(it.storage)}</td>
             <td>${statusC}</td>
             <td style="white-space:nowrap;">
-              <button class="lims-btn" title="Print sticker" onclick="event.stopPropagation();limsQrPrint('inventory','${escJs(it.id)}','${escJs(safeName)}','Lot ${escJs(safeLot)} · Exp ${escJs(fmtDate(it.expiry))}')">🖨</button>
+              <button class="lims-btn" title="Print sticker" onclick="event.stopPropagation();limsQrPrint('inventory','${escJs(it.id)}','${escJs(safeName)}','Lot ${escJs(safeLot)} · Exp ${escJs(fmtDate(dateOf(it.expiry)))}')">🖨</button>
               <button class="lims-btn ghost" title="QR Builder" onclick="event.stopPropagation();limsQrBuilder('inventory','${escJs(it.id)}')">⬛</button>
-              <button class="lims-btn ghost" title="Edit" onclick="event.stopPropagation();limsGo('inventory-form',{id:'${escJs(it.id)}'})">✏️</button>
-              <button class="lims-btn ghost" title="Delete" onclick="event.stopPropagation();limsDeleteInventory('${escJs(it.id)}')">🗑️</button>
+              <button class="lims-btn ghost" title="Edit" onclick="event.stopPropagation();limsGo('inventory-form',{id:${jsId(it.id)}})">✏️</button>
+              <button class="lims-btn ghost" title="Delete" onclick="event.stopPropagation();limsDeleteInventory(${jsId(it.id)})">🗑️</button>
             </td>
           </tr>`;
         }).join('') : '<tr><td colspan="9" class="lims-empty">No reagents in inventory yet — click ➕ Add reagent to register one.</td></tr>'}</tbody>
@@ -2777,8 +2784,8 @@
           <div class="lims-field lims-field-wide"><label>Name *</label><input id="rf_name" class="lims-search" value="${esc(it.name)}" placeholder="e.g. pH Buffer 7.00"></div>
           <div class="lims-field"><label>Lot / batch</label><input id="rf_lot" class="lims-search" value="${esc(it.lot)}" placeholder="e.g. PH7-2025-118"></div>
           <div class="lims-field"><label>Supplier</label><input id="rf_supplier" class="lims-search" value="${esc(it.supplier)}" placeholder="e.g. Hanna, Hach, Merck"></div>
-          <div class="lims-field"><label>Received</label><input id="rf_received" type="date" class="lims-search" value="${esc(String(it.received||'').slice(0,10))}"></div>
-          <div class="lims-field"><label>Expiry</label><input id="rf_expiry" type="date" class="lims-search" value="${esc(String(it.expiry||'').slice(0,10))}"></div>
+          <div class="lims-field"><label>Received</label><input id="rf_received" type="date" class="lims-search" value="${esc(String(dateOf(it.received)||'').slice(0,10))}"></div>
+          <div class="lims-field"><label>Expiry</label><input id="rf_expiry" type="date" class="lims-search" value="${esc(String(dateOf(it.expiry)||'').slice(0,10))}"></div>
           <div class="lims-field"><label>Quantity</label><input id="rf_qty" type="number" step="any" min="0" class="lims-search" value="${esc(it.qty!=null?it.qty:0)}"></div>
           <div class="lims-field"><label>Unit</label>
             <select id="rf_unit" class="lims-search">
@@ -2800,7 +2807,7 @@
           <div class="lims-field lims-field-wide"><label>Notes</label><input id="rf_notes" class="lims-search" value="${esc(it.notes||'')}" placeholder="Anything operators should know"></div>
         </div>
         <div style="margin-top:14px;display:flex;gap:8px;flex-wrap:wrap;">
-          <button class="lims-btn primary" onclick="limsSaveInventory(${isNew?'null':"'"+escJs(id)+"'"})">💾 Save reagent</button>
+          <button class="lims-btn primary" onclick="limsSaveInventory(${isNew?'null':jsId(it.id)})">💾 Save reagent</button>
           <button class="lims-btn ghost" onclick="limsBack()">Cancel</button>
         </div>
         <p style="font-size:12px;color:#6b7684;margin-top:10px;">When stock drops below the min, it'll show a "Low stock" chip on the Inventory list and trigger an alert on the LIMS Dashboard. When expiry is within 30 days, the same happens with a yellow "Expires Xd" chip.</p>

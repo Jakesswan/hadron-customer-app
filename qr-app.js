@@ -236,6 +236,8 @@
     el.innerHTML = inner;
   }
 
+  // A reagent's expiry as a date: one imported from Excel before v170 can be the serial day number (lims.js dateOf).
+  const expOf = (v) => (typeof window.limsDateOf === 'function' ? window.limsDateOf(v) : v);
   // Sync accessor for LIMS items (LIMS uses IndexedDB, so we must await — wrapper caches)
   const _limsCache = { samples: null, instruments: null, inventory: null };
   function await_asLIMSItems_sync() {
@@ -318,11 +320,11 @@
     const list = _limsCache[STATE.type.replace('lims-','')+'s'] || _limsCache[STATE.type.replace('lims-','')] || [];
     // Compat: samples->samples, instruments->instruments, inventory->inventory
     const store = STATE.type === 'lims-sample' ? 'samples' : (STATE.type === 'lims-instrument' ? 'instruments' : 'inventory');
-    const item = (_limsCache[store]||[]).find(x=>x.id===id);
+    const item = (_limsCache[store]||[]).find(x=>String(x.id)===String(id));
     if (item) {
       if (STATE.type === 'lims-sample') { STATE.label = item.barcode; STATE.sublabel = item.description; }
       else if (STATE.type === 'lims-instrument') { STATE.label = item.name; STATE.sublabel = item.model + ' · ' + item.serial; }
-      else { STATE.label = item.name; STATE.sublabel = 'Lot ' + item.lot + ' · exp ' + (item.expiry||''); }
+      else { STATE.label = item.name; STATE.sublabel = 'Lot ' + item.lot + ' · exp ' + (expOf(item.expiry)||''); }
     }
     renderShell();
   };
@@ -474,11 +476,11 @@
       // preset labels
       if (presetType === 'lims-sample' || presetType === 'lims-instrument' || presetType === 'lims-inventory') {
         const store = presetType === 'lims-sample' ? 'samples' : (presetType === 'lims-instrument' ? 'instruments' : 'inventory');
-        const item = (_limsCache[store]||[]).find(x => x.id === presetId);
+        const item = (_limsCache[store]||[]).find(x => String(x.id) === String(presetId));   // one imported before v170 can be kept under a number
         if (item) {
           if (presetType === 'lims-sample')     { STATE.label = item.barcode; STATE.sublabel = item.description||''; }
           else if (presetType === 'lims-instrument') { STATE.label = item.name;    STATE.sublabel = (item.model||'')+' · '+(item.serial||''); }
-          else                                  { STATE.label = item.name;    STATE.sublabel = 'Lot '+(item.lot||'')+(item.expiry?(' · exp '+item.expiry):''); }
+          else                                  { STATE.label = item.name;    STATE.sublabel = 'Lot '+(item.lot||'')+(item.expiry?(' · exp '+expOf(item.expiry)):''); }
         }
       } else if (presetType === 'hg-site' && presetId) {
         const site = loadHGSites().find(s => s.id === presetId);
