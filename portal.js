@@ -176,7 +176,7 @@
               <div style="display:flex;justify-content:space-between;align-items:center;padding:10px 12px;border:1px solid var(--border,rgba(0,0,0,0.08));border-radius:10px;">
                 <div>
                   <div style="font-weight:600;">${esc(j.title||'Service visit')}</div>
-                  <div style="font-size:12px;opacity:0.7;">${j.scheduled_for ? fmtDate(j.scheduled_for) : 'Date TBC'}${j.description?(' · '+esc(j.description.slice(0,60))):''}</div>
+                  <div style="font-size:12px;opacity:0.7;">${j.scheduled_for ? fmtDate(j.scheduled_for) : 'Date TBC'}${j.description?(' · '+esc(String(j.description).slice(0,60))):''}</div>
                 </div>
                 <div>${statusBadge(j.status)}</div>
               </div>

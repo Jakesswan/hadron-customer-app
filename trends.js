@@ -127,7 +127,7 @@
     const out = [];
     Object.values(byId).forEach(rep => {
       pointsOf(rep).forEach(pt => {
-        const pointName = ((pt && pt.name) || '').trim();
+        const pointName = (pt && pt.name != null ? String(pt.name) : '').trim();   // any member can write a report: a name that isn't text mustn't stop Trends for everyone
         (pt && Array.isArray(pt.tests) ? pt.tests : []).forEach(t => {
           if (!t) return;
           const v = num(t.value);

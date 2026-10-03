@@ -52,60 +52,60 @@
     <!-- Supabase JS SDK (auth + cloud sync), pinned 2.117.2 and served by the app itself so sign-in
          works offline from the precache (it used to be the floating @2 from a CDN). See
          THIRD_PARTY_NOTICES.md. To upgrade: replace the file, rename it, update this tag + sw.js. -->
-    <script src="supabase-js-2.117.2.js?v=168"></script>
+    <script src="supabase-js-2.117.2.js?v=169"></script>
 
     <!-- Hadron Supabase bridge -->
-    <script src="supabase-client.js?v=168"></script>
+    <script src="supabase-client.js?v=169"></script>
 
     <!-- Shared UI primitives (in-app sheets) — loaded before auth-ui, which uses them -->
-    <script src="hg-ui.js?v=168" defer></script>
+    <script src="hg-ui.js?v=169" defer></script>
     <!-- Auth UI (login/signup gate, profile binding) -->
-    <script src="auth-ui.js?v=168" defer></script>
+    <script src="auth-ui.js?v=169" defer></script>
 
     <!-- Push notifications -->
-    <script src="push.js?v=168" defer></script>
+    <script src="push.js?v=169" defer></script>
 
     <!-- Translation bundle -->
-    <script src="i18n.js?v=168"></script>
+    <script src="i18n.js?v=169"></script>
 
     <!-- Hadron Tristroke icon system (matches the ERP) -->
-    <script src="hadron-icons.js?v=168" defer></script>
+    <script src="hadron-icons.js?v=169" defer></script>
 
     <!-- Emoji the app has an icon for become Tristroke icons (the rest stay the phone's own emoji) -->
-    <script src="emoji.js?v=168" defer></script>
+    <script src="emoji.js?v=169" defer></script>
 
     <!-- Customizable home grid (drag-to-reorder) -->
-    <script src="home.js?v=168" defer></script>
-    <script src="customize.js?v=168" defer></script>
+    <script src="home.js?v=169" defer></script>
+    <script src="customize.js?v=169" defer></script>
 
     <!-- Data Manager (Excel import/export) -->
-    <script src="data-manager.js?v=168" defer></script>
+    <script src="data-manager.js?v=169" defer></script>
 
     <!-- QR encoder (MIT, Kazuhiko Arase) -->
-    <script src="qr.js?v=168"></script>
+    <script src="qr.js?v=169"></script>
 
     <!-- QR Builder app -->
-    <script src="qr-app.js?v=168" defer></script>
+    <script src="qr-app.js?v=169" defer></script>
 
     <!-- Pool Water module -->
-    <script src="pool.js?v=168" defer></script>
+    <script src="pool.js?v=169" defer></script>
     <!-- Cooling Tower field calculator -->
-    <script src="coolingtower.js?v=168" defer></script>
+    <script src="coolingtower.js?v=169" defer></script>
     <!-- Boiler / Steam field calculator -->
-    <script src="boiler.js?v=168" defer></script>
+    <script src="boiler.js?v=169" defer></script>
     <!-- Water softener sizing calculator -->
-    <script src="softener.js?v=168" defer></script>
-    <script src="academy-content.js?v=168" defer></script>
-    <script src="academy.js?v=168" defer></script>
+    <script src="softener.js?v=169" defer></script>
+    <script src="academy-content.js?v=169" defer></script>
+    <script src="academy.js?v=169" defer></script>
 
-    <script src="searchable-select.js?v=168" defer></script>
-    <script src="trends.js?v=168" defer></script>
+    <script src="searchable-select.js?v=169" defer></script>
+    <script src="trends.js?v=169" defer></script>
 
     <!-- LIMS module (loaded at end of body via defer) -->
-    <script src="lims.js?v=168" defer></script>
-    <script src="lims-sync.js?v=168" defer></script>
-    <script src="portal.js?v=168" defer></script>
-    <script src="team.js?v=168" defer></script>
+    <script src="lims.js?v=169" defer></script>
+    <script src="lims-sync.js?v=169" defer></script>
+    <script src="portal.js?v=169" defer></script>
+    <script src="team.js?v=169" defer></script>
 
 
     <style>
@@ -2834,7 +2834,7 @@
                 <div class="hg-section-title">About</div>
                 <div class="hg-kvgrid">
                     <div class="hg-kv"><div class="k">App</div><div class="v">Hadron Group</div></div>
-                    <div class="hg-kv"><div class="k">Version</div><div class="v">v168</div></div>
+                    <div class="hg-kv"><div class="k">Version</div><div class="v">v169</div></div>
                     <div class="hg-kv"><div class="k">Platform</div><div class="v">PWA</div></div>
                 </div>
             </div>
@@ -6443,6 +6443,7 @@
                 }
             }
             if (overtaken()) { dropLoading(); return; }   // something else is showing now: leave it
+            r = srCleanReport(r);
 
             _srDirty = false;     // as opened: nothing unsaved (a resumed draft stays in its slot). Set before the form shows,
                                   // so an edit made while it loads (the awaits below) still counts; nothing below fires input/change.
@@ -6458,6 +6459,8 @@
             document.getElementById('sr_obs').value  = r.obs || '';
             document.getElementById('sr_act').value  = r.act || '';
             document.getElementById('sr_chem').value = r.chem || '';
+            _srLastVisit = null;   // editing an existing report: no "copy last visit", no opening stock from another site's visit
+            initSignaturePad();    // a blank pad first: the last report's signature never stays under this one
             sr_dosing = (r.dosing || []).map(d => Object.assign(srNewDose(), d)); srRenderDosing(); srRenderDoseProducts();
             sr_recs = (r.recs || []).map(x => Object.assign(srNewRec(), x)); srRenderRecs();
             sr_micro = (r.micro || []).map(x => Object.assign(srNewMicro(), x)); srRenderMicro();
@@ -6465,7 +6468,6 @@
             document.getElementById('sr_next_due').value  = r.nextDue || '';
             document.getElementById('sr_sig_name').value  = r.sigName || '';
             document.getElementById('sr_sig_title').value = r.sigTitle || '';
-            _srLastVisit = null;   // editing an existing report — no "copy last visit" here
 
             // Customer + site dropdowns. If the record's customer/site isn't in this device's
             // local register (e.g. a cloud report from another device), add a placeholder
@@ -6519,7 +6521,6 @@
             sr_photos = Array.isArray(r.photos) ? r.photos.slice() : [];
             renderSrPhotos();
 
-            initSignaturePad();
             if (r.sig) {
                 const c = document.getElementById('sr_sig');
                 const img = new Image();
@@ -6536,8 +6537,8 @@
         }
         // One-line summary for a saved report card — new tests model, or legacy fixed readings.
         function srSummary(r) {
-            if (r.tests && r.tests.length) {
-                const done = r.tests.filter(t => t.value != null && t.value !== '');
+            if (Array.isArray(r.tests) && r.tests.length) {
+                const done = r.tests.filter(t => t && t.value != null && t.value !== '');
                 const fails = done.filter(t => t.pass === false).length;
                 return done.length + ' test' + (done.length === 1 ? '' : 's') + (fails ? ' · ' + fails + ' fail' : '');
             }
@@ -6961,21 +6962,38 @@
         }
         function srGatherPoints() { return sr_points.map(p => ({ name: (p.name || '').trim(), tests: p.tests.map(srMapRow) })); }
 
+        // A report's lists (photos too) as lists of records, its point names as text, and the fields the form, Save and the
+        // PDF read as text (.trim, .slice, .replace) as text. A report from the cloud can hold anything (any member can write
+        // one): one that doesn't fit wouldn't open (or opened part-way, with the last report's signature still on the pad),
+        // couldn't be saved, or its PDF wasn't made.
+        function srCleanReport(r) {
+            const recs = (v) => Array.isArray(v) ? v.filter(x => x && typeof x === 'object') : [];
+            const txt = (o, keys) => { const c = Object.assign({}, o); keys.forEach(k => { if (c[k] != null && typeof c[k] !== 'string') c[k] = String(c[k]); }); return c; };
+            const out = Object.assign(txt(r, ['site', 'date']), { dosing: recs(r.dosing).map(d => txt(d, ['product'])), recs: recs(r.recs).map(x => txt(x, ['text'])),
+                micro: recs(r.micro).map(x => txt(x, ['type', 'location', 'lot'])), instruments: recs(r.instruments).map(c => txt(c, ['instrument', 'serial', 'standard'])), photos: recs(r.photos) });
+            if (r.points != null) out.points = recs(r.points).map(p => Object.assign({}, p, { name: p.name == null ? '' : String(p.name), tests: recs(p.tests) }));
+            if (r.tests != null) out.tests = recs(r.tests);
+            return out;
+        }
+
         // ── Per-parameter mini-trend ──
         // History of THIS parameter at THIS sample point, from prior saved reports for the
         // site. Gives the tech immediate context ("chlorine down 3 visits running") at the
         // point of entry. Reports are passed in (read once per render), not re-fetched here.
         function srParamHistory(reports, siteId, pointName, catId, excludeId, limit) {
             if (!reports || !siteId || !catId) return [];
-            const key = (pointName || '').trim().toLowerCase();
+            // every report of the site is read: one that doesn't fit (a point that's null, a name that isn't text, tests that
+            // aren't a list) is skipped where it doesn't, not allowed to break the others' sparklines
+            const txt = (v) => (v == null ? '' : String(v)).trim().toLowerCase();
+            const key = txt(pointName);
             const out = [];
             reports.forEach(r => {
                 if (!r || r.siteId !== siteId || r.id === excludeId) return;
-                const pts = (r.points && r.points.length) ? r.points : (r.tests ? [{ name: '', tests: r.tests }] : []);
-                let pt = pts.find(p => (p.name || '').trim().toLowerCase() === key);
-                if (!pt && pts.length === 1 && !key) pt = pts[0];   // single unnamed point ↔ unnamed current point
+                const pts = (Array.isArray(r.points) && r.points.length) ? r.points : (Array.isArray(r.tests) ? [{ name: '', tests: r.tests }] : []);
+                let pt = pts.find(p => p && txt(p.name) === key);
+                if (!pt && pts.length === 1 && !key && pts[0]) pt = pts[0];   // single unnamed point ↔ unnamed current point
                 if (!pt) return;
-                const tt = (pt.tests || []).find(z => z.id === catId);
+                const tt = (Array.isArray(pt.tests) ? pt.tests : []).find(z => z && z.id === catId);
                 if (!tt || tt.value == null || tt.value === '') return;
                 const v = parseFloat(tt.value); if (!isFinite(v)) return;   // drop NaN and ±Infinity (a stray 1e999 would give NaN sparkline coords)
                 out.push({ date: r.date || r.savedAt || null, value: v });
@@ -7731,7 +7749,7 @@
                 if (!r) { showToast(late ? 'This report isn’t on this phone and couldn’t be loaded just now: try again with a connection.' : 'Report not found', 4000); return; }
                 hideToastIf('Loading the report…');
             }
-            generateSrPdf(r, share);
+            generateSrPdf(srCleanReport(r), share);
         }
         let _srLogoData = null, _srLogoLoad = null;
         // Loaded once (a failure isn't retried); a PDF built while it loads (PDF + Share at the same time) waits for it too.

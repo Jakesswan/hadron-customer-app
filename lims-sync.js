@@ -128,7 +128,10 @@
     if (cloudRow && cloudRow.payload && typeof cloudRow.payload === 'object') {
       // The row's own id, not the payload's: a row inserted with another record's id in its payload (operators may insert
       // rows, not update them) mustn't replace that record on every phone.
-      const obj = Object.assign({}, cloudRow.payload, { id: cloudRow.id });
+      // A payload id that IS the row's id as a number (an imported record whose ID cell held a number: the id column is
+      // text) stays as it is, so the record keeps its key on the phones that have it and isn't added a second time.
+      const pid = cloudRow.payload.id;
+      const obj = Object.assign({}, cloudRow.payload, { id: (typeof pid === 'number' && String(pid) === String(cloudRow.id)) ? pid : cloudRow.id });
       // Always trust the typed provenance columns over whatever is in payload,
       // so ERP-bridged clients stay flagged read-only locally.
       if (localStore === 'clients') {
