@@ -52,60 +52,60 @@
     <!-- Supabase JS SDK (auth + cloud sync), pinned 2.117.2 and served by the app itself so sign-in
          works offline from the precache (it used to be the floating @2 from a CDN). See
          THIRD_PARTY_NOTICES.md. To upgrade: replace the file, rename it, update this tag + sw.js. -->
-    <script src="supabase-js-2.117.2.js?v=165"></script>
+    <script src="supabase-js-2.117.2.js?v=166"></script>
 
     <!-- Hadron Supabase bridge -->
-    <script src="supabase-client.js?v=165"></script>
+    <script src="supabase-client.js?v=166"></script>
 
     <!-- Shared UI primitives (in-app sheets) — loaded before auth-ui, which uses them -->
-    <script src="hg-ui.js?v=165" defer></script>
+    <script src="hg-ui.js?v=166" defer></script>
     <!-- Auth UI (login/signup gate, profile binding) -->
-    <script src="auth-ui.js?v=165" defer></script>
+    <script src="auth-ui.js?v=166" defer></script>
 
     <!-- Push notifications -->
-    <script src="push.js?v=165" defer></script>
+    <script src="push.js?v=166" defer></script>
 
     <!-- Translation bundle -->
-    <script src="i18n.js?v=165"></script>
+    <script src="i18n.js?v=166"></script>
 
     <!-- Hadron Tristroke icon system (matches the ERP) -->
-    <script src="hadron-icons.js?v=165" defer></script>
+    <script src="hadron-icons.js?v=166" defer></script>
 
     <!-- Emoji the app has an icon for become Tristroke icons (the rest stay the phone's own emoji) -->
-    <script src="emoji.js?v=165" defer></script>
+    <script src="emoji.js?v=166" defer></script>
 
     <!-- Customizable home grid (drag-to-reorder) -->
-    <script src="home.js?v=165" defer></script>
-    <script src="customize.js?v=165" defer></script>
+    <script src="home.js?v=166" defer></script>
+    <script src="customize.js?v=166" defer></script>
 
     <!-- Data Manager (Excel import/export) -->
-    <script src="data-manager.js?v=165" defer></script>
+    <script src="data-manager.js?v=166" defer></script>
 
     <!-- QR encoder (MIT, Kazuhiko Arase) -->
-    <script src="qr.js?v=165"></script>
+    <script src="qr.js?v=166"></script>
 
     <!-- QR Builder app -->
-    <script src="qr-app.js?v=165" defer></script>
+    <script src="qr-app.js?v=166" defer></script>
 
     <!-- Pool Water module -->
-    <script src="pool.js?v=165" defer></script>
+    <script src="pool.js?v=166" defer></script>
     <!-- Cooling Tower field calculator -->
-    <script src="coolingtower.js?v=165" defer></script>
+    <script src="coolingtower.js?v=166" defer></script>
     <!-- Boiler / Steam field calculator -->
-    <script src="boiler.js?v=165" defer></script>
+    <script src="boiler.js?v=166" defer></script>
     <!-- Water softener sizing calculator -->
-    <script src="softener.js?v=165" defer></script>
-    <script src="academy-content.js?v=165" defer></script>
-    <script src="academy.js?v=165" defer></script>
+    <script src="softener.js?v=166" defer></script>
+    <script src="academy-content.js?v=166" defer></script>
+    <script src="academy.js?v=166" defer></script>
 
-    <script src="searchable-select.js?v=165" defer></script>
-    <script src="trends.js?v=165" defer></script>
+    <script src="searchable-select.js?v=166" defer></script>
+    <script src="trends.js?v=166" defer></script>
 
     <!-- LIMS module (loaded at end of body via defer) -->
-    <script src="lims.js?v=165" defer></script>
-    <script src="lims-sync.js?v=165" defer></script>
-    <script src="portal.js?v=165" defer></script>
-    <script src="team.js?v=165" defer></script>
+    <script src="lims.js?v=166" defer></script>
+    <script src="lims-sync.js?v=166" defer></script>
+    <script src="portal.js?v=166" defer></script>
+    <script src="team.js?v=166" defer></script>
 
 
     <style>
@@ -2834,7 +2834,7 @@
                 <div class="hg-section-title">About</div>
                 <div class="hg-kvgrid">
                     <div class="hg-kv"><div class="k">App</div><div class="v">Hadron Group</div></div>
-                    <div class="hg-kv"><div class="k">Version</div><div class="v">v165</div></div>
+                    <div class="hg-kv"><div class="k">Version</div><div class="v">v166</div></div>
                     <div class="hg-kv"><div class="k">Platform</div><div class="v">PWA</div></div>
                 </div>
             </div>
@@ -6386,12 +6386,16 @@
             // Cross-device freshness: if another device saved a newer version of THIS report, load
             // that cloud copy instead of editing a stale local one (which would overwrite the newer
             // version on save). Skip the resume-draft path — the draft is the freshest in-progress work.
+            let submittedMissed = false;   // submitted on another phone, but that copy couldn't be loaded
             if (r && r.savedAt && !window._srResumeDraft && window.HG_DB && window.HG_DB.service_reports) {
                 try {
                     const meta = srCloudMeta.find(m => m.id === id);
-                    if (meta && meta.updated_at && new Date(meta.updated_at) > new Date(r.savedAt)) {
-                        const row = await window.HG_DB.service_reports.get(id);
-                        if (row && row.payload) r = row.payload;
+                    // only with a connection, and for at most 4 s: offline (or no answer) this phone's copy opens at once
+                    if (srCloudFresher(r, meta)) {
+                        let row = null;
+                        if (!window.__hgOfflineSession && navigator.onLine !== false) row = await Promise.race([window.HG_DB.service_reports.get(id), new Promise(res => setTimeout(() => res(null), 4000))]);
+                        if (row && row.payload && row.payload.id === id) r = row.payload;
+                        else if (srCloudSubmittedElsewhere(r, meta)) submittedMissed = true;
                     }
                 } catch (_) {}
             }
@@ -6483,9 +6487,12 @@
                 img.src = r.sig;
                 sr_sigHasStrokes = true; sr_signedAt = r.signedAt || null;   // restore the signed state
             }
+            // The older copy on this phone must not replace a submitted report it can't see: read-only, and said.
+            if (submittedMissed) readOnly = true;
             applySrReadOnly(!!readOnly);
             srUpdateCloneBtn();   // hidden (editing an existing report)
-            showToast(readOnly ? 'Viewing "' + (r.site || 'report') + '"' : 'Editing "' + (r.site || 'report') + '" — Save to update it');
+            if (submittedMissed) showToast('This report was submitted on another phone, and that copy couldn’t be loaded: this is the older copy on this phone, read-only. Try again with a connection.', 6000);
+            else showToast(readOnly ? 'Viewing "' + (r.site || 'report') + '"' : 'Editing "' + (r.site || 'report') + '" — Save to update it');
         }
         // One-line summary for a saved report card — new tests model, or legacy fixed readings.
         function srSummary(r) {
@@ -6531,6 +6538,24 @@
             } catch (_) {}
             return srCloudMeta;
         }
+        // A change saved on this phone is still waiting in the sync queue (not in the cloud yet).
+        function srPendingHere(id) { try { return !!(window.HG_DB && window.HG_DB._pendingKeys && window.HG_DB._pendingKeys().has('service_reports:' + id)); } catch (_) { return false; } }
+        // Submitted in the cloud (on another phone) and not on this one: a status, no clocks compared. Not for an owner
+        // whose own later change is still queued here ("Carry on with my changes" saved offline: sending it unlocks the
+        // report); an operator's queued change to it will be refused (0012), so for them the submitted copy stands.
+        function srCloudSubmittedElsewhere(r, meta) {
+            if (!(r && meta && meta.status === 'submitted' && (r.status || 'draft') !== 'submitted')) return false;
+            return !(srCanManageReports() && srPendingHere(r.id));
+        }
+        // The cloud's copy of a report is the one to show, edit or export instead of this phone's: it was submitted (on
+        // another phone) and this one wasn't (a status, no clocks compared), or, as before, its update time is later than
+        // this phone's save time, unless a change made here is still waiting to be sent.
+        function srCloudFresher(r, meta) {
+            if (!r || !meta) return false;
+            if (srCloudSubmittedElsewhere(r, meta)) return true;
+            if (srPendingHere(r.id)) return false;   // a change made here hasn't reached the cloud: this copy is the newest
+            return !!(meta.updated_at && r.savedAt && new Date(meta.updated_at) > new Date(r.savedAt));
+        }
         function srMergedReports() {
             const byId = {};
             srCloudMeta.forEach(m => { byId[m.id] = { id: m.id, site: m.site, date: srIsoToLocalDt(m.report_date), tech: m.technician || '', status: m.status, updated_at: m.updated_at, _cloud: true }; });
@@ -6540,6 +6565,8 @@
                 // _local = saved on this device (operator owns it); _cloudUpdatedAt = the cloud copy's
                 // updated_at, so the list can flag when another device holds a newer version.
                 byId[r.id] = Object.assign({}, r, { _cloud: !!(meta && meta._cloud), _local: true, _cloudUpdatedAt: meta && meta.updated_at });
+                // submitted on another phone: it is submitted (locked to technicians) here too
+                if (srCloudSubmittedElsewhere(r, meta)) Object.assign(byId[r.id], { status: 'submitted', _cloudSubmitted: true });
             });
             return Object.values(byId).sort((a, b) => String(b.date || b.savedAt || '').localeCompare(String(a.date || a.savedAt || '')));
         }
@@ -6559,16 +6586,16 @@
                     // mirrors migration 0012's operator_draft_update policy; RLS is the real backstop.
                     const canEdit = canManage || ((_srRole === 'operator' || (!_srRole && !_srLocalOnly)) && r._local && r.status !== 'submitted');
                     // Another device holds a newer version of a report we also have locally.
-                    const cloudNewer = r._local && r._cloudUpdatedAt && r.savedAt && new Date(r._cloudUpdatedAt) > new Date(r.savedAt);
+                    const cloudNewer = r._local && (r._cloudSubmitted || (r._cloudUpdatedAt && r.savedAt && new Date(r._cloudUpdatedAt) > new Date(r.savedAt)));
                     return `<div style="border:1px solid #eee;border-radius:6px;padding:10px;margin-bottom:8px;">
                     <strong>${esc(r.site)}</strong> · ${esc(String(r.date || '').replace('T', ' '))}
                     ${r._cloud ? '<span title="Synced to cloud" style="color:#157b3a;font-size:12px;">☁ synced</span>' : '<span title="On this device only — not yet synced" style="color:#b5852a;font-size:12px;">• local only</span>'}${r.status === 'submitted' ? ' <span title="Submitted — locked to technicians" style="color:#1a3d9e;font-size:12px;">🔒 submitted</span>' : ''}${cloudNewer ? ' <span title="A newer version exists on another device — opening will load it" style="color:#b5852a;font-size:12px;">⟳ newer on cloud</span>' : ''}<br>
                     <small>${r.tech ? 'Tech: ' + esc(r.tech) : ''}${srSummary(r) ? (r.tech ? ' · ' : '') + esc(srSummary(r)) : ''}</small>
                     <div style="margin-top:6px;">
-                        <button class="pdf-calc-btn" onclick="exportStoredSrPdf('${r.id}')">📄 PDF</button>
-                        <button class="pdf-calc-btn" onclick="exportStoredSrPdf('${r.id}', true)">📤 Share</button>
-                        ${canEdit ? `<button class="pdf-calc-btn" style="background:#3AAEDB;color:#0f2733;" onclick="openServiceReport('${r.id}')">✎ Edit</button>` : `<button class="pdf-calc-btn" onclick="openServiceReport('${r.id}', true)">👁 View</button>`}
-                        ${canManage ? `<button class="save-calc-btn" style="background:#c44;" onclick="deleteSR('${r.id}')">🗑 Delete</button>` : ''}
+                        <button class="pdf-calc-btn" onclick="exportStoredSrPdf('${escJs(r.id)}')">📄 PDF</button>
+                        <button class="pdf-calc-btn" onclick="exportStoredSrPdf('${escJs(r.id)}', true)">📤 Share</button>
+                        ${canEdit ? `<button class="pdf-calc-btn" style="background:#3AAEDB;color:#0f2733;" onclick="openServiceReport('${escJs(r.id)}')">✎ Edit</button>` : `<button class="pdf-calc-btn" onclick="openServiceReport('${escJs(r.id)}', true)">👁 View</button>`}
+                        ${canManage ? `<button class="save-calc-btn" style="background:#c44;" onclick="deleteSR('${escJs(r.id)}')">🗑 Delete</button>` : ''}
                     </div></div>`;
                 }).join('');
         }
@@ -7623,12 +7650,40 @@
             generateSrPdf(r, share);
         }
         function shareServiceReportPdf() { exportServiceReportPdf(true); }
-        async function exportStoredSrPdf(id, share) {
+        // One PDF per report at a time: a second tap while the first is still loading does nothing.
+        const _srPdfBusy = {};
+        function exportStoredSrPdf(id, share) {
+            if (_srPdfBusy[id]) return Promise.resolve();
+            _srPdfBusy[id] = true;
+            return srExportStoredPdf(id, share).finally(() => { delete _srPdfBusy[id]; });
+        }
+        async function srExportStoredPdf(id, share) {
             let r = LS.get('hadron_sr', []).find(x => x.id === id);
-            if (!r) {   // cloud-only report (from another device) — fetch its full payload
-                try { const row = window.HG_DB && window.HG_DB.service_reports && await window.HG_DB.service_reports.get(id); r = row && row.payload; } catch (_) {}
+            // Submitted on another phone (and not on this one): the PDF is of that copy, as View shows. Bounded (3 s), so a
+            // Share still counts as this tap; not in time, this phone's copy, and the toast says so. Not on the time rule:
+            // the server stamps updated_at when a save from THIS phone arrives, so this phone's own synced reports look
+            // "newer on cloud" by it, and the PDF would wait on the network for the same copy.
+            if (r && window.HG_DB && window.HG_DB.service_reports && srCloudSubmittedElsewhere(r, srCloudMeta.find(m => m.id === id))) {
+                let row = null;
+                if (!window.__hgOfflineSession && navigator.onLine !== false) {   // offline: no wait (the tap's share window), this phone's copy
+                    showToast('Loading the submitted copy…', 3000);
+                    try { row = await Promise.race([window.HG_DB.service_reports.get(id), new Promise(res => setTimeout(() => res(null), 3000))]); } catch (_) {}
+                }
+                if (row && row.payload && row.payload.id === id) r = row.payload;
+                else showToast('The submitted copy of this report couldn’t be loaded: this PDF is of the copy on this phone.', 4000);
             }
-            if (r) generateSrPdf(r, share); else showToast('Report not found');
+            if (!r) {   // cloud-only report (from another device) — fetch its full payload, at most 4 s (then a later tap tries again)
+                let row = null, late = true;
+                if (window.HG_DB && window.HG_DB.service_reports && !window.__hgOfflineSession && navigator.onLine !== false) {
+                    showToast('Loading the report…', 4000);
+                    const TIMEOUT = {};
+                    try { row = await Promise.race([window.HG_DB.service_reports.get(id), new Promise(res => setTimeout(() => res(TIMEOUT), 4000))]); } catch (_) { row = TIMEOUT; }
+                    late = row === TIMEOUT; if (late) row = null;
+                }
+                r = row && row.payload && row.payload.id === id ? row.payload : null;
+                if (!r) { showToast(late ? 'This report isn’t on this phone and couldn’t be loaded just now: try again with a connection.' : 'Report not found', 4000); return; }
+            }
+            generateSrPdf(r, share);
         }
         let _srLogoData = null, _srLogoTried = false;
         async function srLoadLogo() {
@@ -8203,7 +8258,7 @@
                 const nPts = cs.reduce((a, s) => a + ((s.samplePoints || []).length), 0);
                 const open = !!window.__custOpen[c.id];
                 return `<div class="hg-card" style="margin-bottom:10px;">
-                    <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;cursor:pointer;" onclick="custToggle('${esc(c.id)}')">
+                    <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;cursor:pointer;" onclick="custToggle('${escJs(c.id)}')">
                         <span id="cust-caret-${esc(c.id)}" style="color:var(--muted);">${open ? '▾' : '▸'}</span>
                         <strong style="font-size:15px;color:var(--text);">${esc(c.name)}</strong>
                         <span class="hg-chip neutral">${cs.length} site${cs.length === 1 ? '' : 's'}</span>
@@ -8211,7 +8266,7 @@
                     </div>
                     <div id="cust-body-${esc(c.id)}" style="display:${open ? 'block' : 'none'};margin-top:10px;">
                         ${cs.length ? cs.map(custSiteHtml).join('') : '<p style="color:var(--muted);font-size:13px;margin:2px 0;">No sites yet for this customer.</p>'}
-                        <button class="hg-btn primary owner-only" style="margin-top:6px;" onclick="newSite('${esc(c.id)}')">＋ Add site</button>
+                        <button class="hg-btn primary owner-only" style="margin-top:6px;" onclick="newSite('${escJs(c.id)}')">＋ Add site</button>
                     </div>
                 </div>`;
             }).join('');
