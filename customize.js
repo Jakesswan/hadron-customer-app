@@ -42,15 +42,16 @@
     .app-icon.sortable-chosen { transform: scale(1.06); transition: transform .15s; }
     .app-icon.sortable-drag   { transform: rotate(0) !important; opacity: 0.95; }
     .hg-customize-pill {
-      position: fixed; left: 50%; transform: translateX(-50%);
+      position: fixed; left: 0; right: 0; margin: 0 auto; width: max-content; max-width: calc(100vw - 32px);   /* centred without left:50% */
       bottom: 90px; z-index: 8500;
       background: var(--accent-ink, #1B77A0);
       color: var(--on-accent, #fff); padding: 10px 22px; border-radius: 999px;
       font-weight: 700; font-size: 14px; cursor: pointer;
       box-shadow: 0 12px 30px rgba(8,12,40,0.35);
-      border: none; outline: none;
+      border: none;
     }
-    .hg-customize-pill:hover { transform: translateX(-50%) translateY(-1px); }
+    .hg-customize-pill:focus-visible { outline: 3px solid var(--accent-ink, #1B77A0); outline-offset: 3px; }
+    .hg-customize-pill:hover { transform: translateY(-1px); }
     body.hg-home-editing .toast { bottom: 160px; }
   `;
   const style = document.createElement('style');
@@ -153,6 +154,7 @@
     editing = true;
     document.body.classList.add('hg-home-editing');   // the toast moves up off the Done pill
     document.dispatchEvent(new CustomEvent('hg:home:edit', { detail: { editing: true } }));   // home.js hides Continue / Recent
+    if (typeof window.hgArmBack === 'function') window.hgArmBack();   // Back (Esc) ends Customize, not the app (index.html)
     // One sortable list per section: tiles move within their section only.
     sortables = grids.map(grid => {
       grid.classList.add('is-editing');
@@ -180,6 +182,7 @@
     editing = false;
     document.body.classList.remove('hg-home-editing');
     document.dispatchEvent(new CustomEvent('hg:home:edit', { detail: { editing: false } }));
+    if (typeof window.hgDisarmBack === 'function') window.hgDisarmBack();
     getGrids().forEach(grid => {
       grid.classList.remove('is-editing', 'no-drag');
       grid.removeEventListener('click', blockClickWhileEditing, true);
@@ -200,13 +203,15 @@
     donePill = document.createElement('button');
     donePill.className = 'hg-customize-pill';
     donePill.type = 'button';
-    donePill.textContent = '✓ Done customizing';
+    donePill.textContent = '✓ ' + tr('common.done', 'Done');
     donePill.addEventListener('click', exitEditMode);
     document.body.appendChild(donePill);
   }
   function hideDonePill() {
     if (donePill) { donePill.remove(); donePill = null; }
   }
+  // A language changed while customizing (Account menu > Settings): the pill follows, like the tiles and stars.
+  document.addEventListener('hg:lang:changed', () => { if (donePill) donePill.textContent = '✓ ' + tr('common.done', 'Done'); });
 
   // ── Long-press detection on any tile ────────────────────
   let pressTimer = null;

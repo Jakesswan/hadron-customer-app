@@ -258,8 +258,8 @@
     const link = (text) => '<button type="button" class="hg-quick-link">' + esc(text) + '</button>';
     // While customizing, a pinned shortcut doesn't open its tool: its star (unpin) is what's there to use.
     const shortcut = (it, i, kind) => '<div role="listitem" class="hg-short-wrap"' + (kind === 'p' ? ' data-id="' + esc(it.id) + '"' : '') + '>' +
-      '<button type="button" class="hg-short" data-' + kind + '="' + i + '"' + (edit ? ' tabindex="-1" aria-hidden="true"' : it.sub ? ' aria-label="' + esc(it.name + ', ' + it.sub) + '"' : '') + '>' +
-        '<span class="icon" aria-hidden="true">' + iconOf(it.iconFrom) + '</span><span class="app-name">' + esc(it.name) + '</span></button>' +
+      '<button type="button" class="hg-short" data-' + kind + '="' + i + '"' + (edit ? ' tabindex="-1" aria-hidden="true"' : ' aria-label="' + esc(it.sub ? it.name + ', ' + it.sub : it.name) + '"') + '>' +
+        '<span class="icon" aria-hidden="true">' + iconOf(it.iconFrom) + '</span><span class="app-name">' + esc(it.label || it.name) + '</span></button>' +
       (edit ? pinToggle(it.id, it.sub ? it.name + ', ' + it.sub : it.name) : '') + '</div>';
     let html = '';
     if (cont.length) html += '<div class="hg-cont-list" role="list" aria-label="' + esc(tr('home.unfinished', 'Unfinished work')) + '">' + cont.map((c, i) =>
@@ -307,7 +307,8 @@
       const secWords = sec ? ((sec.querySelector('.hg-home-sec-title') || {}).textContent || '') + ' ' + (SEC_WORDS[sec.getAttribute('data-home-sec')] || '') : '';
       // the parts of a long label split at its soft hyphens are words too: 'berekening' finds 'Doseer\u00ADberekening'
       const parts = ((tile.querySelector('.app-name') || {}).textContent || '').split('\u00AD').join(' ');
-      out.push({ id, name: tileName(tile), sub: '', words: (TILE_WORDS[id] || '') + ' ' + id + ' ' + secWords + ' ' + parts, iconFrom: tile, open: () => tile.click() });
+      // label: the name as the tile shows it, soft hyphens included, for the Pinned / Recent shortcuts
+      out.push({ id, name: tileName(tile), label: ((tile.querySelector('.app-name') || {}).textContent || '').trim(), sub: '', words: (TILE_WORDS[id] || '') + ' ' + id + ' ' + secWords + ' ' + parts, iconFrom: tile, open: () => tile.click() });
     }));
     const parents = {};
     out.forEach((it) => { parents[it.id] = it; });
