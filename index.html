@@ -52,60 +52,60 @@
     <!-- Supabase JS SDK (auth + cloud sync), pinned 2.117.2 and served by the app itself so sign-in
          works offline from the precache (it used to be the floating @2 from a CDN). See
          THIRD_PARTY_NOTICES.md. To upgrade: replace the file, rename it, update this tag + sw.js. -->
-    <script src="supabase-js-2.117.2.js?v=162"></script>
+    <script src="supabase-js-2.117.2.js?v=163"></script>
 
     <!-- Hadron Supabase bridge -->
-    <script src="supabase-client.js?v=162"></script>
+    <script src="supabase-client.js?v=163"></script>
 
     <!-- Shared UI primitives (in-app sheets) — loaded before auth-ui, which uses them -->
-    <script src="hg-ui.js?v=162" defer></script>
+    <script src="hg-ui.js?v=163" defer></script>
     <!-- Auth UI (login/signup gate, profile binding) -->
-    <script src="auth-ui.js?v=162" defer></script>
+    <script src="auth-ui.js?v=163" defer></script>
 
     <!-- Push notifications -->
-    <script src="push.js?v=162" defer></script>
+    <script src="push.js?v=163" defer></script>
 
     <!-- Translation bundle -->
-    <script src="i18n.js?v=162"></script>
+    <script src="i18n.js?v=163"></script>
 
     <!-- Hadron Tristroke icon system (matches the ERP) -->
-    <script src="hadron-icons.js?v=162" defer></script>
+    <script src="hadron-icons.js?v=163" defer></script>
 
     <!-- Emoji the app has an icon for become Tristroke icons (the rest stay the phone's own emoji) -->
-    <script src="emoji.js?v=162" defer></script>
+    <script src="emoji.js?v=163" defer></script>
 
     <!-- Customizable home grid (drag-to-reorder) -->
-    <script src="home.js?v=162" defer></script>
-    <script src="customize.js?v=162" defer></script>
+    <script src="home.js?v=163" defer></script>
+    <script src="customize.js?v=163" defer></script>
 
     <!-- Data Manager (Excel import/export) -->
-    <script src="data-manager.js?v=162" defer></script>
+    <script src="data-manager.js?v=163" defer></script>
 
     <!-- QR encoder (MIT, Kazuhiko Arase) -->
-    <script src="qr.js?v=162"></script>
+    <script src="qr.js?v=163"></script>
 
     <!-- QR Builder app -->
-    <script src="qr-app.js?v=162" defer></script>
+    <script src="qr-app.js?v=163" defer></script>
 
     <!-- Pool Water module -->
-    <script src="pool.js?v=162" defer></script>
+    <script src="pool.js?v=163" defer></script>
     <!-- Cooling Tower field calculator -->
-    <script src="coolingtower.js?v=162" defer></script>
+    <script src="coolingtower.js?v=163" defer></script>
     <!-- Boiler / Steam field calculator -->
-    <script src="boiler.js?v=162" defer></script>
+    <script src="boiler.js?v=163" defer></script>
     <!-- Water softener sizing calculator -->
-    <script src="softener.js?v=162" defer></script>
-    <script src="academy-content.js?v=162" defer></script>
-    <script src="academy.js?v=162" defer></script>
+    <script src="softener.js?v=163" defer></script>
+    <script src="academy-content.js?v=163" defer></script>
+    <script src="academy.js?v=163" defer></script>
 
-    <script src="searchable-select.js?v=162" defer></script>
-    <script src="trends.js?v=162" defer></script>
+    <script src="searchable-select.js?v=163" defer></script>
+    <script src="trends.js?v=163" defer></script>
 
     <!-- LIMS module (loaded at end of body via defer) -->
-    <script src="lims.js?v=162" defer></script>
-    <script src="lims-sync.js?v=162" defer></script>
-    <script src="portal.js?v=162" defer></script>
-    <script src="team.js?v=162" defer></script>
+    <script src="lims.js?v=163" defer></script>
+    <script src="lims-sync.js?v=163" defer></script>
+    <script src="portal.js?v=163" defer></script>
+    <script src="team.js?v=163" defer></script>
 
 
     <style>
@@ -2725,7 +2725,7 @@
                 <p style="margin: 0 0 12px; font-size: 13px; opacity: 0.8;">You can change your name, phone and password above. For a new e-mail address, company or role, ask your organisation's admin or contact Support.</p>
                 <div style="display: flex; gap: 10px; flex-wrap: wrap;">
                     <button class="hg-btn ghost" onclick="openWindow('support')">🎧 Open Support</button>
-                    <button class="hg-btn ghost" onclick="window.hgConfirmSignOut ? window.hgConfirmSignOut() : (window.hgSignOut && window.hgSignOut())" style="color: var(--danger-ink); border-color: var(--danger-ink);">⏻ Sign out</button>
+                    <button class="hg-btn ghost" onclick="window.hgConfirmSignOut ? window.hgConfirmSignOut() : (window.hgSignOut && window.hgSignOut())" style="color: var(--danger-ink); border-color: var(--danger-ink);"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align: -3px; margin-right: 6px;"><path d="M10 4h-5a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h5"/><line x1="9" y1="12" x2="16" y2="12"/><path d="M14 8l4 4-4 4"/></svg>Sign out</button>
                 </div>
             </div>
         </div>
@@ -2832,7 +2832,7 @@
                 <div class="hg-section-title">About</div>
                 <div class="hg-kvgrid">
                     <div class="hg-kv"><div class="k">App</div><div class="v">Hadron Group</div></div>
-                    <div class="hg-kv"><div class="k">Version</div><div class="v">v162</div></div>
+                    <div class="hg-kv"><div class="k">Version</div><div class="v">v163</div></div>
                     <div class="hg-kv"><div class="k">Platform</div><div class="v">PWA</div></div>
                 </div>
             </div>
@@ -6334,6 +6334,9 @@
                 if (draft && srDraftHasContent(draft) && (draft.status || 'draft') !== 'submitted') {
                     const when = draft._draftAt ? new Date(draft._draftAt).toLocaleString() : 'earlier';
                     if (confirm('Resume your unfinished report for "' + (draft.site || 'a site') + '"?\n(last edited ' + when + ')\n\nCancel to start a new blank report.')) {
+                        const pick = await srDraftCheck(draft);   // submitted on another phone since? asks first
+                        if (pick === 'cancel') return;
+                        if (pick === 'submitted') { await srOpenSubmitted(draft); return; }
                         window._srResumeDraft = draft;
                         await openServiceReport(draft.id, false);
                         window._srResumeDraft = null;
@@ -7431,6 +7434,62 @@
             window.addEventListener('beforeunload', srAutosaveDraft);
             document.addEventListener('visibilitychange', function () { if (document.hidden) srAutosaveDraft(); });
         }
+        // Before an unsaved draft of a saved report is reopened: has that report been SUBMITTED since, on another phone?
+        // Then carrying on with the draft and saving would replace the submitted report and unlock it again. Returns
+        // 'resume' (go ahead, as before: also offline or without an answer within 4 s), 'submitted' (open that one)
+        // or 'cancel'. (Changes on another phone that weren't submitted aren't checked: the last save wins, as
+        // everywhere in the app; comparing times across phones would mislead with their clocks.)
+        function srCanManageReports() {
+            const role = (window.HG_PROFILE && window.HG_PROFILE.role) || document.body.dataset.role || '';
+            return role ? ['admin', 'customer_admin'].includes(role) : !(window.HG_AUTH && window.HG_AUTH.configured);
+        }
+        async function srDraftCheck(d) {
+            if (!d || !d.id || (d.status || 'draft') === 'submitted' || window.__hgOfflineSession || navigator.onLine === false || !window.HG_SUPA) return 'resume';
+            let row = null;
+            const form = document.getElementById('sr_form');
+            const was = sr_reportId + '|' + (form && form.style.display);   // what the report window shows now
+            try {
+                const b = window.HG_SUPA.from('service_reports').select('status').eq('id', d.id).maybeSingle();
+                const q = typeof b.retry === 'function' ? b.retry(false) : b;   // no 1 s / 2 s / 4 s retries: no answer = carry on
+                const r = await Promise.race([q, new Promise(res => setTimeout(() => res(null), 4000))]);
+                row = r && !r.error ? r.data : null;
+            } catch (_) {}
+            // The window was closed (←), or another report was opened / started, while the lookup was out: don't replace it.
+            if (!openWindows.has('servicereport') || was !== sr_reportId + '|' + (form && form.style.display)) return 'cancel';
+            if (!row || row.status !== 'submitted') return 'resume';
+            const owner = srCanManageReports();
+            return new Promise(function (resolve) {
+                if (!window.hgSheet) { resolve(owner ? 'resume' : 'submitted'); return; }
+                let answered = false;
+                const done = (v) => { if (!answered) { answered = true; resolve(v); } };
+                const site = String(d.site || '').trim();
+                window.hgSheet.open({
+                    title: 'This report has been submitted',
+                    role: 'alertdialog',   // not asked for: read out in full
+                    body: '<p>The report' + (site ? ' for <b>' + esc(site) + '</b>' : '') + ' has been submitted. The changes on this phone were made to an earlier version that wasn’t submitted.</p>' +
+                          (owner ? '<p>If you carry on with your changes and save them, they replace the submitted report and unlock it again.</p>'
+                                 : '<p>Only the account owner can change a submitted report.</p>') +
+                          '<p>Opening the submitted report throws away the changes you made here.</p>',
+                    actions: [{ label: 'Open the submitted report', kind: 'primary', onClick: () => done('submitted') }]
+                        .concat(owner ? [{ label: 'Carry on with my changes', kind: 'secondary', onClick: () => done('resume') }] : [])
+                        .concat([{ label: 'Cancel', kind: 'plain', focus: true, onClick: () => done('cancel') }]),
+                    onClose: () => done('cancel')
+                });
+            });
+        }
+        async function srOpenSubmitted(d) {
+            // The copy the check found submitted, fetched by id: not whichever copy looks newer by comparing this phone's
+            // clock with the server's (with this phone's clock ahead, that kept the older local copy, still a draft).
+            // Bounded like the check; not in time, the changes here are kept and nothing opens.
+            let row = null;
+            try { row = await Promise.race([window.HG_DB.service_reports.get(d.id), new Promise(res => setTimeout(() => res(null), 4000))]); } catch (_) {}
+            const r = row && row.payload && row.payload.id === d.id ? row.payload : null;
+            if (!r) { showToast('The submitted report couldn’t be loaded just now. Your changes are kept: try again in a moment.'); return false; }
+            srClearDraft();   // chosen: the older unsaved changes go
+            window._srResumeDraft = r;   // opened as it is (openServiceReport skips its newer-copy check for it)
+            try { await openServiceReport(d.id, !srCanManageReports()); } finally { window._srResumeDraft = null; }
+            return true;
+        }
         // The home's Continue card (home.js): the unfinished report, reopened or thrown away from there.
         window.hgSrDraft = {
             get: function () {
@@ -7445,6 +7504,9 @@
                 const d = window.hgSrDraft.get();
                 if (!d) return false;
                 openWindow('servicereport');
+                const pick = await srDraftCheck(d);   // submitted on another phone since? asks first
+                if (pick === 'cancel') return false;
+                if (pick === 'submitted') { await srOpenSubmitted(d); return true; }
                 window._srResumeDraft = d;
                 try { await openServiceReport(d.id, false); } finally { window._srResumeDraft = null; }
                 return true;
@@ -7464,6 +7526,8 @@
             if (sr_readOnly || !form || form.style.display === 'none') { res.message = 'The service report isn’t open for editing: no readings added'; return res; }
             const vals = (readings || []).filter(rd => rd && rd.value != null && rd.value !== '' && isFinite(+rd.value) && srCatItem(rd.id));
             if (!vals.length) return res;
+            // A submitted report: its autosave draft is never offered again, so readings put in here would vanish.
+            if (sr_status === 'submitted') { res.message = 'This report is submitted: no readings added. Start a new report for them.'; return res; }
             const sys = String(system || '').trim(), key = sys.toLowerCase();
             const nm = (x) => String(x.name || '').trim().toLowerCase().replace(/\s+/g, ' ');
             const hasValues = (x) => x.tests.some(t => t.value !== '' && t.value != null);
@@ -7517,6 +7581,7 @@
             if (!confirm('Delete this service report? It is removed from this device and the cloud, and cannot be undone.')) return;
             LS.set('hadron_sr', LS.get('hadron_sr', []).filter(r => r.id !== id));
             srCloudMeta = srCloudMeta.filter(m => m.id !== id);
+            try { const dr = JSON.parse(localStorage.getItem(SR_DRAFT_KEY) || 'null'); if (dr && dr.id === id) srClearDraft(); } catch (_) {}   // its unsaved draft goes too (resuming it would re-create the report)
             try { if (window.HG_DB && window.HG_DB.service_reports) window.HG_DB.service_reports.remove(id).catch(() => {}); } catch (_) {}
             listServiceReports();
         }
