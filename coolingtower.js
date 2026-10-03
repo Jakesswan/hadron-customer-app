@@ -77,6 +77,16 @@
      Round-trip safe: every convertible field carries a "kind".
      ============================================================ */
   var UNITS = (function () { try { return localStorage.getItem(UNITS_KEY) === 'imperial' ? 'imperial' : 'metric'; } catch (e) { return 'metric'; } })();
+  // The unit the conductivity is typed in: the meter's (1 mS/m = 10 µS/cm; 1 mS/cm = 1000 µS/cm, what a handheld meter
+  // switches to above ~2000 µS/cm). Cycles are ratios and don't depend on it; the conductivity sent to the service
+  // report (in µS/cm) does.
+  var COND_TO_US = { 'µS/cm': 1, 'mS/m': 10, 'mS/cm': 1000 };
+  var COND_UNIT_KEY = 'hadron_ct_cond_unit';
+  var COND_UNIT = (function () { try { var u = localStorage.getItem(COND_UNIT_KEY); return COND_TO_US[u] ? u : 'µS/cm'; } catch (e) { return 'µS/cm'; } })();
+  function condUnitSelect() {
+    return '<select id="ct_condUnit" aria-label="Conductivity unit" onchange="HG_CT.setCondUnit(this.value)" style="display:block;margin-top:4px;min-height:40px;padding:6px 6px;font-size:14px;border:1px solid #d7dee4;border-radius:8px;">' +
+      Object.keys(COND_TO_US).map(function (u) { return '<option value="' + u + '"' + (u === COND_UNIT ? ' selected' : '') + '>' + u + '</option>'; }).join('') + '</select>';
+  }
   var CONV = {
     flow: 4.40286754,   // 1 m³/h = 4.40287 US gpm
     vol: 264.172052,    // 1 m³   = 264.172 US gal
@@ -407,7 +417,7 @@
       '<div style="overflow-x:auto;"><table style="width:100%;border-collapse:collapse;font-size:13px;min-width:340px;">' +
       '<tr style="text-align:left;color:#6b7684;"><th style="padding:4px;">Species</th><th>Make-up</th><th>Recirc</th></tr>' +
       ION_SPECIES.map(function (sp) {
-        return '<tr><td style="padding:4px;font-weight:600;">' + sp[1] + '</td>' +
+        return '<tr><td style="padding:4px;font-weight:600;">' + sp[1] + (sp[0] === 'cond' ? condUnitSelect() : '') + '</td>' +
           '<td><input type="number" inputmode="decimal" id="ct_ion_' + sp[0] + '_m" style="width:90px;padding:9px;font-size:15px;border:1px solid #d7dee4;border-radius:8px;"></td>' +
           '<td><input type="number" inputmode="decimal" id="ct_ion_' + sp[0] + '_r" style="width:90px;padding:9px;font-size:15px;border:1px solid #d7dee4;border-radius:8px;"></td></tr>';
       }).join('') + '</table></div>' +
@@ -451,7 +461,7 @@
       '<div style="overflow-x:auto;"><table style="width:100%;border-collapse:collapse;font-size:13px;min-width:340px;">' +
       '<tr style="text-align:left;color:#6b7684;"><th style="padding:4px;">Species</th><th>Make-up</th><th>Recirc limit</th></tr>' +
       [['ca', 'Ca (as CaCO₃)'], ['mg', 'Mg (as CaCO₃)'], ['cl', 'Cl'], ['so4', 'SO₄'], ['sio2', 'Silica (SiO₂)'], ['cond', 'Conductivity']].map(function (sp) {
-        return '<tr><td style="padding:4px;font-weight:600;">' + sp[1] + '</td>' +
+        return '<tr><td style="padding:4px;font-weight:600;">' + sp[1] + (sp[0] === 'cond' ? ' <span class="ct-cond-u" style="font-weight:400;">(' + COND_UNIT + ')</span>' : '') + '</td>' +
           '<td><input type="number" inputmode="decimal" id="ct_lim_' + sp[0] + '_m" style="width:90px;padding:9px;font-size:15px;border:1px solid #d7dee4;border-radius:8px;"></td>' +
           '<td><input type="number" inputmode="decimal" id="ct_lim_' + sp[0] + '_l" style="width:90px;padding:9px;font-size:15px;border:1px solid #d7dee4;border-radius:8px;"></td></tr>';
       }).join('') + '</table></div><div id="ct_max_out"></div>');
@@ -560,6 +570,8 @@
 
     /* ---- A water balance ---- */
     var trSel = (document.getElementById('ct_tracerSel') || {}).value;
+    // the tracer fields' unit: the conductivity unit picked in the ion-balance table when Conductivity is the tracer, else mg/L
+    ['ct_trM', 'ct_trR'].forEach(function (id, i) { var el = document.getElementById(id), lab = el && el.previousElementSibling; if (lab) lab.textContent = (i ? 'Tracer in recirc' : 'Tracer in make-up') + ' (' + (trSel === 'cond' ? COND_UNIT : U('conc')) + ')'; });
     var wbIn = {
       R: readF('ct_R', 'flow'), T1: readF('ct_T1', 'tempAbs'), T2: readF('ct_T2', 'tempAbs'), wetbulb: readF('ct_wb', 'tempAbs'),
       dT: readF('ct_dT', 'tempDelta'), V: readF('ct_V', 'vol'), targetCR: readF('ct_targetCR'), L: readF('ct_L', 'flow'),
@@ -680,6 +692,16 @@
     recompute();
   }
 
+  // The conductivity unit picked in the ion-balance table: the numbers typed stay as typed (they are in the meter's
+  // unit); the max-cycles table's label follows.
+  function setCondUnit(u) {
+    COND_UNIT = COND_TO_US[u] ? u : 'µS/cm';
+    try { localStorage.setItem(COND_UNIT_KEY, COND_UNIT); } catch (e) {}
+    var sel = document.getElementById('ct_condUnit'); if (sel && sel.value !== COND_UNIT) sel.value = COND_UNIT;
+    document.querySelectorAll('#ct_root .ct-cond-u').forEach(function (el) { el.textContent = '(' + COND_UNIT + ')'; });
+    recompute();
+  }
+
   /* ---------- settings ---------- */
   function applySettings() {
     var n = {};
@@ -711,8 +733,9 @@
     document.body.removeChild(ta);
   }
   // The readings go into the report's Cooling Tower sample point (see hgSrAddReadings), in the Cooling Tower pack's rows (pH, temperature
-  // in °C, ORP, free chlorine); the full reading lives in History (Save reading). (Until v161 they went to
+  // in °C, ORP, free / total halogen, system and make-up conductivity in µS/cm); the full reading lives in History (Save reading). (Until v161 they went to
   // fields the report no longer has, while the toast said they were sent.)
+  function condUS(id) { var v = readF(id, 'conc'); return v == null ? null : v * (COND_TO_US[COND_UNIT] || 1); }   // in µS/cm
   function prefillServiceReport() {
     recompute();
     if (typeof openWindow !== 'function') return;
@@ -720,12 +743,19 @@
       { id: 't-ph', value: readF('ct_idx_ph') },
       { id: 'x-temp', value: readF('ct_idx_t', 'tempAbs') },
       { id: 'x-orp', value: readF('ct_orp') },
-      { id: 't-fcl', value: readF('ct_dpdF') }
+      { id: 'x-fhal', value: readF('ct_dpdF') },   // free halogen: its own row (chlorine or bromine), not SANS free chlorine
+      { id: 'x-thal', value: readF('ct_dpdT') },
+      { id: 'x-syscond', value: condUS('ct_ion_cond_r') },   // the ion-balance table's recirc conductivity
+      { id: 'x-mucond', value: condUS('ct_ion_cond_m') }
     ];
     openWindow('servicereport');
     Promise.resolve(typeof newServiceReport === 'function' ? newServiceReport() : null).catch(function () {}).then(function () {
       var r = typeof window.hgSrAddReadings === 'function' ? window.hgSrAddReadings(readings, 'Cooling Tower') : null;
-      if (typeof showToast === 'function') showToast(r && r.message ? r.message : 'New service report: no readings to add yet', 3500);
+      var msg = r && r.message ? r.message : 'New service report: no readings to add yet';
+      // a converted conductivity is named, so a reading typed with the wrong unit picked doesn't slip in unnoticed
+      var conv = COND_UNIT !== 'µS/cm' && r && r.added && (readF('ct_ion_cond_r', 'conc') != null || readF('ct_ion_cond_m', 'conc') != null);
+      if (conv) msg += ' · conductivity typed in ' + COND_UNIT + ', recorded in µS/cm';
+      if (typeof showToast === 'function') showToast(msg, conv ? 5000 : 3500);
     });
   }
 
@@ -746,7 +776,7 @@
     waterBalance: waterBalance, ionBalance: ionBalance, indices: indices, maxCycles: maxCycles, dosing: dosing,
     selfTest: selfTest, lastReading: function () { recompute(); return { inputs: LAST.inputs, results: LAST.results, summary: LAST.summary }; },
     setUnits: setUnits, toggle: toggle, applySettings: applySettings, resetSettings: resetSettings,
-    copyText: copyText, prefillServiceReport: prefillServiceReport
+    copyText: copyText, prefillServiceReport: prefillServiceReport, setCondUnit: setCondUnit
   };
 
   // Run self-tests on load (assert), non-blocking.

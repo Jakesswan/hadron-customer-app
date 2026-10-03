@@ -52,60 +52,60 @@
     <!-- Supabase JS SDK (auth + cloud sync), pinned 2.117.2 and served by the app itself so sign-in
          works offline from the precache (it used to be the floating @2 from a CDN). See
          THIRD_PARTY_NOTICES.md. To upgrade: replace the file, rename it, update this tag + sw.js. -->
-    <script src="supabase-js-2.117.2.js?v=163"></script>
+    <script src="supabase-js-2.117.2.js?v=164"></script>
 
     <!-- Hadron Supabase bridge -->
-    <script src="supabase-client.js?v=163"></script>
+    <script src="supabase-client.js?v=164"></script>
 
     <!-- Shared UI primitives (in-app sheets) — loaded before auth-ui, which uses them -->
-    <script src="hg-ui.js?v=163" defer></script>
+    <script src="hg-ui.js?v=164" defer></script>
     <!-- Auth UI (login/signup gate, profile binding) -->
-    <script src="auth-ui.js?v=163" defer></script>
+    <script src="auth-ui.js?v=164" defer></script>
 
     <!-- Push notifications -->
-    <script src="push.js?v=163" defer></script>
+    <script src="push.js?v=164" defer></script>
 
     <!-- Translation bundle -->
-    <script src="i18n.js?v=163"></script>
+    <script src="i18n.js?v=164"></script>
 
     <!-- Hadron Tristroke icon system (matches the ERP) -->
-    <script src="hadron-icons.js?v=163" defer></script>
+    <script src="hadron-icons.js?v=164" defer></script>
 
     <!-- Emoji the app has an icon for become Tristroke icons (the rest stay the phone's own emoji) -->
-    <script src="emoji.js?v=163" defer></script>
+    <script src="emoji.js?v=164" defer></script>
 
     <!-- Customizable home grid (drag-to-reorder) -->
-    <script src="home.js?v=163" defer></script>
-    <script src="customize.js?v=163" defer></script>
+    <script src="home.js?v=164" defer></script>
+    <script src="customize.js?v=164" defer></script>
 
     <!-- Data Manager (Excel import/export) -->
-    <script src="data-manager.js?v=163" defer></script>
+    <script src="data-manager.js?v=164" defer></script>
 
     <!-- QR encoder (MIT, Kazuhiko Arase) -->
-    <script src="qr.js?v=163"></script>
+    <script src="qr.js?v=164"></script>
 
     <!-- QR Builder app -->
-    <script src="qr-app.js?v=163" defer></script>
+    <script src="qr-app.js?v=164" defer></script>
 
     <!-- Pool Water module -->
-    <script src="pool.js?v=163" defer></script>
+    <script src="pool.js?v=164" defer></script>
     <!-- Cooling Tower field calculator -->
-    <script src="coolingtower.js?v=163" defer></script>
+    <script src="coolingtower.js?v=164" defer></script>
     <!-- Boiler / Steam field calculator -->
-    <script src="boiler.js?v=163" defer></script>
+    <script src="boiler.js?v=164" defer></script>
     <!-- Water softener sizing calculator -->
-    <script src="softener.js?v=163" defer></script>
-    <script src="academy-content.js?v=163" defer></script>
-    <script src="academy.js?v=163" defer></script>
+    <script src="softener.js?v=164" defer></script>
+    <script src="academy-content.js?v=164" defer></script>
+    <script src="academy.js?v=164" defer></script>
 
-    <script src="searchable-select.js?v=163" defer></script>
-    <script src="trends.js?v=163" defer></script>
+    <script src="searchable-select.js?v=164" defer></script>
+    <script src="trends.js?v=164" defer></script>
 
     <!-- LIMS module (loaded at end of body via defer) -->
-    <script src="lims.js?v=163" defer></script>
-    <script src="lims-sync.js?v=163" defer></script>
-    <script src="portal.js?v=163" defer></script>
-    <script src="team.js?v=163" defer></script>
+    <script src="lims.js?v=164" defer></script>
+    <script src="lims-sync.js?v=164" defer></script>
+    <script src="portal.js?v=164" defer></script>
+    <script src="team.js?v=164" defer></script>
 
 
     <style>
@@ -2832,7 +2832,7 @@
                 <div class="hg-section-title">About</div>
                 <div class="hg-kvgrid">
                     <div class="hg-kv"><div class="k">App</div><div class="v">Hadron Group</div></div>
-                    <div class="hg-kv"><div class="k">Version</div><div class="v">v163</div></div>
+                    <div class="hg-kv"><div class="k">Version</div><div class="v">v164</div></div>
                     <div class="hg-kv"><div class="k">Platform</div><div class="v">PWA</div></div>
                 </div>
             </div>
@@ -6668,9 +6668,15 @@
             { id:'x-mucond',  code:'MCOND', name:'Make-up conductivity',       unit:'µS/cm', specMin:null, specMax:null, category:'Cooling tower', sans241:'' },
             { id:'x-bio',     code:'BIO',   name:'Biocide / oxidant residual', unit:'mg/L',  specMin:null, specMax:null, category:'Cooling tower', sans241:'' },
             { id:'x-inhib',   code:'INHIB', name:'Inhibitor residual',         unit:'mg/L',  specMin:null, specMax:null, category:'Cooling tower', sans241:'' },
+            // Free / total halogen by DPD: chlorine OR bromine programmes, so not SANS 241's free chlorine (and its limits)
+            { id:'x-fhal',    code:'FHAL',  name:'Free halogen (DPD)',         unit:'mg/L',  specMin:null, specMax:null, category:'Cooling tower', sans241:'' },
+            { id:'x-thal',    code:'THAL',  name:'Total halogen (DPD)',        unit:'mg/L',  specMin:null, specMax:null, category:'Cooling tower', sans241:'' },
             // Boiler control set
             { id:'x-btds',   code:'BTDS',  name:'Boiler water TDS',      unit:'mg/L', specMin:null, specMax:null, category:'Boiler', sans241:'' },
             { id:'x-ftds',   code:'FTDS',  name:'Feedwater TDS',         unit:'mg/L', specMin:null, specMax:null, category:'Boiler', sans241:'' },
+            // boiler water runs at pH 10.5–12: not SANS 241's drinking-water pH (5.0–9.7). A limit, if wanted, is an own limit
+            // (✎ limit): kept per parameter on this phone, so it applies at every site (not per site)
+            { id:'x-bph',    code:'BPH',   name:'Boiler water pH',       unit:'pH',   specMin:null, specMax:null, category:'Boiler', sans241:'' },
             { id:'x-sulph',  code:'SULPH', name:'Sulphite reserve',      unit:'mg/L', specMin:null, specMax:null, category:'Boiler', sans241:'' },
             { id:'x-bphos',  code:'BPHOS', name:'Phosphate reserve',     unit:'mg/L', specMin:null, specMax:null, category:'Boiler', sans241:'' },
             { id:'x-condph', code:'CPH',   name:'Condensate pH',         unit:'pH',   specMin:null, specMax:null, category:'Boiler', sans241:'' },
@@ -6685,8 +6691,8 @@
         ];
         // Curated test packs per water system — loaded into a sample point in one tap.
         const SR_SYSTEM_PACKS = {
-            'Cooling Tower':      ['x-syscond','x-mucond','t-ph','x-bio','x-inhib','x-orp','x-temp','t-fcl'],
-            'Boiler':            ['x-btds','x-ftds','t-ph','x-sulph','x-bphos','t-alk','x-condph','x-oxsc'],
+            'Cooling Tower':      ['x-syscond','x-mucond','t-ph','x-bio','x-inhib','x-orp','x-temp','x-fhal'],
+            'Boiler':            ['x-btds','x-ftds','x-bph','x-sulph','x-bphos','t-alk','x-condph','x-oxsc'],
             'Reverse Osmosis':   ['x-feedc','x-permc','x-rejc','t-ph','x-sdi','x-dp','x-antisc','x-temp'],
             'Potable / SANS 241':['t-ph','t-fcl','x-tcl','t-cond','t-tds','t-turb','t-ec','t-colif']
         };
@@ -6757,7 +6763,8 @@
                 'x-syscond': [0, 200000], 'x-mucond': [0, 200000], 'x-feedc': [0, 200000],
                 'x-permc': [0, 200000], 'x-rejc': [0, 200000], 'x-btds': [0, 200000], 'x-ftds': [0, 200000],
                 'x-bio': [0, 10000], 'x-inhib': [0, 10000], 'x-sulph': [0, 10000], 'x-bphos': [0, 10000],
-                'x-oxsc': [0, 10000], 'x-antisc': [0, 10000], 'x-condph': [0, 14], 'x-sdi': [0, 6.7], 'x-dp': [0, 50]
+                'x-oxsc': [0, 10000], 'x-antisc': [0, 10000], 'x-condph': [0, 14], 'x-sdi': [0, 6.7], 'x-dp': [0, 50],
+                'x-bph': [0, 14], 'x-fhal': [0, 100], 'x-thal': [0, 100]
             }[t.catId || t.id];
             if (R) return v >= R[0] && v <= R[1];
             if (/mg\/L|cfu|NTU|pfu|µg|mS\/m/i.test(t.unit || '') && v < 0) return false;   // most water params are non-negative
@@ -6840,9 +6847,25 @@
                 if (p.tests.some(t => t.catId === id)) return;
                 const c = srCatItem(id); if (c) { p.tests.push(srNewRow(c)); added++; }
             });
+            srUseSystemRows(p, packName);
             if (!p.name || !p.name.trim()) p.name = packName;   // name an unnamed point after its system
             srRenderPoints(); srQueueAutosave();
             showToast(added ? (packName + ' pack loaded — ' + added + ' test' + (added === 1 ? '' : 's')) : (packName + ' tests already present'));
+        }
+        // A system's own row takes the place of the ★ drinking-water row a point starts with, when that row is still
+        // empty: Boiler water pH for SANS 241's pH (5.0–9.7, a normal boiler pH of 11 would FAIL there), Free halogen
+        // (DPD) for SANS Free Chlorine at a tower. A value already typed in the SANS row is never dropped.
+        const SR_SYSTEM_ROWS = { 'Boiler': [['t-ph', 'x-bph']], 'Cooling Tower': [['t-fcl', 'x-fhal']] };
+        function srUseSystemRows(p, system) {   // true when a row was replaced
+            let changed = false;
+            (SR_SYSTEM_ROWS[system] || []).forEach(([old, own]) => {
+                const o = p.tests.find(t => t.catId === old), n = p.tests.find(t => t.catId === own);
+                if (!o || !n || !(o.value === '' || o.value == null)) return;
+                // the system's row ends up where the earlier of the two was (the ★ row's place, usually the top)
+                p.tests = p.tests.indexOf(n) < p.tests.indexOf(o) ? p.tests.filter(t => t !== o) : p.tests.filter(t => t !== n).map(t => (t === o ? n : t));
+                changed = true;
+            });
+            return changed;
         }
         // Derived metrics computed live from the readings at a point (not stored as
         // rows — recomputed on render and on every value edit). Cycles of concentration
@@ -6851,7 +6874,7 @@
         function srDerived(p) {
             const out = [];
             const sys = srPtVal(p, 'x-syscond'), mu = srPtVal(p, 'x-mucond');
-            if (sys != null && mu > 0) out.push(['Cycles of concentration', (sys / mu).toFixed(2), 'system ÷ make-up conductivity']);
+            if (sys > 0 && mu > 0) out.push(['Cycles of concentration', (sys / mu).toFixed(2), 'system ÷ make-up conductivity']);
             const feed = srPtVal(p, 'x-feedc'), perm = srPtVal(p, 'x-permc');
             if (feed > 0 && perm != null) out.push(['Salt rejection', ((1 - perm / feed) * 100).toFixed(1) + '%', '1 − permeate ÷ feed conductivity']);
             return out;
@@ -7551,9 +7574,10 @@
                 t.value = String(Math.round(+rd.value * 100) / 100);
                 res.added++;
             });
+            const swapped = key ? srUseSystemRows(p, sys) : false;
             res.point = (p.name || '').trim();
             srRenderPoints();
-            if (res.added) srQueueAutosave();
+            if (res.added || swapped) srQueueAutosave();
             const where = res.point ? ' (' + res.point + ')' : '';
             const kept = res.kept ? keptNames.join(', ') + ' already filled there, not changed' : '';
             res.message = res.added

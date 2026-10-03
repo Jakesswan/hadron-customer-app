@@ -598,8 +598,8 @@
     if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(txt).then(done, function () { fallbackCopy(txt, done); }); else fallbackCopy(txt, done);
   }
   function fallbackCopy(txt, done) { var ta = document.createElement('textarea'); ta.value = txt; ta.style.position = 'fixed'; ta.style.opacity = '0'; document.body.appendChild(ta); ta.select(); try { document.execCommand('copy'); done(); } catch (e) { if (typeof showToast === 'function') showToast('Copy not supported'); } document.body.removeChild(ta); }
-  // The readings go into the report's Boiler sample point (see hgSrAddReadings), in the Boiler pack's rows (boiler water TDS, pH,
-  // phosphate reserve), in mg/L whatever units the calculator shows. (Until v161 they went to fields the report
+  // The readings go into the report's Boiler sample point (see hgSrAddReadings), in the Boiler pack's rows (boiler water TDS,
+  // boiler water pH, phosphate reserve), in mg/L whatever units the calculator shows. (Until v161 they went to fields the report
   // no longer has, while the toast said they were sent.)
   function samplingOk() { var a = document.getElementById('bo_ack1'), b = document.getElementById('bo_ack2'); return !!(a && a.checked && b && b.checked); }
   function prefillServiceReport() {
@@ -609,7 +609,7 @@
       // the TDS reading; else the cycles section's boiler water TDS, but only with both sampling checks ticked (the
       // same gate the calculator puts on everything worked out from it)
       { id: 'x-btds', value: readF('bo_r_tds', 'conc') != null ? readF('bo_r_tds', 'conc') : (samplingOk() ? readF('bo_tdsBD', 'conc') : null) },
-      { id: 't-ph', value: readRaw('bo_r_ph') },
+      { id: 'x-bph', value: readRaw('bo_r_ph') },   // boiler water pH: its own row, not SANS 241's drinking-water pH
       { id: 'x-bphos', value: readF('bo_r_po4', 'conc') }
     ];
     var heldBack = readF('bo_r_tds', 'conc') == null && readF('bo_tdsBD', 'conc') != null && !samplingOk();   // said in the toast
