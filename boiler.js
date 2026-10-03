@@ -357,7 +357,7 @@
     h += '<div class="bo-gate"><div style="font-weight:800;color:var(--bo-char);margin-bottom:2px;">⚠ Sampling validity — required for any TDS/conductivity result</div>' +
       '<label><input type="checkbox" id="bo_ack1"><span>Feedwater sample was taken <b>after all chemicals were added</b>.</span></label>' +
       '<label><input type="checkbox" id="bo_ack2"><span>Boiler-water sample was <b>neutralised before</b> measuring conductivity.</span></label>' +
-      '<p class="bo-note">Hydrate (OH) alkalinity greatly raises sample conductivity, which understates boiler TDS and gives a <b>falsely low % blowdown</b> — you would believe the boiler is cycling harder than it is (Nalco Ch.9).</p></div>';
+      '<p class="bo-note">Hydrate (OH) alkalinity greatly raises sample conductivity, which overstates boiler TDS and gives a <b>falsely low % blowdown</b> — you would believe the boiler is cycling harder than it is (Nalco Ch.9).</p></div>';
 
     // C — MAX CYCLES (headline)
     h += sec('bo_sec_max', 'Maximum cycles from the limiting species — headline', true, 'gold',
@@ -598,15 +598,28 @@
     if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(txt).then(done, function () { fallbackCopy(txt, done); }); else fallbackCopy(txt, done);
   }
   function fallbackCopy(txt, done) { var ta = document.createElement('textarea'); ta.value = txt; ta.style.position = 'fixed'; ta.style.opacity = '0'; document.body.appendChild(ta); ta.select(); try { document.execCommand('copy'); done(); } catch (e) { if (typeof showToast === 'function') showToast('Copy not supported'); } document.body.removeChild(ta); }
+  // The readings go into the report's Boiler sample point (see hgSrAddReadings), in the Boiler pack's rows (boiler water TDS, pH,
+  // phosphate reserve), in mg/L whatever units the calculator shows. (Until v161 they went to fields the report
+  // no longer has, while the toast said they were sent.)
+  function samplingOk() { var a = document.getElementById('bo_ack1'), b = document.getElementById('bo_ack2'); return !!(a && a.checked && b && b.checked); }
   function prefillServiceReport() {
     recompute();
     if (typeof openWindow !== 'function') return;
-    openWindow('servicereport'); if (typeof newServiceReport === 'function') { try { newServiceReport(); } catch (e) {} }
-    setTimeout(function () {
-      var m = { sr_ph: readRaw('bo_r_ph'), sr_cond: readRaw('bo_tdsBD') || readRaw('bo_r_tds') };
-      Object.keys(m).forEach(function (id) { var el = document.getElementById(id); if (el && m[id] != null && el.value === '') el.value = m[id]; });
-      if (typeof showToast === 'function') showToast('Key readings sent to service report');
-    }, 250);
+    var readings = [
+      // the TDS reading; else the cycles section's boiler water TDS, but only with both sampling checks ticked (the
+      // same gate the calculator puts on everything worked out from it)
+      { id: 'x-btds', value: readF('bo_r_tds', 'conc') != null ? readF('bo_r_tds', 'conc') : (samplingOk() ? readF('bo_tdsBD', 'conc') : null) },
+      { id: 't-ph', value: readRaw('bo_r_ph') },
+      { id: 'x-bphos', value: readF('bo_r_po4', 'conc') }
+    ];
+    var heldBack = readF('bo_r_tds', 'conc') == null && readF('bo_tdsBD', 'conc') != null && !samplingOk();   // said in the toast
+    openWindow('servicereport');
+    Promise.resolve(typeof newServiceReport === 'function' ? newServiceReport() : null).catch(function () {}).then(function () {
+      var r = typeof window.hgSrAddReadings === 'function' ? window.hgSrAddReadings(readings, 'Boiler') : null;
+      var msg = r && r.message ? r.message : 'New service report: no readings to add yet';
+      if (heldBack) msg += ' · Boiler water TDS not sent: tick both sampling checks first';
+      if (typeof showToast === 'function') showToast(msg, heldBack ? 5000 : 3500);
+    });
   }
 
   function mount() {

@@ -20,7 +20,8 @@
   // Lower case, no accents, so "regsitreer" style typos aside, "Sakrekenaar" finds "sakrekenaar" and ClO₂ finds "clo2".
   const fold = (s) => String(s || '').normalize('NFKD').replace(/\p{M}/gu, '').toLowerCase();   // every combining mark: accents, and the Arabic / Devanagari marks people often leave out
 
-  // Tiles other modules add after load, and the section they belong to ('first' = the front of the first one).
+  // Tiles other modules add after load, and the section they belong to ('first' = the front of Calculators, the first
+  // section for every role that sees such a tile).
   const PLACE = { team: 'more', portal: 'first' };
 
   // Tools inside other tools: found by search and opened directly. label is English (the tools' own screens
@@ -88,7 +89,7 @@
     const where = PLACE[id] || 'more';
     const grids = homeGrids();
     if (!grids.length) return false;
-    if (where === 'first') { tile.setAttribute('data-home-first', ''); grids[0].insertBefore(tile, grids[0].firstChild); }
+    if (where === 'first') { const g = document.querySelector('[data-home-sec="' + SEC_DEFAULT[0] + '"] [data-home-grid]') || grids[0]; tile.setAttribute('data-home-first', ''); g.insertBefore(tile, g.firstChild); }
     else (document.querySelector('[data-home-sec="' + where + '"] [data-home-grid]') || grids[grids.length - 1]).appendChild(tile);
     // A saved layout may already say where this tile goes (customize.js keeps data-home-first tiles in front).
     if (window.HG_HOME && typeof window.HG_HOME.applyOrder === 'function' && !window.HG_HOME.isEditing()) window.HG_HOME.applyOrder();
@@ -99,7 +100,23 @@
   }
   window.hgHomePlace = place;
 
+  // Home by role: Hadron's own people (admin) are mostly on site visits, so Field service comes first for them;
+  // everyone else starts with the calculators (a viewer's Portal is in front of those).
+  const SEC_ORDER = { admin: ['field', 'calculators', 'lab', 'learn', 'more'] };
+  const SEC_DEFAULT = ['calculators', 'field', 'lab', 'learn', 'more'];
+  function orderSections() {
+    const all = Array.from(document.querySelectorAll('[data-home-sec]'));
+    if (all.length < 2) return;
+    const want = SEC_ORDER[document.body.getAttribute('data-role') || ''] || SEC_DEFAULT;
+    const rank = (s) => { const i = want.indexOf(s.getAttribute('data-home-sec')); return i === -1 ? want.length : i; };
+    const sorted = all.slice().sort((a, b) => rank(a) - rank(b));
+    if (sorted.every((s, i) => s === all[i])) return;
+    const parent = all[0].parentNode, after = all[all.length - 1].nextSibling;
+    sorted.forEach((s) => parent.insertBefore(s, after));
+  }
+
   function refreshSections() {
+    orderSections();
     document.querySelectorAll('[data-home-sec]').forEach((sec) => {
       const any = Array.from(sec.querySelectorAll('.app-icon[data-app]')).some(tileShown);
       sec.hidden = !any;

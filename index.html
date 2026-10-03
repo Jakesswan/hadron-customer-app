@@ -52,60 +52,60 @@
     <!-- Supabase JS SDK (auth + cloud sync), pinned 2.117.2 and served by the app itself so sign-in
          works offline from the precache (it used to be the floating @2 from a CDN). See
          THIRD_PARTY_NOTICES.md. To upgrade: replace the file, rename it, update this tag + sw.js. -->
-    <script src="supabase-js-2.117.2.js?v=160"></script>
+    <script src="supabase-js-2.117.2.js?v=161"></script>
 
     <!-- Hadron Supabase bridge -->
-    <script src="supabase-client.js?v=160"></script>
+    <script src="supabase-client.js?v=161"></script>
 
     <!-- Shared UI primitives (in-app sheets) — loaded before auth-ui, which uses them -->
-    <script src="hg-ui.js?v=160" defer></script>
+    <script src="hg-ui.js?v=161" defer></script>
     <!-- Auth UI (login/signup gate, profile binding) -->
-    <script src="auth-ui.js?v=160" defer></script>
+    <script src="auth-ui.js?v=161" defer></script>
 
     <!-- Push notifications -->
-    <script src="push.js?v=160" defer></script>
+    <script src="push.js?v=161" defer></script>
 
     <!-- Translation bundle -->
-    <script src="i18n.js?v=160"></script>
+    <script src="i18n.js?v=161"></script>
 
     <!-- Hadron Tristroke icon system (matches the ERP) -->
-    <script src="hadron-icons.js?v=160" defer></script>
+    <script src="hadron-icons.js?v=161" defer></script>
 
     <!-- Emoji the app has an icon for become Tristroke icons (the rest stay the phone's own emoji) -->
-    <script src="emoji.js?v=160" defer></script>
+    <script src="emoji.js?v=161" defer></script>
 
     <!-- Customizable home grid (drag-to-reorder) -->
-    <script src="home.js?v=160" defer></script>
-    <script src="customize.js?v=160" defer></script>
+    <script src="home.js?v=161" defer></script>
+    <script src="customize.js?v=161" defer></script>
 
     <!-- Data Manager (Excel import/export) -->
-    <script src="data-manager.js?v=160" defer></script>
+    <script src="data-manager.js?v=161" defer></script>
 
     <!-- QR encoder (MIT, Kazuhiko Arase) -->
-    <script src="qr.js?v=160"></script>
+    <script src="qr.js?v=161"></script>
 
     <!-- QR Builder app -->
-    <script src="qr-app.js?v=160" defer></script>
+    <script src="qr-app.js?v=161" defer></script>
 
     <!-- Pool Water module -->
-    <script src="pool.js?v=160" defer></script>
+    <script src="pool.js?v=161" defer></script>
     <!-- Cooling Tower field calculator -->
-    <script src="coolingtower.js?v=160" defer></script>
+    <script src="coolingtower.js?v=161" defer></script>
     <!-- Boiler / Steam field calculator -->
-    <script src="boiler.js?v=160" defer></script>
+    <script src="boiler.js?v=161" defer></script>
     <!-- Water softener sizing calculator -->
-    <script src="softener.js?v=160" defer></script>
-    <script src="academy-content.js?v=160" defer></script>
-    <script src="academy.js?v=160" defer></script>
+    <script src="softener.js?v=161" defer></script>
+    <script src="academy-content.js?v=161" defer></script>
+    <script src="academy.js?v=161" defer></script>
 
-    <script src="searchable-select.js?v=160" defer></script>
-    <script src="trends.js?v=160" defer></script>
+    <script src="searchable-select.js?v=161" defer></script>
+    <script src="trends.js?v=161" defer></script>
 
     <!-- LIMS module (loaded at end of body via defer) -->
-    <script src="lims.js?v=160" defer></script>
-    <script src="lims-sync.js?v=160" defer></script>
-    <script src="portal.js?v=160" defer></script>
-    <script src="team.js?v=160" defer></script>
+    <script src="lims.js?v=161" defer></script>
+    <script src="lims-sync.js?v=161" defer></script>
+    <script src="portal.js?v=161" defer></script>
+    <script src="team.js?v=161" defer></script>
 
 
     <style>
@@ -1058,8 +1058,11 @@
         .toast {
             position: fixed;
             bottom: 90px;
-            left: 50%;
-            transform: translateX(-50%) translateY(20px);
+            left: 0;
+            right: 0;
+            margin: 0 auto;
+            width: fit-content;   /* centred without left:50% (which capped a long toast at half the screen) */
+            transform: translateY(20px);
             background: #222;
             color: #fff;
             padding: 12px 20px;
@@ -1076,7 +1079,7 @@
 
         .toast.visible {
             opacity: 1;
-            transform: translateX(-50%) translateY(0);
+            transform: translateY(0);
         }
 
         /* Settings rows & toggle */
@@ -2829,7 +2832,7 @@
                 <div class="hg-section-title">About</div>
                 <div class="hg-kvgrid">
                     <div class="hg-kv"><div class="k">App</div><div class="v">Hadron Group</div></div>
-                    <div class="hg-kv"><div class="k">Version</div><div class="v">v160</div></div>
+                    <div class="hg-kv"><div class="k">Version</div><div class="v">v161</div></div>
                     <div class="hg-kv"><div class="k">Platform</div><div class="v">PWA</div></div>
                 </div>
             </div>
@@ -6171,7 +6174,23 @@
         function srLoadSitePoints(site) {
             if (!site || !(site.samplePoints && site.samplePoints.length)) return;
             const touched = sr_points.some(p => p.tests.some(t => t.value !== '' && t.value != null));
-            if (touched) { showToast('This site has standard sample points — start a new report to load them'); return; }
+            if (touched) {
+                // Readings are already in (sent from a calculator, or typed before the site was picked): keep them all.
+                // A point named like one of the site's takes that point's place; the site's other points are added with
+                // the ★ favourites; a point the site doesn't have stays at the end if it has a name or readings.
+                const key = s => String(s || '').trim().toLowerCase();
+                const used = new Set();
+                const merged = site.samplePoints.map(sp => {
+                    const ex = sr_points.find(p => !used.has(p) && key(p.name) && key(p.name) === key(sp.name));
+                    if (ex) { used.add(ex); return ex; }
+                    return srNewPoint(sp.name, true);
+                });
+                const added = merged.filter(p => !used.has(p)).length;
+                sr_points = merged.concat(sr_points.filter(p => !used.has(p) && (key(p.name) || p.tests.some(t => t.value !== '' && t.value != null))));
+                srRenderPoints(); srQueueAutosave();
+                showToast(added ? 'Added ' + added + ' sample point' + (added === 1 ? '' : 's') + ' from ' + site.name + ' · the readings already in are kept' : site.name + '’s sample points are already in this report');
+                return;
+            }
             sr_points = site.samplePoints.map(sp => srNewPoint(sp.name, true));
             if (!sr_points.length) sr_points = [srNewPoint('', true)];
             srRenderPoints();
@@ -7427,6 +7446,52 @@
                 return true;
             },
             discard: function () { srClearDraft(); }
+        };
+        // Readings from a calculator (Boiler, Cooling Tower) into the open report, at the sample point for that system:
+        // the point named after it, else the first point while it is still unnamed and empty (it is then named after
+        // the system, as a system pack does), else a new point named after it. So a boiler's readings never land under
+        // a cooling tower (or another system's) sample point. Each reading goes into its row there (the row is added
+        // when the point doesn't have it), only where that row is still empty: a value already there is kept, and the
+        // message says so. readings: [{ id: catalog id, value: number in the row's unit }]; system: 'Boiler' |
+        // 'Cooling Tower' (the SR_SYSTEM_PACKS names). Returns { added, kept, point, message } (message: the toast).
+        window.hgSrAddReadings = function (readings, system) {
+            const res = { added: 0, kept: 0, point: '', message: 'New service report: no readings to add yet' };
+            const form = document.getElementById('sr_form');
+            if (sr_readOnly || !form || form.style.display === 'none') { res.message = 'The service report isn’t open for editing: no readings added'; return res; }
+            const vals = (readings || []).filter(rd => rd && rd.value != null && rd.value !== '' && isFinite(+rd.value) && srCatItem(rd.id));
+            if (!vals.length) return res;
+            const sys = String(system || '').trim(), key = sys.toLowerCase();
+            const nm = (x) => String(x.name || '').trim().toLowerCase().replace(/\s+/g, ' ');
+            const hasValues = (x) => x.tests.some(t => t.value !== '' && t.value != null);
+            // The point named after the system; else the ONE point whose name clearly means that system's own water
+            // ("Boiler water", "Boiler 2", "Cooling tower 1", "Tower basin"; not several, not "Boiler feedwater",
+            // "Cooling tower make-up", a bare "Tower 1" (a water tower?) or anything else that may be another water:
+            // those get a new point named after the system instead).
+            const one = '( (no\\.? ?|# ?)?(\\d{1,2}|[a-z]))?';
+            const own = { 'boiler': new RegExp('^boiler( (water|blowdown|drum))?' + one + '$'),
+                          'cooling tower': new RegExp('^(cooling tower( (water|basin|sump|bleed|blowdown|recirc|recirculating|system))?|tower (basin|sump|bleed|blowdown|recirc|recirculating))' + one + '$') }[key];
+            const like = own ? sr_points.filter(x => own.test(nm(x))) : [];
+            let p = key ? (sr_points.find(x => nm(x) === key) || (like.length === 1 ? like[0] : null)) : null;
+            if (!p) { const first = sr_points.find(x => x.id === sr_activePoint) || sr_points[0]; if (first && (!key || (!nm(first) && !hasValues(first)))) p = first; }
+            if (!p) { p = srNewPoint('', false); sr_points.push(p); }
+            if (key && !nm(p)) p.name = sys;
+            const keptNames = [];
+            vals.forEach(function (rd) {
+                let t = p.tests.find(x => x.catId === rd.id);
+                if (!t) { t = srNewRow(srCatItem(rd.id)); p.tests.push(t); }
+                if (t.value !== '' && t.value != null) { res.kept++; keptNames.push(t.name || t.code || rd.id); return; }   // never over a value already there
+                t.value = String(Math.round(+rd.value * 100) / 100);
+                res.added++;
+            });
+            res.point = (p.name || '').trim();
+            srRenderPoints();
+            if (res.added) srQueueAutosave();
+            const where = res.point ? ' (' + res.point + ')' : '';
+            const kept = res.kept ? keptNames.join(', ') + ' already filled there, not changed' : '';
+            res.message = res.added
+                ? (res.added === 1 ? '1 reading' : res.added + ' readings') + ' added to the service report' + where + (kept ? ' · ' + kept : '')
+                : 'No readings added to the service report' + where + ': ' + kept;
+            return res;
         };
 
         function saveServiceReport() {

@@ -710,20 +710,24 @@
     try { document.execCommand('copy'); done(); } catch (e) { if (typeof showToast === 'function') showToast('Copy not supported — long-press to select'); }
     document.body.removeChild(ta);
   }
+  // The readings go into the report's Cooling Tower sample point (see hgSrAddReadings), in the Cooling Tower pack's rows (pH, temperature
+  // in °C, ORP, free chlorine); the full reading lives in History (Save reading). (Until v161 they went to
+  // fields the report no longer has, while the toast said they were sent.)
   function prefillServiceReport() {
     recompute();
-    // The service report captures only pH / conductivity / free-Cl — push those across; the
-    // full reading lives in History (Save reading) to avoid losing cooling-tower data.
     if (typeof openWindow !== 'function') return;
+    var readings = [
+      { id: 't-ph', value: readF('ct_idx_ph') },
+      { id: 'x-temp', value: readF('ct_idx_t', 'tempAbs') },
+      { id: 'x-orp', value: readF('ct_orp') },
+      { id: 't-fcl', value: readF('ct_dpdF') }
+    ];
     openWindow('servicereport');
-    if (typeof newServiceReport === 'function') { try { newServiceReport(); } catch (e) {} }
-    setTimeout(function () {
-      var map = { sr_ph: readFRaw('ct_idx_ph'), sr_cond: readFRaw('ct_ion_cond_r') || readFRaw('ct_idx_tds'), sr_fcl: readFRaw('ct_dpdF') };
-      Object.keys(map).forEach(function (id) { var el = document.getElementById(id); if (el && map[id] != null && el.value === '') el.value = map[id]; });
-      if (typeof showToast === 'function') showToast('Key readings sent to service report');
-    }, 250);
+    Promise.resolve(typeof newServiceReport === 'function' ? newServiceReport() : null).catch(function () {}).then(function () {
+      var r = typeof window.hgSrAddReadings === 'function' ? window.hgSrAddReadings(readings, 'Cooling Tower') : null;
+      if (typeof showToast === 'function') showToast(r && r.message ? r.message : 'New service report: no readings to add yet', 3500);
+    });
   }
-  function readFRaw(id) { var el = document.getElementById(id); return el && el.value !== '' ? el.value : null; }
 
   /* ---------- mount ---------- */
   function mount(keepPanels) {
