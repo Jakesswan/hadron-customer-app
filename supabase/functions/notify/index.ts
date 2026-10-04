@@ -1,27 +1,36 @@
 /*
  * Hadron Group — `notify` Edge Function
  *
- * Sends a Web Push notification to one or more users.
+ * Sends a Web Push notification to one or more users. Only trusted server-side callers may use it (a database trigger
+ * via pg_net, a cron job, a smoke test from a terminal): the app never calls it.
  *
- * Deploy:
+ * Who may call (v6, 2026-10-04): a request with the shared secret in `x-hadron-key` (when HADRON_NOTIFY_KEY is set),
+ * or one signed with the project's service-role key. Everyone else gets 403. The function runs with the service role
+ * and takes user_id / org_id from the body, so before v6 the app's public anon key (which passes the JWT check) let
+ * anyone push any title, text and link to any user or company; v5 checked the shared secret only when it was set.
+ *
+ * Deploy (keep verify_jwt on: the role check below relies on the platform having verified the JWT):
  *   supabase functions deploy notify
  *
  * Required secrets (set with `supabase secrets set`):
  *   VAPID_PUBLIC_KEY    Same value you put in push.js
  *   VAPID_PRIVATE_KEY   The private key from `npx web-push generate-vapid-keys`
- *   VAPID_SUBJECT       e.g. "mailto:sales@hadrongrp.com"
+ *   VAPID_SUBJECT       e.g. "mailto:apps@hadrongrp.com" (optional)
+ *   HADRON_NOTIFY_KEY   Optional: a shared secret for callers that don't use the service-role key
  *
- * Invocation (from the app, a database trigger via pg_net, or a cron job):
+ * Invocation:
  *   POST /functions/v1/notify
- *   Authorization: Bearer <anon or service-role JWT>
+ *   Authorization: Bearer <service-role JWT>        (or another valid JWT together with x-hadron-key)
+ *   x-hadron-key: <HADRON_NOTIFY_KEY>                (optional with the service-role key)
  *   {
- *     "user_id":   "<profiles.id>",   // OR
- *     "org_id":    "<organisations.id>",  // fan-out to every member of an org
- *     "role":      "customer_admin",  // optional filter when using org_id
+ *     "user_id":   "<profiles.id>",                 // OR
+ *     "org_id":    "<organisations.id>",            // fan-out to every member of an org
+ *     "role":      "customer_admin",                // optional filter when using org_id
  *     "title":     "New lab report ready",
  *     "body":      "Sample SAM-1042 has been authorised.",
- *     "link":      "#lims/sample/SAM-1042",
- *     "tag":       "sample-1042"      // optional, dedups in OS notification tray
+ *     "link":      "#lims/sample/SAM-1042",         // an app link: "#route", "./path", "/path" or
+ *                                                   // https://app.hadrongrp.com/…; anything else opens the app's home
+ *     "tag":       "sample-1042"                    // optional, dedups in OS notification tray
  *   }
  *
  * Response: { delivered: number, failed: number, removed_endpoints: number }
@@ -30,11 +39,12 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 import webpush from 'https://esm.sh/web-push@3.6.7';
 
-const SUPABASE_URL         = Deno.env.get('SUPABASE_URL')!;
-const SERVICE_ROLE_KEY     = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
-const VAPID_PUBLIC         = Deno.env.get('VAPID_PUBLIC_KEY')!;
-const VAPID_PRIVATE        = Deno.env.get('VAPID_PRIVATE_KEY')!;
-const VAPID_SUBJECT        = Deno.env.get('VAPID_SUBJECT') || 'mailto:sales@hadrongrp.com';
+const SUPABASE_URL     = Deno.env.get('SUPABASE_URL')!;
+const SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+const VAPID_PUBLIC     = Deno.env.get('VAPID_PUBLIC_KEY')!;
+const VAPID_PRIVATE    = Deno.env.get('VAPID_PRIVATE_KEY')!;
+const VAPID_SUBJECT    = Deno.env.get('VAPID_SUBJECT') || 'mailto:apps@hadrongrp.com';
+const NOTIFY_KEY       = Deno.env.get('HADRON_NOTIFY_KEY') || '';
 
 webpush.setVapidDetails(VAPID_SUBJECT, VAPID_PUBLIC, VAPID_PRIVATE);
 
@@ -52,6 +62,29 @@ interface NotifyBody {
   tag?: string;
 }
 
+// Compares in time that doesn't depend on where the strings first differ.
+function sameSecret(a: string, b: string): boolean {
+  const x = new TextEncoder().encode(a), y = new TextEncoder().encode(b);
+  let diff = x.length ^ y.length;
+  for (let i = 0; i < Math.max(x.length, y.length); i++) diff |= (x[i] ?? 0) ^ (y[i] ?? 0);
+  return diff === 0;
+}
+
+// The caller's role from its JWT. With verify_jwt on, the platform has checked the signature before this runs, so the
+// claims can be read as they are.
+function jwtRole(req: Request): string {
+  const m = (req.headers.get('authorization') || '').match(/^Bearer\s+([^.\s]+)\.([^.\s]+)\.[^.\s]+$/i);
+  if (!m) return '';
+  try {
+    const b64 = m[2].replace(/-/g, '+').replace(/_/g, '/');
+    const claims = JSON.parse(atob(b64 + '='.repeat((4 - b64.length % 4) % 4)));
+    return typeof claims.role === 'string' ? claims.role : '';
+  } catch { return ''; }
+}
+
+// A link into the app only, never to another site.
+const APP_LINK = /^(#|\.\/|\/(?!\/)|https:\/\/app\.hadrongrp\.com\/)/;
+
 async function getTargetUserIds(req: NotifyBody): Promise<string[]> {
   if (req.user_id) return [req.user_id];
   if (req.org_id) {
@@ -66,6 +99,10 @@ async function getTargetUserIds(req: NotifyBody): Promise<string[]> {
 
 Deno.serve(async (req) => {
   if (req.method !== 'POST') return new Response('Method not allowed', { status: 405 });
+
+  // Trusted callers only: the shared key, or the service-role key. The public anon key and signed-in users are refused.
+  const keyOk = !!NOTIFY_KEY && sameSecret(req.headers.get('x-hadron-key') || '', NOTIFY_KEY);
+  if (!keyOk && jwtRole(req) !== 'service_role') return new Response('Forbidden', { status: 403 });
 
   let body: NotifyBody;
   try { body = await req.json(); }
@@ -85,7 +122,7 @@ Deno.serve(async (req) => {
   const payload = JSON.stringify({
     title: body.title,
     body:  body.body  || '',
-    link:  body.link  || './',
+    link:  typeof body.link === 'string' && APP_LINK.test(body.link) ? body.link : './',
     tag:   body.tag   || ''
   });
 
@@ -105,7 +142,7 @@ Deno.serve(async (req) => {
         deadEndpoints.push(sub.id);
         removed++;
       } else {
-        console.error('[notify] push failed for', sub.endpoint, err.statusCode || err.message);
+        console.error('[notify] push failed', sub.endpoint, err.statusCode || err.message);
         failed++;
       }
     }
