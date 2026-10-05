@@ -11,6 +11,7 @@
  *     running), the tools this person pinned (Pinned) and the last tools opened (Recent). While customizing,
  *     every tile has a star that pins it; so does every search result.
  * Customize home (customize.js) reorders tiles within each section.
+ * On a phone or tablet the home is split into tabs (Home, Tools, Field, Learn, Account): see "Tabs" below.
  */
 (function () {
   'use strict';
@@ -121,6 +122,123 @@
       const any = Array.from(sec.querySelectorAll('.app-icon[data-app]')).some(tileShown);
       sec.hidden = !any;
     });
+    // the Home tab shows the role's own section (the first in its order) under the unfinished, pinned and recent tools
+    const primary = Array.from(document.querySelectorAll('[data-home-sec]')).find((s) => !s.hidden && s.getAttribute('data-home-sec') !== 'more');
+    document.querySelectorAll('[data-home-sec]').forEach((s) => { if (s === primary) s.setAttribute('data-home-primary', ''); else s.removeAttribute('data-home-primary'); });
+    if (tabHasContent(tab)) paintTabs(); else goTab('home');   // a role without that tab's tools: Home
+  }
+
+  // ── Tabs (a phone or a tablet): Home · Tools · Field · Learn · Account ──
+  // A bar at the bottom shows one part of the home at a time: Home (search, unfinished work, pinned and recent tools,
+  // and the role's own section), Tools (the calculators), Field (field service and the lab), Learn, and Account. A wider
+  // screen keeps the one-page home, and the avatar opens the account menu there. Back on another tab goes Home first
+  // (index.html's Back guard asks hgHomeTab.away()), then out of the app as before.
+  const TABS = ['home', 'tools', 'field', 'learn', 'account'];
+  const TAB_SECS = { tools: ['calculators'], field: ['field', 'lab'], learn: ['learn'] };
+  const TAB_ICONS = { home: 'dashboard', tools: 'dosage', field: 'document', learn: 'academy', account: 'profile' };
+  const tabsMq = typeof window.matchMedia === 'function' ? window.matchMedia('(max-width: 768px)') : null;
+  let tab = 'home';
+  const tabsOn = () => !!(tabsMq && tabsMq.matches);
+  const tabHasContent = (name) => name === 'home' || name === 'account' ||
+    (TAB_SECS[name] || []).some((s) => { const sec = document.querySelector('[data-home-sec="' + s + '"]'); return !!sec && !sec.hidden; });
+  function paintTabs() {
+    document.body.classList.toggle('hg-tabs', tabsOn());
+    // the avatar: the Account tab on a phone (no pop-up), the account menu (a dialog) on a wider screen
+    const ab = document.getElementById('hgAccountBtn');
+    if (ab) { if (tabsOn()) { ab.removeAttribute('aria-haspopup'); ab.setAttribute('aria-label', tr('tab.account', 'Account')); } else { ab.setAttribute('aria-haspopup', 'dialog'); ab.setAttribute('aria-label', 'Account menu'); } }
+    const desk = document.getElementById('desktop');
+    if (desk) desk.setAttribute('data-tab', tab);
+    document.querySelectorAll('#hgTabbar .hg-tab[data-tab]').forEach((b) => {
+      const name = b.getAttribute('data-tab');
+      b.hidden = !tabHasContent(name);
+      if (name === tab) b.setAttribute('aria-current', 'page'); else b.removeAttribute('aria-current');
+    });
+  }
+  function goTab(name) {
+    if (TABS.indexOf(name) === -1) return;
+    if (!tabsOn() || !tabHasContent(name)) name = 'home';
+    const was = tab;
+    if (name !== 'home' && input && input.value) { input.value = ''; render(); }   // a search hides every section: not carried to another tab
+    // Account has no tiles to arrange: Customize ends there (what was arranged is kept). Tools, Field and Learn have theirs.
+    if (name === 'account' && editing() && window.HG_HOME && typeof window.HG_HOME.exitEditMode === 'function') window.HG_HOME.exitEditMode();
+    tab = name;
+    paintTabs();
+    if (name === 'account') renderAccount();
+    // the focus was in what just went out of view (Back from another tab): the current tab takes it, not the page
+    const f = document.activeElement;
+    if (f && f !== document.body && !f.getClientRects().length) { const cur = document.querySelector('#hgTabbar .hg-tab[data-tab="' + tab + '"]'); if (cur && cur.getClientRects().length) cur.focus({ preventScroll: true }); }
+    const c = document.querySelector('.desktop-content'); if (c) c.scrollTop = 0;   // a tab opens at its top (tapped again: back to the top)
+    // Back: from another tab, Home first (one history entry, index.html); Home itself keeps none
+    if (was !== name) {
+      if (name !== 'home') { if (typeof window.hgArmBack === 'function') window.hgArmBack(); }
+      else if (typeof window.hgDisarmBack === 'function') window.hgDisarmBack();
+    }
+  }
+  window.hgHomeTab = { go: goTab, get: () => tab, away: () => tabsOn() && tab !== 'home' };
+
+  // ── Account (the tab): who is signed in and how this phone's changes stand, their settings, the company's tools, and
+  // signing out. From the profile; offline before it loads, from the top bar (name, company) and the last known role.
+  const ROLE_WORDS = { admin: ['account.role.admin', 'Hadron staff (admin)'], customer_admin: ['account.role.customer_admin', 'Customer admin'],
+    operator: ['account.role.operator', 'Operator'], viewer: ['account.role.viewer', 'Viewer'] };
+  const CHEV = '<svg class="hg-acct-chev" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M9 6l6 6-6 6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+  const textOf = (id) => { const el = document.getElementById(id); return el ? el.textContent.trim() : ''; };
+  const noMark = (s) => String(s || '').replace(/^[^\p{L}\p{N}]+/u, '').trim();   // "🌓 Auto" → "Auto"
+  const openW = (id) => { if (typeof window.openWindow === 'function') window.openWindow(id); };
+  const ACCOUNT_DO = {
+    profile: () => openW('profile'),
+    language: () => { openW('settings'); setTimeout(() => { const s = document.getElementById('languageSelect'); if (s) s.focus(); }, 350); },
+    appearance: () => openW('settings'),
+    customize: () => { goTab('home'); if (typeof window.hgCustomizeHome === 'function') window.hgCustomizeHome(); },
+    team: () => { const t = homeTile('team'); if (t) t.click(); },
+    data: () => { const t = homeTile('data'); if (t) t.click(); },
+    files: () => openW('files'),
+    support: () => openW('support'),
+    settings: () => openW('settings'),
+    signout: () => { if (typeof window.hgConfirmSignOut === 'function') window.hgConfirmSignOut(); else if (typeof window.hgOpenAccountMenu === 'function') window.hgOpenAccountMenu(); }
+  };
+  let acctHtml = '';   // what the panel shows now: drawn again only when that changes
+  function renderAccount() {
+    const host = document.getElementById('hgAccount');
+    if (!host) return;
+    const p = window.HG_PROFILE || {};
+    const name = String(p.full_name || (p.email ? String(p.email).split('@')[0] : '') || textOf('userName'));
+    const org = String((p.organisations && p.organisations.name) || textOf('hgTopOrg'));
+    const rw = ROLE_WORDS[document.body.getAttribute('data-role') || p.role || ''];
+    const chip = document.getElementById('hgSyncChip');
+    const sync = chip && !chip.hidden ? textOf('hgSyncText') : '';
+    const langs = (window.HADRON_I18N && Array.isArray(window.HADRON_I18N.LANGUAGES)) ? window.HADRON_I18N.LANGUAGES : [];
+    const lang = (langs.find((l) => l && l.code === (window.currentLanguage || 'en')) || {}).name || '';
+    const choice = typeof window.themeChoice === 'function' ? window.themeChoice() : 'auto';
+    const theme = noMark(tr('settings.' + choice, choice === 'light' ? 'Light' : choice === 'dark' ? 'Dark' : 'Auto'));
+    const shown = (id) => { const t = homeTile(id); return !!t && tileShown(t); };
+    const kv = Array.from(document.querySelectorAll('.hg-kv')).find((x) => ((x.querySelector('.k') || {}).textContent || '').trim() === 'Version');
+    const version = kv ? ((kv.querySelector('.v') || {}).textContent || '').trim() : '';
+    const row = (id, label, value) => '<button type="button" class="hg-acct-row" data-acct="' + id + '"><span class="hg-acct-label">' + esc(label) + '</span>' +
+      (value ? '<span class="hg-acct-val">' + esc(value) + '</span>' : '') + CHEV + '</button>';
+    const html =
+      '<h2 class="hg-sr-only" id="hgAccountTitle">' + esc(tr('account.title', 'Account')) + '</h2>' +
+      '<div class="hg-acct-you">' +
+        '<span class="hg-acct-avatar" aria-hidden="true">' + esc((textOf('userAvatar') || name.charAt(0) || '?').slice(0, 2)) + '</span>' +
+        '<span class="hg-acct-who"><span class="hg-acct-name">' + esc(name) + '</span>' +
+          ((org || rw) ? '<span class="hg-acct-sub">' + esc([org, rw ? tr(rw[0], rw[1]) : ''].filter(Boolean).join(' · ')) + '</span>' : '') +
+          (sync ? '<span class="hg-acct-sync" data-state="' + esc(chip.getAttribute('data-state') || '') + '">' + esc(sync) + '</span>' : '') +
+        '</span></div>' +
+      '<div class="hg-acct-group" role="group" aria-label="' + esc(tr('account.settingsGroup', 'Your settings')) + '">' +
+        row('profile', tr('account.profile', 'Profile and password')) +
+        row('language', tr('settings.language', 'Language'), lang) +
+        row('appearance', tr('settings.appearance', 'Appearance'), theme) +
+        row('customize', tr('account.customize', 'Customize home')) + '</div>' +
+      '<div class="hg-acct-group" role="group" aria-label="' + esc(tr('account.app', 'App and company')) + '">' +
+        (shown('team') ? row('team', tr('account.team', 'Team')) : '') +
+        (shown('data') ? row('data', tr('account.data', 'Data manager')) : '') +
+        row('files', tr('app.files', 'Files')) + row('support', tr('app.support', 'Support')) + row('settings', tr('app.settings', 'Settings')) + '</div>' +
+      '<button type="button" class="hg-acct-signout" data-acct="signout">' + esc(tr('account.signOut', 'Sign out')) + '</button>' +
+      (version ? '<p class="hg-acct-version">' + esc(tr('account.version', 'Version {v}').replace('{v}', () => version)) + '</p>' : '');
+    // Unchanged (the sync chip refreshed, a window closed): left as it is, so the focus and a tap in progress aren't lost.
+    if (html === acctHtml && host.firstChild) return;
+    const had = host.contains(document.activeElement) ? document.activeElement.getAttribute('data-acct') : null;
+    host.innerHTML = acctHtml = html;
+    if (had) { const b = host.querySelector('[data-acct="' + had + '"]'); if (b) b.focus({ preventScroll: true }); }   // a row redrawn keeps the keyboard
   }
 
   // ── Continue (unfinished work) and Recent (the last tools opened) ──
@@ -458,7 +576,7 @@
     // The home shows again when the last window closes: unfinished work may have changed (a report saved, a
     // timer stopped) and the tool just used is now the most recent.
     if (window.MutationObserver) {
-      const shown = new MutationObserver(() => { if (!document.querySelector('.window.active')) renderQuick(); });
+      const shown = new MutationObserver(() => { if (!document.querySelector('.window.active')) { renderQuick(); if (tab === 'account') renderAccount(); } });   // (back from Settings: the language or theme shown)
       const watch = (w) => shown.observe(w, { attributes: true, attributeFilter: ['class'] });
       document.querySelectorAll('.window').forEach(watch);
       new MutationObserver((list) => list.forEach((m) => m.addedNodes.forEach((n) => { if (n.nodeType === 1 && n.classList.contains('window')) watch(n); })))
@@ -467,6 +585,32 @@
     window.addEventListener('storage', (e) => { if (!e.key || e.key === RECENT_KEY || e.key === PINS_KEY || e.key === 'hadron_sr_draft' || e.key === 'hadron_timer_active') { syncPinToggles(); renderQuick(); } });
     document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible' && !document.querySelector('.window.active')) renderQuick(); });   // "edited 08:42" becomes a date after midnight
     document.addEventListener('hg:home:edit', () => { paintTileStars(); renderQuick(); });
+    // Tabs: their icons, a tap, the avatar (on a phone it opens Account), the screen getting wider or narrower
+    document.querySelectorAll('#hgTabbar .hg-tab[data-tab]').forEach((b) => {
+      const ico = b.querySelector('.hg-tab-ico');
+      if (ico && typeof window.hadronIcon === 'function') ico.innerHTML = window.hadronIcon(TAB_ICONS[b.getAttribute('data-tab')], { size: 24, strokeWidth: 1.5 });
+      b.addEventListener('click', () => goTab(b.getAttribute('data-tab')));
+    });
+    document.addEventListener('click', (e) => {
+      if (!tabsOn() || !e.target || !e.target.closest || !e.target.closest('#hgAccountBtn')) return;
+      e.preventDefault(); e.stopPropagation();   // before the button's own handler (the account menu)
+      goTab('account');
+    }, true);
+    const acct = document.getElementById('hgAccount');
+    if (acct) acct.addEventListener('click', (e) => { const b = e.target && e.target.closest ? e.target.closest('[data-acct]') : null; const go = b && ACCOUNT_DO[b.getAttribute('data-acct')]; if (go) go(); });
+    if (tabsMq) {
+      const onWidth = () => { if (!tabsOn() && tab !== 'home') goTab('home'); else paintTabs(); };
+      if (typeof tabsMq.addEventListener === 'function') tabsMq.addEventListener('change', onWidth); else if (typeof tabsMq.addListener === 'function') tabsMq.addListener(onWidth);
+    }
+    // Customize started from Settings while on Account (no tiles there): Home, where the pinned tools and the role's own
+    // section are arranged (the other tabs' tiles are arranged on those tabs). Back still ends Customize first.
+    document.addEventListener('hg:home:edit', (e) => { if (e.detail && e.detail.editing && tab === 'account') goTab('home'); });
+    // the Account tab's sync line follows the top bar's chip
+    const chip = document.getElementById('hgSyncChip');
+    if (chip && window.MutationObserver) new MutationObserver(() => { if (tab === 'account') renderAccount(); }).observe(chip, { attributes: true, childList: true, subtree: true, characterData: true });
+    // ...and its Appearance row the theme (the top bar's sun / moon button changes it without Settings)
+    if (window.MutationObserver) new MutationObserver(() => { if (tab === 'account') renderAccount(); }).observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
+    paintTabs();
     renderQuick();
     // The language and the tiles' Hadron icons are applied on window load (index.html), after this ran: draw
     // again then, or a start with nothing else to redraw it (offline) keeps English words and emoji icons.
@@ -477,9 +621,9 @@
   }
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot); else boot();
   // Roles decide which tiles show; a language change renames them (results follow the new names).
-  document.addEventListener('hg:profile:loaded', () => setTimeout(() => { refreshSections(); renderQuick(); if (input && input.value) render(); syncPins(); }, 0));
+  document.addEventListener('hg:profile:loaded', () => setTimeout(() => { refreshSections(); renderQuick(); if (input && input.value) render(); syncPins(); if (tab === 'account') renderAccount(); }, 0));
   // A pin change made offline goes now. Only that: another phone's pins are taken from a profile just loaded (this
   // page's copy of the profile can be older than another tab's, whose change it would undo).
   window.addEventListener('online', () => setTimeout(() => { if (syncState() === 'pending') syncPins(); }, 1500));
-  document.addEventListener('hg:lang:changed', () => { if (editing()) paintTileStars(); renderQuick(); if (input && input.value) render(); });
+  document.addEventListener('hg:lang:changed', () => { if (editing()) paintTileStars(); renderQuick(); if (input && input.value) render(); if (tab === 'account') renderAccount(); });
 })();
