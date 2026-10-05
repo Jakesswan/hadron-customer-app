@@ -4,12 +4,14 @@
  * Sends a Web Push notification to one or more users. Only trusted server-side callers may use it (a database trigger
  * via pg_net, a cron job, a smoke test from a terminal): the app never calls it.
  *
- * Who may call (v6, 2026-10-04): a request with the shared secret in `x-hadron-key` (when HADRON_NOTIFY_KEY is set),
- * or one signed with the project's service-role key. Everyone else gets 403. The function runs with the service role
- * and takes user_id / org_id from the body, so before v6 the app's public anon key (which passes the JWT check) let
- * anyone push any title, text and link to any user or company; v5 checked the shared secret only when it was set.
+ * Who may call (v7, 2026-10-05): a request with the shared secret in `x-hadron-key` (when HADRON_NOTIFY_KEY is set),
+ * or one whose Bearer is the project's service-role key itself (SUPABASE_SERVICE_ROLE_KEY, compared in constant time;
+ * any other token, even another service_role JWT, is refused). Everyone else gets 403. The function runs with the service
+ * role and takes user_id / org_id from the body, so before v6 the app's public anon key (which passes the JWT check) let
+ * anyone push any title, text and link to any user or company; v5 checked the shared secret only when it was set, and
+ * v6 trusted the token's role claim (safe only while verify_jwt is on). A link must resolve to the app's own address.
  *
- * Deploy (keep verify_jwt on: the role check below relies on the platform having verified the JWT):
+ * Deploy (keep verify_jwt on; the caller check below compares the service-role key itself, so it holds either way):
  *   supabase functions deploy notify
  *
  * Required secrets (set with `supabase secrets set`):
@@ -20,7 +22,7 @@
  *
  * Invocation:
  *   POST /functions/v1/notify
- *   Authorization: Bearer <service-role JWT>        (or another valid JWT together with x-hadron-key)
+ *   Authorization: Bearer <the service-role key>     (or another valid JWT together with x-hadron-key)
  *   x-hadron-key: <HADRON_NOTIFY_KEY>                (optional with the service-role key)
  *   {
  *     "user_id":   "<profiles.id>",                 // OR
@@ -70,20 +72,20 @@ function sameSecret(a: string, b: string): boolean {
   return diff === 0;
 }
 
-// The caller's role from its JWT. With verify_jwt on, the platform has checked the signature before this runs, so the
-// claims can be read as they are.
-function jwtRole(req: Request): string {
-  const m = (req.headers.get('authorization') || '').match(/^Bearer\s+([^.\s]+)\.([^.\s]+)\.[^.\s]+$/i);
-  if (!m) return '';
-  try {
-    const b64 = m[2].replace(/-/g, '+').replace(/_/g, '/');
-    const claims = JSON.parse(atob(b64 + '='.repeat((4 - b64.length % 4) % 4)));
-    return typeof claims.role === 'string' ? claims.role : '';
-  } catch { return ''; }
+// The service-role key itself, compared (not a role claim read from the token: that is only as safe as verify_jwt, and
+// Supabase's new API keys (sb_secret_…) need verify_jwt off for Edge Functions, which would let a forged token in).
+function serviceRoleCaller(req: Request): boolean {
+  const bearer = (req.headers.get('authorization') || '').replace(/^Bearer\s+/i, '');
+  return !!SERVICE_ROLE_KEY && !!bearer && sameSecret(bearer, SERVICE_ROLE_KEY);
 }
 
-// A link into the app only, never to another site.
-const APP_LINK = /^(#|\.\/|\/(?!\/)|https:\/\/app\.hadrongrp\.com\/)/;
+// A link into the app only, never to another site: resolved as the service worker resolves it (against the app's
+// address), so "/\evil.com" or "/<tab>/evil.com" (both open evil.com) are refused too.
+const APP_ORIGIN = 'https://app.hadrongrp.com';
+function appLink(link: unknown): string {
+  if (typeof link !== 'string' || !link) return './';
+  try { return new URL(link.startsWith('#') ? './' + link : link, APP_ORIGIN + '/sw.js').origin === APP_ORIGIN ? link : './'; } catch { return './'; }
+}
 
 async function getTargetUserIds(req: NotifyBody): Promise<string[]> {
   if (req.user_id) return [req.user_id];
@@ -102,7 +104,7 @@ Deno.serve(async (req) => {
 
   // Trusted callers only: the shared key, or the service-role key. The public anon key and signed-in users are refused.
   const keyOk = !!NOTIFY_KEY && sameSecret(req.headers.get('x-hadron-key') || '', NOTIFY_KEY);
-  if (!keyOk && jwtRole(req) !== 'service_role') return new Response('Forbidden', { status: 403 });
+  if (!keyOk && !serviceRoleCaller(req)) return new Response('Forbidden', { status: 403 });
 
   let body: NotifyBody;
   try { body = await req.json(); }
@@ -122,7 +124,7 @@ Deno.serve(async (req) => {
   const payload = JSON.stringify({
     title: body.title,
     body:  body.body  || '',
-    link:  typeof body.link === 'string' && APP_LINK.test(body.link) ? body.link : './',
+    link:  appLink(body.link),
     tag:   body.tag   || ''
   });
 

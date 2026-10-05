@@ -228,7 +228,7 @@
           row.accredited = /^(true|yes|1)$/i.test(row.accredited.trim());
         }
         ['specMin','specMax','tat'].forEach(k => {
-          if (row[k] !== '' && row[k] != null) row[k] = parseFloat(row[k]);
+          if (row[k] !== '' && row[k] != null) row[k] = importNum(row[k]);
         });
         return window.HG_LIMS_DB.put('tests', row);
       }
@@ -267,7 +267,7 @@
       async upsert(row) {
         if (!window.HG_LIMS_DB) throw new Error('LIMS DB not ready');
         ['qty','min'].forEach(k => {
-          if (row[k] !== '' && row[k] != null) row[k] = parseFloat(row[k]) || 0;
+          if (row[k] !== '' && row[k] != null) row[k] = importNum(row[k]) || 0;
         });
         if (typeof row.coa === 'string') row.coa = /^(true|yes|1)$/i.test(row.coa.trim());
         return window.HG_LIMS_DB.put('inventory', row);
@@ -276,6 +276,9 @@
   };
 
   // ── Helpers ──────────────────────────────────────────────
+  // A number from an imported cell. A CSV's cells come as text (raw, for the dates): "1,200", as Excel saves a cell shown
+  // with a thousands separator, is 1200, as the spreadsheet library read it before v171 (parseFloat stops at the comma: 1).
+  function importNum(v) { return parseFloat(typeof v === 'string' && /^\s*-?\d{1,3}(,\d{3})+(\.\d+)?\s*$/.test(v) ? v.replace(/,/g, '') : v); }
   function uid(prefix) {
     return prefix + '-' + Date.now().toString(36) + '-' + Math.random().toString(36).slice(2, 6);
   }
@@ -296,6 +299,24 @@
   // (as a number it was pushed again on every start, and came back after being deleted elsewhere). A date cell comes as
   // Excel's serial day number (45567 = 2024-10-02): kept as the date (yyyy-mm-dd), what the forms show.
   const IMPORT_DATE_FIELDS = ['received', 'expiry'];
+  // A date typed as text, day-first as South Africa writes it (04/03/2027, 4-3-27, 4 Mar 2027, 4 Maart 2027 = 4 March),
+  // or ISO (2027-03-04): as yyyy-mm-dd. Not a real date, or anything else: as typed.
+  const TEXT_MONTHS = { jan: 1, feb: 2, mar: 3, maa: 3, mrt: 3, apr: 4, may: 5, mei: 5, jun: 6, jul: 7, aug: 8, sep: 9, oct: 10, okt: 10, nov: 11, dec: 12, des: 12 };
+  function textDate(s) {
+    const t = String(s).trim();
+    const ymd = (y, m, d) => {
+      y = +y; m = +m; d = +d; if (y < 100) y += 2000;
+      const dt = new Date(Date.UTC(y, m - 1, d));
+      return (dt.getUTCFullYear() === y && dt.getUTCMonth() === m - 1 && dt.getUTCDate() === d) ? y + '-' + String(m).padStart(2, '0') + '-' + String(d).padStart(2, '0') : null;
+    };
+    let m = t.match(/^(\d{4})[-\/.](\d{1,2})[-\/.](\d{1,2})(?:[ T].*)?$/);
+    if (m) return ymd(m[1], m[2], m[3]) || t;
+    m = t.match(/^(\d{1,2})[-\/. ](\d{1,2})[-\/. ](\d{4}|\d{2})$/);
+    if (m) return ymd(m[3], m[2], m[1]) || t;
+    m = t.match(/^(\d{1,2})[-\/. ]+([A-Za-z]{3,9})\.?[-\/. ]+(\d{4}|\d{2})$/);
+    if (m) { const k = m[2].toLowerCase(), mo = TEXT_MONTHS[k] || TEXT_MONTHS[k.slice(0, 3)]; if (mo) return ymd(m[3], mo, m[1]) || t; }
+    return t;
+  }
   function normaliseImported(row) {
     const out = Object.assign({}, row);
     if (typeof out.id === 'number' && isFinite(out.id)) out.id = out.id ? String(out.id) : '';   // 0: no ID, a new one is made (as before)
@@ -305,6 +326,7 @@
       // a Date (SheetJS 0.18 with cellDates) is the cell's date at LOCAL midnight: its local calendar date (in UTC it is
       // the day before in SA)
       else if (v instanceof Date && !isNaN(v)) out[f] = v.getFullYear() + '-' + String(v.getMonth() + 1).padStart(2, '0') + '-' + String(v.getDate()).padStart(2, '0');
+      else if (typeof v === 'string' && v.trim()) out[f] = textDate(v);   // typed as text (a CSV, or a text cell in Excel)
     });
     return out;
   }
@@ -344,7 +366,10 @@
     try { await loadSheetJs(); }
     catch (e) { alert('Could not load Excel library.'); return null; }
     const buf = await file.arrayBuffer();
-    const wb = window.XLSX.read(buf, { type: 'array' });
+    // A CSV's cells as typed (raw): the library would read 04/03/2027 month-first; normaliseImported reads text dates
+    // day-first, as South Africa writes them. Numbers in a CSV come as text too: the adapters turn them into numbers.
+    const isText = /\.(csv|txt)$/i.test((file && file.name) || '') || /^text\//.test((file && file.type) || '');
+    const wb = window.XLSX.read(buf, { type: 'array', raw: isText });
     const sheet = wb.Sheets[wb.SheetNames[0]];
     const rawRows = window.XLSX.utils.sheet_to_json(sheet, { defval: '' });
     let rows = rowsToObjects(a, rawRows);

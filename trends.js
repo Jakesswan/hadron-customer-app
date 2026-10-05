@@ -79,17 +79,23 @@
     if (!window.HG_SUPA) return [];
     try {
       // Light: pull just the readings (points) + identity keys, NOT the base64 photos/signature.
-      let r = await readAll('id, report_date, site, customer_name, points:payload->points, p_siteId:payload->>siteId, p_customerId:payload->>customerId, p_customerName:payload->>customerName, p_date:payload->>date');
+      // + which report it amends (that one gives way to it), and deleted_at (an owner removed it: not plotted). Asked
+      // without deleted_at when the server refuses it (before migration 0020).
+      // (+ status and when it was submitted: an amendment counts once it is submitted, the latest of a report's)
+      const LIGHT = 'id, status, report_date, site, customer_name, points:payload->points, p_siteId:payload->>siteId, p_customerId:payload->>customerId, p_customerName:payload->>customerName, p_date:payload->>date, p_amendsId:payload->amends->>id, p_submittedAt:payload->>submittedAt';
+      let r = await readAll(LIGHT + ', deleted_at');
+      if (r && r.rejected) r = await readAll(LIGHT);
       if (r && r.rows) return r.rows;
       if (!r || !r.rejected) return null;   // only a rejected select is retried with the whole payload (photos and all)
       // Fallback: some PostgREST configs differ — pull the whole payload and extract client-side.
-      r = await readAll('id, report_date, site, customer_name, payload');
+      r = await readAll('id, status, report_date, site, customer_name, payload');
       if (r && r.rows) {
         return r.rows.map(row => ({
-          id: row.id, report_date: row.report_date, site: row.site, customer_name: row.customer_name,
+          id: row.id, status: row.status || (row.payload && row.payload.status), report_date: row.report_date, site: row.site, customer_name: row.customer_name,
           points: (row.payload && row.payload.points) || [],
           p_siteId: row.payload && row.payload.siteId, p_customerId: row.payload && row.payload.customerId,
-          p_customerName: row.payload && row.payload.customerName, p_date: row.payload && row.payload.date
+          p_customerName: row.payload && row.payload.customerName, p_date: row.payload && row.payload.date,
+          p_amendsId: row.payload && row.payload.amends && row.payload.amends.id, p_submittedAt: row.payload && row.payload.submittedAt
         }));
       }
     } catch (_) {}
@@ -103,12 +109,14 @@
   }
   function localToReading(r) {
     return { id: r.id, date: r.date || r.savedAt, customerId: r.customerId || '', customerName: r.customerName || '',
-             siteId: r.siteId || '', site: r.site || '', points: pointsOf(r) };
+             siteId: r.siteId || '', site: r.site || '', points: pointsOf(r), amendsId: (r.amends && r.amends.id) || '',
+             status: r.status || 'draft', submittedAt: r.submittedAt || '' };
   }
   function cloudToReading(cr) {
     return { id: cr.id, date: cr.p_date || cr.report_date, customerId: cr.p_customerId || '',
              customerName: cr.p_customerName || cr.customer_name || '', siteId: cr.p_siteId || '',
-             site: cr.site || '', points: cr.points || [] };
+             site: cr.site || '', points: cr.points || [], amendsId: cr.p_amendsId || '',
+             status: cr.status || 'draft', submittedAt: cr.p_submittedAt || '' };
   }
 
   async function loadReadings(force) {
@@ -122,10 +130,22 @@
     const cloud = offline ? null : await Promise.race([fetchCloudReports(), new Promise(res => setTimeout(() => res(null), CLOUD_WAIT_MS))]);
     if (seq !== _loadSeq) return null;   // a newer load (Refresh) has taken over: it draws the screen
     _partial = cloud == null;
-    (cloud || []).forEach(cr => { if (cr && cr.id && !byId[cr.id]) byId[cr.id] = cloudToReading(cr); });
+    (cloud || []).forEach(cr => { if (cr && cr.id && !cr.deleted_at && !byId[cr.id]) byId[cr.id] = cloudToReading(cr); });   // removed by an owner: not plotted
+    (cloud || []).forEach(cr => { if (cr && cr.deleted_at) delete byId[cr.id]; });   // …also this phone's copy of it
+    // A report that has an amendment gives way to it once the amendment is submitted: the visit once, with the corrected
+    // values. An amendment still a draft (no reason given yet, perhaps never submitted) isn't plotted: the submitted report
+    // stands until it is. Of several submitted amendments of one report, the latest stands.
+    const latest = new Map();   // amended report id -> its latest submitted amendment
+    Object.values(byId).forEach(x => {
+      if (!x.amendsId || x.status !== 'submitted') return;
+      const c = latest.get(x.amendsId);
+      if (!c || String(x.submittedAt || '') > String(c.submittedAt || '')) latest.set(x.amendsId, x);
+    });
 
     const out = [];
     Object.values(byId).forEach(rep => {
+      if (latest.has(rep.id)) return;                                   // amended
+      if (rep.amendsId && latest.get(rep.amendsId) !== rep) return;     // a draft amendment, or an earlier one of the same report
       pointsOf(rep).forEach(pt => {
         const pointName = (pt && pt.name != null ? String(pt.name) : '').trim();   // any member can write a report: a name that isn't text mustn't stop Trends for everyone
         (pt && Array.isArray(pt.tests) ? pt.tests : []).forEach(t => {

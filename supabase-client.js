@@ -61,7 +61,7 @@
   function saveQueue(q)  { if (window.__hgSuppressQueuePersist) return; try { localStorage.setItem(QUEUE_KEY, JSON.stringify(q || [])); } catch (e) { console.warn('[HG_SYNC] queue persist failed (storage full?)', e); } }
   function loadDead()    { try { return JSON.parse(localStorage.getItem(DEAD_KEY) || '[]'); } catch { return []; } }
   function saveDead(d)   { if (window.__hgSuppressQueuePersist) return; try { localStorage.setItem(DEAD_KEY, JSON.stringify((d || []).slice(-50))); } catch (_) {} }
-  function opId(op)      { return op.table + ':' + (op.kind === 'delete' ? op.id : (op.row && op.row.id)); }
+  function opId(op)      { return op.table + ':' + ((op.kind === 'delete' || op.kind === 'update') ? op.id : (op.row && op.row.id)); }
   function enqueue(op)   {
     const key = opId(op);
     const q = loadQueue().filter(o => opId(o) !== key);   // a newer write for a record supersedes any pending op for it
@@ -83,7 +83,7 @@
   function deadLen()     { return loadDead().length; }
   function deadLetter(op, reason) {
     const d = loadDead();
-    d.push({ kind: op.kind, table: op.table, id: op.kind === 'delete' ? op.id : (op.row && op.row.id),
+    d.push({ kind: op.kind, table: op.table, id: (op.kind === 'delete' || op.kind === 'update') ? op.id : (op.row && op.row.id),
              attempts: op.attempts, reason: String(reason || '').slice(0, 300), deadAt: new Date().toISOString() });
     saveDead(d);
   }
@@ -120,7 +120,8 @@
   }
   async function sendOp(sb, op) {
     const b = op.kind === 'upsert' ? sb.from(op.table).upsert(op.row)
-            : op.kind === 'delete' ? sb.from(op.table).delete().eq('id', op.id) : null;
+            : op.kind === 'delete' ? sb.from(op.table).delete().eq('id', op.id)
+            : op.kind === 'update' ? sb.from(op.table).update(op.patch).eq('id', op.id) : null;
     if (!b) return { res: { error: { message: 'unknown op kind' }, status: 400 }, timedOut: false };
     if (typeof b.abortSignal !== 'function' || typeof AbortController === 'undefined') return { res: await b, timedOut: false };
     const ctrl = new AbortController();
@@ -433,6 +434,23 @@
             return row;
           }
           return data;
+        },
+        // Changes only these columns of one row: an UPDATE, not an upsert, so it can't send (and overwrite) the rest of
+        // the row (a soft delete of a submitted service report, migration 0020). A write of the record still queued takes
+        // the change with it, instead of being replaced by it (the queue keeps only the newest op per record).
+        async patch(id, fields) {
+          const queued = loadQueue().find(o => o.kind === 'upsert' && o.table === table && o.row && o.row.id === id);
+          if (queued) { enqueue(Object.assign({}, queued, { row: Object.assign({}, queued.row, fields), qid: null })); return true; }
+          if (!client || !navigator.onLine || window.__hgOfflineSession) {   // as upsert
+            enqueue({ kind: 'update', table, id, patch: fields });
+            return true;
+          }
+          const { error } = await client.from(table).update(fields).eq('id', id);
+          if (error) {
+            console.warn('[HG_DB]', table, 'patch error — queued', error);
+            enqueue({ kind: 'update', table, id, patch: fields });
+          }
+          return !error;
         },
         async remove(id) {
           if (!client || !navigator.onLine || window.__hgOfflineSession) {   // as upsert
