@@ -74,7 +74,7 @@
     trends: 'trends graph chart readings', catalogue: 'catalogue products quote', qr: 'qr builder code', safety: 'safety msds ppe loto incident spill',
     lims: 'lims lab laboratory samples results', calibration: 'calibration instruments', academy: 'academy course training learn',
     sops: 'sop procedures', troubleshoot: 'troubleshoot fault problem guide', profile: 'profile account password', settings: 'settings language theme dark',
-    files: 'files documents', support: 'support help contact', data: 'data manager import export', team: 'team users invite', portal: 'portal results'
+    files: 'files documents saved reports calculations', support: 'support help contact', data: 'data manager import export', team: 'team users invite', portal: 'portal results'
   };
 
   // A section's name finds its tiles too ("calculator" lists all of them).
@@ -235,7 +235,7 @@
       '<div class="hg-acct-group" role="group" aria-label="' + esc(tr('account.app', 'App and company')) + '">' +
         (shown('team') ? row('team', tr('account.team', 'Team')) : '') +
         (shown('data') ? row('data', tr('account.data', 'Data manager')) : '') +
-        row('files', tr('app.files', 'Files')) + row('support', tr('app.support', 'Support')) + row('settings', tr('app.settings', 'Settings')) + '</div>' +
+        row('files', tr('app.saved', 'Saved')) + row('support', tr('app.support', 'Support')) + row('settings', tr('app.settings', 'Settings')) + '</div>' +
       '<button type="button" class="hg-acct-signout" data-acct="signout">' + esc(tr('account.signOut', 'Sign out')) + '</button>' +
       (version ? '<p class="hg-acct-version">' + esc(tr('account.version', 'Version {v}').replace('{v}', () => version)) + '</p>' : '');
     // Unchanged (the sync chip refreshed, a window closed): left as it is, so the focus and a tap in progress aren't lost.
@@ -442,9 +442,17 @@
     if (recent.length) html += '<section class="hg-home-recent" aria-labelledby="hgSec-recent"><div class="hg-home-quick-head"><h2 class="hg-home-sec-title" id="hgSec-recent">' + esc(tr('home.recent', 'Recent')) + '</h2>' +
         (pinned.length ? '' : link(tr('home.pinTools', 'Pin tools'))) + '</div>' +
       '<div class="hg-short-grid" role="list">' + recent.map((it, i) => shortcut(it, i, 'r')).join('') + '</div></section>';
+    // Saved: the reports and saved calculations in one list (the Files window), after the tools, once this phone holds
+    // some (a first start stays as it was; Saved is also on Account). Read as stored, not parsed: reports carry photos.
+    const savedTile = edit ? null : homeTile('files');
+    const anySaved = () => ['hadron_sr', 'hadron_history'].some((k) => { try { const v = localStorage.getItem(k); return !!v && v !== '[]' && v !== 'null'; } catch (_) { return false; } });
+    if (savedTile && tileShown(savedTile) && anySaved()) html += '<button type="button" class="hg-saved-card" id="hgSavedCard"><span class="hg-saved-card-txt"><span class="hg-saved-card-title">' +
+      esc(tr('app.saved', 'Saved')) + '</span><span class="hg-saved-card-sub">' + esc(tr('home.savedSub', 'Reports and calculations in one place')) + '</span></span>' + CHEV + '</button>';
     quick.innerHTML = html;
     quick.hidden = !html;
     quick.querySelectorAll('.hg-cont-go').forEach((b) => b.addEventListener('click', () => cont[+b.getAttribute('data-c')].open()));
+    const savedCard = quick.querySelector('#hgSavedCard');
+    if (savedCard) savedCard.addEventListener('click', () => { recordRecent('files'); if (typeof window.openWindow === 'function') window.openWindow('files'); });
     quick.querySelectorAll('.hg-cont-x').forEach((b) => b.addEventListener('click', () => cont[+b.getAttribute('data-c')].drop()));
     quick.querySelectorAll('.hg-quick-link').forEach((b) => b.addEventListener('click', () => {
       if (!(window.HG_HOME && typeof window.HG_HOME.enterEditMode === 'function')) return;

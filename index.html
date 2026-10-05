@@ -52,60 +52,60 @@
     <!-- Supabase JS SDK (auth + cloud sync), pinned 2.117.2 and served by the app itself so sign-in
          works offline from the precache (it used to be the floating @2 from a CDN). See
          THIRD_PARTY_NOTICES.md. To upgrade: replace the file, rename it, update this tag + sw.js. -->
-    <script src="supabase-js-2.117.2.js?v=174"></script>
+    <script src="supabase-js-2.117.2.js?v=175"></script>
 
     <!-- Hadron Supabase bridge -->
-    <script src="supabase-client.js?v=174"></script>
+    <script src="supabase-client.js?v=175"></script>
 
     <!-- Shared UI primitives (in-app sheets) — loaded before auth-ui, which uses them -->
-    <script src="hg-ui.js?v=174" defer></script>
+    <script src="hg-ui.js?v=175" defer></script>
     <!-- Auth UI (login/signup gate, profile binding) -->
-    <script src="auth-ui.js?v=174" defer></script>
+    <script src="auth-ui.js?v=175" defer></script>
 
     <!-- Push notifications -->
-    <script src="push.js?v=174" defer></script>
+    <script src="push.js?v=175" defer></script>
 
     <!-- Translation bundle -->
-    <script src="i18n.js?v=174"></script>
+    <script src="i18n.js?v=175"></script>
 
     <!-- Hadron Tristroke icon system (matches the ERP) -->
-    <script src="hadron-icons.js?v=174" defer></script>
+    <script src="hadron-icons.js?v=175" defer></script>
 
     <!-- Emoji the app has an icon for become Tristroke icons (the rest stay the phone's own emoji) -->
-    <script src="emoji.js?v=174" defer></script>
+    <script src="emoji.js?v=175" defer></script>
 
     <!-- Customizable home grid (drag-to-reorder) -->
-    <script src="home.js?v=174" defer></script>
-    <script src="customize.js?v=174" defer></script>
+    <script src="home.js?v=175" defer></script>
+    <script src="customize.js?v=175" defer></script>
 
     <!-- Data Manager (Excel import/export) -->
-    <script src="data-manager.js?v=174" defer></script>
+    <script src="data-manager.js?v=175" defer></script>
 
     <!-- QR encoder (MIT, Kazuhiko Arase) -->
-    <script src="qr.js?v=174"></script>
+    <script src="qr.js?v=175"></script>
 
     <!-- QR Builder app -->
-    <script src="qr-app.js?v=174" defer></script>
+    <script src="qr-app.js?v=175" defer></script>
 
     <!-- Pool Water module -->
-    <script src="pool.js?v=174" defer></script>
+    <script src="pool.js?v=175" defer></script>
     <!-- Cooling Tower field calculator -->
-    <script src="coolingtower.js?v=174" defer></script>
+    <script src="coolingtower.js?v=175" defer></script>
     <!-- Boiler / Steam field calculator -->
-    <script src="boiler.js?v=174" defer></script>
+    <script src="boiler.js?v=175" defer></script>
     <!-- Water softener sizing calculator -->
-    <script src="softener.js?v=174" defer></script>
-    <script src="academy-content.js?v=174" defer></script>
-    <script src="academy.js?v=174" defer></script>
+    <script src="softener.js?v=175" defer></script>
+    <script src="academy-content.js?v=175" defer></script>
+    <script src="academy.js?v=175" defer></script>
 
-    <script src="searchable-select.js?v=174" defer></script>
-    <script src="trends.js?v=174" defer></script>
+    <script src="searchable-select.js?v=175" defer></script>
+    <script src="trends.js?v=175" defer></script>
 
     <!-- LIMS module (loaded at end of body via defer) -->
-    <script src="lims.js?v=174" defer></script>
-    <script src="lims-sync.js?v=174" defer></script>
-    <script src="portal.js?v=174" defer></script>
-    <script src="team.js?v=174" defer></script>
+    <script src="lims.js?v=175" defer></script>
+    <script src="lims-sync.js?v=175" defer></script>
+    <script src="portal.js?v=175" defer></script>
+    <script src="team.js?v=175" defer></script>
 
 
     <style>
@@ -596,7 +596,48 @@
         .hg-guest-note button { padding: 0; border: 0; background: none; color: var(--accent-ink); font: inherit; font-weight: 800; text-decoration: underline; cursor: pointer; }
         .hg-guest-note button:focus-visible { outline: 3px solid var(--accent-ink); outline-offset: 2px; }
         body:not(.dark) .hg-guest-note button { color: #145C7C; }   /* on the note's tint: ≥ 4.5:1 */
+        body.hg-guest .hg-pin-toggle { display: none !important; }   /* no Pinned row for a guest: no stars to fill it */
         @media (max-width: 360px) { body.hg-guest .hg-guest-signin { padding: 0 10px; } }   /* the chip keeps room for its word */
+        /* Saved (the Files window): the service reports and saved calculations in one list */
+        .hg-saved { max-width: 760px; margin: 0 auto; display: grid; gap: 14px; }
+        #window-files .hg-saved { max-width: 760px; }   /* over .window-content > * (1100 px) */
+        .hg-saved-search input { display: block; width: 100%; box-sizing: border-box; height: 48px; padding: 0 14px; border: 1px solid var(--border); border-radius: 14px; background: var(--surface); color: var(--text); font: inherit; font-size: 16px; -webkit-appearance: none; appearance: none; }
+        .hg-saved-search input::placeholder { color: var(--muted); opacity: 1; }
+        body.dark .hg-saved-search input { background-color: #243044; border-color: #3A4A61; }
+        .hg-saved-search input:focus-visible { outline: 3px solid var(--accent-ink); outline-offset: 1px; }
+        .hg-saved-chips { display: flex; gap: 8px; flex-wrap: wrap; }
+        .hg-saved-chipf { min-height: 40px; padding: 0 16px; border-radius: 999px; border: 1px solid var(--border); background: var(--surface); color: var(--text); font: inherit; font-size: 14px; font-weight: 700; cursor: pointer; }
+        body.dark .hg-saved-chipf { background: #1A222F; border-color: #2D3B4F; }
+        .hg-saved-chipf[aria-pressed="true"], body.dark .hg-saved-chipf[aria-pressed="true"] { background: var(--accent-ink); border-color: var(--accent-ink); color: var(--on-accent, #fff); font-weight: 800; }
+        .hg-saved-chipf:focus-visible { outline: 3px solid var(--accent-ink); outline-offset: 2px; }
+        .hg-saved-group { margin: 6px 2px 0; font-size: 12px; font-weight: 800; letter-spacing: 0.07em; text-transform: uppercase; color: var(--muted); }
+        .hg-saved-ul { list-style: none; margin: 0; padding: 0; border: 1px solid var(--border); border-radius: 14px; background: var(--surface); overflow: hidden; }
+        body.dark .hg-saved-ul { background: #1A222F; border-color: #2D3B4F; }
+        .hg-saved-ul li + li { border-top: 1px solid var(--border); }
+        body.dark .hg-saved-ul li + li { border-top-color: #2D3B4F; }
+        .hg-saved-row { display: flex; align-items: center; gap: 12px; width: 100%; min-height: 60px; padding: 10px 12px; box-sizing: border-box; border: 0; background: none; color: var(--text); font: inherit; text-align: start; cursor: pointer; }
+        .hg-saved-row:focus-visible { outline: 3px solid var(--accent-ink); outline-offset: -3px; }
+        .hg-saved-ico { flex: none; width: 40px; height: 40px; border-radius: 11px; display: grid; place-items: center; background: linear-gradient(135deg, #2B7DB3 0%, #123E63 100%); --icon-primary: #FFFFFF; --icon-secondary: #25B6D2; --icon-accent: #FFC52B; }
+        .hg-saved-ico svg { width: 26px; height: 26px; }
+        .hg-saved-txt { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+        .hg-saved-title { font-size: 15px; font-weight: 700; overflow-wrap: anywhere; }
+        .hg-saved-sub { font-size: 13px; color: var(--muted); overflow-wrap: anywhere; }
+        .hg-saved-chip-s { flex: none; padding: 3px 9px; border-radius: 999px; font-size: 12px; font-weight: 800; }
+        .hg-saved-chip-s[data-s="submitted"] { background: rgba(21, 123, 58, 0.12); color: #157B3A; }
+        .hg-saved-chip-s[data-s="draft"] { background: rgba(245, 166, 35, 0.20); color: #7A4F00; }
+        body.dark .hg-saved-chip-s[data-s="submitted"] { background: rgba(74, 222, 128, 0.14); color: #4ADE80; }
+        body.dark .hg-saved-chip-s[data-s="draft"] { background: rgba(245, 166, 35, 0.18); color: #F5C26B; }
+        .hg-saved-empty { margin: 8px 2px; color: var(--muted); }
+        .hg-saved-more { justify-self: start; min-height: 44px; padding: 0 16px; border: 1px solid var(--border); border-radius: 12px; background: var(--surface); color: var(--accent-ink); font: inherit; font-size: 14px; font-weight: 800; cursor: pointer; }
+        .hg-saved-more:focus-visible { outline: 3px solid var(--accent-ink); outline-offset: 2px; }
+        /* the Home tab's way in (home.js) */
+        .hg-saved-card { display: flex; align-items: center; gap: 12px; width: 100%; box-sizing: border-box; margin: 0 0 22px; padding: 14px; border: 1px solid var(--border); border-radius: 14px; background: var(--surface); color: var(--text); font: inherit; text-align: start; cursor: pointer; }
+        body.dark .hg-saved-card { background: #1A222F; border-color: #2D3B4F; }
+        .hg-saved-card:focus-visible { outline: 3px solid var(--accent-ink); outline-offset: 2px; }
+        .hg-saved-card-txt { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+        .hg-saved-card-title { font-size: 15px; font-weight: 700; }
+        .hg-saved-card-sub { font-size: 13px; color: var(--muted); }
+        .hg-saved-card svg { flex: none; width: 22px; height: 22px; color: var(--accent-ink); }
         /* Home: unfinished work (Continue) and the last tools opened (Recent), home.js */
         .hg-home-quick { max-width: 1200px; margin: 0 auto; }
         .hg-home-quick[hidden] { display: none; }
@@ -2727,7 +2768,7 @@
                     </div>
                     <div class="app-icon" data-app="files" onclick="openWindow('files')">
                         <div class="icon">📁</div>
-                        <div class="app-name" data-i18n="app.files">Files</div>
+                        <div class="app-name" data-i18n="app.saved">Saved</div>
                     </div>
                     <div class="app-icon" data-app="support" onclick="openWindow('support')">
                         <div class="icon">🎧</div>
@@ -2927,7 +2968,7 @@
                 <div class="hg-section-title">About</div>
                 <div class="hg-kvgrid">
                     <div class="hg-kv"><div class="k">App</div><div class="v">Hadron Group</div></div>
-                    <div class="hg-kv"><div class="k">Version</div><div class="v">v174</div></div>
+                    <div class="hg-kv"><div class="k">Version</div><div class="v">v175</div></div>
                     <div class="hg-kv"><div class="k">Platform</div><div class="v">PWA</div></div>
                 </div>
             </div>
@@ -2937,28 +2978,22 @@
     <div class="window" id="window-files">
         <div class="window-header">
             <button class="back-button" onclick="closeWindow('files')">←</button>
-            <span class="window-title" data-i18n="app.files">Files</span>
+            <span class="window-title" data-i18n="app.saved">Saved</span>
         </div>
         <div class="window-content">
-            <div class="hg-hero" style="background: linear-gradient(135deg, #f5a623 0%, #e07b00 100%);">
-                <div>
-                    <h2 class="hg-hero-title">Your files</h2>
-                    <div class="hg-hero-sub">PDFs, reports &amp; documents shared with you by the Hadron Group team</div>
+            <!-- Saved: the service reports and saved calculations in one list (hgRenderSaved) -->
+            <div class="hg-saved">
+                <div class="hg-saved-search" role="search">
+                    <label for="hgSavedSearch" class="hg-sr-only" data-i18n="saved.search">Search saved work</label>
+                    <input id="hgSavedSearch" type="search" autocomplete="off" spellcheck="false" placeholder="Search saved work" data-i18n="saved.search" data-i18n-attr="placeholder">
                 </div>
-                <div class="hg-hero-icon">📁</div>
-            </div>
-
-            <div class="hg-card">
-                <div class="hg-section-title">Recent files</div>
-                <div class="hg-empty" style="padding: 30px 20px;">
-                    <span class="emoji">📄</span>
-                    <h3 style="margin: 4px 0 6px;">No files yet</h3>
-                    <p style="margin: 0; font-size: 13px;">Service reports, COAs and other documents shared with you by Hadron will appear here. PDFs you generate from the calculator suite are stored under <strong>History</strong>.</p>
+                <div class="hg-saved-chips" role="group" aria-label="Show" data-i18n="saved.show" data-i18n-attr="aria-label">
+                    <button type="button" class="hg-saved-chipf" data-kind="all" aria-pressed="true" data-i18n="saved.all">All</button>
+                    <button type="button" class="hg-saved-chipf" data-kind="report" aria-pressed="false" data-i18n="saved.reports">Reports</button>
+                    <button type="button" class="hg-saved-chipf" data-kind="calc" aria-pressed="false" data-i18n="saved.calcs">Calculations</button>
                 </div>
-                <div style="margin-top: 12px; display: flex; gap: 8px; flex-wrap: wrap;">
-                    <button class="hg-btn ghost" onclick="openWindow('history')">📋 Open History</button>
-                    <button class="hg-btn ghost" onclick="openWindow('servicereport')">📝 Service Reports</button>
-                </div>
+                <p id="hgSavedStatus" class="hg-sr-only" role="status" aria-live="polite"></p>
+                <div id="hgSavedList"></div>
             </div>
         </div>
     </div>
@@ -4579,8 +4614,19 @@
             const b = e.target && e.target.closest ? e.target.closest('[onclick^="poolExport"], [onclick^="academyCertificate"]') : null;
             if (!b) return;
             e.preventDefault(); e.stopPropagation();   // (before the button's own handler)
-            hgGuestAsk('share');
+            hgGuestAsk(/^academyCertificate/.test(b.getAttribute('onclick') || '') ? 'open' : 'share');   // a certificate isn't a calculation to share
         }, true);
+        // The Jar Test DSS (its own page, in a frame) prints its report as a PDF with window.print(): for a guest that asks first
+        // too. Wrapped each time the frame loads a page; a signed-in user prints as before.
+        function hgGuardDssPrint(fr) {
+            try {
+                const w = fr && fr.contentWindow;
+                if (!w || w.__hgPrintGuarded || typeof w.print !== 'function') return;
+                const own = w.print.bind(w);
+                w.print = function () { if (hgGuestAsk('share')) return; own(); };
+                w.__hgPrintGuarded = true;
+            } catch (_) {}   // (a page of another origin: not this app's)
+        }
         function openWindow(appName) {
             if (document.body.classList.contains('hg-guest') && !HG_GUEST_WINDOWS.has(appName)) { hgGuestAsk(appName === 'servicereport' ? 'report' : 'open'); return; }
             const win = document.getElementById(`window-${appName}`);   // not "window": that hid the global (window.hgTrendsOpen below)
@@ -4591,11 +4637,13 @@
             hgArmBack();
             hgStatusBar();
             if (appName === 'history') renderHistoryList();
+            if (appName === 'files') { hgSavedAll = false; hgRenderSaved(true); }
             if (appName === 'jartest-dss') {
                 const fr = document.getElementById('jartestFrame');
+                if (fr && !fr._hgPrintGuard) { fr._hgPrintGuard = true; fr.addEventListener('load', () => hgGuardDssPrint(fr)); }
                 if (fr && (!fr.src || fr.src === 'about:blank' || fr.src.endsWith('about:blank'))) {
                     fr.src = 'jar-test.html?embed=1';
-                }
+                } else if (fr) hgGuardDssPrint(fr);
             }
             if (appName === 'jartest') renderJarTests();
             if (appName === 'servicereport') { listServiceReports(); }
@@ -4626,6 +4674,7 @@
             const window = document.getElementById(`window-${appName}`);
             window.classList.remove('active');
             openWindows.delete(appName);
+            if (appName !== 'files' && openWindows.has('files')) { try { hgRenderSaved(false); } catch (_) {} }   // back to Saved: what was opened from it may have changed (saved, submitted, removed)
             if (appName === 'servicereport') _srOpenSeq++;   // a report still loading doesn't open into it later (even if reopened)
             updateTaskbar();
             hgDisarmBack();   // last thing on screen closed with ←: drop the Back entry again
@@ -5778,6 +5827,102 @@
                 .replace(/'/g, '&#39;');
         }
 
+        // ── Saved (the Files window): the service reports (this phone's and the cloud's list) and the saved calculations in
+        // one list, newest first, by day; searchable and shown by kind. A report opens as the report list's Edit / View would;
+        // a calculation in History. Rows are buttons keyed by position in the list shown (no ids in handlers).
+        let hgSavedKind = 'all', hgSavedRows = [], hgSavedWired = false, hgSavedTimer = 0, hgSavedAll = false;
+        const HG_SAVED_MAX = 150;   // rows drawn at once: a long list is narrowed by the search ("Show all" draws the rest)
+        const HG_SAVED_ICON = { chlorine: 'dosage', coagulants: 'dosage' };   // a calculation's tool tile (else its own id)
+        function hgSavedTr(k, en) { const v = typeof window.t === 'function' ? window.t(k) : null; return v && v !== k ? v : en; }
+        function hgSavedFold(s) { return String(s || '').normalize('NFKD').replace(/\p{M}/gu, '').toLowerCase(); }
+        function hgSavedIcon(tileId) { const ic = document.querySelector('.app-icon[data-app="' + CSS.escape(String(tileId || '')) + '"] .icon'); return ic && ic.querySelector('svg') ? ic.innerHTML : ''; }
+        function hgSavedItems() {
+            const role = (window.HG_PROFILE && window.HG_PROFILE.role) || document.body.dataset.role || '';
+            const localOnly = !(window.HG_AUTH && window.HG_AUTH.configured);
+            const canManage = role ? ['admin', 'customer_admin'].includes(role) : localOnly;
+            const ms = (v) => { const x = new Date(v || 0).getTime(); return isFinite(x) ? x : 0; };
+            const out = [];
+            srMergedReports().forEach(r => {
+                if (!r || !r.id) return;
+                // as the report list: a draft is edited by an owner, or by its writer on the phone it was saved on; else viewed
+                const canEdit = r.status !== 'submitted' && (canManage || ((role === 'operator' || (!role && !localOnly)) && r._local));
+                const amends = r.amends && r.amends.reportNo ? hgSavedTr('saved.amends', 'Amends {no}').replace('{no}', () => String(r.amends.reportNo)) : '';
+                out.push({ key: 'r:' + r.id, kind: 'report', icon: 'servicereport', t: ms(r.date || r.savedAt || r.updated_at),
+                    title: hgSavedTr('pt.servicereport', 'Service Report') + (r.site ? ' · ' + String(r.site) : ''),
+                    sub: [r.reportNo ? String(r.reportNo) : '', amends].filter(Boolean).join(' · '),
+                    chip: r.status === 'submitted' ? 'submitted' : 'draft',
+                    open: () => { if (!r._local && (window.__hgOfflineSession || navigator.onLine === false)) { showToast(srNotHereMsg(true), 6000); return; } openWindow('servicereport'); openServiceReport(r.id, !canEdit); } });
+            });
+            const hist = loadHistory();
+            (Array.isArray(hist) ? hist : []).forEach(e => {
+                if (!e || !e.id) return;
+                out.push({ key: 'c:' + String(e.id), kind: 'calc', icon: HG_SAVED_ICON[e.type] || String(e.type || ''), t: ms(e.savedAt),
+                    title: String(e.label || hgSavedTr('saved.calc', 'Calculation')) + (e.summary ? ' · ' + String(e.summary) : ''), sub: '', chip: '',
+                    open: () => { openWindow('history'); viewHistoryEntry(e.id); } });
+            });
+            return out.sort((a, b) => b.t - a.t);
+        }
+        function hgSavedWire() {
+            if (hgSavedWired) return; hgSavedWired = true;
+            const input = document.getElementById('hgSavedSearch');
+            if (input) input.addEventListener('input', () => { clearTimeout(hgSavedTimer); hgSavedTimer = setTimeout(() => hgRenderSaved(false), 120); });
+            const chips = Array.from(document.querySelectorAll('#window-files .hg-saved-chipf'));
+            chips.forEach(b => b.addEventListener('click', () => {
+                hgSavedKind = b.getAttribute('data-kind') || 'all';
+                chips.forEach(x => x.setAttribute('aria-pressed', x === b ? 'true' : 'false'));
+                hgRenderSaved(false);
+            }));
+            const list = document.getElementById('hgSavedList');
+            if (list) list.addEventListener('click', (e) => {
+                if (e.target && e.target.closest && e.target.closest('.hg-saved-more')) { hgSavedAll = true; hgRenderSaved(false); const r = list.querySelector('.hg-saved-row[data-i="' + HG_SAVED_MAX + '"]'); if (r) r.focus({ preventScroll: true }); return; }
+                const b = e.target && e.target.closest ? e.target.closest('.hg-saved-row') : null;
+                const it = b ? hgSavedRows[+b.getAttribute('data-i')] : null;
+                if (it) it.open();
+            });
+            // the language changed while Saved is open: its days, kinds and dates in the new one
+            document.addEventListener('hg:lang:changed', () => { if (openWindows.has('files')) hgRenderSaved(false); });
+        }
+        function hgRenderSaved(refresh) {
+            const host = document.getElementById('hgSavedList');
+            if (!host) return;
+            hgSavedWire();
+            const q = hgSavedFold((document.getElementById('hgSavedSearch') || {}).value || '').trim();
+            const now = new Date(), today = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime(), weekAgo = today - 6 * 864e5;
+            const groupOf = (t) => t >= today ? 'today' : t >= weekAgo ? 'week' : 'earlier';
+            const GROUPS = { today: hgSavedTr('saved.today', 'Today'), week: hgSavedTr('saved.week', 'This week'), earlier: hgSavedTr('saved.earlier', 'Earlier') };
+            const KIND = { report: hgSavedTr('saved.report', 'Report'), calc: hgSavedTr('saved.calc', 'Calculation') };
+            const CHIP = { submitted: hgSavedTr('saved.submitted', 'Submitted'), draft: hgSavedTr('saved.draft', 'Draft') };
+            const date = (t) => { if (!t) return ''; const d = new Date(t); try { return d.toLocaleDateString([(window.currentLanguage || 'en') + '-ZA', 'en-ZA'], { weekday: 'short', day: 'numeric', month: 'short' }); } catch (_) { return d.toDateString(); } };
+            const ae = document.activeElement, hadIdx = ae && host.contains(ae) && ae.classList.contains('hg-saved-row') ? +ae.getAttribute('data-i') : -1, hadKey = hadIdx >= 0 ? (hgSavedRows[hadIdx] || {}).key : null;   // (F2)
+            hgSavedRows = hgSavedItems().filter(it => (hgSavedKind === 'all' || it.kind === hgSavedKind) && (!q || hgSavedFold(it.title + ' ' + it.sub).indexOf(q) !== -1));
+            let html = '', last = '';
+            hgSavedRows.forEach((it, i) => {
+                if (!hgSavedAll && i >= HG_SAVED_MAX) return;
+                const g = groupOf(it.t);
+                if (g !== last) { if (last) html += '</ul>'; html += '<h3 class="hg-saved-group">' + esc(GROUPS[g]) + '</h3><ul class="hg-saved-ul">'; last = g; }
+                html += '<li><button type="button" class="hg-saved-row" data-i="' + i + '">' +
+                    '<span class="hg-saved-ico" aria-hidden="true">' + hgSavedIcon(it.icon) + '</span>' +
+                    '<span class="hg-saved-txt"><span class="hg-saved-title">' + esc(it.title) + '</span><span class="hg-saved-sub">' + esc([date(it.t), KIND[it.kind], it.sub].filter(Boolean).join(' · ')) + '</span></span>' +
+                    (it.chip ? '<span class="hg-saved-chip-s" data-s="' + it.chip + '">' + esc(CHIP[it.chip]) + '</span>' : '') +
+                    '</button></li>';
+            });
+            if (last) html += '</ul>';
+            if (!hgSavedAll && hgSavedRows.length > HG_SAVED_MAX) html += '<button type="button" class="hg-saved-more">' + esc(hgSavedTr('saved.more', 'Show all {n}').replace('{n}', String(hgSavedRows.length))) + '</button>';
+            const filtered = !!q || hgSavedKind !== 'all';
+            host.innerHTML = html || '<p class="hg-saved-empty">' + esc(filtered ? hgSavedTr('saved.none', 'Nothing matches.') : hgSavedTr('saved.empty', 'Nothing saved yet. Your service reports and the calculations you save show here.')) + '</p>';
+            if (hadKey) {   // the row that had the focus keeps it (the cloud's list arrived, the language changed, back from a report)
+                const k = hgSavedRows.findIndex(it => it.key === hadKey);
+                const rows = host.querySelectorAll('.hg-saved-row');   // gone: the row now in its place
+                const b = (k >= 0 && host.querySelector('.hg-saved-row[data-i="' + k + '"]')) || rows[Math.min(hadIdx, rows.length - 1)] || document.getElementById('hgSavedSearch');
+                if (b) b.focus({ preventScroll: true });
+            }
+            const st = document.getElementById('hgSavedStatus');
+            if (st) st.textContent = filtered ? hgSavedTr('saved.count', '{n} shown').replace('{n}', String(hgSavedRows.length)) : '';
+            // the cloud's list of reports (other phones'), then again: only while Saved is still open
+            if (refresh && window.HG_SUPA && !window.__hgOfflineSession && navigator.onLine !== false) {
+                Promise.resolve(srCloudList()).then(() => { if (openWindows.has('files')) hgRenderSaved(false); }).catch(() => {});
+            }
+        }
         function renderHistoryList() {
             const list = loadHistory();
             const container = document.getElementById('historyListContainer');
