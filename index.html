@@ -52,60 +52,60 @@
     <!-- Supabase JS SDK (auth + cloud sync), pinned 2.117.2 and served by the app itself so sign-in
          works offline from the precache (it used to be the floating @2 from a CDN). See
          THIRD_PARTY_NOTICES.md. To upgrade: replace the file, rename it, update this tag + sw.js. -->
-    <script src="supabase-js-2.117.2.js?v=173"></script>
+    <script src="supabase-js-2.117.2.js?v=174"></script>
 
     <!-- Hadron Supabase bridge -->
-    <script src="supabase-client.js?v=173"></script>
+    <script src="supabase-client.js?v=174"></script>
 
     <!-- Shared UI primitives (in-app sheets) — loaded before auth-ui, which uses them -->
-    <script src="hg-ui.js?v=173" defer></script>
+    <script src="hg-ui.js?v=174" defer></script>
     <!-- Auth UI (login/signup gate, profile binding) -->
-    <script src="auth-ui.js?v=173" defer></script>
+    <script src="auth-ui.js?v=174" defer></script>
 
     <!-- Push notifications -->
-    <script src="push.js?v=173" defer></script>
+    <script src="push.js?v=174" defer></script>
 
     <!-- Translation bundle -->
-    <script src="i18n.js?v=173"></script>
+    <script src="i18n.js?v=174"></script>
 
     <!-- Hadron Tristroke icon system (matches the ERP) -->
-    <script src="hadron-icons.js?v=173" defer></script>
+    <script src="hadron-icons.js?v=174" defer></script>
 
     <!-- Emoji the app has an icon for become Tristroke icons (the rest stay the phone's own emoji) -->
-    <script src="emoji.js?v=173" defer></script>
+    <script src="emoji.js?v=174" defer></script>
 
     <!-- Customizable home grid (drag-to-reorder) -->
-    <script src="home.js?v=173" defer></script>
-    <script src="customize.js?v=173" defer></script>
+    <script src="home.js?v=174" defer></script>
+    <script src="customize.js?v=174" defer></script>
 
     <!-- Data Manager (Excel import/export) -->
-    <script src="data-manager.js?v=173" defer></script>
+    <script src="data-manager.js?v=174" defer></script>
 
     <!-- QR encoder (MIT, Kazuhiko Arase) -->
-    <script src="qr.js?v=173"></script>
+    <script src="qr.js?v=174"></script>
 
     <!-- QR Builder app -->
-    <script src="qr-app.js?v=173" defer></script>
+    <script src="qr-app.js?v=174" defer></script>
 
     <!-- Pool Water module -->
-    <script src="pool.js?v=173" defer></script>
+    <script src="pool.js?v=174" defer></script>
     <!-- Cooling Tower field calculator -->
-    <script src="coolingtower.js?v=173" defer></script>
+    <script src="coolingtower.js?v=174" defer></script>
     <!-- Boiler / Steam field calculator -->
-    <script src="boiler.js?v=173" defer></script>
+    <script src="boiler.js?v=174" defer></script>
     <!-- Water softener sizing calculator -->
-    <script src="softener.js?v=173" defer></script>
-    <script src="academy-content.js?v=173" defer></script>
-    <script src="academy.js?v=173" defer></script>
+    <script src="softener.js?v=174" defer></script>
+    <script src="academy-content.js?v=174" defer></script>
+    <script src="academy.js?v=174" defer></script>
 
-    <script src="searchable-select.js?v=173" defer></script>
-    <script src="trends.js?v=173" defer></script>
+    <script src="searchable-select.js?v=174" defer></script>
+    <script src="trends.js?v=174" defer></script>
 
     <!-- LIMS module (loaded at end of body via defer) -->
-    <script src="lims.js?v=173" defer></script>
-    <script src="lims-sync.js?v=173" defer></script>
-    <script src="portal.js?v=173" defer></script>
-    <script src="team.js?v=173" defer></script>
+    <script src="lims.js?v=174" defer></script>
+    <script src="lims-sync.js?v=174" defer></script>
+    <script src="portal.js?v=174" defer></script>
+    <script src="team.js?v=174" defer></script>
 
 
     <style>
@@ -360,6 +360,7 @@
         .hg-sync-dot { flex: none; width: 8px; height: 8px; border-radius: 50%; background: #157B3A; box-sizing: border-box; }
         .hg-sync-chip[data-state="pending"] .hg-sync-dot { background: #2E3742; }
         .hg-sync-chip[data-state="offline"] .hg-sync-dot { background: transparent; border: 2px solid #2E3742; }
+        .hg-sync-chip[data-state="guest"] .hg-sync-dot { background: #5B6773; }
 
         .user-info {
             display: flex;
@@ -581,6 +582,21 @@
         body.hg-tabs:has(#hgUpdateBar) .toast, body.hg-tabs:has(#hgUpdateBar) .hg-sync-pill, body.hg-tabs:has(#hgUpdateBar) .hg-customize-pill { bottom: calc(142px + env(safe-area-inset-bottom, 0px)); }   /* above the update bar too */
         body.hg-tabs.hg-home-editing .toast { bottom: calc(132px + env(safe-area-inset-bottom, 0px)); }   /* customizing: above the Done pill */
         body.hg-tabs.hg-home-editing:has(#hgUpdateBar) .toast { bottom: calc(190px + env(safe-area-inset-bottom, 0px)); }
+        /* Guest (the calculators without an account, auth-ui.js): the calculators and Learn only, a Sign in button
+           instead of the account, a note that saving and sharing need an account */
+        .hg-guest-signin, .hg-guest-note { display: none; }
+        body.hg-guest .hg-guest-signin { display: inline-flex; align-items: center; min-height: 40px; padding: 0 14px; border: 0; border-radius: 10px; background: #2E3742; color: #FFFFFF; font: inherit; font-size: 14px; font-weight: 800; cursor: pointer; }
+        body.hg-guest .hg-guest-signin:focus-visible { outline: 3px solid #2E3742; outline-offset: 2px; }
+        body.hg-guest .hg-account-btn,
+        body.hg-guest .hg-home-search, body.hg-guest .hg-home-results, body.hg-guest .hg-home-quick,
+        body.hg-guest [data-home-sec="field"], body.hg-guest [data-home-sec="lab"], body.hg-guest [data-home-sec="more"],
+        body.hg-guest .app-icon[data-app="history"] { display: none !important; }
+        body.hg-guest .hg-guest-note { display: block; max-width: 1200px; margin: 0 auto 16px; padding: 12px 14px; border-radius: 12px; background: rgba(27, 119, 160, 0.10); color: var(--text); font-size: 14px; line-height: 1.45; }
+        body.dark.hg-guest .hg-guest-note { background: rgba(58, 174, 219, 0.14); }
+        .hg-guest-note button { padding: 0; border: 0; background: none; color: var(--accent-ink); font: inherit; font-weight: 800; text-decoration: underline; cursor: pointer; }
+        .hg-guest-note button:focus-visible { outline: 3px solid var(--accent-ink); outline-offset: 2px; }
+        body:not(.dark) .hg-guest-note button { color: #145C7C; }   /* on the note's tint: ≥ 4.5:1 */
+        @media (max-width: 360px) { body.hg-guest .hg-guest-signin { padding: 0 10px; } }   /* the chip keeps room for its word */
         /* Home: unfinished work (Continue) and the last tools opened (Recent), home.js */
         .hg-home-quick { max-width: 1200px; margin: 0 auto; }
         .hg-home-quick[hidden] { display: none; }
@@ -2558,6 +2574,7 @@
             </div>
             <div class="user-info">
                 <button class="topbar-theme-toggle no-print" id="topThemeToggle" aria-label="Toggle light/dark theme" title="Toggle light/dark theme" onclick="setTheme(document.documentElement.getAttribute('data-theme')==='dark'?'light':'dark')"></button>
+                <button type="button" class="hg-guest-signin no-print" id="hgGuestSignIn" onclick="window.HG_AUTH_UI && window.HG_AUTH_UI.show('signin')" data-i18n="guest.signIn">Sign in</button>
                 <button type="button" class="hg-account-btn" id="hgAccountBtn" aria-haspopup="dialog" aria-label="Account menu" onclick="window.hgOpenAccountMenu ? window.hgOpenAccountMenu() : openWindow('profile')">
                     <span class="user-avatar" id="userAvatar" aria-hidden="true">U</span>
                     <span id="userName">User</span>
@@ -2567,6 +2584,7 @@
 
         <!-- Desktop Content -->
         <div class="desktop-content">
+            <p class="hg-guest-note" id="hgGuestNote"><span data-i18n="guest.note">You’re using the calculators as a guest: saving results and making PDFs need an account.</span> <button type="button" onclick="window.HG_AUTH_UI && window.HG_AUTH_UI.show('signin')" data-i18n="guest.signIn">Sign in</button> · <button type="button" onclick="openWindow('settings')" data-i18n="app.settings">Settings</button></p>
             <div class="hg-home-search" role="search">
                 <label for="hgHomeSearch" class="hg-sr-only" data-i18n="home.search">Search tools</label>
                 <span class="hg-home-search-ico" aria-hidden="true"></span>
@@ -2755,6 +2773,7 @@
             <button type="button" class="hg-tab" data-tab="field"><span class="hg-tab-ico" aria-hidden="true"></span><span class="hg-tab-label" data-i18n="tab.field">Field</span></button>
             <button type="button" class="hg-tab" data-tab="learn"><span class="hg-tab-ico" aria-hidden="true"></span><span class="hg-tab-label" data-i18n="tab.learn">Learn</span></button>
             <button type="button" class="hg-tab" data-tab="account"><span class="hg-tab-ico" aria-hidden="true"></span><span class="hg-tab-label" data-i18n="tab.account">Account</span></button>
+            <button type="button" class="hg-tab" data-tab="signin" hidden><span class="hg-tab-ico" aria-hidden="true"></span><span class="hg-tab-label" data-i18n="guest.signIn">Sign in</span></button>
         </nav>
     </div>
 
@@ -2908,7 +2927,7 @@
                 <div class="hg-section-title">About</div>
                 <div class="hg-kvgrid">
                     <div class="hg-kv"><div class="k">App</div><div class="v">Hadron Group</div></div>
-                    <div class="hg-kv"><div class="k">Version</div><div class="v">v173</div></div>
+                    <div class="hg-kv"><div class="k">Version</div><div class="v">v174</div></div>
                     <div class="hg-kv"><div class="k">Platform</div><div class="v">PWA</div></div>
                 </div>
             </div>
@@ -4406,7 +4425,9 @@
         function hgHomeEditing() { return !!(window.HG_HOME && typeof window.HG_HOME.isEditing === 'function' && window.HG_HOME.isEditing()); }   // Customize home
         // On a phone, a tab other than Home (home.js): Back goes Home first, and from there out of the app as before.
         function hgTabAway() { return !!(window.hgHomeTab && typeof window.hgHomeTab.away === 'function' && window.hgHomeTab.away()); }
-        function hgAnythingOpen() { return openWindows.size > 0 || hgSheetsOpen() > 0 || !!hgOverlayOpen() || hgFormOpen() || hgHomeEditing() || hgTabAway(); }
+        // A guest's sign-in screen (auth-ui.js) over the calculators: Back / Esc close it first, as "Back to the calculators" does.
+        function hgGuestAuthOpen() { return document.body.classList.contains('hg-guest') && !!(window.HG_AUTH_UI && window.HG_AUTH_UI.isOpen && window.HG_AUTH_UI.isOpen()); }
+        function hgAnythingOpen() { return openWindows.size > 0 || hgSheetsOpen() > 0 || !!hgOverlayOpen() || hgFormOpen() || hgHomeEditing() || hgTabAway() || hgGuestAuthOpen(); }
         // A #route the app opens: following one is navigation, not Back. Anything else in the hash (e.g.
         // an expired e-mail link's #error=…, which supabase-js leaves in place) is not.
         // Keep in step with handleHash in qr-app.js.
@@ -4466,6 +4487,7 @@
             if (ov === 'picker') { srCloseTestPicker(); return; }
             if (ov === 'scan') { srCloseSiteScan(); return; }
             if (hgSheetsOpen()) { window.hgSheet.closeTop(); return; }   // 'blocked' while busy: it stays open
+            if (hgGuestAuthOpen()) { window.HG_AUTH_UI.hide(); return; }
             if (hgFormOpen()) { hgModalClose(); return; }
             const top = hgTopWindow();
             // Back while customizing: Done. Not in the middle of a tile drag: SortableJS destroyed mid-drag leaves its drag
@@ -4528,7 +4550,39 @@
         if (history.state && history.state.hgBack) { hgBackArmed = true; hgDisarmBack(); }
         else { try { history.replaceState(Object.assign({}, history.state || {}, { hgBase: 1 }), ''); } catch (_) {} }
 
+        // A guest (the calculators without an account, auth-ui.js): saving, sharing (PDF), sending readings to a service report
+        // and the other tools need an account; one sheet says so, with Create an account / Sign in / Not now.
+        const HG_GUEST_WINDOWS = new Set(['dosage', 'waterindex', 'coolingtower', 'boiler', 'softener', 'rocalc', 'converters', 'neutralise',
+            'effluent', 'removalcalc', 'fmcalc', 'srtcalc', 'pool', 'jartest-dss', 'academy', 'sops', 'troubleshoot', 'settings', 'support']);
+        let hgGuestCtx = null;
+        function hgGuestAsk(kind) {
+            if (!document.body.classList.contains('hg-guest')) return false;
+            if (hgGuestCtx || !window.hgSheet) return true;   // asked already (one tap can reach two gates)
+            const tr = (k, en) => { const v = typeof window.t === 'function' ? window.t(k) : null; return v && v !== k ? v : en; };
+            const TITLES = { save: ['guest.saveTitle', 'Save this calculation?'], share: ['guest.shareTitle', 'Share this calculation?'],
+                report: ['guest.reportTitle', 'Send to a service report?'], open: ['guest.openTitle', 'This needs an account'] };
+            const ti = TITLES[kind] || TITLES.open;
+            const auth = (m) => () => { if (window.HG_AUTH_UI) window.HG_AUTH_UI.show(m); };
+            hgGuestCtx = window.hgSheet.open({
+                title: tr(ti[0], ti[1]),
+                body: '<p>' + esc(tr('guest.body', 'Create a free account to save calculations, share them as PDFs and find them on any phone.')) + '</p>',
+                actions: [{ label: tr('guest.create', 'Create an account'), kind: 'primary', onClick: auth('signup') },
+                          { label: tr('guest.signIn', 'Sign in'), kind: 'secondary', onClick: auth('signin') },
+                          { label: tr('guest.notNow', 'Not now'), kind: 'plain', focus: true }],
+                onClose: () => { hgGuestCtx = null; }
+            });
+            return true;
+        }
+        // The PDFs a tool makes itself (Pool's report, an Academy certificate) need an account too, as exportPdf does.
+        document.addEventListener('click', function (e) {
+            if (!document.body.classList.contains('hg-guest')) return;
+            const b = e.target && e.target.closest ? e.target.closest('[onclick^="poolExport"], [onclick^="academyCertificate"]') : null;
+            if (!b) return;
+            e.preventDefault(); e.stopPropagation();   // (before the button's own handler)
+            hgGuestAsk('share');
+        }, true);
         function openWindow(appName) {
+            if (document.body.classList.contains('hg-guest') && !HG_GUEST_WINDOWS.has(appName)) { hgGuestAsk(appName === 'servicereport' ? 'report' : 'open'); return; }
             const win = document.getElementById(`window-${appName}`);   // not "window": that hid the global (window.hgTrendsOpen below)
             win.classList.add('active');
             openWindows.add(appName);
@@ -5677,6 +5731,7 @@
         }
 
         function saveCalculation(type, btn) {
+            if (hgGuestAsk('save')) return;   // a guest: saving needs an account
             const meta = CALC_META[type];
             if (!meta) return;
             const snapshot = meta.collect();
@@ -5816,6 +5871,7 @@
         }
 
         function exportPdf(type) {
+            if (hgGuestAsk('share')) return;   // a guest: PDFs and sharing need an account
             const snap = buildPdfSnapshot(type);
             if (!snap) return;
             generatePdf(snap);
@@ -6442,6 +6498,7 @@
         }
 
         async function newServiceReport() {
+            if (document.body.classList.contains('hg-guest')) return;   // a guest has no service reports (the window doesn't open: hgGuestAsk)
             srEnsureAutosaveWired();
             _srOpenSeq++;   // a report still loading doesn't replace the new (or resumed) one
             srFlushDraft();   // an edit still waiting to be autosaved is in the draft before it is offered
@@ -7969,6 +8026,7 @@
         // message says so. readings: [{ id: catalog id, value: number in the row's unit }]; system: 'Boiler' |
         // 'Cooling Tower' (the SR_SYSTEM_PACKS names). Returns { added, kept, point, message } (message: the toast).
         window.hgSrAddReadings = function (readings, system) {
+            if (hgGuestAsk('report')) return { added: 0, kept: 0, point: '', message: (typeof window.t === 'function' && window.t('guest.reportToast') !== 'guest.reportToast') ? window.t('guest.reportToast') : 'Sign in to send readings to a service report' };
             const res = { added: 0, kept: 0, point: '', message: 'New service report: no readings to add yet' };
             const form = document.getElementById('sr_form');
             if (sr_readOnly || !form || form.style.display === 'none') { res.message = 'The service report isn’t open for editing: no readings added'; return res; }

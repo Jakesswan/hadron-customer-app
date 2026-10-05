@@ -49,11 +49,16 @@
   async function setStatusText() {
     const el = document.getElementById('profilePushStatus');
     if (!el) return;
-    const s = status();
+    let s = status();
+    // Allowed isn't on: this phone's subscription can have ended ("Use the calculators" ends it) with the permission kept.
+    if (s === 'granted') {
+      try { const reg = await navigator.serviceWorker.getRegistration(); const sub = reg ? await reg.pushManager.getSubscription() : null; if (!sub) s = 'off'; } catch (_) {}
+    }
     const map = {
       unsupported: '🚫 Push not supported on this device. On iPhone, install this app to your Home Screen first.',
       denied: '🔇 Push is blocked. Enable it in your browser settings to receive alerts.',
       granted: '✅ Push enabled.',
+      off: '🔕 Push is off on this phone. Tap “Enable push notifications” to turn it on.',
       unknown: ''
     };
     el.textContent = map[s] || '';
@@ -118,7 +123,9 @@
 
   async function disable() {
     if (!isSupported()) return;
-    const reg = await getRegistration();
+    // The registration as it is now: a phone still installing the app (no active worker yet) has no subscription to end,
+    // and navigator.serviceWorker.ready would wait for the install ("Use the calculators" waited its full 3 s).
+    const reg = await navigator.serviceWorker.getRegistration();
     const sub = reg && await reg.pushManager.getSubscription();
     if (sub) {
       const endpoint = sub.endpoint;

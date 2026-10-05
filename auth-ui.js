@@ -107,6 +107,13 @@
       display: none;
     }
     .hg-sync-pill.show { display: block; }
+    .hg-auth-guest { margin-top: 18px; padding: 14px 16px; border: 1px dashed var(--border, rgba(0,0,0,0.2)); border-radius: 14px; display: grid; gap: 8px; }
+    .hg-auth-guest h2 { margin: 0; font-size: 15px; font-weight: 800; }
+    .hg-auth-guest p { margin: 0; font-size: 13px; line-height: 1.45; opacity: 0.85; }
+    .hg-auth-btn.hg-auth-guest-go { width: auto; min-height: 44px; justify-self: start; padding: 10px 16px; background: transparent; color: var(--accent-ink, #1B77A0); border: 1px solid currentColor; }
+    .hg-auth-link { display: block; min-height: 44px; margin: 14px auto 0; padding: 8px 10px; border: 0; background: none; color: var(--accent-ink, #1B77A0); font: inherit; font-size: 14px; font-weight: 700; cursor: pointer; }
+    .hg-auth-link:focus-visible, .hg-auth-btn.hg-auth-guest-go:focus-visible { outline: 2px solid currentColor; outline-offset: 2px; }
+    .hg-auth-card:focus { outline: none; }
   `;
   const styleEl = document.createElement('style');
   styleEl.textContent = css;
@@ -136,6 +143,7 @@
     }
     const card = document.createElement('div');
     card.className = 'hg-auth-card';
+    card.setAttribute('role', 'dialog'); card.setAttribute('aria-modal', 'true'); card.setAttribute('aria-labelledby', 'hgAuthTitle');
 
     const titles = {
       signin: { h1: 'Sign in', sub: 'Welcome back to Hadron Group',     primary: 'Sign in' },
@@ -147,7 +155,7 @@
     card.innerHTML = `
       <img class="hg-auth-logo light" src="Hadron_Logo_dark.png" alt="Hadron Group" />
       <img class="hg-auth-logo dark"  src="Hadron_Logo.png" alt="Hadron Group" />
-      <h1 class="hg-auth-title">${cfg.h1}</h1>
+      <h1 class="hg-auth-title" id="hgAuthTitle">${cfg.h1}</h1>
       <div class="hg-auth-sub">${cfg.sub}</div>
 
       ${mode === 'signup' ? `
@@ -199,15 +207,25 @@
         `}
       </div>
 
+      ${mode === 'signin' && !isGuest() ? `
+        <section class="hg-auth-guest" aria-labelledby="hgAuthGuestH">
+          <h2 id="hgAuthGuestH">Just need a calculator?</h2>
+          <p>Dosage, LSI, cooling tower, boiler and the other calculators work without an account, also offline.</p>
+          <button type="button" class="hg-auth-btn hg-auth-guest-go" id="hgAuthGuest" ${busy?'disabled':''}>Use the calculators</button>
+        </section>` : ''}
+      ${isGuest() ? '<button type="button" class="hg-auth-link" id="hgAuthBackGuest">Back to the calculators</button>' : ''}
+
       <div class="hg-auth-footer">
         Hadron Group · Customer Interface ·
         <a href="privacy.html" style="color: inherit;">Privacy</a>
       </div>
     `;
 
+    const hadFocus = isGuest() && overlay.contains(document.activeElement) && document.activeElement.id;   // (guests only: nothing changes for the sign-in screen of a signed-out phone)
     overlay.innerHTML = '';
     overlay.appendChild(card);
     wireEvents();
+    if (isGuest() && hadFocus) { const f = document.getElementById(hadFocus); try { (f || card).focus({ preventScroll: true }); } catch (_) {} }   // a redraw (busy, an error) keeps the keyboard in it
   }
 
   function wireEvents() {
@@ -223,6 +241,9 @@
     if (goSignup) goSignup.addEventListener('click', () => { mode = 'signup'; clear(); render(); });
     if (goReset)  goReset .addEventListener('click', () => { mode = 'reset';  clear(); render(); });
     if (goSignin) goSignin.addEventListener('click', () => { mode = 'signin'; clear(); render(); });
+    const goGuest = document.getElementById('hgAuthGuest'), backGuest = document.getElementById('hgAuthBackGuest');
+    if (goGuest) goGuest.addEventListener('click', enterGuest);
+    if (backGuest) backGuest.addEventListener('click', () => { teardown(); });
 
     ['hgAuthEmail','hgAuthPassword','hgAuthName'].forEach(id => {
       const el = document.getElementById(id);
@@ -276,19 +297,88 @@
   }
 
   function teardown() {
-    if (overlay) { overlay.remove(); overlay = null; }
+    if (!overlay) return;
+    overlay.remove(); overlay = null;
+    if (overlayOpener) { const o = overlayOpener; overlayOpener = null; try { if (document.contains(o) && o.getClientRects().length) o.focus({ preventScroll: true }); } catch (_) {} }
+    try { if (typeof window.hgDisarmBack === 'function') window.hgDisarmBack(); } catch (_) {}   // a guest's sign-in screen was a Back layer
+  }
+  let overlayOpener = null;   // a guest's sign-in screen: where the focus goes back to
+
+  // ── Guest: the calculators without an account ───────────
+  // On this phone only, kept across restarts (hg-guest) until someone signs in. Saving, sharing and the other tools need
+  // an account (index.html hgGuestAsk); the home shows the calculators and Learn (index.html / home.js, body.hg-guest).
+  const GUEST_KEY = 'hg-guest';
+  function isGuest() { try { return localStorage.getItem(GUEST_KEY) === '1'; } catch (_) { return false; } }
+  async function enterGuest() {
+    if (busy) return;
+    busy = true; render();
+    // Another person's data on this phone (signed in before and never signed out, e.g. a session the server ended): set
+    // aside for them first, as a user switch does. If it can't be (storage), no guest: their unsent work mustn't be lost.
+    const prev = lastUid();
+    let residue = false;
+    try { residue = Object.keys(localStorage).some(isTenantKey); } catch (_) {}
+    // Reloading (below): late tenant writers must not put anything back meanwhile, as in a user switch
+    const reload = !!(prev || residue || bootHeld);
+    const freeze = function (on) { window.__hgTenantFrozen = on; window.__hgSuppressQueuePersist = on; };
+    if (reload) freeze(true);
+    if (prev && residue) {
+      try { await stashPut(prev, collectTenantData(), lastOrg()); }
+      catch (_) { if (reload) freeze(false); busy = false; setError('This phone holds work of an account that couldn’t be set aside. Sign in to that account first, or try again.'); return; }
+    }
+    // This phone's push subscription ends too: the previous account's notifications don't reach a guest (push.js; bounded)
+    try { if (typeof window.hgDisablePush === 'function') await Promise.race([window.hgDisablePush(), new Promise(function (r) { setTimeout(r, 3000); })]); } catch (_) {}
+    if (prev || residue) { try { await hgClearTenantData(); } catch (_) {} }
+    try {
+      ['hg-last-uid', 'hg-last-org', 'hg-last-role', 'hg-last-org-name', 'hg-restore-pending'].forEach(function (k) { localStorage.removeItem(k); });
+      localStorage.setItem(GUEST_KEY, '1');
+    } catch (_) {}
+    // Modules may still hold that data in memory. Also when another tab has already set it aside and cleared it: this page
+    // started with it (bootHeld), so its modules hold it all the same (Cooling Tower settings, the quote).
+    if (reload) { try { location.reload(); } catch (_) {} return; }
+    busy = false;
+    showGuest();
+  }
+  function showGuest() {
+    teardown();
+    document.body.classList.add('hg-guest');
+    applyRole('guest');   // no role's tiles (Data Manager, Team, Portal)
+    paintTopOrg('');
+    showDesktop(true);
+    refreshSyncChip();
+    try { document.dispatchEvent(new CustomEvent('hg:guest', { detail: { guest: true } })); } catch (_) {}
+  }
+  // Signed in: no longer a guest (what the guest left is cleared by the user switch that follows, hgEnsureUser)
+  function leaveGuest() {
+    try { localStorage.removeItem(GUEST_KEY); } catch (_) {}
+    if (document.body.classList.contains('hg-guest')) {
+      document.body.classList.remove('hg-guest');
+      try { document.dispatchEvent(new CustomEvent('hg:guest', { detail: { guest: false } })); } catch (_) {}
+    }
   }
 
   // ── Public API ──────────────────────────────────────────
   window.HG_AUTH_UI = {
-    show()  {
-      if (overlay) return;   // already showing: keep what it says (e.g. the expired-link message)
-      mode = 'signin'; clear();
+    show(m)  {
+      const want = (m === 'signup' || m === 'reset') ? m : 'signin';   // a guest's "Create an account" opens on sign-up
+      if (overlay) { if (m && want !== mode) { mode = want; clear(); render(); } return; }   // already showing: keep what it says (e.g. the expired-link message)
+      mode = want; clear();
       if (pendingLinkError) { lastError = pendingLinkError; pendingLinkError = null; }
       render();
+      if (isGuest() && overlay) {
+        try { if (typeof window.hgArmBack === 'function') window.hgArmBack(); } catch (_) {}
+        // the focus goes in once a sheet that asked ("Create an account") has closed and put it back on what opened it
+        setTimeout(function () {
+          if (!overlay) return;
+          const a = document.activeElement;
+          if (a && a !== document.body && !overlay.contains(a)) overlayOpener = a;
+          const card = overlay.querySelector('.hg-auth-card');
+          if (card && !overlay.contains(document.activeElement)) { card.setAttribute('tabindex', '-1'); try { card.focus({ preventScroll: true }); } catch (_) {} }
+        }, 0);
+      }
     },
     hide()  { teardown(); },
-    isOpen() { return !!overlay; }
+    isOpen() { return !!overlay; },
+    isGuest: function () { return isGuest(); }
   };
 
   // ── Sync pill ───────────────────────────────────────────
@@ -413,6 +503,13 @@
   function refreshSyncChip() {
     const chip = document.getElementById('hgSyncChip'), text = document.getElementById('hgSyncText');
     if (!chip || !text) return;
+    if (document.body.classList.contains('hg-guest')) {   // used without an account: nothing syncs
+      chip.dataset.state = 'guest'; chip.classList.remove('hg-sync-compact');
+      const g = word('guest.chip', 'Guest');
+      if (text.textContent !== g) text.textContent = g;
+      chip.hidden = false;
+      return;
+    }
     const signedIn = !!(window.HG_AUTH && window.HG_AUTH.configured) && !!(window.HG_PROFILE || window.__hgOfflineSession);
     if (!signedIn) { chip.hidden = true; return; }
     let n = 0;
@@ -610,6 +707,7 @@
       }
       if (uid) {
         teardown();
+        leaveGuest();
         // Make sure THIS user's data is what's live before anything is shown. Keyed on the session's
         // user id, so it holds even when the profile fetch fails (offline). True = reloading.
         if (await hgEnsureUser(uid)) return;
@@ -644,6 +742,12 @@
         }
         // Unsynced changes are sent from refreshProfileCard, once the profile has confirmed the user
         // and organisation they belong to (a session alone isn't enough: see mayFlushAs).
+      } else if (isGuest()) {
+        showGuest();   // the calculators without an account: the sign-in screen only when asked for
+        if (pendingLinkError) {   // an expired / used e-mail link opened as a guest: said now, not only once the sign-in screen opens
+          const m = pendingLinkError; pendingLinkError = null;
+          setTimeout(function () { if (typeof window.showToast === 'function') window.showToast(m, 7000); }, 600);
+        }
       } else {
         // Signed out: hide the desktop; the sign-in screen covers everything.
         showDesktop(false);
@@ -1258,6 +1362,7 @@
   // Single-flight: boot and supabase's INITIAL_SESSION / SIGNED_IN can call this concurrently.
   // Crash-safe: hg-last-uid changes right after the clear, and a stash is never overwritten with
   // empty data, so an interrupted switch can't destroy or misfile anyone's data.
+  let bootHeld = false, bootUid = null;   // set at start-up (end of this file)
   let _switchRun = null;
   function hgEnsureUser(uid) {
     if (_switchRun) return _switchRun;
@@ -1271,6 +1376,9 @@
         try {
           if (stashIndex()[uid] && !localStorage.getItem('hg-restore-pending') && !(await signOutInProgress())) localStorage.setItem('hg-restore-pending', uid);
         } catch (_) {}
+        // Another tab has already switched the phone to this user, but this page started with someone else's data (or a
+        // guest's) and may hold it in memory: start again, without it.
+        if (bootHeld && bootUid !== uid) { window.__hgTenantFrozen = true; window.__hgSuppressQueuePersist = true; try { location.reload(); } catch (_) {} return true; }
         return false;
       }
       window.__hgTenantFrozen = true;            // late tenant writers (report autosave…) must not write now
@@ -1288,7 +1396,8 @@
         localStorage.removeItem('hg-last-org-name');
         localStorage.setItem('hg-restore-pending', uid);
       } catch (_) {}
-      if (purge) { try { location.reload(); } catch (_) {} return true; }   // modules may still hold the old data in memory
+      // Modules may still hold the old data in memory; also when another tab cleared it first (this page started with it).
+      if (purge || (bootHeld && bootUid !== uid)) { try { location.reload(); } catch (_) {} return true; }
       window.__hgTenantFrozen = false;
       window.__hgSuppressQueuePersist = false;
       return false;
@@ -1501,6 +1610,10 @@
   // Wait for supabase-client.js to finish initialising. If it's already
   // initialised by the time we get here (race: defer script vs setTimeout(0)),
   // boot synchronously instead of waiting for an event we missed.
+  // This page started with someone's data on the phone (or a user recorded): its modules may hold that data in memory, also
+  // after another tab has set it aside. Read once, now, before the modules that load their data at start-up (the scripts after
+  // this one).
+  try { bootUid = lastUid(); bootHeld = !!bootUid || Object.keys(localStorage).some(isTenantKey); } catch (_) {}
   if (window.HG_AUTH) {
     boot();
   } else {

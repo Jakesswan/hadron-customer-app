@@ -125,7 +125,7 @@
     // the Home tab shows the role's own section (the first in its order) under the unfinished, pinned and recent tools
     const primary = Array.from(document.querySelectorAll('[data-home-sec]')).find((s) => !s.hidden && s.getAttribute('data-home-sec') !== 'more');
     document.querySelectorAll('[data-home-sec]').forEach((s) => { if (s === primary) s.setAttribute('data-home-primary', ''); else s.removeAttribute('data-home-primary'); });
-    if (tabHasContent(tab)) paintTabs(); else goTab('home');   // a role without that tab's tools: Home
+    if (tabHasContent(tab)) paintTabs(); else goTab(homeTab());   // a role without that tab's tools: Home
   }
 
   // ── Tabs (a phone or a tablet): Home · Tools · Field · Learn · Account ──
@@ -135,13 +135,17 @@
   // (index.html's Back guard asks hgHomeTab.away()), then out of the app as before.
   const TABS = ['home', 'tools', 'field', 'learn', 'account'];
   const TAB_SECS = { tools: ['calculators'], field: ['field', 'lab'], learn: ['learn'] };
-  const TAB_ICONS = { home: 'dashboard', tools: 'dosage', field: 'document', learn: 'academy', account: 'profile' };
+  const TAB_ICONS = { home: 'dashboard', tools: 'dosage', field: 'document', learn: 'academy', account: 'profile', signin: 'profile' };
   const tabsMq = typeof window.matchMedia === 'function' ? window.matchMedia('(max-width: 768px)') : null;
   let tab = 'home';
   const tabsOn = () => !!(tabsMq && tabsMq.matches);
-  const tabHasContent = (name) => name === 'home' || name === 'account' ||
-    (TAB_SECS[name] || []).some((s) => { const sec = document.querySelector('[data-home-sec="' + s + '"]'); return !!sec && !sec.hidden; });
+  // A guest (the calculators without an account, auth-ui.js): Tools (their start) and Learn; "Sign in" in the bar
+  const isGuest = () => document.body.classList.contains('hg-guest');
+  const homeTab = () => isGuest() ? 'tools' : 'home';
+  const secsShown = (name) => (TAB_SECS[name] || []).some((s) => { const sec = document.querySelector('[data-home-sec="' + s + '"]'); return !!sec && !sec.hidden; });
+  const tabHasContent = (name) => isGuest() ? ((name === 'tools' || name === 'learn') && secsShown(name)) : (name === 'home' || name === 'account' || secsShown(name));
   function paintTabs() {
+    if (!tabHasContent(tab)) tab = homeTab();   // (became a guest, or no longer one)
     document.body.classList.toggle('hg-tabs', tabsOn());
     // the avatar: the Account tab on a phone (no pop-up), the account menu (a dialog) on a wider screen
     const ab = document.getElementById('hgAccountBtn');
@@ -150,13 +154,13 @@
     if (desk) desk.setAttribute('data-tab', tab);
     document.querySelectorAll('#hgTabbar .hg-tab[data-tab]').forEach((b) => {
       const name = b.getAttribute('data-tab');
-      b.hidden = !tabHasContent(name);
+      b.hidden = name === 'signin' ? !isGuest() : !tabHasContent(name);
       if (name === tab) b.setAttribute('aria-current', 'page'); else b.removeAttribute('aria-current');
     });
   }
   function goTab(name) {
     if (TABS.indexOf(name) === -1) return;
-    if (!tabsOn() || !tabHasContent(name)) name = 'home';
+    if (!tabsOn() || !tabHasContent(name)) name = homeTab();
     const was = tab;
     if (name !== 'home' && input && input.value) { input.value = ''; render(); }   // a search hides every section: not carried to another tab
     // Account has no tiles to arrange: Customize ends there (what was arranged is kept). Tools, Field and Learn have theirs.
@@ -170,11 +174,11 @@
     const c = document.querySelector('.desktop-content'); if (c) c.scrollTop = 0;   // a tab opens at its top (tapped again: back to the top)
     // Back: from another tab, Home first (one history entry, index.html); Home itself keeps none
     if (was !== name) {
-      if (name !== 'home') { if (typeof window.hgArmBack === 'function') window.hgArmBack(); }
+      if (name !== homeTab()) { if (typeof window.hgArmBack === 'function') window.hgArmBack(); }
       else if (typeof window.hgDisarmBack === 'function') window.hgDisarmBack();
     }
   }
-  window.hgHomeTab = { go: goTab, get: () => tab, away: () => tabsOn() && tab !== 'home' };
+  window.hgHomeTab = { go: goTab, get: () => tab, away: () => tabsOn() && tab !== homeTab() };
 
   // ── Account (the tab): who is signed in and how this phone's changes stand, their settings, the company's tools, and
   // signing out. From the profile; offline before it loads, from the top bar (name, company) and the last known role.
@@ -589,7 +593,11 @@
     document.querySelectorAll('#hgTabbar .hg-tab[data-tab]').forEach((b) => {
       const ico = b.querySelector('.hg-tab-ico');
       if (ico && typeof window.hadronIcon === 'function') ico.innerHTML = window.hadronIcon(TAB_ICONS[b.getAttribute('data-tab')], { size: 24, strokeWidth: 1.5 });
-      b.addEventListener('click', () => goTab(b.getAttribute('data-tab')));
+      b.addEventListener('click', () => {
+        const name = b.getAttribute('data-tab');
+        if (name === 'signin') { if (window.HG_AUTH_UI) window.HG_AUTH_UI.show('signin'); return; }   // a guest's: the sign-in screen
+        goTab(name);
+      });
     });
     document.addEventListener('click', (e) => {
       if (!tabsOn() || !e.target || !e.target.closest || !e.target.closest('#hgAccountBtn')) return;
@@ -599,12 +607,14 @@
     const acct = document.getElementById('hgAccount');
     if (acct) acct.addEventListener('click', (e) => { const b = e.target && e.target.closest ? e.target.closest('[data-acct]') : null; const go = b && ACCOUNT_DO[b.getAttribute('data-acct')]; if (go) go(); });
     if (tabsMq) {
-      const onWidth = () => { if (!tabsOn() && tab !== 'home') goTab('home'); else paintTabs(); };
+      const onWidth = () => { if (!tabsOn() && tab !== homeTab()) goTab(homeTab()); else paintTabs(); };
       if (typeof tabsMq.addEventListener === 'function') tabsMq.addEventListener('change', onWidth); else if (typeof tabsMq.addListener === 'function') tabsMq.addListener(onWidth);
     }
     // Customize started from Settings while on Account (no tiles there): Home, where the pinned tools and the role's own
     // section are arranged (the other tabs' tiles are arranged on those tabs). Back still ends Customize first.
     document.addEventListener('hg:home:edit', (e) => { if (e.detail && e.detail.editing && tab === 'account') goTab('home'); });
+    // a guest (or no longer one): their tabs, from their start
+    document.addEventListener('hg:guest', () => { const was = tab; tab = homeTab(); refreshSections(); if (was !== tab && typeof window.hgDisarmBack === 'function') window.hgDisarmBack(); });
     // the Account tab's sync line follows the top bar's chip
     const chip = document.getElementById('hgSyncChip');
     if (chip && window.MutationObserver) new MutationObserver(() => { if (tab === 'account') renderAccount(); }).observe(chip, { attributes: true, childList: true, subtree: true, characterData: true });
