@@ -206,8 +206,25 @@
         retry.set(t, op);                                  // transient / unknown → retry, bounded
       } else {
         deadLetter(op, (error && (error.message || error.code)) || 'failed');   // permanent or exhausted → set aside
-        deadened++;
-        deadItems.push({ table: op.table, kind: op.kind, status: Number(status) || 0, old: !op.fmt, code: String((error && error.code) || ''), reason: String((error && error.message) || '').slice(0, 200) });
+        // A change patch() folded into this write (an owner's removal) goes on its own now, in this run, unless a newer op
+        // for the record is queued (that one supersedes, as always). Not reported as refused: what was asked for is sent.
+        // (queued by v171, before op.patch: a service report write never carries deleted_at but for a removal folded in)
+        const folded = (op.patch && typeof op.patch === 'object') ? op.patch
+          : (op.table === 'service_reports' && op.row && op.row.deleted_at) ? { deleted_at: op.row.deleted_at } : null;
+        const alone = (op.kind === 'upsert' && folded && op.row && op.row.id != null)
+          ? { kind: 'update', table: op.table, id: op.row.id, patch: folded } : null;
+        const refused = isPermanentError(error, status);   // refused for good; else it never got through (still said)
+        if (alone && !loadQueue().some(o => opId(o) === opId(alone) && opTok(o) !== t)) {
+          enqueue(alone);         // queued (kept if this run stops first) …
+          snapshot.push(alone);   // … and sent after the ops already in this run
+          if (!refused) {
+            deadened++;
+            deadItems.push({ table: op.table, kind: op.kind, status: Number(status) || 0, old: !op.fmt, code: String((error && error.code) || ''), reason: String((error && error.message) || '').slice(0, 200) });
+          }
+        } else {
+          deadened++;
+          deadItems.push({ table: op.table, kind: op.kind, status: Number(status) || 0, old: !op.fmt, code: String((error && error.code) || ''), reason: String((error && error.message) || '').slice(0, 200) });
+        }
         done.add(t);
       }
       persist();
@@ -437,10 +454,12 @@
         },
         // Changes only these columns of one row: an UPDATE, not an upsert, so it can't send (and overwrite) the rest of
         // the row (a soft delete of a submitted service report, migration 0020). A write of the record still queued takes
-        // the change with it, instead of being replaced by it (the queue keeps only the newest op per record).
+        // the change with it, instead of being replaced by it (the queue keeps only the newest op per record), and keeps it
+        // apart as well (op.patch): if the server refuses that write for good, the change goes on its own (_flushOnce),
+        // instead of with it (0020 refuses a change to a submitted report, not an owner's removal of it).
         async patch(id, fields) {
           const queued = loadQueue().find(o => o.kind === 'upsert' && o.table === table && o.row && o.row.id === id);
-          if (queued) { enqueue(Object.assign({}, queued, { row: Object.assign({}, queued.row, fields), qid: null })); return true; }
+          if (queued) { enqueue(Object.assign({}, queued, { row: Object.assign({}, queued.row, fields), patch: Object.assign({}, queued.patch, fields), qid: null })); return true; }
           if (!client || !navigator.onLine || window.__hgOfflineSession) {   // as upsert
             enqueue({ kind: 'update', table, id, patch: fields });
             return true;

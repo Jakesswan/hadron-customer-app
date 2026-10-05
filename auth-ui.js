@@ -327,6 +327,11 @@
   // copies came back refused. Those still queued from before v154 are set aside without a word (the queue
   // marks what it takes in from v154 on); anything queued since is reported.
   const isOldLimsResend = function (it) { return !!it.old && /^(customers|samples|sample_results|lims_\w+)$/.test(it.table || '') && isDenied(it); };
+  // A submitted service report's own refusals (migration 0020) come with the server's reason, written for the user (no
+  // account may change a submitted report, so "your account isn't allowed" would mislead): it can't be changed (an
+  // amendment corrects it), a removed one stays removed, only an owner removes one, it is kept on record.
+  const SR_KEPT = /^(A submitted service report|A removed service report|Only the account owner can remove a submitted service report)/;
+  const isSrKept = function (it) { return it.table === 'service_reports' && it.code === '42501' && SR_KEPT.test(String(it.reason || '')); };
   function rejectedContent(n, items) {
     const one = n === 1;
     const kinds = [];
@@ -334,21 +339,30 @@
       const w = RECORD_WORDS[it.table] || (/^lims_/.test(it.table || '') ? 'LIMS record' : 'Record');
       if (kinds.indexOf(w) < 0) kinds.push(w);
     });
+    const kept = items.filter(isSrKept), rest = items.filter(function (it) { return !isSrKept(it); });
     const all = function (f) { return items.length > 0 && items.every(f); };
-    const unreached = all(isUnreached), denied = all(isDenied), deletes = all(function (it) { return it.kind === 'delete'; });
+    const allRest = function (f) { return rest.length > 0 && rest.every(f); };
+    const unreached = all(isUnreached), denied = allRest(isDenied), deletes = allRest(function (it) { return it.kind === 'delete'; });
     const msg = unreached
       ? (one ? 'One change from this phone' : n + ' changes from this phone') + ' couldn’t be sent after several tries, so ' + (one ? 'it wasn’t' : 'they weren’t') + ' saved.'
       : (one ? 'One change from this phone was' : n + ' changes from this phone were') + ' refused by the server, so ' + (one ? 'it wasn’t' : 'they weren’t') + ' saved.';
+    const oneRest = rest.length ? rest.length === 1 : one;   // said of the rest only
     const why = denied && deletes
-      ? 'Your account isn’t allowed to delete ' + (one ? 'it, so it stays' : 'them, so they stay') + ' on the server. Ask your company’s admin if you need to.'
+      ? 'Your account isn’t allowed to delete ' + (oneRest ? 'it, so it stays' : 'them, so they stay') + ' on the server. Ask your company’s admin if you need to.'
       : denied
-      ? 'Your account isn’t allowed to make ' + (one ? 'this change' : 'these changes') + '. Ask your company’s admin if you need to.'
+      ? 'Your account isn’t allowed to make ' + (oneRest ? 'this change' : 'these changes') + '. Ask your company’s admin if you need to.'
       : 'Open the item, check it, and make the change again. If it keeps happening, contact Hadron support.';
+    // the server's reasons, each once; for a refused change, how a submitted report is corrected
+    const said = [];
+    kept.forEach(function (it) { const r = String(it.reason).trim(); if (said.indexOf(r) < 0) said.push(r); });
+    const keptWhy = said.join(' ') + (kept.some(function (it) { return /^A submitted service report can/.test(String(it.reason)); })
+      ? ' To correct a submitted report, open it and tap “✎ Amend this report”.' : '');
     return {
       title: one ? 'A change wasn’t saved' : n + ' changes weren’t saved',
       body: '<div class="hg-sheet-note danger"><span aria-hidden="true">⚠</span><span>' + escH(msg) + '</span></div>' +
             (kinds.length ? '<p>' + escH(kinds.join(', ')) + '</p>' : '') +
-            '<p>' + escH(why) + '</p>'
+            (kept.length ? '<p>' + escH(keptWhy) + '</p>' : '') +
+            (rest.length || !kept.length ? '<p>' + escH(why) + '</p>' : '')
     };
   }
   // One pop-up: while it's open, new refusals are added to it; while another sheet is open (account menu,

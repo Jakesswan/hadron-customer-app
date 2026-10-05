@@ -52,60 +52,60 @@
     <!-- Supabase JS SDK (auth + cloud sync), pinned 2.117.2 and served by the app itself so sign-in
          works offline from the precache (it used to be the floating @2 from a CDN). See
          THIRD_PARTY_NOTICES.md. To upgrade: replace the file, rename it, update this tag + sw.js. -->
-    <script src="supabase-js-2.117.2.js?v=171"></script>
+    <script src="supabase-js-2.117.2.js?v=172"></script>
 
     <!-- Hadron Supabase bridge -->
-    <script src="supabase-client.js?v=171"></script>
+    <script src="supabase-client.js?v=172"></script>
 
     <!-- Shared UI primitives (in-app sheets) — loaded before auth-ui, which uses them -->
-    <script src="hg-ui.js?v=171" defer></script>
+    <script src="hg-ui.js?v=172" defer></script>
     <!-- Auth UI (login/signup gate, profile binding) -->
-    <script src="auth-ui.js?v=171" defer></script>
+    <script src="auth-ui.js?v=172" defer></script>
 
     <!-- Push notifications -->
-    <script src="push.js?v=171" defer></script>
+    <script src="push.js?v=172" defer></script>
 
     <!-- Translation bundle -->
-    <script src="i18n.js?v=171"></script>
+    <script src="i18n.js?v=172"></script>
 
     <!-- Hadron Tristroke icon system (matches the ERP) -->
-    <script src="hadron-icons.js?v=171" defer></script>
+    <script src="hadron-icons.js?v=172" defer></script>
 
     <!-- Emoji the app has an icon for become Tristroke icons (the rest stay the phone's own emoji) -->
-    <script src="emoji.js?v=171" defer></script>
+    <script src="emoji.js?v=172" defer></script>
 
     <!-- Customizable home grid (drag-to-reorder) -->
-    <script src="home.js?v=171" defer></script>
-    <script src="customize.js?v=171" defer></script>
+    <script src="home.js?v=172" defer></script>
+    <script src="customize.js?v=172" defer></script>
 
     <!-- Data Manager (Excel import/export) -->
-    <script src="data-manager.js?v=171" defer></script>
+    <script src="data-manager.js?v=172" defer></script>
 
     <!-- QR encoder (MIT, Kazuhiko Arase) -->
-    <script src="qr.js?v=171"></script>
+    <script src="qr.js?v=172"></script>
 
     <!-- QR Builder app -->
-    <script src="qr-app.js?v=171" defer></script>
+    <script src="qr-app.js?v=172" defer></script>
 
     <!-- Pool Water module -->
-    <script src="pool.js?v=171" defer></script>
+    <script src="pool.js?v=172" defer></script>
     <!-- Cooling Tower field calculator -->
-    <script src="coolingtower.js?v=171" defer></script>
+    <script src="coolingtower.js?v=172" defer></script>
     <!-- Boiler / Steam field calculator -->
-    <script src="boiler.js?v=171" defer></script>
+    <script src="boiler.js?v=172" defer></script>
     <!-- Water softener sizing calculator -->
-    <script src="softener.js?v=171" defer></script>
-    <script src="academy-content.js?v=171" defer></script>
-    <script src="academy.js?v=171" defer></script>
+    <script src="softener.js?v=172" defer></script>
+    <script src="academy-content.js?v=172" defer></script>
+    <script src="academy.js?v=172" defer></script>
 
-    <script src="searchable-select.js?v=171" defer></script>
-    <script src="trends.js?v=171" defer></script>
+    <script src="searchable-select.js?v=172" defer></script>
+    <script src="trends.js?v=172" defer></script>
 
     <!-- LIMS module (loaded at end of body via defer) -->
-    <script src="lims.js?v=171" defer></script>
-    <script src="lims-sync.js?v=171" defer></script>
-    <script src="portal.js?v=171" defer></script>
-    <script src="team.js?v=171" defer></script>
+    <script src="lims.js?v=172" defer></script>
+    <script src="lims-sync.js?v=172" defer></script>
+    <script src="portal.js?v=172" defer></script>
+    <script src="team.js?v=172" defer></script>
 
 
     <style>
@@ -2834,7 +2834,7 @@
                 <div class="hg-section-title">About</div>
                 <div class="hg-kvgrid">
                     <div class="hg-kv"><div class="k">App</div><div class="v">Hadron Group</div></div>
-                    <div class="hg-kv"><div class="k">Version</div><div class="v">v171</div></div>
+                    <div class="hg-kv"><div class="k">Version</div><div class="v">v172</div></div>
                     <div class="hg-kv"><div class="k">Platform</div><div class="v">PWA</div></div>
                 </div>
             </div>
@@ -6086,9 +6086,14 @@
         let sr_openedExtra = {};  // the opened report's fields the form doesn't show (an old report's fixed readings, who
                                   // submitted it …): kept as they were when it is saved again, not dropped
         function srMakeReportNo(site) {
-            const d = String((document.getElementById('sr_dt') || {}).value || new Date().toISOString()).slice(0, 10).replace(/-/g, '');
+            return srReportNoFor((document.getElementById('sr_dt') || {}).value || new Date().toISOString(), site, sr_reportId || uid());
+        }
+        // SR-YYYYMMDD-SITE-XXXX: the visit date, the site's first four letters or digits, the report id's last four. A report
+        // from before numbers is referred to by the number it would have had (its amendments: that + A1, A2 …).
+        function srReportNoFor(date, site, id) {
+            const m = String(date || '').match(/^(\d{4})-(\d{2})-(\d{2})/);
             const slug = (String(site || '').replace(/[^a-z0-9]/gi, '').slice(0, 4).toUpperCase()) || 'SITE';
-            return 'SR-' + d + '-' + slug + '-' + String(sr_reportId || uid()).slice(-4).toUpperCase();
+            return 'SR-' + (m ? m[1] + m[2] + m[3] : 'UNDATED') + '-' + slug + '-' + String(id || '').slice(-4).toUpperCase();
         }
 
         function srEnsureRoStyle() {
@@ -6275,8 +6280,11 @@
         let _srLastVisit = null;
         function srLastReportForSite(siteId) {
             if (!siteId) return null;
-            return LS.get('hadron_sr', []).filter(r => r && r.siteId === siteId && (r.points || r.tests))
+            const last = LS.get('hadron_sr', []).filter(r => r && r.siteId === siteId && (r.points || r.tests))
                 .sort((a, b) => new Date(b.date || b.savedAt || 0) - new Date(a.date || a.savedAt || 0))[0] || null;
+            // cleaned as an opened report is: one from another phone with an action's text or a dip-slide's location that
+            // isn't text (a list …) stopped the open actions and dip-slides being carried forward (the select threw)
+            return last ? srCleanReport(last) : null;
         }
         // The report immediately BEFORE a given one for a site (by date) — used at PDF time
         // to show a stored report's opening stock (its predecessor's closing stock).
@@ -6665,7 +6673,7 @@
             return !!(meta.updated_at && r.savedAt && new Date(meta.updated_at) > new Date(r.savedAt));
         }
         function srMergedReports() {
-            const byId = {};
+            const byId = Object.create(null);   // by report id, with no inherited names: a crafted "__proto__" id stays listed
             srCloudMeta.forEach(m => { if (m.deleted_at) return; byId[m.id] = { id: m.id, site: m.site, date: srIsoToLocalDt(m.report_date), tech: m.technician || '', status: m.status, updated_at: m.updated_at, _cloud: true,
                 reportNo: m.report_no || undefined, amends: m.amends_id ? { id: String(m.amends_id), reportNo: String((srCloudMeta.find(x => x && x.id === m.amends_id) || {}).report_no || String(m.report_no || '').replace(/-A\d+$/, '')) } : undefined }; });   // (a report from before 0020 has no report_no: its number is the amendment's own, less "-A…")
             const gone = new Set(srCloudMeta.filter(m => m.deleted_at).map(m => m.id));
@@ -7694,15 +7702,56 @@
             LS.get('hadron_sr', []).concat([{ reportNo: origNo }], srCloudMeta.map(m => ({ reportNo: m && m.report_no }))).forEach(r => { const m = r && String(r.reportNo || '').match(re); if (m) n = Math.max(n, +m[1]); });
             return root + '-A' + (n + 1);
         }
+        // The amendments a report has (this phone's reports and the cloud's list; not removed ones), by number.
+        function srAmendmentsOf(id) {
+            const out = new Map(), k = String(id);
+            LS.get('hadron_sr', []).forEach(x => { if (x && x.id && x.amends && typeof x.amends === 'object' && x.amends.id != null && String(x.amends.id) === k) out.set(String(x.id), { id: String(x.id), reportNo: String(x.reportNo || ''), status: x.status || 'draft', local: true }); });
+            srCloudMeta.forEach(m => {
+                if (!m || m.id == null || m.amends_id == null || String(m.amends_id) !== k) return;
+                const had = out.get(String(m.id));
+                if (had) { if (m.status === 'submitted') had.status = 'submitted'; return; }   // submitted on another phone meanwhile
+                out.set(String(m.id), { id: String(m.id), reportNo: String(m.report_no || ''), status: m.status || 'draft', local: false });
+            });
+            const gone = new Set(srCloudMeta.filter(m => m && m.deleted_at).map(m => String(m.id)));
+            return Array.from(out.values()).filter(a => !gone.has(a.id)).sort((a, b) => a.reportNo.localeCompare(b.reportNo, undefined, { numeric: true }));
+        }
+        // ✎ Amend on a report that already has an amendment: said first, with the choice to open that one instead (still a
+        // draft, it can be finished; two people needn't correct the same thing twice). true: the question is showing.
+        function srAskAmendAgain(id) {
+            const has = srAmendmentsOf(id);
+            if (!has.length || !window.hgSheet) return false;
+            const drafts = has.filter(a => a.status !== 'submitted');
+            const mine = drafts.filter(a => srCanManageReports() || (a.local && srCanWriteReports()));   // ones this user can finish
+            const go = mine.length ? mine[mine.length - 1] : drafts.length ? drafts[drafts.length - 1] : has[has.length - 1];
+            const names = has.map(a => (a.reportNo || 'An amendment') + (a.status === 'submitted' ? ' (submitted)' : ' (a draft, not submitted yet)'));
+            const open = { label: 'Open ' + (go.reportNo || 'the amendment'), kind: drafts.length ? 'primary' : 'secondary', onClick: () => { srOpenAmendment(go); } };
+            const again = { label: 'Make a new amendment', kind: drafts.length ? 'secondary' : 'primary', onClick: () => { srAmendCurrent(true); } };
+            window.hgSheet.open({
+                title: has.length === 1 ? 'This report already has an amendment' : 'This report already has ' + has.length + ' amendments',
+                body: '<p>' + esc(names.join(', ')) + '.</p><p>' + (drafts.length
+                    ? 'An amendment that isn’t submitted yet can still be changed: open it to finish it, rather than starting another.'
+                    : 'A new amendment corrects this report again. If it is the earlier amendment that needs correcting, open that one and amend it.') + '</p>',
+                actions: (drafts.length ? [open, again] : [again, open]).concat([{ label: 'Cancel', kind: 'plain', focus: true }])
+            });
+            return true;
+        }
+        // As the list's Edit / View: a draft is edited by an owner, or by its writer on the phone it was saved on; else viewed.
+        function srOpenAmendment(a) {
+            const edit = a.status !== 'submitted' && (srCanManageReports() || (a.local && srCanWriteReports()));
+            openServiceReport(a.id, !edit);
+        }
         // ✎ Amend this report (the submitted report open, read-only): the form becomes a new report, an amendment of it, with
         // its content; each reading's old result is the submitted one, so a change shows ✎. Not signed yet; the reason next.
-        function srAmendCurrent() {
+        function srAmendCurrent(again) {
             if (!(sr_readOnly && sr_status === 'submitted') || !srCanWriteReports()) return;
-            const orig = { id: sr_reportId, reportNo: sr_reportNo || '' };
+            if (again !== true && srAskAmendAgain(sr_reportId)) return;   // it has an amendment already: asked first
+            // a report from before numbers: the number it would have had (its date, site, id; as on every phone), not "SR"
+            const orig = { id: sr_reportId, reportNo: sr_reportNo || srReportNoFor(document.getElementById('sr_dt').value, document.getElementById('sr_site').value, sr_reportId) };
             sr_points.forEach(p => p.tests.forEach(t => { t.base = String(t.value == null ? '' : t.value); }));
             sr_amends = orig;
             sr_reportId = uid(); sr_reportNo = srAmendNo(orig.reportNo); sr_status = 'draft';
             delete sr_openedExtra.submittedAt; delete sr_openedExtra.submittedBy;
+            SR_LEGACY_READINGS.forEach(([k]) => { delete sr_openedExtra[k]; });   // an old report's fixed readings: its rows here, not also beside them
             initSignaturePad();   // the amendment isn't signed yet
             applySrReadOnly(false); srRenderPoints(); srRenderAmendCard('');
             srQueueAutosave();    // unsaved until it is saved (kept as the draft meanwhile)
@@ -7726,9 +7775,11 @@
             subPts.forEach(p => (p.tests || []).forEach(t => { old[key(p.name, t.id)] = t.value == null ? '' : String(t.value); }));
             const mark = (p) => Object.assign({}, p, { tests: (p.tests || []).map(t => Object.assign({}, t, { base: Object.prototype.hasOwnProperty.call(old, key(p.name, t.id)) ? old[key(p.name, t.id)] : '' })) });
             const dd = srCleanReport(d);
-            const a = Object.assign({}, dd, { id: uid(), reportNo: srAmendNo(sub.reportNo), status: 'draft', amends: { id: sub.id, reportNo: String(sub.reportNo || '') },
+            const subNo = sub.reportNo ? String(sub.reportNo) : srReportNoFor(sub.date, sub.site, sub.id);   // (one from before numbers: as srAmendCurrent)
+            const a = Object.assign({}, dd, { id: uid(), reportNo: srAmendNo(subNo), status: 'draft', amends: { id: sub.id, reportNo: subNo },
                 amendReason: '', sig: '', signedAt: null });
             delete a.submittedAt; delete a.submittedBy; delete a._draftAt;
+            if ((a.points && a.points.length) || (a.tests && a.tests.length)) SR_LEGACY_READINGS.forEach(([k]) => { delete a[k]; });   // its readings are its rows
             if (a.points && a.points.length) a.points = a.points.map(mark);
             else if (a.tests && a.tests.length) a.tests = mark({ name: '', tests: a.tests }).tests;
             srClearDraft();   // the changes are in the amendment now
