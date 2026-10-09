@@ -309,6 +309,46 @@
   // an account (index.html hgGuestAsk); the home shows the calculators and Learn (index.html / home.js, body.hg-guest).
   const GUEST_KEY = 'hg-guest';
   function isGuest() { try { return localStorage.getItem(GUEST_KEY) === '1'; } catch (_) { return false; } }
+  // A guest who signs in keeps what they did as a guest wherever the account has nothing of its own yet (Jaco, 2026-10-09):
+  // Academy progress and the calculators' settings. hgEnsureUser keeps those keys through the user switch and records them
+  // here (hg-guest-carry: a device marker, which the switch doesn't clear); hgRestorePending puts the account's own value
+  // back wherever its data on this phone has one, and academy.js gives way to the account's Academy record in the cloud.
+  // Only for the account signed in straight from the guest session, and only for a week.
+  const GUEST_CARRY_KEYS = ['hadron_academy_progress', 'hadron_ct_settings', 'hadron_ct_units', 'hadron_ct_cond_unit',
+    'hadron_boiler_settings', 'hadron_boiler_units', 'hadron_softener_settings', 'hadron_softener_units'];
+  const CARRY_MARK = 'hg-guest-carry', CARRY_MAX_AGE = 7 * 864e5;
+  let guestLeaving = false;   // this page was a guest's when it signed in (leaveGuest, then hgEnsureUser)
+  function dropCarry() { try { localStorage.removeItem(CARRY_MARK); } catch (_) {} }
+  function carryMark() {
+    let m = null;
+    try { m = JSON.parse(localStorage.getItem(CARRY_MARK) || 'null'); } catch (_) {}
+    // (only ever the carried keys: a mark naming any other key would remove that live key in settleCarry)
+    if (!m || typeof m !== 'object' || typeof m.uid !== 'string' || !Array.isArray(m.keys) || !m.keys.every(function (k) { return GUEST_CARRY_KEYS.indexOf(k) !== -1; }) ||
+        !(Date.now() - (+m.t || 0) < CARRY_MAX_AGE)) { if (m !== null) dropCarry(); return null; }
+    return m;
+  }
+  function carryKeep(m, keys) {
+    if (!keys.length) { dropCarry(); return; }
+    try { localStorage.setItem(CARRY_MARK, JSON.stringify({ uid: m.uid, t: m.t, keys: keys })); } catch (_) {}
+  }
+  // The account's own value on this phone (its stash) wins over a carried one: the live key goes, so the restore that
+  // follows puts the account's back. What the stash doesn't hold stays as carried; the Academy progress then still waits
+  // for the account's record in the cloud (academy.js).
+  function settleCarry(uid, data) {
+    const m = carryMark();
+    if (!m) return;
+    if (m.uid !== uid) { dropCarry(); return; }
+    const left = [];
+    m.keys.forEach(function (k) {
+      const v = data ? data[k] : undefined;
+      if (typeof v === 'string' && !EMPTY_VALUES.has(v)) { try { localStorage.removeItem(k); } catch (_) {} }
+      else if (k === 'hadron_academy_progress') left.push(k);
+    });
+    carryKeep(m, left);
+  }
+  // academy.js: is this account's Academy progress on the phone still the guest's (waiting for the cloud's answer)?
+  window.hgCarryPending = function (uid, k) { const m = carryMark(); return !!(m && uid && m.uid === uid && m.keys.indexOf(k) !== -1); };
+  window.hgCarryDone = function (k) { const m = carryMark(); if (m) carryKeep(m, m.keys.filter(function (x) { return x !== k; })); };
   async function enterGuest() {
     if (busy) return;
     busy = true; render();
@@ -325,11 +365,12 @@
       try { await stashPut(prev, collectTenantData(), lastOrg()); }
       catch (_) { if (reload) freeze(false); busy = false; setError('This phone holds work of an account that couldn’t be set aside. Sign in to that account first, or try again.'); return; }
     }
-    // This phone's push subscription ends too: the previous account's notifications don't reach a guest (push.js; bounded)
-    try { if (typeof window.hgDisablePush === 'function') await Promise.race([window.hgDisablePush(), new Promise(function (r) { setTimeout(r, 3000); })]); } catch (_) {}
+    // This phone's push subscription ends too: the previous account's notifications don't reach a guest (push.js; bounded).
+    // They come back when that account signs in here again.
+    try { if (typeof window.hgPushPause === 'function') await Promise.race([window.hgPushPause(prev, true), new Promise(function (r) { setTimeout(r, 3000); })]); } catch (_) {}
     if (prev || residue) { try { await hgClearTenantData(); } catch (_) {} }
     try {
-      ['hg-last-uid', 'hg-last-org', 'hg-last-role', 'hg-last-org-name', 'hg-restore-pending'].forEach(function (k) { localStorage.removeItem(k); });
+      ['hg-last-uid', 'hg-last-org', 'hg-last-role', 'hg-last-org-name', 'hg-restore-pending', CARRY_MARK].forEach(function (k) { localStorage.removeItem(k); });
       localStorage.setItem(GUEST_KEY, '1');
     } catch (_) {}
     // Modules may still hold that data in memory. Also when another tab has already set it aside and cleared it: this page
@@ -347,8 +388,10 @@
     refreshSyncChip();
     try { document.dispatchEvent(new CustomEvent('hg:guest', { detail: { guest: true } })); } catch (_) {}
   }
-  // Signed in: no longer a guest (what the guest left is cleared by the user switch that follows, hgEnsureUser)
+  // Signed in: no longer a guest (what the guest left is cleared by the user switch that follows, hgEnsureUser, except
+  // what carries into the account: GUEST_CARRY_KEYS)
   function leaveGuest() {
+    if (isGuest()) guestLeaving = true;
     try { localStorage.removeItem(GUEST_KEY); } catch (_) {}
     if (document.body.classList.contains('hg-guest')) {
       document.body.classList.remove('hg-guest');
@@ -752,6 +795,11 @@
         // Signed out: hide the desktop; the sign-in screen covers everything.
         showDesktop(false);
         window.HG_AUTH_UI.show();
+        // A session the server ended (not signed out here; the account is still recorded on the phone): the phone stops
+        // taking its notifications too, as at a sign-out; they come back when it signs in here again (push.js, which loads
+        // after this script: a moment later).
+        const gone = lastUid();
+        if (gone) setTimeout(function () { if (!window.HG_PROFILE && lastUid() === gone && typeof window.hgPushPause === 'function') Promise.resolve(window.hgPushPause(gone, true)).catch(function () {}); }, 0);
       }
     }
 
@@ -1368,6 +1416,7 @@
     if (_switchRun) return _switchRun;
     _switchRun = (async function () {
       const prev = lastUid();
+      const fromGuest = guestLeaving; guestLeaving = false;
       if (!uid) return false;
       if (prev === uid) {
         // Same user. If their data is set aside (a sign-out that didn't finish, so the markers were
@@ -1387,6 +1436,11 @@
       if (prev && residue) {
         try { await stashPut(prev, collectTenantData(), lastOrg()); } catch (_) {}   // best effort; isolation wins either way
       }
+      // The previous account's notifications don't reach this one (push.js; bounded): they come back when it signs in here again
+      if (prev) { try { if (typeof window.hgPushPause === 'function') await Promise.race([window.hgPushPause(prev, true), new Promise(function (r) { setTimeout(r, 3000); })]); } catch (_) {} }
+      // Signed in straight from "Use the calculators": what the guest did that carries into the account, read before the clear
+      const carry = {};
+      if (fromGuest && !prev) GUEST_CARRY_KEYS.forEach(function (k) { try { const v = localStorage.getItem(k); if (v != null && !EMPTY_VALUES.has(v)) carry[k] = v; } catch (_) {} });
       const purge = !!prev || residue;
       if (purge) { try { await hgClearTenantData(); } catch (_) {} }
       try {
@@ -1396,6 +1450,14 @@
         localStorage.removeItem('hg-last-org-name');
         localStorage.setItem('hg-restore-pending', uid);
       } catch (_) {}
+      dropCarry();   // (an older one: never another account's)
+      const carried = Object.keys(carry);
+      if (carried.length) {
+        try {
+          carried.forEach(function (k) { localStorage.setItem(k, carry[k]); });
+          localStorage.setItem(CARRY_MARK, JSON.stringify({ uid: uid, t: Date.now(), keys: carried }));
+        } catch (_) { try { carried.forEach(function (k) { localStorage.removeItem(k); }); } catch (_) {} dropCarry(); }
+      }
       // Modules may still hold the old data in memory; also when another tab cleared it first (this page started with it).
       if (purge || (bootHeld && bootUid !== uid)) { try { location.reload(); } catch (_) {} return true; }
       window.__hgTenantFrozen = false;
@@ -1419,9 +1481,10 @@
       const clearPending = function () { try { localStorage.removeItem('hg-restore-pending'); } catch (_) {} };
       let st;
       try { st = await stashGet(uid); } catch (_) { return false; }   // storage unavailable now: retry on a later load
-      if (!st || !st.data) { clearPending(); return false; }
+      if (!st || !st.data) { settleCarry(uid, null); clearPending(); return false; }   // (nothing of the account's here: a guest's carried values stay)
       if (st.org && st.org !== (profile.organisation_id || null)) {
         try { await stashDel(uid); } catch (_) {}
+        settleCarry(uid, null);
         clearPending();
         return false;
       }
@@ -1429,9 +1492,11 @@
       // would re-add queued changes that have been sent since, and replay them over newer edits.
       if (restoreDone(uid) === st.savedAt) {
         try { await stashDel(uid); } catch (_) {}
+        settleCarry(uid, null);
         clearPending();
         return false;
       }
+      settleCarry(uid, st.data);   // the account's own values on this phone win over a guest's carried ones
       // A stash with no organisation recorded (signed out offline on the first launch of this
       // version) is restored into the current one: its queued rows carry their own organisation_id
       // where it was known, so the server rejects any that belong elsewhere.
@@ -1487,6 +1552,9 @@
         if (uid) { try { await stashDel(uid); } catch (_) {} }
       } else {
         const data = collectTenantData();
+        // A guest's Academy progress still waiting for the account's record in the cloud (academy.js) isn't set aside as the
+        // account's: at the next sign-in it would be MERGED into that record, which wins instead (Jaco, 2026-10-09).
+        { const m = carryMark(); if (m && m.uid === uid && m.keys.indexOf('hadron_academy_progress') !== -1) delete data.hadron_academy_progress; }
         let ok = false;
         if (!Object.keys(data).length) ok = true;   // nothing to keep
         else { try { ok = !!uid && await stashPut(uid, data, org); } catch (_) { ok = false; } }
@@ -1496,6 +1564,9 @@
           throw new Error('stash-failed');
         }
       }
+      // 3b. This phone stops taking the account's notifications (push.js; bounded), so the next person doesn't get them.
+      //     They come back when the account signs in here again, unless its data is being removed from the phone.
+      try { if (typeof window.hgPushPause === 'function') await Promise.race([window.hgPushPause(uid, !opts.removeData), new Promise(function (res) { setTimeout(res, 3000); })]); } catch (_) {}
       // 4. Clear the live store (isolation).
       try { await hgClearTenantData(); } catch (_) {}
       // 5. End the session. Bounded: a hung request must not freeze the sheet, and supabase-js can
@@ -1505,7 +1576,7 @@
       // 6. Only now drop the per-device markers: other tabs reload when hg-last-uid changes, and must
       //    find the session already gone (else they'd boot as this user again and re-fill the phone).
       //    If the app dies before this line, hgEnsureUser finds the user's stash and marks it for restore.
-      try { ['hg-last-uid', 'hg-last-org', 'hg-last-role', 'hg-last-org-name', 'hg-restore-pending'].forEach(function (k) { localStorage.removeItem(k); }); } catch (_) {}
+      try { ['hg-last-uid', 'hg-last-org', 'hg-last-role', 'hg-last-org-name', 'hg-restore-pending', CARRY_MARK].forEach(function (k) { localStorage.removeItem(k); }); } catch (_) {}
     });
     try { location.reload(); } catch (_) {}   // no tenant state left in memory
   };

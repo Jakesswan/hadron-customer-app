@@ -222,8 +222,12 @@
       if (id !== syncId()) { academySyncPull(); return; }   // the user changed meanwhile: pull theirs instead
       if (!res || res.error) return;                        // couldn't read: no pushes yet (retried later)
       SYNC.pulled = true;
+      // Signed in from "Use the calculators": the progress made as a guest becomes this account's only if the account has
+      // no Academy record yet; else the account's record replaces it (auth-ui.js hgCarryPending; Jaco, 2026-10-09).
+      const guestCarried = typeof window.hgCarryPending === 'function' && window.hgCarryPending(SYNC.userId, PROGRESS_KEY);
+      if (guestCarried) window.hgCarryDone(PROGRESS_KEY);
       if (res.data && res.data.payload) {
-        saveProgress(mergeProgress(loadProgress(), res.data.payload));   // merge cloud → local (and push the union back)
+        saveProgress(mergeProgress(guestCarried ? {} : loadProgress(), res.data.payload));   // merge cloud → local (and push the union back)
         if (typeof window.academyRerender === 'function') window.academyRerender();
       } else if (Object.keys(loadProgress()).length) {
         academySyncPushNow();   // no record in the cloud yet: send this phone's progress up

@@ -420,7 +420,13 @@
     const byId = new Map(items().map((it) => [it.id, it]));
     const pinIds = pinList();
     const pinned = pinIds.map((id) => byId.get(id)).filter(Boolean);
-    const recent = edit ? [] : recentList().filter((x) => pinIds.indexOf(x.id) === -1).map((x) => byId.get(x.id)).filter(Boolean).slice(0, RECENT_SHOW);
+    // Saved: the reports and saved calculations in one list (the Files window), after the tools, once this phone holds
+    // some (a first start stays as it was; Saved is also on Account). Read as stored, not parsed: reports carry photos.
+    const savedTile = edit ? null : homeTile('files');
+    const anySaved = () => ['hadron_sr', 'hadron_history'].some((k) => { try { const v = localStorage.getItem(k); return !!v && v !== '[]' && v !== 'null'; } catch (_) { return false; } });
+    const showSaved = !!(savedTile && tileShown(savedTile) && anySaved());
+    const recent = edit ? [] : recentList().filter((x) => pinIds.indexOf(x.id) === -1 && !(showSaved && x.id === 'files'))   // (Saved: its own card)
+      .map((x) => byId.get(x.id)).filter(Boolean).slice(0, RECENT_SHOW);
     const link = (text) => '<button type="button" class="hg-quick-link">' + esc(text) + '</button>';
     // While customizing, a pinned shortcut doesn't open its tool: its star (unpin) is what's there to use.
     const shortcut = (it, i, kind) => '<div role="listitem" class="hg-short-wrap"' + (kind === 'p' ? ' data-id="' + esc(it.id) + '"' : '') + '>' +
@@ -442,11 +448,7 @@
     if (recent.length) html += '<section class="hg-home-recent" aria-labelledby="hgSec-recent"><div class="hg-home-quick-head"><h2 class="hg-home-sec-title" id="hgSec-recent">' + esc(tr('home.recent', 'Recent')) + '</h2>' +
         (pinned.length ? '' : link(tr('home.pinTools', 'Pin tools'))) + '</div>' +
       '<div class="hg-short-grid" role="list">' + recent.map((it, i) => shortcut(it, i, 'r')).join('') + '</div></section>';
-    // Saved: the reports and saved calculations in one list (the Files window), after the tools, once this phone holds
-    // some (a first start stays as it was; Saved is also on Account). Read as stored, not parsed: reports carry photos.
-    const savedTile = edit ? null : homeTile('files');
-    const anySaved = () => ['hadron_sr', 'hadron_history'].some((k) => { try { const v = localStorage.getItem(k); return !!v && v !== '[]' && v !== 'null'; } catch (_) { return false; } });
-    if (savedTile && tileShown(savedTile) && anySaved()) html += '<button type="button" class="hg-saved-card" id="hgSavedCard"><span class="hg-saved-card-txt"><span class="hg-saved-card-title">' +
+    if (showSaved) html += '<button type="button" class="hg-saved-card" id="hgSavedCard"><span class="hg-saved-card-txt"><span class="hg-saved-card-title">' +
       esc(tr('app.saved', 'Saved')) + '</span><span class="hg-saved-card-sub">' + esc(tr('home.savedSub', 'Reports and calculations in one place')) + '</span></span>' + CHEV + '</button>';
     quick.innerHTML = html;
     quick.hidden = !html;

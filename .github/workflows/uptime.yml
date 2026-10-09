@@ -1,0 +1,41 @@
+name: Uptime check
+
+# Every hour: does app.hadrongrp.com answer over HTTPS, with a certificate that isn't about to run out? GitHub e-mails a
+# failed run (Actions notifications for failed workflows). Added in v176, after the address had been missing from DNS for
+# six days unnoticed (the domain's DNS moved from Cloudflare to Hostinger without the "app" record).
+on:
+  schedule:
+    - cron: '17 * * * *'
+  workflow_dispatch:
+
+permissions: {}
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: The address resolves and the app answers over HTTPS
+        run: |
+          ok=0
+          for i in 1 2 3; do
+            if curl -fsS --max-time 20 -o page.html https://app.hadrongrp.com/ && grep -q 'class="v">v[0-9]' page.html; then ok=1; break; fi   # (the app's own version mark)
+            sleep 30
+          done
+          if [ "$ok" != 1 ]; then
+            echo "::error::app.hadrongrp.com did not answer over HTTPS. Check its DNS record first (CNAME app -> jakesswan.github.io at the domain's DNS host), then GitHub Pages."
+            dig +short app.hadrongrp.com || true
+            exit 1
+          fi
+          echo "OK: $(grep -o 'class="v">v[0-9]*' page.html | head -1 | sed 's/.*>//')"
+      - name: The certificate has more than 14 days left
+        run: |
+          cert=$(echo | openssl s_client -connect app.hadrongrp.com:443 -servername app.hadrongrp.com 2>/dev/null || true)   # (bash -e: an empty answer fails the check below, with its message)
+          if ! echo "$cert" | openssl x509 -noout -subject -enddate; then
+            echo "::error::No certificate came back from app.hadrongrp.com (no HTTPS answer)."
+            exit 1
+          fi
+          if ! echo "$cert" | openssl x509 -noout -checkend 1209600; then
+            echo "::error::The certificate for app.hadrongrp.com runs out within 14 days. GitHub Pages renews it only while the DNS record points at GitHub."
+            exit 1
+          fi

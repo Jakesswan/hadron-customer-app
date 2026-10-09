@@ -52,60 +52,60 @@
     <!-- Supabase JS SDK (auth + cloud sync), pinned 2.117.2 and served by the app itself so sign-in
          works offline from the precache (it used to be the floating @2 from a CDN). See
          THIRD_PARTY_NOTICES.md. To upgrade: replace the file, rename it, update this tag + sw.js. -->
-    <script src="supabase-js-2.117.2.js?v=175"></script>
+    <script src="supabase-js-2.117.2.js?v=176"></script>
 
     <!-- Hadron Supabase bridge -->
-    <script src="supabase-client.js?v=175"></script>
+    <script src="supabase-client.js?v=176"></script>
 
     <!-- Shared UI primitives (in-app sheets) — loaded before auth-ui, which uses them -->
-    <script src="hg-ui.js?v=175" defer></script>
+    <script src="hg-ui.js?v=176" defer></script>
     <!-- Auth UI (login/signup gate, profile binding) -->
-    <script src="auth-ui.js?v=175" defer></script>
+    <script src="auth-ui.js?v=176" defer></script>
 
     <!-- Push notifications -->
-    <script src="push.js?v=175" defer></script>
+    <script src="push.js?v=176" defer></script>
 
     <!-- Translation bundle -->
-    <script src="i18n.js?v=175"></script>
+    <script src="i18n.js?v=176"></script>
 
     <!-- Hadron Tristroke icon system (matches the ERP) -->
-    <script src="hadron-icons.js?v=175" defer></script>
+    <script src="hadron-icons.js?v=176" defer></script>
 
     <!-- Emoji the app has an icon for become Tristroke icons (the rest stay the phone's own emoji) -->
-    <script src="emoji.js?v=175" defer></script>
+    <script src="emoji.js?v=176" defer></script>
 
     <!-- Customizable home grid (drag-to-reorder) -->
-    <script src="home.js?v=175" defer></script>
-    <script src="customize.js?v=175" defer></script>
+    <script src="home.js?v=176" defer></script>
+    <script src="customize.js?v=176" defer></script>
 
     <!-- Data Manager (Excel import/export) -->
-    <script src="data-manager.js?v=175" defer></script>
+    <script src="data-manager.js?v=176" defer></script>
 
     <!-- QR encoder (MIT, Kazuhiko Arase) -->
-    <script src="qr.js?v=175"></script>
+    <script src="qr.js?v=176"></script>
 
     <!-- QR Builder app -->
-    <script src="qr-app.js?v=175" defer></script>
+    <script src="qr-app.js?v=176" defer></script>
 
     <!-- Pool Water module -->
-    <script src="pool.js?v=175" defer></script>
+    <script src="pool.js?v=176" defer></script>
     <!-- Cooling Tower field calculator -->
-    <script src="coolingtower.js?v=175" defer></script>
+    <script src="coolingtower.js?v=176" defer></script>
     <!-- Boiler / Steam field calculator -->
-    <script src="boiler.js?v=175" defer></script>
+    <script src="boiler.js?v=176" defer></script>
     <!-- Water softener sizing calculator -->
-    <script src="softener.js?v=175" defer></script>
-    <script src="academy-content.js?v=175" defer></script>
-    <script src="academy.js?v=175" defer></script>
+    <script src="softener.js?v=176" defer></script>
+    <script src="academy-content.js?v=176" defer></script>
+    <script src="academy.js?v=176" defer></script>
 
-    <script src="searchable-select.js?v=175" defer></script>
-    <script src="trends.js?v=175" defer></script>
+    <script src="searchable-select.js?v=176" defer></script>
+    <script src="trends.js?v=176" defer></script>
 
     <!-- LIMS module (loaded at end of body via defer) -->
-    <script src="lims.js?v=175" defer></script>
-    <script src="lims-sync.js?v=175" defer></script>
-    <script src="portal.js?v=175" defer></script>
-    <script src="team.js?v=175" defer></script>
+    <script src="lims.js?v=176" defer></script>
+    <script src="lims-sync.js?v=176" defer></script>
+    <script src="portal.js?v=176" defer></script>
+    <script src="team.js?v=176" defer></script>
 
 
     <style>
@@ -610,7 +610,7 @@
         body.dark .hg-saved-chipf { background: #1A222F; border-color: #2D3B4F; }
         .hg-saved-chipf[aria-pressed="true"], body.dark .hg-saved-chipf[aria-pressed="true"] { background: var(--accent-ink); border-color: var(--accent-ink); color: var(--on-accent, #fff); font-weight: 800; }
         .hg-saved-chipf:focus-visible { outline: 3px solid var(--accent-ink); outline-offset: 2px; }
-        .hg-saved-group { margin: 6px 2px 0; font-size: 12px; font-weight: 800; letter-spacing: 0.07em; text-transform: uppercase; color: var(--muted); }
+        #window-files .hg-saved-group { margin: 6px 2px 0; font-size: 12px; font-weight: 800; letter-spacing: 0.07em; text-transform: uppercase; color: var(--muted); }   /* an h2: beats .window-content h2 */
         .hg-saved-ul { list-style: none; margin: 0; padding: 0; border: 1px solid var(--border); border-radius: 14px; background: var(--surface); overflow: hidden; }
         body.dark .hg-saved-ul { background: #1A222F; border-color: #2D3B4F; }
         .hg-saved-ul li + li { border-top: 1px solid var(--border); }
@@ -2968,7 +2968,7 @@
                 <div class="hg-section-title">About</div>
                 <div class="hg-kvgrid">
                     <div class="hg-kv"><div class="k">App</div><div class="v">Hadron Group</div></div>
-                    <div class="hg-kv"><div class="k">Version</div><div class="v">v175</div></div>
+                    <div class="hg-kv"><div class="k">Version</div><div class="v">v176</div></div>
                     <div class="hg-kv"><div class="k">Platform</div><div class="v">PWA</div></div>
                 </div>
             </div>
@@ -4630,6 +4630,7 @@
         function openWindow(appName) {
             if (document.body.classList.contains('hg-guest') && !HG_GUEST_WINDOWS.has(appName)) { hgGuestAsk(appName === 'servicereport' ? 'report' : 'open'); return; }
             const win = document.getElementById(`window-${appName}`);   // not "window": that hid the global (window.hgTrendsOpen below)
+            const wasOpen = openWindows.has(appName);
             win.classList.add('active');
             openWindows.add(appName);
             updateTaskbar();
@@ -4637,7 +4638,7 @@
             hgArmBack();
             hgStatusBar();
             if (appName === 'history') renderHistoryList();
-            if (appName === 'files') { hgSavedAll = false; hgRenderSaved(true); }
+            if (appName === 'files') { hgSavedAll = false; if (!wasOpen) hgSavedFresh(); hgRenderSaved(true); }
             if (appName === 'jartest-dss') {
                 const fr = document.getElementById('jartestFrame');
                 if (fr && !fr._hgPrintGuard) { fr._hgPrintGuard = true; fr.addEventListener('load', () => hgGuardDssPrint(fr)); }
@@ -5763,7 +5764,8 @@
         function loadHistory() {
             try {
                 const raw = localStorage.getItem(HISTORY_KEY);
-                return raw ? JSON.parse(raw) : [];
+                const h = raw ? JSON.parse(raw) : [];
+                return Array.isArray(h) ? h.filter(e => e && typeof e === 'object') : [];   // (malformed: the records it has; History, Delete, PDF and Save don't throw)
             } catch (e) {
                 console.warn('History read failed:', e);
                 return [];
@@ -5840,7 +5842,11 @@
             const role = (window.HG_PROFILE && window.HG_PROFILE.role) || document.body.dataset.role || '';
             const localOnly = !(window.HG_AUTH && window.HG_AUTH.configured);
             const canManage = role ? ['admin', 'customer_admin'].includes(role) : localOnly;
-            const ms = (v) => { const x = new Date(v || 0).getTime(); return isFinite(x) ? x : 0; };
+            const ms = (v) => {   // (a date without a time is that day here, not midnight UTC: a day early west of Greenwich)
+                const d = typeof v === 'string' && /^(\d{4})-(\d{2})-(\d{2})$/.exec(v);
+                const x = d ? new Date(+d[1], +d[2] - 1, +d[3]).getTime() : new Date(v || 0).getTime();
+                return isFinite(x) ? x : 0;
+            };
             const out = [];
             srMergedReports().forEach(r => {
                 if (!r || !r.id) return;
@@ -5858,9 +5864,19 @@
                 if (!e || !e.id) return;
                 out.push({ key: 'c:' + String(e.id), kind: 'calc', icon: HG_SAVED_ICON[e.type] || String(e.type || ''), t: ms(e.savedAt),
                     title: String(e.label || hgSavedTr('saved.calc', 'Calculation')) + (e.summary ? ' · ' + String(e.summary) : ''), sub: '', chip: '',
-                    open: () => { openWindow('history'); viewHistoryEntry(e.id); } });
+                    // straight to its details: one Back returns to Saved (gone meanwhile, e.g. deleted in another tab: the list redraws)
+                    open: () => { const h = loadHistory(); if ((Array.isArray(h) ? h : []).some(x => x && x.id === e.id)) viewHistoryEntry(e.id); else hgRenderSaved(false); } });
             });
             return out.sort((a, b) => b.t - a.t);
+        }
+        // Saved opened afresh (from Home, Account or its tile): the search and the kind start clear. Coming back to it from a
+        // report or a calculation keeps them (closeWindow redraws it as it was).
+        function hgSavedFresh() {
+            hgSavedKind = 'all';
+            clearTimeout(hgSavedTimer);
+            document.querySelectorAll('#window-files .hg-saved-chipf').forEach(x => x.setAttribute('aria-pressed', x.getAttribute('data-kind') === 'all' ? 'true' : 'false'));
+            const input = document.getElementById('hgSavedSearch');
+            if (input) input.value = '';
         }
         function hgSavedWire() {
             if (hgSavedWired) return; hgSavedWired = true;
@@ -5888,18 +5904,19 @@
             hgSavedWire();
             const q = hgSavedFold((document.getElementById('hgSavedSearch') || {}).value || '').trim();
             const now = new Date(), today = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime(), weekAgo = today - 6 * 864e5;
-            const groupOf = (t) => t >= today ? 'today' : t >= weekAgo ? 'week' : 'earlier';
-            const GROUPS = { today: hgSavedTr('saved.today', 'Today'), week: hgSavedTr('saved.week', 'This week'), earlier: hgSavedTr('saved.earlier', 'Earlier') };
+            const tomorrow = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1).getTime();   // later: a report dated ahead (or a phone's clock)
+            const groupOf = (t) => t >= tomorrow ? 'later' : t >= today ? 'today' : t >= weekAgo ? 'week' : 'earlier';
+            const GROUPS = { later: hgSavedTr('saved.later', 'Upcoming'), today: hgSavedTr('saved.today', 'Today'), week: hgSavedTr('saved.week', 'This week'), earlier: hgSavedTr('saved.earlier', 'Earlier') };
             const KIND = { report: hgSavedTr('saved.report', 'Report'), calc: hgSavedTr('saved.calc', 'Calculation') };
             const CHIP = { submitted: hgSavedTr('saved.submitted', 'Submitted'), draft: hgSavedTr('saved.draft', 'Draft') };
-            const date = (t) => { if (!t) return ''; const d = new Date(t); try { return d.toLocaleDateString([(window.currentLanguage || 'en') + '-ZA', 'en-ZA'], { weekday: 'short', day: 'numeric', month: 'short' }); } catch (_) { return d.toDateString(); } };
+            const date = (t) => { if (!t) return ''; const d = new Date(t), o = { weekday: 'short', day: 'numeric', month: 'short' }; if (d.getFullYear() !== now.getFullYear()) o.year = 'numeric'; try { return d.toLocaleDateString([(window.currentLanguage || 'en') + '-ZA', 'en-ZA'], o); } catch (_) { return d.toDateString(); } };   // (another year's: with its year)
             const ae = document.activeElement, hadIdx = ae && host.contains(ae) && ae.classList.contains('hg-saved-row') ? +ae.getAttribute('data-i') : -1, hadKey = hadIdx >= 0 ? (hgSavedRows[hadIdx] || {}).key : null;   // (F2)
             hgSavedRows = hgSavedItems().filter(it => (hgSavedKind === 'all' || it.kind === hgSavedKind) && (!q || hgSavedFold(it.title + ' ' + it.sub).indexOf(q) !== -1));
             let html = '', last = '';
             hgSavedRows.forEach((it, i) => {
                 if (!hgSavedAll && i >= HG_SAVED_MAX) return;
                 const g = groupOf(it.t);
-                if (g !== last) { if (last) html += '</ul>'; html += '<h3 class="hg-saved-group">' + esc(GROUPS[g]) + '</h3><ul class="hg-saved-ul">'; last = g; }
+                if (g !== last) { if (last) html += '</ul>'; html += '<h2 class="hg-saved-group">' + esc(GROUPS[g]) + '</h2><ul class="hg-saved-ul">'; last = g; }
                 html += '<li><button type="button" class="hg-saved-row" data-i="' + i + '">' +
                     '<span class="hg-saved-ico" aria-hidden="true">' + hgSavedIcon(it.icon) + '</span>' +
                     '<span class="hg-saved-txt"><span class="hg-saved-title">' + esc(it.title) + '</span><span class="hg-saved-sub">' + esc([date(it.t), KIND[it.kind], it.sub].filter(Boolean).join(' · ')) + '</span></span>' +
@@ -5943,22 +5960,24 @@
             container.innerHTML = '<div class="history-list">' + list.map(function (e) {
                 return '' +
                     '<div class="history-item">' +
-                        '<div class="history-item-body" onclick="viewHistoryEntry(\'' + e.id + '\')">' +
+                        '<div class="history-item-body" onclick="viewHistoryEntry(\'' + escJs(e.id) + '\')">' +
                             '<div class="history-item-type">' + escapeHtml(e.label) + '</div>' +
                             '<div class="history-item-title">' + escapeHtml(e.summary) + '</div>' +
                             '<div class="history-item-date">' + escapeHtml(formatDate(e.savedAt)) + '</div>' +
                         '</div>' +
                         '<div class="history-item-actions">' +
-                            '<button title="Export PDF" onclick="event.stopPropagation(); exportHistoryPdf(\'' + e.id + '\')">📄</button>' +
-                            '<button class="delete-btn" title="Delete" onclick="event.stopPropagation(); deleteHistoryEntry(\'' + e.id + '\')">🗑</button>' +
+                            '<button title="Export PDF" onclick="event.stopPropagation(); exportHistoryPdf(\'' + escJs(e.id) + '\')">📄</button>' +
+                            '<button class="delete-btn" title="Delete" onclick="event.stopPropagation(); deleteHistoryEntry(\'' + escJs(e.id) + '\')">🗑</button>' +
                         '</div>' +
                     '</div>';
             }).join('') + '</div>';
         }
 
         function viewHistoryEntry(id) {
-            const entry = loadHistory().find(e => e.id === id);
+            const hist = loadHistory();
+            const entry = (Array.isArray(hist) ? hist : []).find(e => e && e.id === id);
             if (!entry) return;
+            const rowsOf = (a) => (Array.isArray(a) ? a : []).filter(x => x && typeof x === 'object');   // (a malformed entry shows what it has)
             const body = document.getElementById('historyDetailBody');
             const row = (lbl, val) =>
                 '<div style="display:flex; justify-content:space-between; padding:10px 0; border-bottom:1px solid #eee;">' +
@@ -5972,16 +5991,16 @@
 
                 '<h3 style="color:var(--accent-ink); font-size:15px; margin-bottom:8px;">Inputs</h3>' +
                 '<div style="background:#f8f9fa; border-radius:10px; padding:6px 16px; margin-bottom:20px;">' +
-                    entry.inputs.map(i => row(i.label, i.value)).join('') +
+                    rowsOf(entry.inputs).map(i => row(i.label, i.value)).join('') +
                 '</div>' +
 
                 '<h3 style="color:var(--accent-ink); font-size:15px; margin-bottom:8px;">Results</h3>' +
                 '<div style="background:#f8f9fa; border-radius:10px; padding:6px 16px; margin-bottom:24px;">' +
-                    entry.results.map(r => row(r.label, r.value)).join('') +
+                    rowsOf(entry.results).map(r => row(r.label, r.value)).join('') +
                 '</div>' +
 
-                '<button onclick="exportHistoryPdf(\'' + entry.id + '\')" class="pdf-calc-btn">📄 Export PDF</button>' +
-                '<button onclick="deleteHistoryEntry(\'' + entry.id + '\', true)" class="save-calc-btn" style="background:#d33; box-shadow:0 4px 12px rgba(211,51,51,0.25);">🗑 Delete</button>';
+                '<button onclick="exportHistoryPdf(\'' + escJs(entry.id) + '\')" class="pdf-calc-btn">📄 Export PDF</button>' +
+                '<button onclick="deleteHistoryEntry(\'' + escJs(entry.id) + '\', true)" class="save-calc-btn" style="background:#d33; box-shadow:0 4px 12px rgba(211,51,51,0.25);">🗑 Delete</button>';
 
             openWindow('historydetail');
         }
