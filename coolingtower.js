@@ -481,8 +481,8 @@
       '<div class="ct-grid">' +
       fg('ct_cs', 'Carbon-steel coupon', 'corr', 'e.g. 40') +
       fg('ct_cu', 'Copper-alloy coupon', 'corr', 'e.g. 3') +
-      fg('ct_dpdF', 'Free halogen (DPD)', 'ppm', 'e.g. 0.8') +
-      fg('ct_dpdT', 'Total halogen (DPD)', 'ppm', 'optional') +
+      fg('ct_dpdF', 'Free halogen (DPD, as Cl₂)', 'ppm', 'e.g. 0.8') +   // as the kit reads it, bromine too (no Br₂ conversion)
+      fg('ct_dpdT', 'Total halogen (DPD, as Cl₂)', 'ppm', 'optional') +
       fg('ct_orp', 'ORP', 'mV', 'e.g. 650') +
       '<div class="ct-fg"><label>Drift eliminators</label><select id="ct_drifts"><option value="ok">Good condition</option><option value="bad">Damaged / fouled</option></select></div>' +
       '</div><div id="ct_health_out" class="ct-res"></div>');
@@ -648,7 +648,7 @@
     var hOut = '';
     hOut += row('Carbon-steel corrosion', cs, 'corr', 1, isN(cs) ? (cs > S.csRed ? 'act' : cs > S.csAmber ? 'watch' : 'ok') : 'none', fx('acceptable < 76 µm/y (3 mpy)', 'Ch.16', 'amber ' + S.csAmber + '–' + S.csRed + ', red >' + S.csRed + ' µm/y'));
     hOut += row('Copper-alloy corrosion', cu, 'corr', 2, isN(cu) ? (cu > S.cuRed ? 'act' : cu > S.cuAmber ? 'watch' : 'ok') : 'none', fx('acceptable < 5 µm/y (0.2 mpy)', 'Ch.16', 'amber ' + S.cuAmber + '–' + S.cuRed + ', red >' + S.cuRed + ' µm/y'));
-    hOut += row('Free halogen (DPD)', dpdF, 'ppm', 2, isN(dpdF) ? (dpdF >= S.halogenTarget ? 'ok' : 'watch') : 'none', fx('target ≥ ' + S.halogenTarget + ' mg/L', 'operator target', 'DPD working range to 5 mg/L'));
+    hOut += row('Free halogen (DPD, as Cl₂)', dpdF, 'ppm', 2, isN(dpdF) ? (dpdF >= S.halogenTarget ? 'ok' : 'watch') : 'none', fx('target ≥ ' + S.halogenTarget + ' mg/L', 'operator target', 'DPD working range to 5 mg/L'));
     hOut += row('ORP', orp, 'mV', 0, isN(orp) ? (orp >= S.orpTarget ? 'ok' : 'watch') : 'none', fx('target ≥ ' + S.orpTarget + ' mV', 'operator target', 'convenient oxidant-control measure'));
     if (isN(orp)) hOut += '<div class="ct-flag amber">⚠ ORP readings are affected by temperature and pH, and ORP does <b>not</b> work for stabilised halogens.</div>';
     if (drifts === 'bad') hOut += '<div class="ct-flag amber">⚠ Damaged drift eliminators: drift (not evaporated vapour) is the aerosol that can carry <i>Legionella</i> — repair is a direct health control.</div>';
@@ -739,24 +739,44 @@
   function prefillServiceReport() {
     recompute();
     if (typeof openWindow !== 'function') return;
+    if (typeof window.hgGuestAsk === 'function' && window.hgGuestAsk('report')) return;   // a guest: an account first (one question, not two)
     var readings = [
       { id: 't-ph', value: readF('ct_idx_ph') },
       { id: 'x-temp', value: readF('ct_idx_t', 'tempAbs') },
       { id: 'x-orp', value: readF('ct_orp') },
-      { id: 'x-fhal', value: readF('ct_dpdF') },   // free halogen: its own row (chlorine or bromine), not SANS free chlorine
-      { id: 'x-thal', value: readF('ct_dpdT') },
+      { id: 'x-fhal', value: readF('ct_dpdF') },   // free halogen: its own row (chlorine or bromine, as Cl₂), not SANS free chlorine
+      { id: 'x-thal', value: readF('ct_dpdT') }
+    ];
+    var cond = [
       { id: 'x-syscond', value: condUS('ct_ion_cond_r') },   // the ion-balance table's recirc conductivity
       { id: 'x-mucond', value: condUS('ct_ion_cond_m') }
     ];
-    openWindow('servicereport');
-    Promise.resolve(typeof newServiceReport === 'function' ? newServiceReport() : null).catch(function () {}).then(function () {
-      var r = typeof window.hgSrAddReadings === 'function' ? window.hgSrAddReadings(readings, 'Cooling Tower') : null;
-      var msg = r && r.message ? r.message : 'New service report: no readings to add yet';
-      // a converted conductivity is named, so a reading typed with the wrong unit picked doesn't slip in unnoticed
-      var conv = COND_UNIT !== 'µS/cm' && r && r.added && (readF('ct_ion_cond_r', 'conc') != null || readF('ct_ion_cond_m', 'conc') != null);
-      if (conv) msg += ' · conductivity typed in ' + COND_UNIT + ', recorded in µS/cm';
-      if (typeof showToast === 'function') showToast(msg, conv ? 5000 : 3500);
-    });
+    var send = function (withCond) {
+      openWindow('servicereport');
+      Promise.resolve(typeof newServiceReport === 'function' ? newServiceReport() : null).catch(function () {}).then(function () {
+        var r = typeof window.hgSrAddReadings === 'function' ? window.hgSrAddReadings(withCond ? readings.concat(cond) : readings, 'Cooling Tower') : null;
+        var msg = r && r.message ? r.message : 'New service report: no readings to add yet';
+        // a converted conductivity is named, so a reading typed with the wrong unit picked doesn't slip in unnoticed
+        var conv = withCond && COND_UNIT !== 'µS/cm' && r && r.added && (readF('ct_ion_cond_r', 'conc') != null || readF('ct_ion_cond_m', 'conc') != null);
+        if (conv) msg += ' · conductivity typed in ' + COND_UNIT + ', recorded in µS/cm';
+        if (!withCond && hasCond) msg += ' · conductivity left out (not measured today)';
+        if (typeof showToast === 'function') showToast(msg, conv || (!withCond && hasCond) ? 5000 : 3500);
+      });
+    };
+    var hasCond = cond.some(function (c) { return c.value != null; });
+    if (!hasCond) { send(false); return; }
+    // Measured today? The ion balance can be worked from an earlier sample or a lab certificate: then its conductivity isn't a
+    // reading of this visit, and stays out of the report (Jaco, 2026-10-09: asked each time). The rest goes either way.
+    var later = function (withCond) { return function () { setTimeout(function () { send(withCond); }, 0); }; };   // (after the sheet has closed)
+    if (window.hgSheet && typeof window.hgSheet.open === 'function') {
+      window.hgSheet.open({
+        title: 'Conductivity measured today?',
+        body: '<p>The system and make-up conductivity from the ion balance go into today’s visit report as readings. If they come from an earlier sample or a lab certificate, leave them out.</p>',
+        actions: [{ label: 'Measured today', kind: 'primary', onClick: later(true) },
+                  { label: 'Leave them out', kind: 'secondary', onClick: later(false) },
+                  { label: 'Cancel', kind: 'plain', focus: true }]
+      });
+    } else send(window.confirm('Was the conductivity measured today?\n\nOK: it goes into the visit report.\nCancel: it stays out.'));
   }
 
   /* ---------- mount ---------- */

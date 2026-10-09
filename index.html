@@ -52,60 +52,60 @@
     <!-- Supabase JS SDK (auth + cloud sync), pinned 2.117.2 and served by the app itself so sign-in
          works offline from the precache (it used to be the floating @2 from a CDN). See
          THIRD_PARTY_NOTICES.md. To upgrade: replace the file, rename it, update this tag + sw.js. -->
-    <script src="supabase-js-2.117.2.js?v=176"></script>
+    <script src="supabase-js-2.117.2.js?v=177"></script>
 
     <!-- Hadron Supabase bridge -->
-    <script src="supabase-client.js?v=176"></script>
+    <script src="supabase-client.js?v=177"></script>
 
     <!-- Shared UI primitives (in-app sheets) — loaded before auth-ui, which uses them -->
-    <script src="hg-ui.js?v=176" defer></script>
+    <script src="hg-ui.js?v=177" defer></script>
     <!-- Auth UI (login/signup gate, profile binding) -->
-    <script src="auth-ui.js?v=176" defer></script>
+    <script src="auth-ui.js?v=177" defer></script>
 
     <!-- Push notifications -->
-    <script src="push.js?v=176" defer></script>
+    <script src="push.js?v=177" defer></script>
 
     <!-- Translation bundle -->
-    <script src="i18n.js?v=176"></script>
+    <script src="i18n.js?v=177"></script>
 
     <!-- Hadron Tristroke icon system (matches the ERP) -->
-    <script src="hadron-icons.js?v=176" defer></script>
+    <script src="hadron-icons.js?v=177" defer></script>
 
     <!-- Emoji the app has an icon for become Tristroke icons (the rest stay the phone's own emoji) -->
-    <script src="emoji.js?v=176" defer></script>
+    <script src="emoji.js?v=177" defer></script>
 
     <!-- Customizable home grid (drag-to-reorder) -->
-    <script src="home.js?v=176" defer></script>
-    <script src="customize.js?v=176" defer></script>
+    <script src="home.js?v=177" defer></script>
+    <script src="customize.js?v=177" defer></script>
 
     <!-- Data Manager (Excel import/export) -->
-    <script src="data-manager.js?v=176" defer></script>
+    <script src="data-manager.js?v=177" defer></script>
 
     <!-- QR encoder (MIT, Kazuhiko Arase) -->
-    <script src="qr.js?v=176"></script>
+    <script src="qr.js?v=177"></script>
 
     <!-- QR Builder app -->
-    <script src="qr-app.js?v=176" defer></script>
+    <script src="qr-app.js?v=177" defer></script>
 
     <!-- Pool Water module -->
-    <script src="pool.js?v=176" defer></script>
+    <script src="pool.js?v=177" defer></script>
     <!-- Cooling Tower field calculator -->
-    <script src="coolingtower.js?v=176" defer></script>
+    <script src="coolingtower.js?v=177" defer></script>
     <!-- Boiler / Steam field calculator -->
-    <script src="boiler.js?v=176" defer></script>
+    <script src="boiler.js?v=177" defer></script>
     <!-- Water softener sizing calculator -->
-    <script src="softener.js?v=176" defer></script>
-    <script src="academy-content.js?v=176" defer></script>
-    <script src="academy.js?v=176" defer></script>
+    <script src="softener.js?v=177" defer></script>
+    <script src="academy-content.js?v=177" defer></script>
+    <script src="academy.js?v=177" defer></script>
 
-    <script src="searchable-select.js?v=176" defer></script>
-    <script src="trends.js?v=176" defer></script>
+    <script src="searchable-select.js?v=177" defer></script>
+    <script src="trends.js?v=177" defer></script>
 
     <!-- LIMS module (loaded at end of body via defer) -->
-    <script src="lims.js?v=176" defer></script>
-    <script src="lims-sync.js?v=176" defer></script>
-    <script src="portal.js?v=176" defer></script>
-    <script src="team.js?v=176" defer></script>
+    <script src="lims.js?v=177" defer></script>
+    <script src="lims-sync.js?v=177" defer></script>
+    <script src="portal.js?v=177" defer></script>
+    <script src="team.js?v=177" defer></script>
 
 
     <style>
@@ -2968,7 +2968,7 @@
                 <div class="hg-section-title">About</div>
                 <div class="hg-kvgrid">
                     <div class="hg-kv"><div class="k">App</div><div class="v">Hadron Group</div></div>
-                    <div class="hg-kv"><div class="k">Version</div><div class="v">v176</div></div>
+                    <div class="hg-kv"><div class="k">Version</div><div class="v">v177</div></div>
                     <div class="hg-kv"><div class="k">Platform</div><div class="v">PWA</div></div>
                 </div>
             </div>
@@ -6600,8 +6600,11 @@
             const touched = sr_points.some(p => p.tests.some(t => t.value !== '' && t.value != null));
             if (touched && !confirm('Replace the current tests with the last visit\'s setup? Your entered readings will be cleared.')) return;
             const pts = (_srLastVisit.points && _srLastVisit.points.length) ? _srLastVisit.points : [{ name: '', tests: _srLastVisit.tests || [] }];
-            sr_points = pts.map(p => ({ id: uid(), name: p.name || '', tests: (p.tests || []).map(t => srNewRow({ id: t.id, code: t.code, name: t.name, unit: t.unit, specMin: t.specMin, specMax: t.specMax, sans241: t.sans241, category: t.category })) }));
+            sr_points = pts.map(p => ({ id: uid(), name: p.name || '', tests: (p.tests || []).map(t => srNewRow(srCatItem(t.id) || { id: t.id, code: t.code, name: t.name, unit: t.unit, specMin: t.specMin, specMax: t.specMax, sans241: t.sans241, category: t.category })) }));
             if (!sr_points.length) sr_points = [srNewPoint('', true)];
+            // a boiler / tower point copied (it holds that system's own rows): they take the empty drinking-water rows' places,
+            // as when its pack loads (a point without both rows of a pair is left as it was)
+            sr_points.forEach(p => { srUseSystemRows(p, 'Boiler'); srUseSystemRows(p, 'Cooling Tower'); });
             if (_srLastVisit.dosing && _srLastVisit.dosing.length) {   // same products/dose, fresh qty + stock
                 sr_dosing = _srLastVisit.dosing.map(d => Object.assign(srNewDose(), { product: d.product || '', dose: d.dose || '', unit: d.unit || 'L', batch: d.batch || '' }));
                 srRenderDosing();
@@ -7123,14 +7126,16 @@
             { id:'x-bio',     code:'BIO',   name:'Biocide / oxidant residual', unit:'mg/L',  specMin:null, specMax:null, category:'Cooling tower', sans241:'' },
             { id:'x-inhib',   code:'INHIB', name:'Inhibitor residual',         unit:'mg/L',  specMin:null, specMax:null, category:'Cooling tower', sans241:'' },
             // Free / total halogen by DPD: chlorine OR bromine programmes, so not SANS 241's free chlorine (and its limits)
-            { id:'x-fhal',    code:'FHAL',  name:'Free halogen (DPD)',         unit:'mg/L',  specMin:null, specMax:null, category:'Cooling tower', sans241:'' },
-            { id:'x-thal',    code:'THAL',  name:'Total halogen (DPD)',        unit:'mg/L',  specMin:null, specMax:null, category:'Cooling tower', sans241:'' },
+            // as the DPD kit reads it ("as Cl₂", bromine sites too: no Br₂ conversion); low below 0.2 mg/L, as SANS free chlorine was
+            { id:'x-fhal',    code:'FHAL',  name:'Free halogen (DPD, as Cl₂)',  unit:'mg/L',  specMin:0.2,  specMax:null, category:'Cooling tower', sans241:'' },
+            { id:'x-thal',    code:'THAL',  name:'Total halogen (DPD, as Cl₂)', unit:'mg/L',  specMin:null, specMax:null, category:'Cooling tower', sans241:'' },
             // Boiler control set
             { id:'x-btds',   code:'BTDS',  name:'Boiler water TDS',      unit:'mg/L', specMin:null, specMax:null, category:'Boiler', sans241:'' },
             { id:'x-ftds',   code:'FTDS',  name:'Feedwater TDS',         unit:'mg/L', specMin:null, specMax:null, category:'Boiler', sans241:'' },
             // boiler water runs at pH 10.5–12: not SANS 241's drinking-water pH (5.0–9.7). A limit, if wanted, is an own limit
             // (✎ limit): kept per parameter on this phone, so it applies at every site (not per site)
             { id:'x-bph',    code:'BPH',   name:'Boiler water pH',       unit:'pH',   specMin:null, specMax:null, category:'Boiler', sans241:'' },
+            { id:'x-balk',   code:'BALK',  name:'Boiler water alkalinity (M, as CaCO₃)', unit:'mg/L', specMin:null, specMax:null, category:'Boiler', sans241:'' },
             { id:'x-sulph',  code:'SULPH', name:'Sulphite reserve',      unit:'mg/L', specMin:null, specMax:null, category:'Boiler', sans241:'' },
             { id:'x-bphos',  code:'BPHOS', name:'Phosphate reserve',     unit:'mg/L', specMin:null, specMax:null, category:'Boiler', sans241:'' },
             { id:'x-condph', code:'CPH',   name:'Condensate pH',         unit:'pH',   specMin:null, specMax:null, category:'Boiler', sans241:'' },
@@ -7146,7 +7151,7 @@
         // Curated test packs per water system — loaded into a sample point in one tap.
         const SR_SYSTEM_PACKS = {
             'Cooling Tower':      ['x-syscond','x-mucond','t-ph','x-bio','x-inhib','x-orp','x-temp','x-fhal'],
-            'Boiler':            ['x-btds','x-ftds','x-bph','x-sulph','x-bphos','t-alk','x-condph','x-oxsc'],
+            'Boiler':            ['x-btds','x-ftds','x-bph','x-sulph','x-bphos','x-balk','x-condph','x-oxsc'],
             'Reverse Osmosis':   ['x-feedc','x-permc','x-rejc','t-ph','x-sdi','x-dp','x-antisc','x-temp'],
             'Potable / SANS 241':['t-ph','t-fcl','x-tcl','t-cond','t-tds','t-turb','t-ec','t-colif']
         };
@@ -7216,7 +7221,7 @@
                 'x-orp': [-1200, 1500], 't-cond': [0, 200000], 't-tds': [0, 200000], 't-turb': [0, 4000],
                 't-hard': [0, 100000], 't-alk': [0, 100000], 'x-po4': [0, 10000],
                 'x-syscond': [0, 200000], 'x-mucond': [0, 200000], 'x-feedc': [0, 200000],
-                'x-permc': [0, 200000], 'x-rejc': [0, 200000], 'x-btds': [0, 200000], 'x-ftds': [0, 200000],
+                'x-permc': [0, 200000], 'x-rejc': [0, 200000], 'x-btds': [0, 200000], 'x-ftds': [0, 200000], 'x-balk': [0, 20000],
                 'x-bio': [0, 10000], 'x-inhib': [0, 10000], 'x-sulph': [0, 10000], 'x-bphos': [0, 10000],
                 'x-oxsc': [0, 10000], 'x-antisc': [0, 10000], 'x-condph': [0, 14], 'x-sdi': [0, 6.7], 'x-dp': [0, 50],
                 'x-bph': [0, 14], 'x-fhal': [0, 100], 'x-thal': [0, 100]
@@ -7244,7 +7249,7 @@
             if (p === true)  return '<span style="background:#157b3a;color:#fff;font-size:11px;font-weight:700;padding:2px 8px;border-radius:999px;">PASS</span>';
             if (p === false) return '<span style="background:#c0392b;color:#fff;font-size:11px;font-weight:700;padding:2px 8px;border-radius:999px;">FAIL</span>';
             const lt = srLimitText(t);
-            return lt ? '<span style="color:var(--muted);font-size:11px;">' + (t.custom ? 'Own limit ' : 'SANS ') + esc(lt) + '</span>' : '<span style="color:var(--muted);font-size:11px;opacity:.65;">no limit</span>';
+            return lt ? '<span style="color:var(--muted);font-size:11px;">' + (t.custom ? 'Own limit ' : (t.sans241 ? 'SANS ' : 'Limit ')) + esc(lt) + '</span>' : '<span style="color:var(--muted);font-size:11px;opacity:.65;">no limit</span>';
         }
         function srUpdateChip(rid) { const el = document.getElementById('sr_chip_' + rid); const f = srFindRow(rid); if (el && f) el.innerHTML = srChip(f.t); const w = document.getElementById('sr_was_' + rid); if (w && f) w.innerHTML = srWasHtml(f.t); }
         // Inline limit editor per test row — persists as this parameter's preferred limit (keyed by catId).
@@ -7321,14 +7326,16 @@
             showToast(added ? (packName + ' pack loaded — ' + added + ' test' + (added === 1 ? '' : 's')) : (packName + ' tests already present'));
         }
         // A system's own row takes the place of the ★ drinking-water row a point starts with, when that row is still
-        // empty: Boiler water pH for SANS 241's pH (5.0–9.7, a normal boiler pH of 11 would FAIL there), Free halogen
-        // (DPD) for SANS Free Chlorine at a tower. A value already typed in the SANS row is never dropped.
-        const SR_SYSTEM_ROWS = { 'Boiler': [['t-ph', 'x-bph']], 'Cooling Tower': [['t-fcl', 'x-fhal']] };
+        // empty: at a boiler, Boiler water pH for SANS 241's pH (5.0–9.7, a normal boiler pH of 11 would FAIL there), Boiler
+        // water TDS for its TDS (≤ 1200) and Boiler water alkalinity for its alkalinity (≤ 500); at a tower, Free halogen
+        // (DPD) for SANS Free Chlorine and System conductivity for its EC (≤ 170 mS/m). A value already typed in the SANS
+        // row is never dropped. (Jaco, 2026-10-09: all of these, and for points copied from the last visit too.)
+        const SR_SYSTEM_ROWS = { 'Boiler': [['t-ph', 'x-bph'], ['t-tds', 'x-btds'], ['t-alk', 'x-balk']], 'Cooling Tower': [['t-fcl', 'x-fhal'], ['t-cond', 'x-syscond']] };
         function srUseSystemRows(p, system) {   // true when a row was replaced
             let changed = false;
             (SR_SYSTEM_ROWS[system] || []).forEach(([old, own]) => {
                 const o = p.tests.find(t => t.catId === old), n = p.tests.find(t => t.catId === own);
-                if (!o || !n || !(o.value === '' || o.value == null) || srHadResult(o)) return;   // (a saved result, removed, stays: ✎)
+                if (!o || !n || !(o.value === '' || o.value == null) || srHadResult(o) || o.photo) return;   // (a saved result, removed, stays: ✎; a photo too)
                 // the system's row ends up where the earlier of the two was (the ★ row's place, usually the top)
                 p.tests = p.tests.indexOf(n) < p.tests.indexOf(o) ? p.tests.filter(t => t !== o) : p.tests.filter(t => t !== n).map(t => (t === o ? n : t));
                 changed = true;
@@ -7488,7 +7495,7 @@
                         <button type="button" onclick="srToggleFav('${esc(c.id)}')" title="Favourite" style="border:none;background:transparent;font-size:19px;line-height:1;cursor:pointer;color:${srIsFav(c.id) ? 'var(--accent-2)' : 'var(--muted)'};">${srIsFav(c.id) ? '★' : '☆'}</button>
                         <div style="flex:1;min-width:0;">
                             <div style="font-weight:600;font-size:14px;color:var(--text);">${esc(c.name)} <span style="color:var(--muted);font-weight:400;font-size:12px;">${esc(c.unit || '')}</span></div>
-                            ${(c.sans241 || srLimitText(c)) ? `<div style="font-size:11px;color:var(--muted);">${esc(c.sans241 || '')}${srLimitText(c) ? (c.sans241 ? ' · ' : '') + 'SANS ' + esc(srLimitText(c)) : ''}</div>` : ''}
+                            ${(c.sans241 || srLimitText(c)) ? `<div style="font-size:11px;color:var(--muted);">${esc(c.sans241 || '')}${srLimitText(c) ? (c.sans241 ? ' · ' : '') + (c.sans241 ? 'SANS ' : 'Limit ') + esc(srLimitText(c)) : ''}</div>` : ''}
                         </div>
                         ${inReport.has(c.id)
                             ? '<span style="color:var(--success);font-size:12px;font-weight:600;padding-right:6px;">added ✓</span>'
@@ -8334,6 +8341,13 @@
             if (!window.jspdf) { showToast('PDF lib still loading'); return; }
             const { jsPDF } = window.jspdf;
             const doc = new jsPDF({ unit: 'pt', format: 'a4' });
+            // The PDF's Helvetica has no sub/superscript digits or ≥ ≤: one in a string made jsPDF write the whole string as
+            // UTF-16, printed as "Free halogen (DPD, as Cl ‚)" and "\"e 0.2". Plain characters instead (as Trends' PDF does).
+            const pdfPlain = (s) => typeof s !== 'string' ? s : s.replace(/[\u2080-\u2089]/g, c => String.fromCharCode(c.charCodeAt(0) - 0x2050))
+                .replace(/[\u2070\u2074-\u2079]/g, c => String.fromCharCode(c.charCodeAt(0) === 0x2070 ? 48 : c.charCodeAt(0) - 0x2040))
+                .replace(/\u207A/g, '+').replace(/\u207B/g, '-').replace(/\u2265/g, '>=').replace(/\u2264/g, '<=');
+            const _pdfText = doc.text.bind(doc);
+            doc.text = function (t) { const a = Array.prototype.slice.call(arguments); a[0] = Array.isArray(t) ? t.map(pdfPlain) : pdfPlain(t); return _pdfText.apply(null, a); };
             const PAGE_W = doc.internal.pageSize.getWidth(), PAGE_H = doc.internal.pageSize.getHeight();
             const CYAN = [0,168,224], GOLD = [197,157,43], SOFT = [120,120,120];
             // ✎ (the PDF font has no pen): a small one drawn, a nib and a stroke
@@ -8351,7 +8365,7 @@
                 doc.setFontSize(10); doc.setFont('helvetica','bold'); doc.text(String(r.reportNo), PAGE_W - 36, 34, { align: 'right' });
                 doc.setFontSize(9); doc.setFont('helvetica','normal'); doc.text((r.status === 'submitted' ? 'FINAL' : 'DRAFT') + (r.amends ? ' · AMENDMENT' : ''), PAGE_W - 36, 50, { align: 'right' });
             }
-            doc.setTextColor(0,0,0); let y = 110; let anyCustom = false, anyEdited = false;
+            doc.setTextColor(0,0,0); let y = 110; let anyCustom = false, anyCustomSans = false, anyEdited = false;
             const row = (k, v) => { if (v == null || v === '') return; doc.setFont('helvetica','bold'); doc.text(k, 36, y); doc.setFont('helvetica','normal'); doc.text(String(v), 200, y); y += 16; if (y > PAGE_H - 80) { doc.addPage(); y = 60; }};
             doc.setFontSize(14); doc.setFont('helvetica','bold'); doc.text('Site Details', 36, y); y += 18; doc.setFontSize(10);
             row('Date / time:', srIsoToLocalDt(r.date).replace('T', ' ') || r.date); row('Technician:', r.tech); row('Contact:', r.contact); row('GPS:', r.gps); row('Next service due:', r.nextDue);
@@ -8371,22 +8385,30 @@
             }
 
             // ── SANS 241 compliance summary + exceedances ──
+            // SANS 241 is the drinking-water standard: its box counts the SANS 241 parameters only (rows with a SANS class).
+            // A row judged against another limit (a tower's free halogen ≥ 0.2, a company's own limit on a system row) is an
+            // operating limit, on its own line (v177).
             const _pts = (r.points || []).filter(p => p.tests && p.tests.some(t => t.value != null && t.value !== ''));
             const _flat = _pts.length ? _pts : [{ name: '', tests: (r.tests || []) }];
-            const _judged = [], _fails = [];
+            const _judged = [], _fails = [], _opJudged = [], _opFails = [];
             _flat.forEach(p => (p.tests || []).forEach(t => {
                 if (t.value == null || t.value === '' || (t.specMin == null && t.specMax == null)) return;
-                _judged.push(t); if (t.pass === false) _fails.push({ point: p.name, t });
+                if (t.sans241) { _judged.push(t); if (t.pass === false) _fails.push({ point: p.name, t }); }
+                else { _opJudged.push(t); if (t.pass === false) _opFails.push({ point: p.name, t, op: true }); }
             }));
-            if (_judged.length) {
+            const _box = (label, n, bad, word) => {
                 y += 10; if (y > PAGE_H - 90) { doc.addPage(); y = 60; }
-                const ok = _fails.length === 0;
+                const ok = bad === 0;
                 doc.setFillColor.apply(doc, ok ? [231,245,236] : [250,232,232]); doc.setDrawColor.apply(doc, ok ? [21,123,58] : [192,57,43]);
                 doc.roundedRect(36, y, PAGE_W - 72, 28, 4, 4, 'FD');
                 doc.setTextColor.apply(doc, ok ? [21,123,58] : [192,57,43]); doc.setFont('helvetica','bold'); doc.setFontSize(11);
-                doc.text('SANS 241 compliance:  ' + (_judged.length - _fails.length) + ' of ' + _judged.length + ' within limits' + (_fails.length ? '  ·  ' + _fails.length + ' exceedance' + (_fails.length === 1 ? '' : 's') : '  ·  all within limits'), 48, y + 18);
-                doc.setTextColor(0,0,0); doc.setFont('helvetica','normal'); y += 40;
-            }
+                doc.text(label + ':  ' + (n - bad) + ' of ' + n + ' within limits' + (bad ? '  ·  ' + bad + ' ' + word + (bad === 1 ? '' : 's') : '  ·  all within limits'), 48, y + 18);
+                doc.setTextColor(0,0,0); doc.setFont('helvetica','normal'); y += 30;
+            };
+            if (_judged.length) _box('SANS 241 compliance', _judged.length, _fails.length, 'exceedance');
+            if (_opJudged.length) _box('Operating limits (not SANS 241)', _opJudged.length, _opFails.length, 'outside limit');
+            if (_judged.length || _opJudged.length) y += 10;
+            if (_opFails.length) _fails.push.apply(_fails, _opFails);
             if (_fails.length) {
                 if (y > PAGE_H - 100) { doc.addPage(); y = 60; }
                 doc.setFontSize(12); doc.setFont('helvetica','bold'); doc.setTextColor(192,57,43); doc.text('Exceedances', 36, y); doc.setTextColor(0,0,0); y += 15;
@@ -8399,7 +8421,7 @@
                     doc.text(String(f.point || '(unnamed)').slice(0, 24), 36, y);
                     doc.text(String(t.name || '').slice(0, 26), 180, y);
                     doc.setTextColor(192,57,43); doc.setFont('helvetica','bold'); doc.text(String(t.value) + ' ' + (t.unit || ''), 340, y); doc.setTextColor(0,0,0); doc.setFont('helvetica','normal');
-                    doc.text(lt, 430, y); y += 14;
+                    doc.text(lt + (f.op ? '  operating' : ''), 430, y); y += 14;
                 });
                 y += 8;
             }
@@ -8422,7 +8444,7 @@
                         doc.setFontSize(7.5); doc.setTextColor(150,110,30); doc.text('was ' + was, 250, y + 9); doc.setTextColor(0,0,0); doc.setFontSize(10);
                     }
                     doc.text(String(t.unit || ''), 320, y);
-                    if (t.custom) anyCustom = true;
+                    if (t.custom) { anyCustom = true; if (t.sans241) anyCustomSans = true; }   // own limit on a SANS 241 parameter, or an operating one
                     const lt0 = (t.specMin != null && t.specMax != null) ? (t.specMin + '–' + t.specMax) : (t.specMax != null ? '≤ ' + t.specMax : (t.specMin != null ? '≥ ' + t.specMin : ''));
                     const lt = lt0 ? lt0 + (t.custom ? '*' : '') : '';
                     if (t.pass === false) { doc.setTextColor(192,57,43); doc.setFont('helvetica','bold'); doc.text((lt ? lt + '  ' : '') + 'FAIL', 400, y); doc.setFont('helvetica','normal'); doc.setTextColor(0,0,0); }
@@ -8467,7 +8489,7 @@
                 doc.text(r.amends ? 'Changed in this amendment: the result in ' + String((r.amends && r.amends.reportNo) || 'the report it corrects') + ' is shown under it.' : 'Changed after the report was first saved: the earlier result is shown under it.', 48, y);
                 doc.setTextColor(0,0,0); doc.setFont('helvetica','normal'); y += 14;
             }
-            if (anyCustom) { if (y > PAGE_H - 80) { doc.addPage(); y = 60; } doc.setFontSize(8); doc.setFont('helvetica','italic'); doc.setTextColor.apply(doc, SOFT); doc.text('* Own limit — differs from the SANS 241 value.', 36, y); doc.setTextColor(0,0,0); doc.setFont('helvetica','normal'); y += 14; }
+            if (anyCustom) { if (y > PAGE_H - 80) { doc.addPage(); y = 60; } doc.setFontSize(8); doc.setFont('helvetica','italic'); doc.setTextColor.apply(doc, SOFT); doc.text(anyCustomSans ? '* Own limit — differs from the SANS 241 value.' : '* Own limit (an operating limit for this site).', 36, y); doc.setTextColor(0,0,0); doc.setFont('helvetica','normal'); y += 14; }
             y += 8; doc.setFontSize(14); doc.setFont('helvetica','bold'); doc.text('Observations', 36, y); y += 18; doc.setFontSize(10);
             const writeBlock = txt => { if (!txt) return; const lines = doc.splitTextToSize(txt, PAGE_W - 72); doc.text(lines, 36, y); y += lines.length * 12 + 6; if (y > PAGE_H - 120) { doc.addPage(); y = 60; }};
             writeBlock(r.obs); doc.setFont('helvetica','bold'); doc.text('Actions taken:', 36, y); y += 14; doc.setFont('helvetica','normal'); writeBlock(r.act);
@@ -8602,7 +8624,7 @@
                 const _mList = _mIds.map(id => srCatItem(id)).filter(c => c && c.method).map(c => c.name + ' — ' + c.method);   // no internal methodVer on a customer document
                 doc.setFontSize(11); doc.setFont('helvetica','bold'); doc.setTextColor(30, 38, 45); doc.text('Methods & basis of assessment', 36, y); y += 13;
                 doc.setFontSize(8); doc.setFont('helvetica','normal'); doc.setTextColor.apply(doc, SOFT);
-                const _mStmt = 'On-site results in this report are indicative field measurements taken with portable instruments. Where a limit applies, results are assessed against SANS 241:2015 (South African National Standard for Drinking Water).' + (anyCustom ? ' Values marked * use a site-specific limit set by The Hadron Group, not the SANS 241 value.' : '') + ' Formal confirmation of SANS 241 compliance requires sampling and analysis by a laboratory accredited to ISO/IEC 17025; field results are not a substitute for accredited laboratory analysis.';
+                const _mStmt = 'On-site results in this report are indicative field measurements taken with portable instruments. Where a SANS 241 limit applies, results are assessed against SANS 241:2015 (South African National Standard for Drinking Water).' + (_opJudged.length ? ' Cooling-tower, boiler and other system readings are not drinking water: where they have a limit, it is an operating limit, shown separately.' : '') + (anyCustomSans ? ' Values marked * use a site-specific limit set by The Hadron Group, not the SANS 241 value.' : '') + ' Formal confirmation of SANS 241 compliance requires sampling and analysis by a laboratory accredited to ISO/IEC 17025; field results are not a substitute for accredited laboratory analysis.';
                 const _mS = doc.splitTextToSize(_mStmt, PAGE_W - 72); doc.text(_mS, 36, y); y += _mS.length * 10 + 5;
                 if (_mList.length) {
                     if (y > PAGE_H - 90) { doc.addPage(); y = 60; doc.setFontSize(8); doc.setFont('helvetica','normal'); doc.setTextColor.apply(doc, SOFT); }

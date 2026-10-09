@@ -353,7 +353,8 @@
     if (F.point !== '__all__' && !points.some(p => p.key === F.point)) F.point = '__all__';
     // params within the above
     const paRows = ptRows.filter(r => F.point === '__all__' || r.point === F.point);
-    const params = uniqBy(paRows, r => r.paramId, r => (r.name + (r.unit ? ' (' + r.unit + ')' : '')));
+    const newest = new Map(); paRows.forEach(r => newest.set(r.paramId, r));   // rows are oldest first: the last one is the newest
+    const params = uniqBy(paRows, r => r.paramId, r => { const n = newest.get(r.paramId) || r; return n.name + (n.unit ? ' (' + n.unit + ')' : ''); });
     if (F.param && !params.some(p => p.key === F.param)) F.param = params.length ? params[0].key : '';
     if (!F.param && params.length) F.param = params[0].key;
 
@@ -380,7 +381,7 @@
     const spec = newestSpec(rows);
     const st = computeStats(rows);
     const chartW = host.clientWidth ? host.clientWidth - 18 : 0;   // the chart box's inside (8 px padding, 1 px border)
-    const paramName = rows[0].name, unit = rows[0].unit;
+    const paramName = rows[rows.length - 1].name, unit = rows[rows.length - 1].unit;   // the newest reading's name (rows: oldest first)
 
     const stat = (label, val, cls) => `<div class="tr-stat"><div class="tr-stat-v"${cls ? ` style="color:${cls}"` : ''}>${val}</div><div class="tr-stat-l">${esc(label)}</div></div>`;
     const cC = themeColors();
@@ -468,8 +469,8 @@
     const rows = filtered();
     const custLabel = F.cust ? (rows[0] ? rows[0].customerName : F.cust) : 'All customers';
     const siteLabel = F.site ? (rows[0] ? rows[0].site : F.site) : 'All sites';
-    const paramLabel = rows[0] ? rows[0].name : '';
-    const unit = rows[0] ? rows[0].unit : '';
+    const paramLabel = rows.length ? rows[rows.length - 1].name : '';   // the newest reading's name
+    const unit = rows.length ? rows[rows.length - 1].unit : '';
     const period = ({ 0: 'All time', 30: 'Last 30 days', 90: 'Last 90 days', 180: 'Last 6 months', 365: 'Last 12 months' })[F.days] || 'All time';
     return { rows, custLabel, siteLabel, paramLabel, unit, period };
   }
